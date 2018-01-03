@@ -13,3 +13,4 @@ services:
     build: ./server
     ports:
       - "3443:3443"
+      - "40000-40200:40000-40200/udp"

@@ -2,6 +2,7 @@ node_modules/
 
 /server/config.*
 !/server/config.example.js
+!/server/config.example_docker.js
 /server/public/
 /server/certs/
 !/server/certs/mediasoup-demo.localhost.*
