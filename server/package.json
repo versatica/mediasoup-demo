@@ -14,7 +14,7 @@
     "protoo-server": "^2.0.5"
   },
   "devDependencies": {
-    "gulp": "git://github.com/gulpjs/gulp.git#4.0",
+    "gulp": "^4.0",
     "gulp-eslint": "^4.0.0",
     "gulp-plumber": "^1.1.0"
   }

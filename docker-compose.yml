@@ -1,0 +1,15 @@
+version: '2'
+services:
+  mediasoup-demo-app:
+    build: ./app
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    depends_on:
+      - mediasoup-demo-server
+    environment:
+      - MEDIASOUP_HOSTNAME=localhost    
+  mediasoup-demo-server:
+    build: ./server
+    ports:
+      - "3443:3443"

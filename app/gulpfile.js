@@ -44,7 +44,7 @@ const BANNER_OPTIONS =
 	pkg         : PKG,
 	currentYear : (new Date()).getFullYear()
 };
-const OUTPUT_DIR = '../server/public';
+const OUTPUT_DIR = 'server/public';
 
 // Set Node 'development' environment (unless externally set).
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -192,17 +192,21 @@ gulp.task('bundle:watch', () =>
 
 gulp.task('livebrowser', (done) =>
 {
-	const config = require('../server/config');
+	const tls = {
+		cert : `${__dirname}/certs/mediasoup-demo.localhost.cert.pem`,
+		key  : `${__dirname}/certs/mediasoup-demo.localhost.key.pem`
+	};
+	const host = process.env.MEDIASOUP_HOSTNAME || 'localhost';
 
 	browserSync(
 		{
 			open   : 'external',
-			host   : config.domain,
+			host,
 			server :
 			{
 				baseDir : OUTPUT_DIR
 			},
-			https     : config.tls,
+			https     : tls,
 			ghostMode : false,
 			files     : path.join(OUTPUT_DIR, '**', '*')
 		});
@@ -212,17 +216,21 @@ gulp.task('livebrowser', (done) =>
 
 gulp.task('browser', (done) =>
 {
-	const config = require('../server/config');
+	const tls = {
+		cert : `${__dirname}/certs/mediasoup-demo.localhost.cert.pem`,
+		key  : `${__dirname}/certs/mediasoup-demo.localhost.key.pem`
+	};
+	const host = process.env.MEDIASOUP_HOSTNAME || 'localhost';
 
 	browserSync(
 		{
 			open   : 'external',
-			host   : config.domain,
+			host,
 			server :
 			{
 				baseDir : OUTPUT_DIR
 			},
-			https     : config.tls,
+			https     : tls,
 			ghostMode : false
 		});
 
