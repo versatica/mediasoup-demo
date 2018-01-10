@@ -1,0 +1,6 @@
+version: '2'
+
+services:
+  base:
+    environment:
+       - MEDIASOUP_SERVER_HOST=${mediasoup_server_host}

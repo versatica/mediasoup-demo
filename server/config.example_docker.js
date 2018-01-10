@@ -27,7 +27,7 @@ module.exports =
 		rtcIPv4          : true,
 		rtcIPv6          : true,
 		rtcAnnouncedIPv6 : null,
-                rtcAnnouncedIPv4 : '192.168.1.92',
+                rtcAnnouncedIPv4 : process.env.MEDIASOUP_SERVER_HOST || 'localhost',
 		rtcMinPort       : 40000,
 		rtcMaxPort       : 40200,
 		// mediasoup Room codecs.

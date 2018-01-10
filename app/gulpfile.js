@@ -196,7 +196,7 @@ gulp.task('livebrowser', (done) =>
 		cert : `${__dirname}/certs/mediasoup-demo.localhost.cert.pem`,
 		key  : `${__dirname}/certs/mediasoup-demo.localhost.key.pem`
 	};
-	const host = process.env.MEDIASOUP_HOSTNAME || 'localhost';
+	const host = process.env.MEDIASOUP_SERVER_HOST || 'localhost';
 
 	browserSync(
 		{
@@ -220,7 +220,7 @@ gulp.task('browser', (done) =>
 		cert : `${__dirname}/certs/mediasoup-demo.localhost.cert.pem`,
 		key  : `${__dirname}/certs/mediasoup-demo.localhost.key.pem`
 	};
-	const host = process.env.MEDIASOUP_HOSTNAME || 'localhost';
+	const host = process.env.MEDIASOUP_SERVER_HOST || 'localhost';
 
 	browserSync(
 		{
