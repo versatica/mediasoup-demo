@@ -57,6 +57,10 @@ $ cd app
 $ gulp live
 ```
 
+** Docker
+
+As an alternative to test locally you can also use the provided docker-compose.yml, which will build both services
+
 * Enjoy.
 
 
