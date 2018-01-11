@@ -6,7 +6,7 @@ services:
       - "3000:3000"
       - "3001:3001"
     extends:
-       file: base.yml
+       file: docker-base.yml
        service: base
     depends_on:
       - mediasoup-demo-server
@@ -16,5 +16,5 @@ services:
       - "3443:3443"
       - "40000-40200:40000-40200/udp"
     extends:
-      file: base.yml
+      file: docker-base.yml
       service: base
