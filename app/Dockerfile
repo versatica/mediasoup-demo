@@ -1,6 +1,6 @@
 FROM node:8.9
 ADD certs /service/certs
-ADD server /service/server
+ADD app_out /service/app_out
 ADD . /service
 # App
 RUN cd /service/ && npm install
