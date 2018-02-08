@@ -6,8 +6,6 @@ process.title = 'mediasoup-demo-server';
 
 const config = require('./config');
 
-process.env.DEBUG = config.debug || '*INFO* *WARN* *ERROR*';
-
 /* eslint-disable no-console */
 console.log('- process.env.DEBUG:', process.env.DEBUG);
 console.log('- config.mediasoup.logLevel:', config.mediasoup.logLevel);
@@ -24,6 +22,7 @@ const colors = require('colors/safe');
 const repl = require('repl');
 const Logger = require('./lib/Logger');
 const Room = require('./lib/Room');
+const homer = require('./lib/homer');
 
 const logger = new Logger();
 
@@ -43,6 +42,10 @@ const mediaServer = mediasoup.Server(
 		rtcMinPort       : config.mediasoup.rtcMinPort,
 		rtcMaxPort       : config.mediasoup.rtcMaxPort
 	});
+
+// Do Homer stuff.
+if (process.env.MEDIASOUP_HOMER_OUTPUT)
+	homer(mediaServer);
 
 global.SERVER = mediaServer;
 
@@ -74,7 +77,7 @@ mediaServer.on('newroom', (room) =>
 	});
 });
 
-// HTTPS server for the protoo WebSocjet server.
+// HTTPS server for the protoo WebSocket server.
 const tls =
 {
 	cert : fs.readFileSync(config.tls.cert),
