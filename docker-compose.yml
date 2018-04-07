@@ -1,0 +1,20 @@
+version: '2'
+services:
+  mediasoup-demo-app:
+    build: ./app
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    extends:
+       file: docker-base.yml
+       service: base
+    depends_on:
+      - mediasoup-demo-server
+  mediasoup-demo-server:
+    build: ./server
+    ports:
+      - "3443:3443"
+      - "40000-40200:40000-40200/udp"
+    extends:
+      file: docker-base.yml
+      service: base
