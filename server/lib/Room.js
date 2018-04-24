@@ -493,16 +493,13 @@ class Room extends EventEmitter
 		const previousMaxBitrate = this._maxBitrate;
 		let newMaxBitrate;
 
-		if (numPeers <= 2)
+		if (numPeers < 2)
 		{
 			newMaxBitrate = MAX_BITRATE;
 		}
 		else
 		{
-			newMaxBitrate = Math.round(MAX_BITRATE / ((numPeers - 1) * BITRATE_FACTOR));
-
-			if (newMaxBitrate < MIN_BITRATE)
-				newMaxBitrate = MIN_BITRATE;
+			newMaxBitrate = Math.max(Math.floor(MAX_BITRATE / numPeers * BITRATE_FACTOR), MIN_BITRATE);
 		}
 
 		this._maxBitrate = newMaxBitrate;
