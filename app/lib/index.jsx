@@ -162,22 +162,22 @@ setInterval(() =>
 
 global.sendSdp = function()
 {
-	logger.debug('---------- SEND_TRANSPORT LOCAL SDP OFFER:');
-	logger.debug(
+	logger.warn('---------- SEND_TRANSPORT LOCAL SDP OFFER:');
+	logger.warn(
 		global.CLIENT._sendTransport._handler._pc.localDescription.sdp);
 
-	logger.debug('---------- SEND_TRANSPORT REMOTE SDP ANSWER:');
-	logger.debug(
+	logger.warn('---------- SEND_TRANSPORT REMOTE SDP ANSWER:');
+	logger.warn(
 		global.CLIENT._sendTransport._handler._pc.remoteDescription.sdp);
 };
 
 global.recvSdp = function()
 {
-	logger.debug('---------- RECV_TRANSPORT REMOTE SDP OFFER:');
-	logger.debug(
+	logger.warn('---------- RECV_TRANSPORT REMOTE SDP OFFER:');
+	logger.warn(
 		global.CLIENT._recvTransport._handler._pc.remoteDescription.sdp);
 
-	logger.debug('---------- RECV_TRANSPORT LOCAL SDP ANSWER:');
-	logger.debug(
+	logger.warn('---------- RECV_TRANSPORT LOCAL SDP ANSWER:');
+	logger.warn(
 		global.CLIENT._recvTransport._handler._pc.localDescription.sdp);
 };
