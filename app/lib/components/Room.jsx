@@ -61,8 +61,6 @@ const Room = (
 					</div>
 				</div>
 
-				<Peers />
-
 				<div
 					className={classnames('me-container', {
 						'active-speaker' : amActiveSpeaker
@@ -71,6 +69,8 @@ const Room = (
 					<Me />
 				</div>
 
+				<Peers />
+				
 				<div className='sidebar'>
 					<div
 						className={classnames('button', 'audio-only', {
