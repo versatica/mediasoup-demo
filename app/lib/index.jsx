@@ -64,7 +64,7 @@ function run()
 	const urlParser = new UrlParse(window.location.href, true);
 	let roomId = urlParser.query.roomId;
 	const produce = urlParser.query.produce !== 'false';
-	let displayName = urlParser.query.displayName;
+	let displayName = urlParser.query.name;
 	const isSipEndpoint = urlParser.query.sipEndpoint === 'true';
 	const useSimulcast = urlParser.query.simulcast !== 'false';
 
@@ -135,6 +135,12 @@ function run()
 	store.dispatch(
 		requestActions.joinRoom(
 			{ roomId, peerName, displayName, device, useSimulcast, produce }));
+
+	//Wait for peerConnection objects to be created and expose them in window.pc and window.remotePc
+	setTimeout(() => {
+		window.pc = CLIENT._sendTransport._handler._pc;
+		window.remotePc = [CLIENT._recvTransport._handler._pc];
+	}, 2000);
 
 	render(
 		<Provider store={store}>
