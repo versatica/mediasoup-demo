@@ -133,11 +133,11 @@ class Room extends EventEmitter
 
 						if (consumer.source === activeVideoProducer)
 						{
-							consumer.setPreferredProfile('high');
+							// consumer.setPreferredProfile('high');
 						}
 						else
 						{
-							consumer.setPreferredProfile('low');
+							// consumer.setPreferredProfile('low');
 						}
 					}
 				}
@@ -155,7 +155,7 @@ class Room extends EventEmitter
 						if (consumer.kind !== 'video')
 							continue;
 
-						consumer.setPreferredProfile('low');
+						// consumer.setPreferredProfile('low');
 					}
 				}
 			}
@@ -383,8 +383,8 @@ class Room extends EventEmitter
 
 		// If video, initially make it 'low' profile unless this is for the current
 		// active speaker.
-		if (consumer.kind === 'video' && consumer.peer !== this._currentActiveSpeaker)
-			consumer.setPreferredProfile('low');
+		// if (consumer.kind === 'video' && consumer.peer !== this._currentActiveSpeaker)
+		//	 consumer.setPreferredProfile('low');
 	}
 
 	_handleMediasoupClientRequest(protooPeer, request, accept, reject)
@@ -486,47 +486,47 @@ class Room extends EventEmitter
 
 	_updateMaxBitrate()
 	{
-		if (this._mediaRoom.closed)
-			return;
+	// 	if (this._mediaRoom.closed)
+	// 		return;
 
-		const numPeers = this._mediaRoom.peers.length;
-		const previousMaxBitrate = this._maxBitrate;
-		let newMaxBitrate;
+	// 	const numPeers = this._mediaRoom.peers.length;
+	// 	const previousMaxBitrate = this._maxBitrate;
+	// 	let newMaxBitrate;
 
-		if (numPeers <= 2)
-		{
-			newMaxBitrate = MAX_BITRATE;
-		}
-		else
-		{
-			newMaxBitrate = Math.round(MAX_BITRATE / ((numPeers - 1) * BITRATE_FACTOR));
+	// 	if (numPeers <= 2)
+	// 	{
+	// 		newMaxBitrate = MAX_BITRATE;
+	// 	}
+	// 	else
+	// 	{
+	// 		newMaxBitrate = Math.round(MAX_BITRATE / ((numPeers - 1) * BITRATE_FACTOR));
 
-			if (newMaxBitrate < MIN_BITRATE)
-				newMaxBitrate = MIN_BITRATE;
-		}
+	// 		if (newMaxBitrate < MIN_BITRATE)
+	// 			newMaxBitrate = MIN_BITRATE;
+	// 	}
 
-		this._maxBitrate = newMaxBitrate;
+	// 	this._maxBitrate = newMaxBitrate;
 
-		for (const peer of this._mediaRoom.peers)
-		{
-			for (const transport of peer.transports)
-			{
-				if (transport.direction === 'send')
-				{
-					transport.setMaxBitrate(newMaxBitrate)
-						.catch((error) =>
-						{
-							logger.error('transport.setMaxBitrate() failed: %s', String(error));
-						});
-				}
-			}
-		}
+	// 	for (const peer of this._mediaRoom.peers)
+	// 	{
+	// 		for (const transport of peer.transports)
+	// 		{
+	// 			if (transport.direction === 'send')
+	// 			{
+	// 				transport.setMaxBitrate(newMaxBitrate)
+	// 					.catch((error) =>
+	// 					{
+	// 						logger.error('transport.setMaxBitrate() failed: %s', String(error));
+	// 					});
+	// 			}
+	// 		}
+	// 	}
 
-		logger.info(
-			'_updateMaxBitrate() [num peers:%s, before:%skbps, now:%skbps]',
-			numPeers,
-			Math.round(previousMaxBitrate / 1000),
-			Math.round(newMaxBitrate / 1000));
+	// 	logger.info(
+	// 		'_updateMaxBitrate() [num peers:%s, before:%skbps, now:%skbps]',
+	// 		numPeers,
+	// 		Math.round(previousMaxBitrate / 1000),
+	// 		Math.round(newMaxBitrate / 1000));
 	}
 }
 
