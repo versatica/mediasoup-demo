@@ -67,6 +67,7 @@ function run()
 	let displayName = urlParser.query.displayName;
 	const isSipEndpoint = urlParser.query.sipEndpoint === 'true';
 	const useSimulcast = urlParser.query.simulcast !== 'false';
+	const forceTcp = urlParser.query.forceTcp === 'true';
 
 	if (!roomId)
 	{
@@ -134,7 +135,7 @@ function run()
 	// NOTE: I don't like this.
 	store.dispatch(
 		requestActions.joinRoom(
-			{ roomId, peerName, displayName, device, useSimulcast, produce }));
+			{ roomId, peerName, displayName, device, useSimulcast, forceTcp, produce }));
 
 	render(
 		<Provider store={store}>

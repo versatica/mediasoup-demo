@@ -8,15 +8,6 @@ import * as stateActions from './redux/stateActions';
 
 const logger = new Logger('RoomClient');
 
-const ROOM_OPTIONS =
-{
-	requestTimeout   : 10000,
-	transportOptions :
-	{
-		tcp : false
-	}
-};
-
 const VIDEO_CONSTRAINS =
 {
 	qvga : { width: { ideal: 320 }, height: { ideal: 240 } },
@@ -27,7 +18,18 @@ const VIDEO_CONSTRAINS =
 export default class RoomClient
 {
 	constructor(
-		{ roomId, peerName, displayName, device, useSimulcast, produce, dispatch, getState })
+		{
+			roomId,
+			peerName,
+			displayName,
+			device,
+			useSimulcast,
+			forceTcp,
+			produce,
+			dispatch,
+			getState
+		}
+	)
 	{
 		logger.debug(
 			'constructor() [roomId:"%s", peerName:"%s", displayName:"%s", device:%s]',
@@ -58,7 +60,15 @@ export default class RoomClient
 		this._protoo = new protooClient.Peer(protooTransport);
 
 		// mediasoup-client Room instance.
-		this._room = new mediasoupClient.Room(ROOM_OPTIONS);
+		this._room = new mediasoupClient.Room(
+			{
+				requestTimeout   : 10000,
+				transportOptions :
+				{
+					udp : !forceTcp,
+					tcp : Boolean(forceTcp)
+				}
+			});
 
 		// Transport for sending.
 		this._sendTransport = null;

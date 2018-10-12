@@ -16,6 +16,7 @@ export default ({ dispatch, getState }) => (next) =>
 					displayName,
 					device,
 					useSimulcast,
+					forceTcp,
 					produce
 				} = action.payload;
 
@@ -26,6 +27,7 @@ export default ({ dispatch, getState }) => (next) =>
 						displayName,
 						device,
 						useSimulcast,
+						forceTcp,
 						produce,
 						dispatch,
 						getState
