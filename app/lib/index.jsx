@@ -161,7 +161,7 @@ setInterval(() =>
 	global.CONSUMER = peer.consumers[peer.consumers.length - 1];
 }, 2000);
 
-global.sendSdp = function()
+global.__sendSdp = function()
 {
 	logger.warn('---------- SEND_TRANSPORT LOCAL SDP OFFER:');
 	logger.warn(
@@ -172,7 +172,7 @@ global.sendSdp = function()
 		global.CLIENT._sendTransport._handler._pc.remoteDescription.sdp);
 };
 
-global.recvSdp = function()
+global.__recvSdp = function()
 {
 	logger.warn('---------- RECV_TRANSPORT REMOTE SDP OFFER:');
 	logger.warn(
@@ -181,4 +181,24 @@ global.recvSdp = function()
 	logger.warn('---------- RECV_TRANSPORT LOCAL SDP ANSWER:');
 	logger.warn(
 		global.CLIENT._recvTransport._handler._pc.localDescription.sdp);
+};
+
+global.__enableVideoConsumerStats = function()
+{
+	if (!global.CONSUMER)
+		return;
+
+	global.CONSUMER.enableStats();
+
+	global.CONSUMER.on('stats', (stats) => logger.warn(stats));
+};
+
+global.__disableVideoConsumerStats = function()
+{
+	if (!global.CONSUMER)
+		return;
+
+	global.CONSUMER.disableStats();
+
+	global.CONSUMER.removeAllListeners('stats');
 };
