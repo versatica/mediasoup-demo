@@ -11,7 +11,8 @@ const Peer = (props) =>
 		peer,
 		micConsumer,
 		webcamConsumer,
-		onChangeVideoPreferredProfile
+		onChangeVideoPreferredProfile,
+		onRequestKeyFrame
 	} = props;
 
 	const micEnabled = (
@@ -69,6 +70,7 @@ const Peer = (props) =>
 				{
 					onChangeVideoPreferredProfile(webcamConsumer.id, profile);
 				}}
+				onRequestKeyFrame={() => onRequestKeyFrame(webcamConsumer.id)}
 			/>
 		</div>
 	);
@@ -79,7 +81,8 @@ Peer.propTypes =
 	peer                          : appPropTypes.Peer.isRequired,
 	micConsumer                   : appPropTypes.Consumer,
 	webcamConsumer                : appPropTypes.Consumer,
-	onChangeVideoPreferredProfile : PropTypes.func.isRequired
+	onChangeVideoPreferredProfile : PropTypes.func.isRequired,
+	onRequestKeyFrame             : PropTypes.func.isRequired
 };
 
 const mapStateToProps = (state, { name }) =>
@@ -105,6 +108,10 @@ const mapDispatchToProps = (dispatch) =>
 		onChangeVideoPreferredProfile : (consumerId, profile) =>
 		{
 			dispatch(requestActions.changeConsumerPreferredProfile(consumerId, profile));
+		},
+		onRequestKeyFrame : (consumerId) =>
+		{
+			dispatch(requestActions.requestConsumerKeyFrame(consumerId));
 		}
 	};
 };

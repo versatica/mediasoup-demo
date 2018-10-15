@@ -523,6 +523,30 @@ export default class RoomClient
 			});
 	}
 
+	requestConsumerKeyFrame(consumerId)
+	{
+		logger.debug('requestConsumerKeyFrame() [consumerId:%s]', consumerId);
+
+		return this._protoo.send('request-consumer-keyframe', { consumerId })
+			.then(() =>
+			{
+				this._dispatch(requestActions.notify(
+					{
+						text : 'Keyframe requested for video consumer'
+					}));
+			})
+			.catch((error) =>
+			{
+				logger.error('requestConsumerKeyFrame() | failed: %o', error);
+
+				this._dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : 'Could not request keyframe for video consumer'
+					}));
+			});
+	}
+
 	_join({ displayName, device })
 	{
 		this._dispatch(stateActions.setRoomState('connecting'));

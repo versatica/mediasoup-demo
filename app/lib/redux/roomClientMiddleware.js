@@ -119,6 +119,15 @@ export default ({ dispatch, getState }) => (next) =>
 
 				break;
 			}
+
+			case 'REQUEST_CONSUMER_KEY_FRAME':
+			{
+				const { consumerId } = action.payload;
+
+				client.requestConsumerKeyFrame(consumerId);
+
+				break;
+			}
 		}
 
 		return next(action);

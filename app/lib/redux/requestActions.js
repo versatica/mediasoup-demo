@@ -89,6 +89,14 @@ export const changeConsumerPreferredProfile = (consumerId, profile) =>
 	};
 };
 
+export const requestConsumerKeyFrame = (consumerId) =>
+{
+	return {
+		type    : 'REQUEST_CONSUMER_KEY_FRAME',
+		payload : { consumerId }
+	};
+};
+
 // This returns a redux-thunk action (a function).
 export const notify = ({ type = 'info', text, timeout }) =>
 {

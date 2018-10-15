@@ -46,7 +46,8 @@ export default class PeerView extends React.Component
 			audioCodec,
 			videoCodec,
 			onChangeDisplayName,
-			onChangeVideoPreferredProfile
+			onChangeVideoPreferredProfile,
+			onRequestKeyFrame
 		} = this.props;
 
 		const {
@@ -120,12 +121,12 @@ export default class PeerView extends React.Component
 							}}
 						>
 							{audioCodec ?
-								<p className='codec'>{audioCodec}</p>
+								<p>{audioCodec}</p>
 								:null
 							}
 
 							{videoCodec ?
-								<p className='codec'>
+								<p>
 									{videoCodec} {videoProfile}
 									{videoPreferredProfile ? ` (pref: ${videoPreferredProfile})` : ''}
 								</p>
@@ -133,7 +134,25 @@ export default class PeerView extends React.Component
 							}
 
 							{(videoVisible && videoWidth !== null) ?
-								<p className='resolution'>{videoWidth}x{videoHeight}</p>
+								<p>{videoWidth}x{videoHeight}</p>
+								:null
+							}
+
+							{videoCodec ?
+								<p
+									className='clickable'
+									onClick={(event) =>
+									{
+										event.stopPropagation();
+
+										if (!onRequestKeyFrame)
+											return;
+
+										onRequestKeyFrame();
+									}}
+								>
+									{'Request keyframe'}
+								</p>
 								:null
 							}
 						</div>
@@ -322,5 +341,6 @@ PeerView.propTypes =
 	audioCodec                    : PropTypes.string,
 	videoCodec                    : PropTypes.string,
 	onChangeDisplayName           : PropTypes.func,
-	onChangeVideoPreferredProfile : PropTypes.func
+	onChangeVideoPreferredProfile : PropTypes.func,
+	onRequestKeyFrame             : PropTypes.func
 };
