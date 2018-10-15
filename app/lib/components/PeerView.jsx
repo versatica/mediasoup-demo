@@ -90,6 +90,34 @@ export default class PeerView extends React.Component
 
 								onChangeVideoPreferredProfile(newPreferredProfile);
 							}}
+							onContextMenu={(event) =>
+							{
+								event.stopPropagation();
+								event.preventDefault(); // Don't show the context menu.
+
+								let newPreferredProfile;
+
+								switch (videoPreferredProfile)
+								{
+									case 'low':
+										newPreferredProfile = 'high';
+										break;
+
+									case 'medium':
+										newPreferredProfile = 'low';
+										break;
+
+									case 'high':
+										newPreferredProfile = 'medium';
+										break;
+
+									default:
+										newPreferredProfile = 'medium';
+										break;
+								}
+
+								onChangeVideoPreferredProfile(newPreferredProfile);
+							}}
 						>
 							{audioCodec ?
 								<p className='codec'>{audioCodec}</p>
