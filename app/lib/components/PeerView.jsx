@@ -62,7 +62,7 @@ export default class PeerView extends React.Component
 					<div className={classnames('media', { 'is-me': isMe })}>
 						<div
 							className={classnames('box', {
-								clickable : videoVisible && videoProfile !== 'default'
+								clickable : !isMe && videoVisible && videoProfile !== 'default'
 							})}
 							onClick={(event) =>
 							{
@@ -138,7 +138,7 @@ export default class PeerView extends React.Component
 								:null
 							}
 
-							{videoCodec ?
+							{!isMe && videoCodec ?
 								<p
 									className='clickable'
 									onClick={(event) =>
