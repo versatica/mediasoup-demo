@@ -1,14 +1,17 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 import * as appPropTypes from './appPropTypes';
 import PeerView from './PeerView';
+import * as requestActions from '../redux/requestActions';
 
 const Peer = (props) =>
 {
 	const {
 		peer,
 		micConsumer,
-		webcamConsumer
+		webcamConsumer,
+		onChangeVideoPreferredProfile
 	} = props;
 
 	const micEnabled = (
@@ -27,6 +30,11 @@ const Peer = (props) =>
 
 	if (webcamConsumer)
 		videoProfile = webcamConsumer.profile;
+
+	let videoPreferredProfile;
+
+	if (webcamConsumer)
+		videoPreferredProfile = webcamConsumer.preferredProfile;
 
 	return (
 		<div data-component='Peer'>
@@ -54,8 +62,13 @@ const Peer = (props) =>
 				videoTrack={webcamConsumer ? webcamConsumer.track : null}
 				videoVisible={videoVisible}
 				videoProfile={videoProfile}
+				videoPreferredProfile={videoPreferredProfile}
 				audioCodec={micConsumer ? micConsumer.codec : null}
 				videoCodec={webcamConsumer ? webcamConsumer.codec : null}
+				onChangeVideoPreferredProfile={(profile) =>
+				{
+					onChangeVideoPreferredProfile(webcamConsumer.id, profile);
+				}}
 			/>
 		</div>
 	);
@@ -63,9 +76,10 @@ const Peer = (props) =>
 
 Peer.propTypes =
 {
-	peer           : appPropTypes.Peer.isRequired,
-	micConsumer    : appPropTypes.Consumer,
-	webcamConsumer : appPropTypes.Consumer
+	peer                          : appPropTypes.Peer.isRequired,
+	micConsumer                   : appPropTypes.Consumer,
+	webcamConsumer                : appPropTypes.Consumer,
+	onChangeVideoPreferredProfile : PropTypes.func.isRequired
 };
 
 const mapStateToProps = (state, { name }) =>
@@ -85,6 +99,19 @@ const mapStateToProps = (state, { name }) =>
 	};
 };
 
-const PeerContainer = connect(mapStateToProps)(Peer);
+const mapDispatchToProps = (dispatch) =>
+{
+	return {
+		onChangeVideoPreferredProfile : (consumerId, profile) =>
+		{
+			dispatch(requestActions.changeConsumerPreferredProfile(consumerId, profile));
+		}
+	};
+};
+
+const PeerContainer = connect(
+	mapStateToProps,
+	mapDispatchToProps
+)(Peer);
 
 export default PeerContainer;

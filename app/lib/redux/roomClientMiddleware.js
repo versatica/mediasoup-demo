@@ -110,6 +110,15 @@ export default ({ dispatch, getState }) => (next) =>
 
 				break;
 			}
+
+			case 'CHANGE_CONSUMER_PREFERRED_PROFILE':
+			{
+				const { consumerId, profile } = action.payload;
+
+				client.changeConsumerPreferredProfile(consumerId, profile);
+
+				break;
+			}
 		}
 
 		return next(action);

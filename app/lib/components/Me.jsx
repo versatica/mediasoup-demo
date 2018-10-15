@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import ReactTooltip from 'react-tooltip';
 import PropTypes from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 import classnames from 'classnames';
 import { getDeviceInfo } from 'mediasoup-client';
 import * as appPropTypes from './appPropTypes';

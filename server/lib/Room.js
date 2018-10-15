@@ -226,6 +226,29 @@ class Room extends EventEmitter
 					break;
 				}
 
+				case 'change-consumer-preferred-profile':
+				{
+					const { consumerId, profile } = request.data;
+					const { mediaPeer } = protooPeer.data;
+					const consumer = mediaPeer.consumers
+						.find((_consumer) => _consumer.id === consumerId);
+
+					if (!consumer)
+					{
+						logger.warn('consumer with id "%s" not found', consumerId);
+
+						reject(404, 'consumer not found');
+
+						return;
+					}
+
+					consumer.setPreferredProfile(profile);
+
+					accept();
+
+					break;
+				}
+
 				default:
 				{
 					logger.error('unknown request.method "%s"', request.method);

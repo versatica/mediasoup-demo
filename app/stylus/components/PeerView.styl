@@ -40,6 +40,12 @@
 				padding: 2px 4px;
 				border-radius: 2px;
 				background-color: rgba(#000, 0.25);
+				pointer-events: none;
+
+				&.clickable {
+					pointer-events: auto;
+					cursor: pointer;
+				}
 
 				> p {
 					user-select: none;

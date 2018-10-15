@@ -81,6 +81,14 @@ export const restartIce = () =>
 	};
 };
 
+export const changeConsumerPreferredProfile = (consumerId, profile) =>
+{
+	return {
+		type    : 'CHANGE_CONSUMER_PREFERRED_PROFILE',
+		payload : { consumerId, profile }
+	};
+};
+
 // This returns a redux-thunk action (a function).
 export const notify = ({ type = 'info', text, timeout }) =>
 {

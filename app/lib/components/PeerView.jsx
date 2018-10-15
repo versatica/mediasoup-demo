@@ -42,9 +42,11 @@ export default class PeerView extends React.Component
 			peer,
 			videoVisible,
 			videoProfile,
+			videoPreferredProfile,
 			audioCodec,
 			videoCodec,
-			onChangeDisplayName
+			onChangeDisplayName,
+			onChangeVideoPreferredProfile
 		} = this.props;
 
 		const {
@@ -57,14 +59,48 @@ export default class PeerView extends React.Component
 			<div data-component='PeerView'>
 				<div className='info'>
 					<div className={classnames('media', { 'is-me': isMe })}>
-						<div className='box'>
+						<div
+							className={classnames('box', {
+								clickable : videoVisible && videoProfile !== 'default'
+							})}
+							onClick={(event) =>
+							{
+								event.stopPropagation();
+
+								let newPreferredProfile;
+
+								switch (videoPreferredProfile)
+								{
+									case 'low':
+										newPreferredProfile = 'medium';
+										break;
+
+									case 'medium':
+										newPreferredProfile = 'high';
+										break;
+
+									case 'high':
+										newPreferredProfile = 'low';
+										break;
+
+									default:
+										newPreferredProfile = 'high';
+										break;
+								}
+
+								onChangeVideoPreferredProfile(newPreferredProfile);
+							}}
+						>
 							{audioCodec ?
 								<p className='codec'>{audioCodec}</p>
 								:null
 							}
 
 							{videoCodec ?
-								<p className='codec'>{videoCodec} {videoProfile}</p>
+								<p className='codec'>
+									{videoCodec} {videoProfile}
+									{videoPreferredProfile ? ` (pref: ${videoPreferredProfile})` : ''}
+								</p>
 								:null
 							}
 
@@ -250,11 +286,13 @@ PeerView.propTypes =
 	isMe : PropTypes.bool,
 	peer : PropTypes.oneOfType(
 		[ appPropTypes.Me, appPropTypes.Peer ]).isRequired,
-	audioTrack          : PropTypes.any,
-	videoTrack          : PropTypes.any,
-	videoVisible        : PropTypes.bool.isRequired,
-	videoProfile        : PropTypes.string,
-	audioCodec          : PropTypes.string,
-	videoCodec          : PropTypes.string,
-	onChangeDisplayName : PropTypes.func
+	audioTrack                    : PropTypes.any,
+	videoTrack                    : PropTypes.any,
+	videoVisible                  : PropTypes.bool.isRequired,
+	videoProfile                  : PropTypes.string,
+	videoPreferredProfile         : PropTypes.string,
+	audioCodec                    : PropTypes.string,
+	videoCodec                    : PropTypes.string,
+	onChangeDisplayName           : PropTypes.func,
+	onChangeVideoPreferredProfile : PropTypes.func
 };

@@ -59,27 +59,29 @@
   {
     5551 :
     {
-      id             : 5551,
-      peerName       : 'alice',
-      source         : 'mic', // mic/webcam
-      supported      : true,
-      locallyPaused  : false,
-      remotelyPaused : false,
-      profile        : 'default',
-      track          : MediaStreamTrack,
-      codec          : 'opus'
+      id               : 5551,
+      peerName         : 'alice',
+      source           : 'mic', // mic/webcam
+      supported        : true,
+      locallyPaused    : false,
+      remotelyPaused   : false,
+      profile          : 'default',
+      preferredProfile : null,
+      track            : MediaStreamTrack,
+      codec            : 'opus'
     },
     5552 :
     {
-      id             : 5552,
-      peerName       : 'alice',
-      source         : 'webcam',
-      supported      : false,
-      locallyPaused  : false,
-      remotelyPaused : true,
-      profile        : 'medium',
-      track          : null,
-      codec          : 'h264'
+      id               : 5552,
+      peerName         : 'alice',
+      source           : 'webcam',
+      supported        : false,
+      locallyPaused    : false,
+      remotelyPaused   : true,
+      profile          : 'medium',
+      preferredProfile : 'high',
+      track            : null,
+      codec            : 'h264'
     }
   },
   notifications :

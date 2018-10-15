@@ -490,6 +490,39 @@ export default class RoomClient
 			});
 	}
 
+	changeConsumerPreferredProfile(consumerId, profile)
+	{
+		logger.debug(
+			'changeConsumerPreferredProfile() [consumerId:%s, profile:%s]',
+			consumerId, profile);
+
+		return this._protoo.send('change-consumer-preferred-profile',
+			{
+				consumerId,
+				profile
+			})
+			.then(() =>
+			{
+				this._dispatch(requestActions.notify(
+					{
+						text : `Video consumer preferred profile set to ${profile}`
+					}));
+
+				this._dispatch(
+					stateActions.setConsumerPreferredProfile(consumerId, profile));
+			})
+			.catch((error) =>
+			{
+				logger.error('changeConsumerPreferredProfile() | failed: %o', error);
+
+				this._dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : `Could not set video consumer preferred profile: ${error}`
+					}));
+			});
+	}
+
 	_join({ displayName, device })
 	{
 		this._dispatch(stateActions.setRoomState('connecting'));
