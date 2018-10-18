@@ -40,22 +40,20 @@ const Peer = (props) =>
 	return (
 		<div data-component='Peer'>
 			<div className='indicators'>
-				{!micEnabled ?
+				<If condition={!micEnabled}>
 					<div className='icon mic-off' />
-					:null
-				}
-				{!videoVisible ?
+				</If>
+
+				<If condition={!videoVisible}>
 					<div className='icon webcam-off' />
-					:null
-				}
+				</If>
 			</div>
 
-			{videoVisible && !webcamConsumer.supported ?
+			<If condition={videoVisible && !webcamConsumer.supported}>
 				<div className='incompatible-video'>
 					<p>incompatible video</p>
 				</div>
-				:null
-			}
+			</If>
 
 			<PeerView
 				peer={peer}

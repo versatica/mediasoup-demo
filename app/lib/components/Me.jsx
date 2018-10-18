@@ -85,7 +85,7 @@ class Me extends React.Component
 				data-tip-disable={!tip}
 				data-type='dark'
 			>
-				{connected ?
+				<If condition={connected}>
 					<div className='controls'>
 						<div
 							className={classnames('button', 'mic', micState)}
@@ -112,8 +112,7 @@ class Me extends React.Component
 							onClick={() => onChangeWebcam()}
 						/>
 					</div>
-					:null
-				}
+				</If>
 
 				<PeerView
 					isMe
@@ -126,14 +125,13 @@ class Me extends React.Component
 					onChangeDisplayName={(displayName) => onChangeDisplayName(displayName)}
 				/>
 
-				{this._tooltip ?
+				<If condition={this._tooltip}>
 					<ReactTooltip
 						effect='solid'
 						delayShow={100}
 						delayHide={100}
 					/>
-					:null
-				}
+				</If>
 			</div>
 		);
 	}

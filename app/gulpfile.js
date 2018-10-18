@@ -75,16 +75,7 @@ function bundle(options)
 			// required to be true only for watchify.
 			fullPaths    : watch
 		})
-		.transform('babelify',
-			{
-				presets : [ 'es2015', 'react' ],
-				plugins :
-				[
-					'transform-runtime',
-					'transform-object-assign',
-					'transform-object-rest-spread'
-				]
-			})
+		.transform('babelify')
 		.transform(envify(
 			{
 				NODE_ENV : process.env.NODE_ENV,
