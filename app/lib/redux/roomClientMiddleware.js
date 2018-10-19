@@ -17,7 +17,7 @@ export default ({ dispatch, getState }) => (next) =>
 					device,
 					useSimulcast,
 					forceTcp,
-					produce
+					spy
 				} = action.payload;
 
 				client = new RoomClient(
@@ -28,7 +28,7 @@ export default ({ dispatch, getState }) => (next) =>
 						device,
 						useSimulcast,
 						forceTcp,
-						produce,
+						spy,
 						dispatch,
 						getState
 					});

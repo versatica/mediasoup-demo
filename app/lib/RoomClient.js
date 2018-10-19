@@ -25,7 +25,7 @@ export default class RoomClient
 			device,
 			useSimulcast,
 			forceTcp,
-			produce,
+			spy,
 			dispatch,
 			getState
 		}
@@ -41,8 +41,8 @@ export default class RoomClient
 		// Closed flag.
 		this._closed = false;
 
-		// Whether we should produce.
-		this._produce = produce;
+		// Whether we should be a spy.
+		this._spy = spy;
 
 		// Whether simulcast should be used.
 		this._useSimulcast = useSimulcast;
@@ -67,7 +67,8 @@ export default class RoomClient
 				{
 					udp : !forceTcp,
 					tcp : Boolean(forceTcp)
-				}
+				},
+				spy : this._spy
 			});
 
 		// Transport for sending.
@@ -431,6 +432,9 @@ export default class RoomClient
 		return Promise.resolve()
 			.then(() =>
 			{
+				if (this._spy)
+					return;
+
 				if (!this._webcamProducer && this._room.canSend('video'))
 					return this.enableWebcam();
 			})
@@ -711,15 +715,18 @@ export default class RoomClient
 		this._room.join(this._peerName, { displayName, device })
 			.then(() =>
 			{
-				// Create Transport for sending.
-				this._sendTransport =
-					this._room.createTransport('send', { media: 'SEND_MIC_WEBCAM' });
-
-				this._sendTransport.on('close', (originator) =>
+				// Create Transport for sending (unless we are spy).
+				if (!this._spy)
 				{
-					logger.debug(
-						'Transport "close" event [originator:%s]', originator);
-				});
+					this._sendTransport =
+						this._room.createTransport('send', { media: 'SEND_MIC_WEBCAM' });
+
+					this._sendTransport.on('close', (originator) =>
+					{
+						logger.debug(
+							'Transport "close" event [originator:%s]', originator);
+					});
+				}
 
 				// Create Transport for receiving.
 				this._recvTransport =
@@ -733,6 +740,9 @@ export default class RoomClient
 			})
 			.then(() =>
 			{
+				if (this._spy)
+					return;
+
 				// Set our media capabilities.
 				this._dispatch(stateActions.setMediaCapabilities(
 					{
@@ -742,8 +752,8 @@ export default class RoomClient
 			})
 			.then(() =>
 			{
-				// Don't produce if explicitely requested to not to do it.
-				if (!this._produce)
+				// Don't produce if we are spy.
+				if (this._spy)
 					return;
 
 				// NOTE: Don't depend on this Promise to continue (so we don't do return).

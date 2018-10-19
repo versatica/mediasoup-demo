@@ -63,11 +63,11 @@ function run()
 	const peerName = randomString({ length: 8 }).toLowerCase();
 	const urlParser = new UrlParse(window.location.href, true);
 	let roomId = urlParser.query.roomId;
-	const produce = urlParser.query.produce !== 'false';
 	let displayName = urlParser.query.displayName;
 	const isSipEndpoint = urlParser.query.sipEndpoint === 'true';
 	const useSimulcast = urlParser.query.simulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
+	const spy = urlParser.query.spy === 'true';
 
 	if (!roomId)
 	{
@@ -135,7 +135,7 @@ function run()
 	// NOTE: I don't like this.
 	store.dispatch(
 		requestActions.joinRoom(
-			{ roomId, peerName, displayName, device, useSimulcast, forceTcp, produce }));
+			{ roomId, peerName, displayName, device, useSimulcast, forceTcp, spy }));
 
 	render(
 		<Provider store={store}>
