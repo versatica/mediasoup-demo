@@ -173,6 +173,9 @@ setInterval(() =>
 		micConsumer = undefined;
 		webcamConsumer = undefined;
 	}
+
+	if (sendTransport && webcamProducer)
+		global.WEBCAM_SENDER = sendTransport._handler._pc.getSenders()[1];
 }, 2000);
 
 global.__enableSendTransportStats = function()
