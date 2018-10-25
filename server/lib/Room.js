@@ -320,8 +320,8 @@ class Room extends EventEmitter
 		mediaPeer.on('newtransport', (transport) =>
 		{
 			logger.info(
-				'mediaPeer "newtransport" event [id:%s, direction:%s]',
-				transport.id, transport.direction);
+				'mediaPeer "newtransport" event [peer.name:%s, transport.id:%s, direction:%s]',
+				mediaPeer.name, transport.id, transport.direction);
 
 			// Update peers max sending  bitrate.
 			if (transport.direction === 'send')
@@ -499,6 +499,14 @@ class Room extends EventEmitter
 						request.method);
 
 					reject(400, 'no mediasoup Peer');
+				}
+
+				// TODO: Temporal to catch a possible bug.
+				if (request.method === 'createTransport')
+				{
+					logger.info(
+						'"createTransport" request [peer.name:%s, transport.id:%s, direction:%s]',
+						mediaPeer.name, request.id, request.direction);
 				}
 
 				mediaPeer.receiveRequest(request)
