@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-'use strict';
-
 process.title = 'mediasoup-demo-server';
 
 const config = require('./config');
@@ -121,15 +119,18 @@ webSocketServer.on('connectionrequest', (info, accept, reject) =>
 		return;
 	}
 
+	const remoteAddress = info.socket.remoteAddress;
+
 	logger.info(
-		'connection request [roomId:"%s", peerName:"%s"]', roomId, peerName);
+		'connection request [roomId:%s, peerName:%s, address:%s]',
+		roomId, peerName, remoteAddress);
 
 	let room;
 
 	// If an unknown roomId, create a new Room.
 	if (!rooms.has(roomId))
 	{
-		logger.info('creating a new Room [roomId:"%s"]', roomId);
+		logger.info('creating a new Room [roomId:%s]', roomId);
 
 		try
 		{
@@ -139,7 +140,7 @@ webSocketServer.on('connectionrequest', (info, accept, reject) =>
 		}
 		catch (error)
 		{
-			logger.error('error creating a new Room: %s', error);
+			logger.error('error creating a new Room: %o', error);
 
 			reject(error);
 
