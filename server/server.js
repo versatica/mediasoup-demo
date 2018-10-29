@@ -119,11 +119,9 @@ webSocketServer.on('connectionrequest', (info, accept, reject) =>
 		return;
 	}
 
-	const remoteAddress = info.socket.remoteAddress;
-
 	logger.info(
-		'connection request [roomId:%s, peerName:%s, address:%s]',
-		roomId, peerName, remoteAddress);
+		'connection request [roomId:%s, peerName:%s, address:%s, origin:%s]',
+		roomId, peerName, info.socket.remoteAddress, info.origin);
 
 	let room;
 
