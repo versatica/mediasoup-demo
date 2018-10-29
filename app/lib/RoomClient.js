@@ -62,7 +62,7 @@ export default class RoomClient
 		// mediasoup-client Room instance.
 		this._room = new mediasoupClient.Room(
 			{
-				requestTimeout   : 10000,
+				requestTimeout   : 30000,
 				transportOptions :
 				{
 					udp : !forceTcp,
