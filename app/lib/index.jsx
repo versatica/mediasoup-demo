@@ -174,6 +174,12 @@ setInterval(() =>
 		webcamConsumer = undefined;
 	}
 
+	if (sendTransport)
+		global.PC1 = sendTransport._handler._pc;
+
+	if (recvTransport)
+		global.PC2 = recvTransport._handler._pc;
+
 	if (sendTransport && webcamProducer)
 		global.WEBCAM_SENDER = sendTransport._handler._pc.getSenders()[1];
 }, 2000);
