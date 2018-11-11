@@ -1,5 +1,3 @@
-'use strict';
-
 const EventEmitter = require('events').EventEmitter;
 const protooServer = require('protoo-server');
 const Logger = require('./Logger');
@@ -15,7 +13,7 @@ class Room extends EventEmitter
 {
 	constructor(roomId, mediaServer)
 	{
-		logger.info('constructor() [roomId:"%s"]', roomId);
+		logger.info('constructor() [roomId:%s]', roomId);
 
 		super();
 		this.setMaxListeners(Infinity);
@@ -80,7 +78,7 @@ class Room extends EventEmitter
 			return;
 
 		logger.info(
-			'logStatus() [room id:"%s", protoo peers:%s, mediasoup peers:%s]',
+			'logStatus() [roomId:%s, protoo peers:%s, mediasoup peers:%s]',
 			this._roomId,
 			this._protooRoom.peers.length,
 			this._mediaRoom.peers.length);
@@ -88,13 +86,13 @@ class Room extends EventEmitter
 
 	handleConnection(peerName, transport)
 	{
-		logger.info('handleConnection() [peerName:"%s"]', peerName);
+		logger.info('handleConnection() [peerName:%s]', peerName);
 
 		if (this._protooRoom.hasPeer(peerName))
 		{
 			logger.warn(
 				'handleConnection() | there is already a peer with same peerName, ' +
-				'closing the previous one [peerName:"%s"]',
+				'closing the previous one [peerName:%s]',
 				peerName);
 
 			const protooPeer = this._protooRoom.getPeer(peerName);
@@ -117,7 +115,7 @@ class Room extends EventEmitter
 		{
 			if (activePeer)
 			{
-				logger.info('new active speaker [peerName:"%s"]', activePeer.name);
+				logger.info('new active speaker [peerName:%s]', activePeer.name);
 
 				this._currentActiveSpeaker = activePeer;
 
@@ -171,12 +169,12 @@ class Room extends EventEmitter
 
 	_handleProtooPeer(protooPeer)
 	{
-		logger.debug('_handleProtooPeer() [peer:"%s"]', protooPeer.id);
+		logger.debug('_handleProtooPeer() [peer:%s]', protooPeer.id);
 
 		protooPeer.on('request', (request, accept, reject) =>
 		{
 			logger.debug(
-				'protoo "request" event [method:%s, peer:"%s"]',
+				'protoo "request" event [method:%s, peer:%s]',
 				request.method, protooPeer.id);
 
 			switch (request.method)
@@ -226,6 +224,52 @@ class Room extends EventEmitter
 					break;
 				}
 
+				case 'change-consumer-preferred-profile':
+				{
+					const { consumerId, profile } = request.data;
+					const { mediaPeer } = protooPeer.data;
+					const consumer = mediaPeer.consumers
+						.find((_consumer) => _consumer.id === consumerId);
+
+					if (!consumer)
+					{
+						logger.warn('consumer with id "%s" not found', consumerId);
+
+						reject(404, 'consumer not found');
+
+						return;
+					}
+
+					consumer.setPreferredProfile(profile);
+
+					accept();
+
+					break;
+				}
+
+				case 'request-consumer-keyframe':
+				{
+					const { consumerId } = request.data;
+					const { mediaPeer } = protooPeer.data;
+					const consumer = mediaPeer.consumers
+						.find((_consumer) => _consumer.id === consumerId);
+
+					if (!consumer)
+					{
+						logger.warn('consumer with id "%s" not found', consumerId);
+
+						reject(404, 'consumer not found');
+
+						return;
+					}
+
+					consumer.requestKeyFrame();
+
+					accept();
+
+					break;
+				}
+
 				default:
 				{
 					logger.error('unknown request.method "%s"', request.method);
@@ -237,7 +281,7 @@ class Room extends EventEmitter
 
 		protooPeer.on('close', () =>
 		{
-			logger.debug('protoo Peer "close" event [peer:"%s"]', protooPeer.id);
+			logger.debug('protoo Peer "close" event [peer:%s]', protooPeer.id);
 
 			const { mediaPeer } = protooPeer.data;
 
@@ -254,7 +298,7 @@ class Room extends EventEmitter
 				if (this._mediaRoom.peers.length === 0)
 				{
 					logger.info(
-						'last peer in the room left, closing the room [roomId:"%s"]',
+						'last peer in the room left, closing the room [roomId:%s]',
 						this._roomId);
 
 					this.close();
@@ -274,8 +318,8 @@ class Room extends EventEmitter
 		mediaPeer.on('newtransport', (transport) =>
 		{
 			logger.info(
-				'mediaPeer "newtransport" event [id:%s, direction:%s]',
-				transport.id, transport.direction);
+				'mediaPeer "newtransport" event [peer.name:%s, transport.id:%s, direction:%s]',
+				mediaPeer.name, transport.id, transport.direction);
 
 			// Update peers max sending  bitrate.
 			if (transport.direction === 'send')
@@ -293,14 +337,18 @@ class Room extends EventEmitter
 
 		mediaPeer.on('newproducer', (producer) =>
 		{
-			logger.info('mediaPeer "newproducer" event [id:%s]', producer.id);
+			logger.info(
+				'mediaPeer "newproducer" event [peer.name:%s, id:%s]',
+				mediaPeer.name, producer.id);
 
 			this._handleMediaProducer(producer);
 		});
 
 		mediaPeer.on('newconsumer', (consumer) =>
 		{
-			logger.info('mediaPeer "newconsumer" event [id:%s]', consumer.id);
+			logger.info(
+				'mediaPeer "newconsumer" event [peer.name:%s, id:%s]',
+				mediaPeer.name, consumer.id);
 
 			this._handleMediaConsumer(consumer);
 		});
@@ -308,7 +356,9 @@ class Room extends EventEmitter
 		// Also handle already existing Consumers.
 		for (const consumer of mediaPeer.consumers)
 		{
-			logger.info('mediaPeer existing "consumer" [id:%s]', consumer.id);
+			logger.debug(
+				'mediaPeer existing "consumer" [peer.name:%s, id:%s]',
+				mediaPeer.name, consumer.id);
 
 			this._handleMediaConsumer(consumer);
 		}
@@ -330,7 +380,7 @@ class Room extends EventEmitter
 		transport.on('close', (originator) =>
 		{
 			logger.info(
-				'Transport "close" event [originator:%s]', originator);
+				'Transport "close" event [id:%s, originator:%s]', transport.id, originator);
 		});
 	}
 
@@ -339,19 +389,19 @@ class Room extends EventEmitter
 		producer.on('close', (originator) =>
 		{
 			logger.info(
-				'Producer "close" event [originator:%s]', originator);
+				'Producer "close" event [id:%s, originator:%s]', producer.id, originator);
 		});
 
 		producer.on('pause', (originator) =>
 		{
 			logger.info(
-				'Producer "pause" event [originator:%s]', originator);
+				'Producer "pause" event [id:%s, originator:%s]', producer.id, originator);
 		});
 
 		producer.on('resume', (originator) =>
 		{
 			logger.info(
-				'Producer "resume" event [originator:%s]', originator);
+				'Producer "resume" event [id:%s, originator:%s]', producer.id, originator);
 		});
 	}
 
@@ -360,26 +410,30 @@ class Room extends EventEmitter
 		consumer.on('close', (originator) =>
 		{
 			logger.info(
-				'Consumer "close" event [originator:%s]', originator);
+				'Consumer "close" event [id:%s, originator:%s]', consumer.id, originator);
 		});
 
 		consumer.on('pause', (originator) =>
 		{
 			logger.info(
-				'Consumer "pause" event [originator:%s]', originator);
+				'Consumer "pause" event [id:%s, originator:%s]', consumer.id, originator);
 		});
 
 		consumer.on('resume', (originator) =>
 		{
 			logger.info(
-				'Consumer "resume" event [originator:%s]', originator);
+				'Consumer "resume" event [id:%s, originator:%s]', consumer.id, originator);
 		});
 
-		consumer.on('effectiveprofilechange', (profile) =>
+		if (consumer.kind === 'video')
 		{
-			logger.info(
-				'Consumer "effectiveprofilechange" event [profile:%s]', profile);
-		});
+			consumer.on('effectiveprofilechange', (profile) =>
+			{
+				logger.info(
+					'Consumer "effectiveprofilechange" event [id:%s, profile:%s]',
+					consumer.id, profile);
+			});
+		}
 
 		// If video, initially make it 'low' profile unless this is for the current
 		// active speaker.
@@ -390,7 +444,7 @@ class Room extends EventEmitter
 	_handleMediasoupClientRequest(protooPeer, request, accept, reject)
 	{
 		logger.debug(
-			'mediasoup-client request [method:%s, peer:"%s"]',
+			'mediasoup-client request [method:%s, peer:%s]',
 			request.method, protooPeer.id);
 
 		switch (request.method)
@@ -449,10 +503,18 @@ class Room extends EventEmitter
 				if (!mediaPeer)
 				{
 					logger.error(
-						'cannot handle mediasoup request, no mediasoup Peer [method:"%s"]',
+						'cannot handle mediasoup request, no mediasoup Peer [method:%s]',
 						request.method);
 
 					reject(400, 'no mediasoup Peer');
+				}
+
+				// TODO: Temporal to catch a possible bug.
+				if (request.method === 'createTransport')
+				{
+					logger.info(
+						'"createTransport" request [peer.name:%s, transport.id:%s, direction:%s]',
+						mediaPeer.name, request.id, request.direction);
 				}
 
 				mediaPeer.receiveRequest(request)
@@ -465,7 +527,7 @@ class Room extends EventEmitter
 	_handleMediasoupClientNotification(protooPeer, notification)
 	{
 		logger.debug(
-			'mediasoup-client notification [method:%s, peer:"%s"]',
+			'mediasoup-client notification [method:%s, peer:%s]',
 			notification.method, protooPeer.id);
 
 		// NOTE: mediasoup-client just sends notifications with target 'peer',
@@ -475,7 +537,7 @@ class Room extends EventEmitter
 		if (!mediaPeer)
 		{
 			logger.error(
-				'cannot handle mediasoup notification, no mediasoup Peer [method:"%s"]',
+				'cannot handle mediasoup notification, no mediasoup Peer [method:%s]',
 				notification.method);
 
 			return;

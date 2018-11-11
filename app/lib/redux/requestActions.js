@@ -2,11 +2,11 @@ import randomString from 'random-string';
 import * as stateActions from './stateActions';
 
 export const joinRoom = (
-	{ roomId, peerName, displayName, device, useSimulcast, produce }) =>
+	{ roomId, peerName, displayName, device, useSimulcast, forceTcp, spy }) =>
 {
 	return {
 		type    : 'JOIN_ROOM',
-		payload : { roomId, peerName, displayName, device, useSimulcast, produce }
+		payload : { roomId, peerName, displayName, device, useSimulcast, forceTcp, spy }
 	};
 };
 
@@ -78,6 +78,22 @@ export const restartIce = () =>
 {
 	return {
 		type : 'RESTART_ICE'
+	};
+};
+
+export const changeConsumerPreferredProfile = (consumerId, profile) =>
+{
+	return {
+		type    : 'CHANGE_CONSUMER_PREFERRED_PROFILE',
+		payload : { consumerId, profile }
+	};
+};
+
+export const requestConsumerKeyFrame = (consumerId) =>
+{
+	return {
+		type    : 'REQUEST_CONSUMER_KEY_FRAME',
+		payload : { consumerId }
 	};
 };
 

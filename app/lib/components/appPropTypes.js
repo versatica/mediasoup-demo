@@ -52,15 +52,16 @@ export const Peer = PropTypes.shape(
 
 export const Consumer = PropTypes.shape(
 	{
-		id             : PropTypes.number.isRequired,
-		peerName       : PropTypes.string.isRequired,
-		source         : PropTypes.oneOf([ 'mic', 'webcam' ]).isRequired,
-		supported      : PropTypes.bool.isRequired,
-		locallyPaused  : PropTypes.bool.isRequired,
-		remotelyPaused : PropTypes.bool.isRequired,
-		profile        : PropTypes.oneOf([ 'none', 'default', 'low', 'medium', 'high' ]),
-		track          : PropTypes.any,
-		codec          : PropTypes.string
+		id               : PropTypes.number.isRequired,
+		peerName         : PropTypes.string.isRequired,
+		source           : PropTypes.oneOf([ 'mic', 'webcam' ]).isRequired,
+		supported        : PropTypes.bool.isRequired,
+		locallyPaused    : PropTypes.bool.isRequired,
+		remotelyPaused   : PropTypes.bool.isRequired,
+		profile          : PropTypes.oneOf([ 'none', 'default', 'low', 'medium', 'high' ]),
+		preferredProfile : PropTypes.oneOf([ 'low', 'medium', 'high' ]),
+		track            : PropTypes.any,
+		codec            : PropTypes.string
 	});
 
 export const Notification = PropTypes.shape(

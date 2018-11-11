@@ -12,11 +12,15 @@
 	background-size: auto 85%;
 	background-repeat: no-repeat;
 
+	&.clickable {
+		cursor: pointer;
+	}
+
 	> .info {
 		$backgroundTint = #000;
 
 		position: absolute;
-		z-index: 5
+		z-index: 5;
 		top: -56px;
 		left: 0;
 		right: 0;
@@ -34,6 +38,12 @@
 				padding: 2px 4px;
 				border-radius: 2px;
 				background-color: rgba(#000, 0.25);
+				pointer-events: none;
+
+				&.clickable {
+					pointer-events: auto;
+					cursor: pointer;
+				}
 
 				> p {
 					user-select: none;
@@ -44,6 +54,14 @@
 
 					&:last-child {
 						margin-bottom: 0;
+					}
+
+					&.clickable {
+						pointer-events: auto;
+
+						&:hover {
+							text-decoration: underline;
+						}
 					}
 				}
 			}

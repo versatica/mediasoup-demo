@@ -16,7 +16,8 @@ export default ({ dispatch, getState }) => (next) =>
 					displayName,
 					device,
 					useSimulcast,
-					produce
+					forceTcp,
+					spy
 				} = action.payload;
 
 				client = new RoomClient(
@@ -26,7 +27,8 @@ export default ({ dispatch, getState }) => (next) =>
 						displayName,
 						device,
 						useSimulcast,
-						produce,
+						forceTcp,
+						spy,
 						dispatch,
 						getState
 					});
@@ -105,6 +107,24 @@ export default ({ dispatch, getState }) => (next) =>
 			case 'RESTART_ICE':
 			{
 				client.restartIce();
+
+				break;
+			}
+
+			case 'CHANGE_CONSUMER_PREFERRED_PROFILE':
+			{
+				const { consumerId, profile } = action.payload;
+
+				client.changeConsumerPreferredProfile(consumerId, profile);
+
+				break;
+			}
+
+			case 'REQUEST_CONSUMER_KEY_FRAME':
+			{
+				const { consumerId } = action.payload;
+
+				client.requestConsumerKeyFrame(consumerId);
 
 				break;
 			}
