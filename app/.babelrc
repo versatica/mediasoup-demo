@@ -1,0 +1,12 @@
+{
+	"plugins":
+	[
+		"@babel/plugin-proposal-object-rest-spread",
+		"jsx-control-statements"
+	],
+	"presets":
+	[
+		"@babel/env",
+		"@babel/react"
+	]
+}

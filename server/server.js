@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-'use strict';
-
 process.title = 'mediasoup-demo-server';
 
 const config = require('./config');
@@ -32,7 +30,7 @@ const rooms = new Map();
 // mediasoup server.
 const mediaServer = mediasoup.Server(
 	{
-		numWorkers       : 1,
+		numWorkers       : null, // Use as many CPUs as available.
 		logLevel         : config.mediasoup.logLevel,
 		logTags          : config.mediasoup.logTags,
 		rtcIPv4          : config.mediasoup.rtcIPv4,
@@ -122,14 +120,15 @@ webSocketServer.on('connectionrequest', (info, accept, reject) =>
 	}
 
 	logger.info(
-		'connection request [roomId:"%s", peerName:"%s"]', roomId, peerName);
+		'connection request [roomId:%s, peerName:%s, address:%s, origin:%s]',
+		roomId, peerName, info.socket.remoteAddress, info.origin);
 
 	let room;
 
 	// If an unknown roomId, create a new Room.
 	if (!rooms.has(roomId))
 	{
-		logger.info('creating a new Room [roomId:"%s"]', roomId);
+		logger.info('creating a new Room [roomId:%s]', roomId);
 
 		try
 		{
@@ -139,7 +138,7 @@ webSocketServer.on('connectionrequest', (info, accept, reject) =>
 		}
 		catch (error)
 		{
-			logger.error('error creating a new Room: %s', error);
+			logger.error('error creating a new Room: %o', error);
 
 			reject(error);
 

@@ -190,6 +190,14 @@ export const setConsumerEffectiveProfile = (consumerId, profile) =>
 	};
 };
 
+export const setConsumerPreferredProfile = (consumerId, profile) =>
+{
+	return {
+		type    : 'SET_CONSUMER_PREFERRED_PROFILE',
+		payload : { consumerId, profile }
+	};
+};
+
 export const setConsumerTrack = (consumerId, track) =>
 {
 	return {

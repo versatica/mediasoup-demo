@@ -42,9 +42,12 @@ export default class PeerView extends React.Component
 			peer,
 			videoVisible,
 			videoProfile,
+			videoPreferredProfile,
 			audioCodec,
 			videoCodec,
-			onChangeDisplayName
+			onChangeDisplayName,
+			onChangeVideoPreferredProfile,
+			onRequestKeyFrame
 		} = this.props;
 
 		const {
@@ -57,45 +60,125 @@ export default class PeerView extends React.Component
 			<div data-component='PeerView'>
 				<div className='info'>
 					<div className={classnames('media', { 'is-me': isMe })}>
-						<div className='box'>
-							{audioCodec ?
-								<p className='codec'>{audioCodec}</p>
-								:null
-							}
+						<div
+							className={classnames('box', {
+								clickable : !isMe && videoVisible && videoProfile !== 'default'
+							})}
+							onClick={(event) =>
+							{
+								event.stopPropagation();
 
-							{videoCodec ?
-								<p className='codec'>{videoCodec} {videoProfile}</p>
-								:null
-							}
+								let newPreferredProfile;
 
-							{(videoVisible && videoWidth !== null) ?
-								<p className='resolution'>{videoWidth}x{videoHeight}</p>
-								:null
-							}
+								switch (videoPreferredProfile)
+								{
+									case 'low':
+										newPreferredProfile = 'medium';
+										break;
+
+									case 'medium':
+										newPreferredProfile = 'high';
+										break;
+
+									case 'high':
+										newPreferredProfile = 'low';
+										break;
+
+									default:
+										newPreferredProfile = 'high';
+										break;
+								}
+
+								onChangeVideoPreferredProfile(newPreferredProfile);
+							}}
+							onContextMenu={(event) =>
+							{
+								event.stopPropagation();
+								event.preventDefault(); // Don't show the context menu.
+
+								let newPreferredProfile;
+
+								switch (videoPreferredProfile)
+								{
+									case 'low':
+										newPreferredProfile = 'high';
+										break;
+
+									case 'medium':
+										newPreferredProfile = 'low';
+										break;
+
+									case 'high':
+										newPreferredProfile = 'medium';
+										break;
+
+									default:
+										newPreferredProfile = 'medium';
+										break;
+								}
+
+								onChangeVideoPreferredProfile(newPreferredProfile);
+							}}
+						>
+							<If condition={audioCodec}>
+								<p>{audioCodec}</p>
+							</If>
+
+							<If condition={videoCodec}>
+								<p>
+									{videoCodec} {videoProfile}
+									{videoPreferredProfile ? ` (pref: ${videoPreferredProfile})` : ''}
+								</p>
+							</If>
+
+							<If condition={videoVisible && videoWidth !== null}>
+								<p>{videoWidth}x{videoHeight}</p>
+							</If>
+
+							<If condition={!isMe && videoCodec}>
+								<p
+									className='clickable'
+									onClick={(event) =>
+									{
+										event.stopPropagation();
+
+										if (!onRequestKeyFrame)
+											return;
+
+										onRequestKeyFrame();
+									}}
+								>
+									{'Request keyframe'}
+								</p>
+							</If>
 						</div>
 					</div>
 
 					<div className={classnames('peer', { 'is-me': isMe })}>
-						{isMe ?
-							<EditableInput
-								value={peer.displayName}
-								propName='displayName'
-								className='display-name editable'
-								classLoading='loading'
-								classInvalid='invalid'
-								shouldBlockWhileLoading
-								editProps={{
-									maxLength   : 20,
-									autoCorrect : false,
-									spellCheck  : false
-								}}
-								onChange={({ displayName }) => onChangeDisplayName(displayName)}
-							/>
-							:
-							<span className='display-name'>
-								{peer.displayName}
-							</span>
-						}
+						<Choose>
+							<When condition={isMe}>
+								<EditableInput
+									value={peer.displayName}
+									propName='displayName'
+									className='display-name editable'
+									classLoading='loading'
+									classInvalid='invalid'
+									shouldBlockWhileLoading
+									editProps={{
+										maxLength   : 20,
+										autoCorrect : false,
+										spellCheck  : false
+									}}
+									onChange={({ displayName }) => onChangeDisplayName(displayName)}
+								/>
+							</When>
+
+							<Otherwise>
+								<span className='display-name'>
+									{peer.displayName}
+								</span>
+							</Otherwise>
+						</Choose>
 
 						<div className='row'>
 							<span
@@ -123,12 +206,11 @@ export default class PeerView extends React.Component
 					<div className={classnames('bar', `level${volume}`)} />
 				</div>
 
-				{videoProfile === 'none' ?
+				<If condition={videoProfile === 'none'}>
 					<div className='spinner-container'>
 						<Spinner />
 					</div>
-					:null
-				}
+				</If>
 			</div>
 		));
 	}
@@ -250,11 +332,14 @@ PeerView.propTypes =
 	isMe : PropTypes.bool,
 	peer : PropTypes.oneOfType(
 		[ appPropTypes.Me, appPropTypes.Peer ]).isRequired,
-	audioTrack          : PropTypes.any,
-	videoTrack          : PropTypes.any,
-	videoVisible        : PropTypes.bool.isRequired,
-	videoProfile        : PropTypes.string,
-	audioCodec          : PropTypes.string,
-	videoCodec          : PropTypes.string,
-	onChangeDisplayName : PropTypes.func
+	audioTrack                    : PropTypes.any,
+	videoTrack                    : PropTypes.any,
+	videoVisible                  : PropTypes.bool.isRequired,
+	videoProfile                  : PropTypes.string,
+	videoPreferredProfile         : PropTypes.string,
+	audioCodec                    : PropTypes.string,
+	videoCodec                    : PropTypes.string,
+	onChangeDisplayName           : PropTypes.func,
+	onChangeVideoPreferredProfile : PropTypes.func,
+	onRequestKeyFrame             : PropTypes.func
 };

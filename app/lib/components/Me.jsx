@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import ReactTooltip from 'react-tooltip';
 import PropTypes from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 import classnames from 'classnames';
 import { getDeviceInfo } from 'mediasoup-client';
 import * as appPropTypes from './appPropTypes';
@@ -85,7 +85,7 @@ class Me extends React.Component
 				data-tip-disable={!tip}
 				data-type='dark'
 			>
-				{connected ?
+				<If condition={connected}>
 					<div className='controls'>
 						<div
 							className={classnames('button', 'mic', micState)}
@@ -112,8 +112,7 @@ class Me extends React.Component
 							onClick={() => onChangeWebcam()}
 						/>
 					</div>
-					:null
-				}
+				</If>
 
 				<PeerView
 					isMe
@@ -126,14 +125,13 @@ class Me extends React.Component
 					onChangeDisplayName={(displayName) => onChangeDisplayName(displayName)}
 				/>
 
-				{this._tooltip ?
+				<If condition={this._tooltip}>
 					<ReactTooltip
 						effect='solid'
 						delayShow={100}
 						delayHide={100}
 					/>
-					:null
-				}
+				</If>
 			</div>
 		);
 	}
