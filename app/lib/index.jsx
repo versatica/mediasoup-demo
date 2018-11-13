@@ -185,6 +185,10 @@ setInterval(() =>
 
 	if (recvTransport)
 		global.PC2 = recvTransport._handler._pc;
+	
+	if (spy) {
+		window.pc = recvTransport._handler._pc;
+	}
 
 	if (sendTransport && webcamProducer)
 		global.WEBCAM_SENDER = sendTransport._handler._pc.getSenders()[1];

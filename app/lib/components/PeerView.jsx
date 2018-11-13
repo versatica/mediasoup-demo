@@ -56,7 +56,7 @@ export default class PeerView extends React.Component
 			videoHeight
 		} = this.state;
 
-		return (!videoVisible & false ? (<div>{peer.displayName}</div>) : (
+		return (!videoVisible && !isMe ? (<div>{peer.displayName}</div>) : (
 			<div data-component='PeerView'>
 				<div className='info'>
 					<div className={classnames('media', { 'is-me': isMe })}>
