@@ -5,30 +5,28 @@
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
+	overflow: visible;
 	background-color: rgba(#2a4b58, 0.9);
 	background-image: url('/resources/images/buddy.svg');
 	background-position: bottom;
 	background-size: auto 85%;
 	background-repeat: no-repeat;
 
+	&.clickable {
+		cursor: pointer;
+	}
+
 	> .info {
 		$backgroundTint = #000;
 
 		position: absolute;
-		z-index: 5
-		top: 0;
-		bottom: 0;
+		z-index: 5;
+		top: -56px;
 		left: 0;
 		right: 0;
 		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		background: linear-gradient(to bottom,
-			rgba($backgroundTint, 0) 0%,
-			rgba($backgroundTint, 0) 60%,
-			rgba($backgroundTint, 0.1) 70%,
-			rgba($backgroundTint, 0.8) 100%);
+		flex-direction: row;
+		justify-content: flex-start;
 
 		> .media {
 			flex: 0 0 auto;
@@ -40,6 +38,12 @@
 				padding: 2px 4px;
 				border-radius: 2px;
 				background-color: rgba(#000, 0.25);
+				pointer-events: none;
+
+				&.clickable {
+					pointer-events: auto;
+					cursor: pointer;
+				}
 
 				> p {
 					user-select: none;
@@ -50,6 +54,14 @@
 
 					&:last-child {
 						margin-bottom: 0;
+					}
+
+					&.clickable {
+						pointer-events: auto;
+
+						&:hover {
+							text-decoration: underline;
+						}
 					}
 				}
 			}
@@ -62,15 +74,8 @@
 			justify-content: flex-end;
 
 			+desktop() {
-				&.is-me {
-					padding: 10px;
-					align-items: flex-start;
-				}
-
-				&:not(.is-me) {
-					padding: 20px;
-					align-items: flex-start;
-				}
+				padding: 10px;
+				align-items: flex-start;
 			}
 
 			+mobile() {
@@ -181,10 +186,6 @@
 		transition-duration: .15s;
 		background-color: rgba(#000, 0.75);
 
-		&.is-me {
-			transform: scaleX(-1);
-		}
-
 		&.hidden {
 			opacity: 0;
 			transition-duration: 0s;
@@ -199,7 +200,7 @@
 		position: absolute;
 		top: 0
 		bottom: 0;
-		right: 2px;
+		right: -15px;
 		width: 10px;
 		display: flex;
 		flex-direction: column;

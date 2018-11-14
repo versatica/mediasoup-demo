@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import ReactTooltip from 'react-tooltip';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import ClipboardButton from 'react-clipboard.js';
+import clipboardCopy from 'clipboard-copy';
 import * as appPropTypes from './appPropTypes';
 import * as requestActions from '../redux/requestActions';
 import { Appear } from './transitions';
@@ -33,13 +33,11 @@ const Room = (
 
 				<div className='room-link-wrapper'>
 					<div className='room-link'>
-						<ClipboardButton
-							component='a'
+						<a
 							className='link'
-							button-href={room.url}
-							button-target='_blank'
-							data-clipboard-text={room.url}
-							onSuccess={onRoomLinkCopy}
+							href={room.url}
+							target='_blank'
+							rel='noopener noreferrer'
 							onClick={(event) =>
 							{
 								// If this is a 'Open in new window/tab' don't prevent
@@ -54,14 +52,15 @@ const Room = (
 								}
 
 								event.preventDefault();
+
+								clipboardCopy(room.url)
+									.then(onRoomLinkCopy);
 							}}
 						>
 							invitation link
-						</ClipboardButton>
+						</a>
 					</div>
 				</div>
-
-				<Peers />
 
 				<div
 					className={classnames('me-container', {
@@ -71,6 +70,8 @@ const Room = (
 					<Me />
 				</div>
 
+				<Peers />
+				
 				<div className='sidebar'>
 					<div
 						className={classnames('button', 'audio-only', {

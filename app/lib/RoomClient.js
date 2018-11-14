@@ -8,15 +8,6 @@ import * as stateActions from './redux/stateActions';
 
 const logger = new Logger('RoomClient');
 
-const ROOM_OPTIONS =
-{
-	requestTimeout   : 10000,
-	transportOptions :
-	{
-		tcp : false
-	}
-};
-
 const VIDEO_CONSTRAINS =
 {
 	qvga : { width: { ideal: 320 }, height: { ideal: 240 } },
@@ -27,7 +18,18 @@ const VIDEO_CONSTRAINS =
 export default class RoomClient
 {
 	constructor(
-		{ roomId, peerName, displayName, device, useSimulcast, produce, dispatch, getState })
+		{
+			roomId,
+			peerName,
+			displayName,
+			device,
+			useSimulcast,
+			forceTcp,
+			spy,
+			dispatch,
+			getState
+		}
+	)
 	{
 		logger.debug(
 			'constructor() [roomId:"%s", peerName:"%s", displayName:"%s", device:%s]',
@@ -39,8 +41,8 @@ export default class RoomClient
 		// Closed flag.
 		this._closed = false;
 
-		// Whether we should produce.
-		this._produce = produce;
+		// Whether we should be a spy.
+		this._spy = spy;
 
 		// Whether simulcast should be used.
 		this._useSimulcast = useSimulcast;
@@ -58,7 +60,16 @@ export default class RoomClient
 		this._protoo = new protooClient.Peer(protooTransport);
 
 		// mediasoup-client Room instance.
-		this._room = new mediasoupClient.Room(ROOM_OPTIONS);
+		this._room = new mediasoupClient.Room(
+			{
+				requestTimeout   : 30000,
+				transportOptions :
+				{
+					udp : !forceTcp,
+					tcp : Boolean(forceTcp)
+				},
+				spy : this._spy
+			});
 
 		// Transport for sending.
 		this._sendTransport = null;
@@ -421,6 +432,9 @@ export default class RoomClient
 		return Promise.resolve()
 			.then(() =>
 			{
+				if (this._spy)
+					return;
+
 				if (!this._webcamProducer && this._room.canSend('video'))
 					return this.enableWebcam();
 			})
@@ -477,6 +491,63 @@ export default class RoomClient
 
 				this._dispatch(
 					stateActions.setRestartIceInProgress(false));
+			});
+	}
+
+	changeConsumerPreferredProfile(consumerId, profile)
+	{
+		logger.debug(
+			'changeConsumerPreferredProfile() [consumerId:%s, profile:%s]',
+			consumerId, profile);
+
+		return this._protoo.send('change-consumer-preferred-profile',
+			{
+				consumerId,
+				profile
+			})
+			.then(() =>
+			{
+				this._dispatch(requestActions.notify(
+					{
+						text : `Video consumer preferred profile set to ${profile}`
+					}));
+
+				this._dispatch(
+					stateActions.setConsumerPreferredProfile(consumerId, profile));
+			})
+			.catch((error) =>
+			{
+				logger.error('changeConsumerPreferredProfile() | failed: %o', error);
+
+				this._dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : `Could not set video consumer preferred profile: ${error}`
+					}));
+			});
+	}
+
+	requestConsumerKeyFrame(consumerId)
+	{
+		logger.debug('requestConsumerKeyFrame() [consumerId:%s]', consumerId);
+
+		return this._protoo.send('request-consumer-keyframe', { consumerId })
+			.then(() =>
+			{
+				this._dispatch(requestActions.notify(
+					{
+						text : 'Keyframe requested for video consumer'
+					}));
+			})
+			.catch((error) =>
+			{
+				logger.error('requestConsumerKeyFrame() | failed: %o', error);
+
+				this._dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : 'Could not request keyframe for video consumer'
+					}));
 			});
 	}
 
@@ -644,15 +715,18 @@ export default class RoomClient
 		this._room.join(this._peerName, { displayName, device })
 			.then(() =>
 			{
-				// Create Transport for sending.
-				this._sendTransport =
-					this._room.createTransport('send', { media: 'SEND_MIC_WEBCAM' });
-
-				this._sendTransport.on('close', (originator) =>
+				// Create Transport for sending (unless we are spy).
+				if (!this._spy)
 				{
-					logger.debug(
-						'Transport "close" event [originator:%s]', originator);
-				});
+					this._sendTransport =
+						this._room.createTransport('send', { media: 'SEND_MIC_WEBCAM' });
+
+					this._sendTransport.on('close', (originator) =>
+					{
+						logger.debug(
+							'Transport "close" event [originator:%s]', originator);
+					});
+				}
 
 				// Create Transport for receiving.
 				this._recvTransport =
@@ -666,6 +740,9 @@ export default class RoomClient
 			})
 			.then(() =>
 			{
+				if (this._spy)
+					return;
+
 				// Set our media capabilities.
 				this._dispatch(stateActions.setMediaCapabilities(
 					{
@@ -675,8 +752,8 @@ export default class RoomClient
 			})
 			.then(() =>
 			{
-				// Don't produce if explicitely requested to not to do it.
-				if (!this._produce)
+				// Don't produce if we are spy.
+				if (this._spy)
 					return;
 
 				// NOTE: Don't depend on this Promise to continue (so we don't do return).
