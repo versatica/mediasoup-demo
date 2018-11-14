@@ -22,6 +22,7 @@ import roomClientMiddleware from './redux/roomClientMiddleware';
 import Room from './components/Room';
 
 const logger = new Logger();
+let spy = false;
 const reduxMiddlewares =
 [
 	thunk,
@@ -67,7 +68,7 @@ function run()
 	const isSipEndpoint = urlParser.query.sipEndpoint === 'true';
 	const useSimulcast = urlParser.query.simulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
-	const spy = urlParser.query.spy === 'true';
+	spy = urlParser.query.spy === 'true';
 
 	if (!roomId)
 	{
@@ -186,7 +187,7 @@ setInterval(() =>
 	if (recvTransport)
 		global.PC2 = recvTransport._handler._pc;
 	
-	if (spy) {
+	if (spy && recvTransport) {
 		window.pc = recvTransport._handler._pc;
 	}
 

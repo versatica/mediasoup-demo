@@ -54,12 +54,18 @@ export default class PeerView extends React.Component
 			volume,
 			videoWidth,
 			videoHeight
-		} = this.state;
-
-		return (!videoVisible && !isMe ? (<div>{peer.displayName}</div>) : (
+    } = this.state;
+		return ((!videoVisible || isMe) && global.CLIENT._spy ? (<div>
+        <p>name {peer.displayName}</p>  
+        <p>videoVisible {videoVisible ? 'true' : 'false'}</p>
+        <p>isMe {isMe ? 'true' : 'false'}</p>
+        <p>global.CLIENT._spy {global.CLIENT._spy ? 'true' : 'false'}</p></div>) : (
 			<div data-component='PeerView'>
 				<div className='info'>
 					<div className={classnames('media', { 'is-me': isMe })}>
+          <div><p>videoVisible {videoVisible ? 'true' : 'false'}</p>
+          <p>isMe {isMe ? 'true' : 'false'}</p>
+          <p>global.CLIENT._spy {global.CLIENT._spy ? 'true' : 'false'}</p></div>
 						<div
 							className={classnames('box', {
 								clickable : !isMe && videoVisible && videoProfile !== 'default'
