@@ -30,7 +30,7 @@ const rooms = new Map();
 // mediasoup server.
 const mediaServer = mediasoup.Server(
 	{
-		numWorkers       : null, // Use as many CPUs as available.
+		numWorkers       : config.mediasoup.numWorkers || null,
 		logLevel         : config.mediasoup.logLevel,
 		logTags          : config.mediasoup.logTags,
 		rtcIPv4          : config.mediasoup.rtcIPv4,
@@ -46,6 +46,16 @@ if (process.env.MEDIASOUP_HOMER_OUTPUT)
 	homer(mediaServer);
 
 global.SERVER = mediaServer;
+
+mediaServer.on('close', () =>
+{
+	logger.error('mediaServer "close" event, closing server in 2 seconds...');
+
+	setTimeout(() =>
+	{
+		process.exit(1);
+	}, 2000);
+});
 
 mediaServer.on('newroom', (room) =>
 {

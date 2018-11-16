@@ -22,6 +22,7 @@ module.exports =
 			'rbe',
 			'rtx'
 		],
+		numWorkers       : null, // Use number of CPUs.
 		rtcIPv4          : true,
 		rtcIPv6          : true,
 		rtcAnnouncedIPv4 : null,
