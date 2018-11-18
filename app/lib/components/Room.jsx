@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import clipboardCopy from 'clipboard-copy';
 import * as appPropTypes from './appPropTypes';
+import { withRoomContext } from '../RoomContext';
 import * as requestActions from '../redux/requestActions';
 import { Appear } from './transitions';
 import Me from './Me';
@@ -13,12 +14,11 @@ import Notifications from './Notifications';
 
 const Room = (
 	{
+		roomClient,
 		room,
 		me,
 		amActiveSpeaker,
-		onRoomLinkCopy,
-		onSetAudioMode,
-		onRestartIce
+		onRoomLinkCopy
 	}) =>
 {
 	return (
@@ -80,7 +80,12 @@ const Room = (
 						})}
 						data-tip='Toggle audio only mode'
 						data-type='dark'
-						onClick={() => onSetAudioMode(!me.audioOnly)}
+						onClick={() =>
+						{
+							me.audioOnly
+								? roomClient.disableAudioOnly()
+								: roomClient.enableAudioOnly();
+						}}
 					/>
 
 					<div
@@ -89,7 +94,7 @@ const Room = (
 						})}
 						data-tip='Restart ICE'
 						data-type='dark'
-						onClick={() => onRestartIce()}
+						onClick={() => roomClient.restartIce()}
 					/>
 				</div>
 
@@ -105,12 +110,11 @@ const Room = (
 
 Room.propTypes =
 {
+	roomClient      : PropTypes.any.isRequired,
 	room            : appPropTypes.Room.isRequired,
 	me              : appPropTypes.Me.isRequired,
 	amActiveSpeaker : PropTypes.bool.isRequired,
-	onRoomLinkCopy  : PropTypes.func.isRequired,
-	onSetAudioMode  : PropTypes.func.isRequired,
-	onRestartIce    : PropTypes.func.isRequired
+	onRoomLinkCopy  : PropTypes.func.isRequired
 };
 
 const mapStateToProps = (state) =>
@@ -131,24 +135,13 @@ const mapDispatchToProps = (dispatch) =>
 				{
 					text : 'Room link copied to the clipboard'
 				}));
-		},
-		onSetAudioMode : (enable) =>
-		{
-			if (enable)
-				dispatch(requestActions.enableAudioOnly());
-			else
-				dispatch(requestActions.disableAudioOnly());
-		},
-		onRestartIce : () =>
-		{
-			dispatch(requestActions.restartIce());
 		}
 	};
 };
 
-const RoomContainer = connect(
+const RoomContainer = withRoomContext(connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(Room);
+)(Room));
 
 export default RoomContainer;

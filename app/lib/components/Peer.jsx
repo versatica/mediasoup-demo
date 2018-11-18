@@ -2,17 +2,16 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import * as appPropTypes from './appPropTypes';
+import { withRoomContext } from '../RoomContext';
 import PeerView from './PeerView';
-import * as requestActions from '../redux/requestActions';
 
 const Peer = (props) =>
 {
 	const {
+		roomClient,
 		peer,
 		micConsumer,
-		webcamConsumer,
-		onChangeVideoPreferredProfile,
-		onRequestKeyFrame
+		webcamConsumer
 	} = props;
 
 	const micEnabled = (
@@ -66,9 +65,12 @@ const Peer = (props) =>
 				videoCodec={webcamConsumer ? webcamConsumer.codec : null}
 				onChangeVideoPreferredProfile={(profile) =>
 				{
-					onChangeVideoPreferredProfile(webcamConsumer.id, profile);
+					roomClient.changeConsumerPreferredProfile(webcamConsumer.id, profile);
 				}}
-				onRequestKeyFrame={() => onRequestKeyFrame(webcamConsumer.id)}
+				onRequestKeyFrame={() =>
+				{
+					roomClient.requestConsumerKeyFrame(webcamConsumer.id);
+				}}
 			/>
 		</div>
 	);
@@ -76,11 +78,10 @@ const Peer = (props) =>
 
 Peer.propTypes =
 {
-	peer                          : appPropTypes.Peer.isRequired,
-	micConsumer                   : appPropTypes.Consumer,
-	webcamConsumer                : appPropTypes.Consumer,
-	onChangeVideoPreferredProfile : PropTypes.func.isRequired,
-	onRequestKeyFrame             : PropTypes.func.isRequired
+	roomClient     : PropTypes.any.isRequired,
+	peer           : appPropTypes.Peer.isRequired,
+	micConsumer    : appPropTypes.Consumer,
+	webcamConsumer : appPropTypes.Consumer
 };
 
 const mapStateToProps = (state, { name }) =>
@@ -100,23 +101,9 @@ const mapStateToProps = (state, { name }) =>
 	};
 };
 
-const mapDispatchToProps = (dispatch) =>
-{
-	return {
-		onChangeVideoPreferredProfile : (consumerId, profile) =>
-		{
-			dispatch(requestActions.changeConsumerPreferredProfile(consumerId, profile));
-		},
-		onRequestKeyFrame : (consumerId) =>
-		{
-			dispatch(requestActions.requestConsumerKeyFrame(consumerId));
-		}
-	};
-};
-
-const PeerContainer = connect(
+const PeerContainer = withRoomContext(connect(
 	mapStateToProps,
-	mapDispatchToProps
-)(Peer);
+	undefined
+)(Peer));
 
 export default PeerContainer;

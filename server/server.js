@@ -119,6 +119,7 @@ webSocketServer.on('connectionrequest', (info, accept, reject) =>
 	const u = url.parse(info.request.url, true);
 	const roomId = u.query['roomId'];
 	const peerName = u.query['peerName'];
+	const forceH264 = u.query['forceH264'] === 'true';
 
 	if (!roomId || !peerName)
 	{
@@ -142,7 +143,7 @@ webSocketServer.on('connectionrequest', (info, accept, reject) =>
 
 		try
 		{
-			room = new Room(roomId, mediaServer);
+			room = new Room(roomId, mediaServer, { forceH264 });
 
 			global.APP_ROOM = room;
 		}

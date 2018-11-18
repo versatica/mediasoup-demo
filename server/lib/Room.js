@@ -11,9 +11,9 @@ const logger = new Logger('Room');
 
 class Room extends EventEmitter
 {
-	constructor(roomId, mediaServer)
+	constructor(roomId, mediaServer, { forceH264 })
 	{
-		logger.info('constructor() [roomId:%s]', roomId);
+		logger.info('constructor() [roomId:%s, forceH264:%s]', roomId, forceH264);
 
 		super();
 		this.setMaxListeners(Infinity);
@@ -29,8 +29,24 @@ class Room extends EventEmitter
 			// Protoo Room instance.
 			this._protooRoom = new protooServer.Room();
 
+			let mediaCodecs;
+
+			// Select codecs.
+			if (!forceH264)
+			{
+				mediaCodecs = config.mediasoup.mediaCodecs;
+			}
+			else
+			{
+				mediaCodecs = config.mediasoup.mediaCodecs
+					.filter((codec) => (
+						codec.name.toLowerCase() !== 'vp8' &&
+						codec.name.toLowerCase() !== 'vp9'
+					));
+			}
+
 			// mediasoup Room instance.
-			this._mediaRoom = mediaServer.Room(config.mediasoup.mediaCodecs);
+			this._mediaRoom = mediaServer.Room(mediaCodecs);
 		}
 		catch (error)
 		{
@@ -289,21 +305,17 @@ class Room extends EventEmitter
 				mediaPeer.close();
 
 			// If this is the latest peer in the room, close the room.
-			// However wait a bit (for reconnections).
-			setTimeout(() =>
+			if (this._mediaRoom && this._mediaRoom.closed)
+				return;
+
+			if (this._mediaRoom.peers.length === 0)
 			{
-				if (this._mediaRoom && this._mediaRoom.closed)
-					return;
+				logger.info(
+					'last peer in the room left, closing the room [roomId:%s]',
+					this._roomId);
 
-				if (this._mediaRoom.peers.length === 0)
-				{
-					logger.info(
-						'last peer in the room left, closing the room [roomId:%s]',
-						this._roomId);
-
-					this.close();
-				}
-			}, 5000);
+				this.close();
+			}
 		});
 	}
 
