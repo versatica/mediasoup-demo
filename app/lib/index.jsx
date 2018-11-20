@@ -134,6 +134,9 @@ function run()
 	roomClient = new RoomClient(
 		{ roomId, peerName, displayName, device, useSimulcast, forceTcp, spy, forceH264 });
 
+	// NOTE: For debugging.
+	global.CLIENT = roomClient;
+
 	render(
 		<Provider store={store}>
 			<RoomContext.Provider value={roomClient}>
@@ -144,9 +147,7 @@ function run()
 	);
 }
 
-// TODO: Debugging stuff.
-
-global.CLIENT = roomClient;
+// NOTE: Debugging stuff.
 
 let sendTransport;
 let recvTransport;
