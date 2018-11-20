@@ -14,11 +14,11 @@ import randomString from 'random-string';
 import randomName from 'node-random-name';
 import Logger from './Logger';
 import * as utils from './utils';
+import RoomClient from './RoomClient';
+import RoomContext from './RoomContext';
 import * as cookiesManager from './cookiesManager';
-import * as requestActions from './redux/requestActions';
 import * as stateActions from './redux/stateActions';
 import reducers from './redux/reducers';
-import roomClientMiddleware from './redux/roomClientMiddleware';
 import Room from './components/Room';
 
 const logger = new Logger();
@@ -48,11 +48,15 @@ const store = createReduxStore(
 	applyReduxMiddleware(...reduxMiddlewares)
 );
 
+let roomClient;
+
+RoomClient.init({ store });
+
 domready(() =>
 {
 	logger.debug('DOM ready');
 
-	// Load stuff and run
+	// Load stuff and run.
 	utils.initialize()
 		.then(run);
 });
@@ -69,6 +73,7 @@ function run()
 	const useSimulcast = urlParser.query.simulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
 	spy = urlParser.query.spy === 'true';
+	const forceH264 = urlParser.query.forceH264 === 'true';
 
 	if (!roomId)
 	{
@@ -125,18 +130,14 @@ function run()
 		device.version = undefined;
 	}
 
-	// NOTE: I don't like this.
 	store.dispatch(
 		stateActions.setRoomUrl(roomUrl));
 
-	// NOTE: I don't like this.
 	store.dispatch(
 		stateActions.setMe({ peerName, displayName, displayNameSet, device }));
 
-	// NOTE: I don't like this.
-	store.dispatch(
-		requestActions.joinRoom(
-			{ roomId, peerName, displayName, device, useSimulcast, forceTcp, spy }));
+	roomClient = new RoomClient(
+		{ roomId, peerName, displayName, device, useSimulcast, forceTcp, spy, forceH264 });
 
 	//Wait for peerConnection objects to be created and expose them in window.pc and window.remotePc
 	setTimeout(() => {
@@ -146,13 +147,17 @@ function run()
 
 	render(
 		<Provider store={store}>
-			<Room />
+			<RoomContext.Provider value={roomClient}>
+				<Room />
+			</RoomContext.Provider>
 		</Provider>,
 		document.getElementById('mediasoup-demo-app-container')
 	);
 }
 
 // TODO: Debugging stuff.
+
+global.CLIENT = roomClient;
 
 let sendTransport;
 let recvTransport;
@@ -163,14 +168,14 @@ let webcamConsumer;
 
 setInterval(() =>
 {
-	sendTransport = global.CLIENT._sendTransport;
-	recvTransport = global.CLIENT._recvTransport;
-	micProducer = global.CLIENT._micProducer;
-	webcamProducer = global.CLIENT._webcamProducer;
+	sendTransport = roomClient._sendTransport;
+	recvTransport = roomClient._recvTransport;
+	micProducer = roomClient._micProducer;
+	webcamProducer = roomClient._webcamProducer;
 
-	if (global.CLIENT._room.peers[0])
+	if (roomClient._room.peers[0])
 	{
-		const peer = global.CLIENT._room.peers[0];
+		const peer = roomClient._room.peers[0];
 
 		micConsumer = peer.consumers.find((c) => c.kind === 'audio');
 		webcamConsumer = peer.consumers.find((c) => c.kind === 'video');
@@ -331,22 +336,22 @@ global.__showSendSdps = function()
 {
 	logger.warn('>>> send transport local SDP offer:');
 	logger.warn(
-		global.CLIENT._sendTransport._handler._pc.localDescription.sdp);
+		roomClient._sendTransport._handler._pc.localDescription.sdp);
 
 	logger.warn('>>> send transport remote SDP answer:');
 	logger.warn(
-		global.CLIENT._sendTransport._handler._pc.remoteDescription.sdp);
+		roomClient._sendTransport._handler._pc.remoteDescription.sdp);
 };
 
 global.__showRecvSdps = function()
 {
 	logger.warn('>>> recv transport remote SDP offer:');
 	logger.warn(
-		global.CLIENT._recvTransport._handler._pc.remoteDescription.sdp);
+		roomClient._recvTransport._handler._pc.remoteDescription.sdp);
 
 	logger.warn('>>> recv transport local SDP answer:');
 	logger.warn(
-		global.CLIENT._recvTransport._handler._pc.localDescription.sdp);
+		roomClient._recvTransport._handler._pc.localDescription.sdp);
 };
 
 function printStats(title, stats)
