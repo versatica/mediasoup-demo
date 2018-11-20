@@ -23,11 +23,7 @@ import Room from './components/Room';
 
 const logger = new Logger();
 let spy = false;
-const reduxMiddlewares =
-[
-	thunk,
-	roomClientMiddleware
-];
+const reduxMiddlewares = [ thunk ];
 
 if (process.env.NODE_ENV === 'development')
 {
@@ -73,6 +69,7 @@ function run()
 	const useSimulcast = urlParser.query.simulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
 	spy = urlParser.query.spy === 'true';
+	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceH264 = urlParser.query.forceH264 === 'true';
 
 	if (!roomId)
