@@ -54,19 +54,20 @@ export default class PeerView extends React.Component
 			volume,
 			videoWidth,
 			videoHeight
-    } = this.state;
+		} = this.state;
+
 		return ((!videoVisible || isMe) && global.CLIENT._spy ? (<div>
-        <p>name {peer.displayName}</p>  
-        <p>videoVisible {videoVisible ? 'true' : 'false'}</p>
-        <p>isMe {isMe ? 'true' : 'false'}</p>
-        <p>global.CLIENT._spy {global.CLIENT._spy ? 'true' : 'false'}</p></div>) : (
+			<p>name {peer.displayName}</p>  
+			<p>videoVisible {videoVisible ? 'true' : 'false'}</p>
+			<p>isMe {isMe ? 'true' : 'false'}</p>
+			<p>global.CLIENT._spy {global.CLIENT._spy ? 'true' : 'false'}</p></div>) : (
 			<div data-component='PeerView'>
-				<div className='info'>
+					<div className='info'>
 					<div className={classnames('media', { 'is-me': isMe })}>
-          <div><p>videoVisible {videoVisible ? 'true' : 'false'}</p>
-          <p>isMe {isMe ? 'true' : 'false'}</p>
-          <p>global.CLIENT._spy {global.CLIENT._spy ? 'true' : 'false'}</p></div>
-						<div
+							<div><p>videoVisible {videoVisible ? 'true' : 'false'}</p>
+							<p>isMe {isMe ? 'true' : 'false'}</p>
+							<p>global.CLIENT._spy {global.CLIENT._spy ? 'true' : 'false'}</p></div>
+							<div
 							className={classnames('box', {
 								clickable : !isMe && videoVisible && videoProfile !== 'default'
 							})}
@@ -127,22 +128,22 @@ export default class PeerView extends React.Component
 							}}
 						>
 							<If condition={audioCodec}>
-								<p>{audioCodec}</p>
-							</If>
+									<p>{audioCodec}</p>
+								</If>
 
 							<If condition={videoCodec}>
-								<p>
+									<p>
 									{videoCodec} {videoProfile}
 									{videoPreferredProfile ? ` (pref: ${videoPreferredProfile})` : ''}
 								</p>
-							</If>
+								</If>
 
 							<If condition={videoVisible && videoWidth !== null}>
-								<p>{videoWidth}x{videoHeight}</p>
-							</If>
+									<p>{videoWidth}x{videoHeight}</p>
+								</If>
 
 							<If condition={!isMe && videoCodec}>
-								<p
+									<p
 									className='clickable'
 									onClick={(event) =>
 									{
@@ -156,14 +157,14 @@ export default class PeerView extends React.Component
 								>
 									{'Request keyframe'}
 								</p>
-							</If>
+								</If>
 						</div>
-					</div>
+						</div>
 
 					<div className={classnames('peer', { 'is-me': isMe })}>
-						<Choose>
+							<Choose>
 							<When condition={isMe}>
-								<EditableInput
+									<EditableInput
 									value={peer.displayName}
 									propName='displayName'
 									className='display-name editable'
@@ -177,27 +178,27 @@ export default class PeerView extends React.Component
 									}}
 									onChange={({ displayName }) => onChangeDisplayName(displayName)}
 								/>
-							</When>
+								</When>
 
 							<Otherwise>
-								<span className='display-name'>
+									<span className='display-name'>
 									{peer.displayName}
 								</span>
-							</Otherwise>
+								</Otherwise>
 						</Choose>
 
-						<div className='row'>
+							<div className='row'>
 							<span
-								className={classnames('device-icon', peer.device.flag)}
-							/>
+									className={classnames('device-icon', peer.device.flag)}
+								/>
 							<span className='device-version'>
-								{peer.device.name} {Math.floor(peer.device.version) || null}
-							</span>
+									{peer.device.name} {Math.floor(peer.device.version) || null}
+								</span>
 						</div>
-					</div>
+						</div>
 				</div>
 
-				<video
+					<video
 					ref='video'
 					className={classnames({
 						hidden  : !videoVisible,
@@ -208,16 +209,16 @@ export default class PeerView extends React.Component
 					muted={isMe}
 				/>
 
-				<div className='volume-container'>
+					<div className='volume-container'>
 					<div className={classnames('bar', `level${volume}`)} />
 				</div>
 
-				<If condition={videoProfile === 'none'}>
+					<If condition={videoProfile === 'none'}>
 					<div className='spinner-container'>
-						<Spinner />
-					</div>
+							<Spinner />
+						</div>
 				</If>
-			</div>
+				</div>
 		));
 	}
 

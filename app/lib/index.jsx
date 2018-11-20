@@ -68,9 +68,9 @@ function run()
 	const isSipEndpoint = urlParser.query.sipEndpoint === 'true';
 	const useSimulcast = urlParser.query.simulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
+	const forceH264 = urlParser.query.forceH264 === 'true';
+		
 	spy = urlParser.query.spy === 'true';
-	const forceH264 = urlParser.query.forceH264 === 'true';
-	const forceH264 = urlParser.query.forceH264 === 'true';
 
 	if (!roomId)
 	{
@@ -136,10 +136,11 @@ function run()
 	roomClient = new RoomClient(
 		{ roomId, peerName, displayName, device, useSimulcast, forceTcp, spy, forceH264 });
 
-	//Wait for peerConnection objects to be created and expose them in window.pc and window.remotePc
-	setTimeout(() => {
-		window.pc = CLIENT._sendTransport._handler._pc;
-		window.remotePc = [CLIENT._recvTransport._handler._pc];
+	// Wait for peerConnection objects to be created and expose them in window.pc and window.remotePc
+	setTimeout(() => 
+	{
+		window.pc = roomClient._sendTransport._handler._pc;
+		window.remotePc = [ roomClient._recvTransport._handler._pc ];
 	}, 2000);
 
 	render(
@@ -189,7 +190,8 @@ setInterval(() =>
 	if (recvTransport)
 		global.PC2 = recvTransport._handler._pc;
 	
-	if (spy && recvTransport) {
+	if (spy && recvTransport) 
+	{
 		window.pc = recvTransport._handler._pc;
 	}
 
