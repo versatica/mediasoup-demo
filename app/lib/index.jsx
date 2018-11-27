@@ -53,16 +53,15 @@ domready(() =>
 
 	// Load stuff and run.
 	utils.initialize()
-		.then(run);
+		.then(console.log);
 });
 
-function run()
+window.runme = (roomId)=>
 {
 	logger.debug('run() [environment:%s]', process.env.NODE_ENV);
 
 	const peerName = randomString({ length: 8 }).toLowerCase();
 	const urlParser = new UrlParse(window.location.href, true);
-	let roomId = urlParser.query.roomId;
 	let displayName = urlParser.query.displayName;
 	const isSipEndpoint = urlParser.query.sipEndpoint === 'true';
 	const useSimulcast = urlParser.query.simulcast !== 'false';
