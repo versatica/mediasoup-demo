@@ -67,7 +67,7 @@ function bundle(options)
 			entries      : PKG.main,
 			extensions   : [ '.js', '.jsx' ],
 			// required for sourcemaps (must be false otherwise).
-			debug        : process.env.NODE_ENV === 'development',
+			debug        : false,
 			// required for watchify.
 			cache        : {},
 			// required for watchify.

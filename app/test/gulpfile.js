@@ -15,7 +15,7 @@ const OUTPUT_DIR = 'output';
 const APP_NAME = 'mediasoup-client-test';
 
 // Node environment.
-process.env.NODE_ENV = 'development';
+process.env.NODE_ENV = 'production';
 
 function logError(error)
 {
