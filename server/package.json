@@ -11,7 +11,7 @@
     "debug": "^4.1.0",
     "express": "^4.16.4",
     "gulp-cli": "^2.0.1",
-    "mediasoup": "^2.4.2",
+    "mediasoup": "^2.5.0",
     "protoo-server": "^3.0.2"
   },
   "devDependencies": {

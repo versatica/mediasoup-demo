@@ -15,7 +15,7 @@
     "gulp-cli": "^2.0.1",
     "hark": "^1.2.3",
     "js-cookie": "^2.2.0",
-    "mediasoup-client": "^2.4.0",
+    "mediasoup-client": "^2.4.1",
     "node-random-name": "^1.0.1",
     "prop-types": "^15.6.2",
     "protoo-client": "^3.0.2",
