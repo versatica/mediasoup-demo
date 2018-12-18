@@ -12,6 +12,7 @@ import { createLogger as createReduxLogger } from 'redux-logger';
 import { getDeviceInfo } from 'mediasoup-client';
 import randomString from 'random-string';
 import randomName from 'node-random-name';
+import * as faceapi from 'face-api.js';
 import Logger from './Logger';
 import * as utils from './utils';
 import RoomClient from './RoomClient';
@@ -37,23 +38,35 @@ if (process.env.NODE_ENV === 'development')
 	reduxMiddlewares.push(reduxLogger);
 }
 
+let roomClient;
 const store = createReduxStore(
 	reducers,
 	undefined,
 	applyReduxMiddleware(...reduxMiddlewares)
 );
 
-let roomClient;
-
 RoomClient.init({ store });
+
+const urlParser = new UrlParse(window.location.href, true);
+
+// Enable face detection on demand.
+window.DEMO_DO_FACE_DETECTION = urlParser.query.faceDetection === 'true';
 
 domready(() =>
 {
 	logger.debug('DOM ready');
 
 	// Load stuff and run.
-	utils.initialize()
-		.then(run);
+	Promise.resolve()
+		.then(() => utils.initialize())
+		.then(() =>
+		{
+			if (!window.DEMO_DO_FACE_DETECTION)
+				return;
+
+			return faceapi.loadTinyFaceDetectorModel('/resources/face-detector-models');
+		})
+		.then(() => run());
 });
 
 function run()
@@ -61,7 +74,6 @@ function run()
 	logger.debug('run() [environment:%s]', process.env.NODE_ENV);
 
 	const peerName = randomString({ length: 8 }).toLowerCase();
-	const urlParser = new UrlParse(window.location.href, true);
 	let roomId = urlParser.query.roomId;
 	let displayName = urlParser.query.displayName;
 	const isSipEndpoint = urlParser.query.sipEndpoint === 'true';
@@ -158,6 +170,9 @@ let webcamConsumer;
 
 setInterval(() =>
 {
+	if (!roomClient)
+		return;
+
 	sendTransport = roomClient._sendTransport;
 	recvTransport = roomClient._recvTransport;
 	micProducer = roomClient._micProducer;

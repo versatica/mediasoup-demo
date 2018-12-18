@@ -213,9 +213,23 @@
 		}
 	}
 
+	> canvas.face-detection {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		z-index: 1;
+		pointer-events: none;
+
+		&.is-me {
+			transform: scaleX(-1);
+		}
+	}
+
 	> .volume-container {
 		position: absolute;
-		top: 0
+		top: 0;
 		bottom: 0;
 		right: 2px;
 		width: 10px;

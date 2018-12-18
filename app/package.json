@@ -15,6 +15,7 @@
     "clipboard-copy": "^2.0.1",
     "debug": "^4.1.0",
     "domready": "^1.0.8",
+    "face-api.js": "^0.16.2",
     "hark": "^1.2.3",
     "js-cookie": "^2.2.0",
     "mediasoup-client": "^2.4.6",

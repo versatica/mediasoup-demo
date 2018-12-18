@@ -3,8 +3,15 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import Spinner from 'react-spinner';
 import hark from 'hark';
+import * as faceapi from 'face-api.js';
 import * as appPropTypes from './appPropTypes';
 import EditableInput from './EditableInput';
+
+const tinyFaceDetectorOptions = new faceapi.TinyFaceDetectorOptions(
+	{
+		inputSize      : 160,
+		scoreThreshold : 0.5
+	});
 
 export default class PeerView extends React.Component
 {
@@ -14,9 +21,9 @@ export default class PeerView extends React.Component
 
 		this.state =
 		{
-			volume      : 0, // Integer from 0 to 10.,
-			videoWidth  : null,
-			videoHeight : null
+			audioVolume           : 0, // Integer from 0 to 10.,
+			videoResolutionWidth  : null,
+			videoResolutionHeight : null
 		};
 
 		// Latest received video track.
@@ -31,8 +38,11 @@ export default class PeerView extends React.Component
 		// @type {Object}
 		this._hark = null;
 
-		// Periodic timer for showing video resolution.
-		this._videoResolutionTimer = null;
+		// Periodic timer for reading video resolution.
+		this._videoResolutionPeriodicTimer = null;
+
+		// requestAnimationFrame for face detection.
+		this._faceDetectionRequestAnimationFrame = null;
 	}
 
 	render()
@@ -51,9 +61,9 @@ export default class PeerView extends React.Component
 		} = this.props;
 
 		const {
-			volume,
-			videoWidth,
-			videoHeight
+			audioVolume,
+			videoResolutionWidth,
+			videoResolutionHeight
 		} = this.state;
 
 		return (
@@ -131,8 +141,8 @@ export default class PeerView extends React.Component
 								</p>
 							</If>
 
-							<If condition={videoVisible && videoWidth !== null}>
-								<p>{videoWidth}x{videoHeight}</p>
+							<If condition={videoVisible && videoResolutionWidth !== null}>
+								<p>{videoResolutionWidth}x{videoResolutionHeight}</p>
 							</If>
 
 							<If condition={!isMe && videoCodec}>
@@ -202,8 +212,13 @@ export default class PeerView extends React.Component
 					muted={isMe}
 				/>
 
+				<canvas
+					ref='canvas'
+					className={classnames('face-detection', { 'is-me': isMe })}
+				/>
+
 				<div className='volume-container'>
-					<div className={classnames('bar', `level${volume}`)} />
+					<div className={classnames('bar', `level${audioVolume}`)} />
 				</div>
 
 				<If condition={videoProfile === 'none'}>
@@ -227,7 +242,8 @@ export default class PeerView extends React.Component
 		if (this._hark)
 			this._hark.stop();
 
-		clearInterval(this._videoResolutionTimer);
+		clearInterval(this._videoResolutionPeriodicTimer);
+		cancelAnimationFrame(this._faceDetectionRequestAnimationFrame);
 	}
 
 	componentWillReceiveProps(nextProps)
@@ -248,8 +264,8 @@ export default class PeerView extends React.Component
 		if (this._hark)
 			this._hark.stop();
 
-		clearInterval(this._videoResolutionTimer);
-		this._hideVideoResolution();
+		this._stopVideoResolution();
+		this._stopFaceDetection();
 
 		const { video } = this.refs;
 
@@ -269,7 +285,10 @@ export default class PeerView extends React.Component
 				this._runHark(stream);
 
 			if (videoTrack)
-				this._showVideoResolution();
+			{
+				this._startVideoResolution();
+				this._startFaceDetection();
+			}
 		}
 		else
 		{
@@ -292,38 +311,108 @@ export default class PeerView extends React.Component
 			// However it does not produce a visually useful output, so let exagerate
 			// it a bit. Also, let convert it from 0..1 to 0..10 and avoid value 1 to
 			// minimize component renderings.
-			let volume = Math.round(Math.pow(10, dBs / 85) * 10);
+			let audioVolume = Math.round(Math.pow(10, dBs / 85) * 10);
 
-			if (volume === 1)
-				volume = 0;
+			if (audioVolume === 1)
+				audioVolume = 0;
 
-			if (volume !== this.state.volume)
-				this.setState({ volume: volume });
+			if (audioVolume !== this.state.audioVolume)
+				this.setState({ audioVolume });
 		});
 	}
 
-	_showVideoResolution()
+	_startVideoResolution()
 	{
-		this._videoResolutionTimer = setInterval(() =>
+		this._videoResolutionPeriodicTimer = setInterval(() =>
 		{
-			const { videoWidth, videoHeight } = this.state;
+			const {
+				videoResolutionWidth,
+				videoResolutionHeight
+			} = this.state;
 			const { video } = this.refs;
 
-			// Don't re-render if nothing changed.
-			if (video.videoWidth === videoWidth && video.videoHeight === videoHeight)
-				return;
-
-			this.setState(
-				{
-					videoWidth  : video.videoWidth,
-					videoHeight : video.videoHeight
-				});
+			if (
+				video.videoWidth !== videoResolutionWidth ||
+				video.videoHeight !== videoResolutionHeight
+			)
+			{
+				this.setState(
+					{
+						videoResolutionWidth  : video.videoWidth,
+						videoResolutionHeight : video.videoHeight
+					});
+			}
 		}, 1000);
 	}
 
-	_hideVideoResolution()
+	_stopVideoResolution()
 	{
-		this.setState({ videoWidth: null, videoHeight: null });
+		clearInterval(this._videoResolutionPeriodicTimer);
+
+		this.setState(
+			{
+				videoResolutionWidth  : null,
+				videoResolutionHeight : null
+			});
+	}
+
+	_startFaceDetection()
+	{
+		if (!window.DEMO_DO_FACE_DETECTION)
+			return;
+
+		const { video, canvas } = this.refs;
+
+		const step = () =>
+		{
+			// NOTE: Somehow this is critical. Otherwise the Promise returned by
+			// faceapi.detectSingleFace() never resolves or rejects.
+			if (!this._videoTrack || video.readyState < 2)
+			{
+				this._faceDetectionRequestAnimationFrame = requestAnimationFrame(step);
+
+				return;
+			}
+
+			faceapi.detectSingleFace(video, tinyFaceDetectorOptions)
+				.then((detection) =>
+				{
+					if (detection)
+					{
+						const width = video.offsetWidth;
+						const height = video.offsetHeight;
+
+						canvas.width = width;
+						canvas.height = height;
+
+						const resizedDetection = detection.forSize(width, height);
+
+						faceapi.drawDetection(
+							canvas, [ resizedDetection ], { withScore: false });
+					}
+					else
+					{
+						// Trick to hide the canvas rectangle.
+						canvas.width = 0;
+						canvas.height = 0;
+					}
+
+					this._faceDetectionRequestAnimationFrame =
+						requestAnimationFrame(() => setTimeout(step, 100));
+				});
+		};
+
+		step();
+	}
+
+	_stopFaceDetection()
+	{
+		cancelAnimationFrame(this._faceDetectionRequestAnimationFrame);
+
+		const { canvas } = this.refs;
+
+		canvas.width = 0;
+		canvas.height = 0;
 	}
 }
 
