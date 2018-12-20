@@ -593,30 +593,26 @@ export default class RoomClient
 			this.close();
 		});
 
-		this._protoo.on('request', (request, accept, reject) =>
+		this._protoo.on('notification', (notification) =>
 		{
 			logger.debug(
-				'_handleProtooRequest() [method:%s, data:%o]',
-				request.method, request.data);
+				'proto "notification" event [method:%s, data:%o]',
+				notification.method, notification.data);
 
-			switch (request.method)
+			switch (notification.method)
 			{
 				case 'mediasoup-notification':
 				{
-					accept();
+					const mediasoupNotification = notification.data;
 
-					const notification = request.data;
-
-					this._room.receiveNotification(notification);
+					this._room.receiveNotification(mediasoupNotification);
 
 					break;
 				}
 
 				case 'active-speaker':
 				{
-					accept();
-
-					const { peerName } = request.data;
+					const { peerName } = notification.data;
 
 					store.dispatch(
 						stateActions.setRoomActiveSpeaker(peerName));
@@ -626,10 +622,8 @@ export default class RoomClient
 
 				case 'display-name-changed':
 				{
-					accept();
-
 					// eslint-disable-next-line no-shadow
-					const { peerName, displayName, oldDisplayName } = request.data;
+					const { peerName, displayName, oldDisplayName } = notification.data;
 
 					// NOTE: Hack, we shouldn't do this, but this is just a demo.
 					const peer = this._room.getPeerByName(peerName);
@@ -656,9 +650,8 @@ export default class RoomClient
 
 				default:
 				{
-					logger.error('unknown protoo method "%s"', request.method);
-
-					reject(404, 'unknown method');
+					logger.error(
+						'unknown protoo notification.method "%s"', notification.method);
 				}
 			}
 		});
@@ -701,7 +694,7 @@ export default class RoomClient
 				'sending mediasoup notification [method:%s]:%o',
 				notification.method, notification);
 
-			this._protoo.send('mediasoup-notification', notification)
+			this._protoo.notify('mediasoup-notification', notification)
 				.catch((error) =>
 				{
 					logger.warn('could not send mediasoup notification:%o', error);

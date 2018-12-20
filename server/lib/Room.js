@@ -205,18 +205,6 @@ class Room extends EventEmitter
 					break;
 				}
 
-				case 'mediasoup-notification':
-				{
-					accept();
-
-					const mediasoupNotification = request.data;
-
-					this._handleMediasoupClientNotification(
-						protooPeer, mediasoupNotification);
-
-					break;
-				}
-
 				case 'change-display-name':
 				{
 					accept();
@@ -295,6 +283,32 @@ class Room extends EventEmitter
 			}
 		});
 
+		protooPeer.on('notification', (notification) =>
+		{
+			logger.debug(
+				'protoo "notification" event [method:%s, peer:%s]',
+				notification.method, protooPeer.id);
+
+			switch (notification.method)
+			{
+				case 'mediasoup-notification':
+				{
+					const mediasoupNotification = notification.data;
+
+					this._handleMediasoupClientNotification(
+						protooPeer, mediasoupNotification);
+
+					break;
+				}
+
+				default:
+				{
+					logger.error(
+						'unknown protoo notification.method "%s"', notification.method);
+				}
+			}
+		});
+
 		protooPeer.on('close', () =>
 		{
 			logger.debug('protoo Peer "close" event [peer:%s]', protooPeer.id);
@@ -323,7 +337,7 @@ class Room extends EventEmitter
 	{
 		mediaPeer.on('notify', (notification) =>
 		{
-			protooPeer.send('mediasoup-notification', notification)
+			protooPeer.notify('mediasoup-notification', notification)
 				.catch(() => {});
 		});
 
@@ -378,7 +392,7 @@ class Room extends EventEmitter
 		// Notify about the existing active speaker.
 		if (this._currentActiveSpeaker)
 		{
-			protooPeer.send(
+			protooPeer.notify(
 				'active-speaker',
 				{
 					peerName : this._currentActiveSpeaker.name
