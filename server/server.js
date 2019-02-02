@@ -48,49 +48,18 @@ if (process.env.MEDIASOUP_HOMER_OUTPUT)
 
 global.SERVER = mediaServer;
 
-mediaServer.on('close', () =>
+mediaServer.on('died', () =>
 {
-	logger.error('mediaServer "close" event, closing server in 2 seconds...');
+	logger.error('mediasoup Worker "died" event, exiting  in 2 seconds...');
 
-	setTimeout(() =>
-	{
-		process.exit(1);
-	}, 2000);
-});
-
-mediaServer.on('newroom', (room) =>
-{
-	global.ROOM = room;
-
-	room.on('newpeer', (peer) =>
-	{
-		global.PEER = peer;
-
-		if (peer.consumers.length > 0)
-			global.CONSUMER = peer.consumers[peer.consumers.length - 1];
-
-		peer.on('newtransport', (transport) =>
-		{
-			global.TRANSPORT = transport;
-		});
-
-		peer.on('newproducer', (producer) =>
-		{
-			global.PRODUCER = producer;
-		});
-
-		peer.on('newconsumer', (consumer) =>
-		{
-			global.CONSUMER = consumer;
-		});
-	});
+	setTimeout(() => process.exit(1), 2000);
 });
 
 // HTTPS server for the protoo WebSocket server.
 const tls =
 {
-	cert : fs.readFileSync(config.tls.cert),
-	key  : fs.readFileSync(config.tls.key)
+	cert : fs.readFileSync(config.protoo.tls.cert),
+	key  : fs.readFileSync(config.protoo.tls.key)
 };
 
 const httpsServer = https.createServer(tls, (req, res) =>
@@ -99,7 +68,7 @@ const httpsServer = https.createServer(tls, (req, res) =>
 	res.end();
 });
 
-httpsServer.listen(3443, '0.0.0.0', () =>
+httpsServer.listen(config.protoo.listenPort, config.protoo.listenIp, () =>
 {
 	logger.info('protoo WebSocket server running');
 });
