@@ -10,6 +10,7 @@
     "lint": "eslint -c .eslintrc.js server.js lib"
   },
   "dependencies": {
+    "awaitqueue": "^1.0.0",
     "colors": "^1.3.3",
     "debug": "^4.1.1",
     "express": "^4.16.4",
