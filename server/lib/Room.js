@@ -74,7 +74,7 @@ class Room extends EventEmitter
 	logStatus()
 	{
 		logger.info(
-			'logStatus() [roomId:%s, protoo peers:%s, mediasoup transports:%s]',
+			'logStatus() [roomId:%s, protoo Peers:%s, mediasoup Transports:%s]',
 			this._roomId,
 			this._protooRoom.peers.length,
 			this._mediasoupRouter._transports.size); // NOTE: Private API.
@@ -82,35 +82,35 @@ class Room extends EventEmitter
 
 	handleProtooConnection({ peerId, protooWebSocketTransport })
 	{
-		const existingProtooPeer = this._protooRoom.getPeer(peerId);
+		const existingPeer = this._protooRoom.getPeer(peerId);
 
-		if (existingProtooPeer)
+		if (existingPeer)
 		{
 			logger.warn(
-				'handleProtooConnection() | there is already a protoo peer with same peerId, closing it [peerId:%s]',
+				'handleProtooConnection() | there is already a protoo Peer with same peerId, closing it [peerId:%s]',
 				peerId);
 
-			existingProtooPeer.close();
+			existingPeer.close();
 		}
 
-		let protooPeer;
+		let peer;
 
 		try
 		{
-			protooPeer = this._protooRoom.createPeer(peerId, protooWebSocketTransport);
+			peer = this._protooRoom.createPeer(peerId, protooWebSocketTransport);
 		}
 		catch (error)
 		{
 			logger.error('protooRoom.createPeer() failed:%o', error);
 		}
 
-		protooPeer.on('request', (request, accept, reject) =>
+		peer.on('request', (request, accept, reject) =>
 		{
 			logger.debug(
-				'protoo peer "request" event [method:%s, peerId:%s]',
-				request.method, protooPeer.id);
+				'protoo Peer "request" event [method:%s, peerId:%s]',
+				request.method, peer.id);
 
-			this._handleProtooRequest(protooPeer, request, accept, reject)
+			this._handleProtooRequest(peer, request, accept, reject)
 				.catch((error) =>
 				{
 					logger.error('request failed:%o', error);
@@ -119,23 +119,23 @@ class Room extends EventEmitter
 				});
 		});
 
-		protooPeer.on('close', () =>
+		peer.on('close', () =>
 		{
 			if (this._closed)
 				return;
 
-			logger.debug('protoo peer "close" event [peerId:%s]', protooPeer.id);
+			logger.debug('protoo Peer "close" event [peerId:%s]', peer.id);
 
 			// Notify other joined Peers.
-			for (const peer of this._getJoinedPeers({ excludePeer: protooPeer }))
+			for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
 			{
-				peer.notify('peerClosed', { peerId: protooPeer.id })
+				otherPeer.notify('peerClosed', { peerId: peer.id })
 					.catch(() => {});
 			}
 
 			// Iterate and close all mediasoup Transport associated to this Peer, so all
 			// its Producers and Consumers will also be closed.
-			for (const transport of protooPeer.data.transports)
+			for (const transport of peer.data.transports)
 			{
 				transport.close();
 			}
@@ -144,7 +144,7 @@ class Room extends EventEmitter
 			if (this._protooRoom.peers.length === 0)
 			{
 				logger.info(
-					'last peer in the room left, closing the room [roomId:%s]',
+					'last Peer in the room left, closing the room [roomId:%s]',
 					this._roomId);
 
 				this.close();
@@ -152,7 +152,7 @@ class Room extends EventEmitter
 		});
 	}
 
-	async _handleProtooRequest(protooPeer, request, accept, reject)
+	async _handleProtooRequest(peer, request, accept, reject)
 	{
 		switch (request.method)
 		{
@@ -165,90 +165,91 @@ class Room extends EventEmitter
 
 			case 'join':
 			{
-				// Ensure the peer is not already joined.
-				if (protooPeer.data.joined)
-					throw new Error('peer already joined');
+				// Ensure the Peer is not already joined.
+				if (peer.data.joined)
+					throw new Error('Peer already joined');
 
 				const { displayName, rtpCapabilities } = request.data;
 
 				if (typeof rtpCapabilities !== 'object')
 					throw new TypeError('missing rtpCapabilities');
 
-				// Store peer data into the protoo Peer data object.
-				protooPeer.data.displayName = displayName;
-				protooPeer.data.rtpCapabilities = rtpCapabilities;
-				protooPeer.data.transports = new Map();
-				protooPeer.data.producers = new Map();
-				protooPeer.data.consumers = new Map();
+				// Store client data into the protoo Peer data object.
+				peer.data.displayName = displayName;
+				peer.data.rtpCapabilities = rtpCapabilities;
+				peer.data.transports = new Map();
+				peer.data.producers = new Map();
+				peer.data.consumers = new Map();
 
-				// Notify joined Peers about the new joining Peer.
-				// Also, collect info about joined Peers and their Producers to reply
+				// Collect info about joined Peers and their Producers to reply
 				// the joining Peer with them.
-				const peerInfos = [];
+				const otherPeerInfos = [];
 
-				for (const peer of this._getJoinedPeers())
+				for (const otherPeer of this._getJoinedPeers())
 				{
-					peer.notify(
-						'newPeer',
-						{
-							peerId      : protooPeer.id,
-							displayName : displayName
-						})
-						.catch(() => {});
-
-					const peerInfo =
+					const otherPeerInfo =
 					{
-						id          : peer.id,
-						displayName : peer.displayName,
-						producers   : []
+						id          : otherPeer.id,
+						displayName : otherPeer.data.displayName,
+						producers   : Array.from(otherPeer.data.producers)
+							.map((producer) => (
+								{
+									id         : producer.id,
+									kind       : producer.kind,
+									appData    : producer.appData,
+									consumable : this._mediasoupRouter.canConsume(
+										{
+											producerId      : producer.id,
+											rtpCapabilities : peer.data.rtpCapabilities
+										})
+								}
+							))
 					};
 
-					for (const producer of peer.data.producers.values())
-					{
-						peerInfo.producers.push(
-							{
-								id            : producer.id,
-								kind          : producer.kind,
-								rtpParameters : producer.rtpParameters,
-								appData       : producer.appData,
-								canConsume    : this._mediasoupRouter.canConsume(
-									{
-										producerId : producer.id,
-										rtpCapabilities
-									})
-							});
-					}
-
-					peerInfos.push(peerInfo);
+					otherPeerInfos.push(otherPeerInfo);
 				}
 
-				// Mark this peer as joined.
-				protooPeer.data.joined = true;
+				// Accept the new Peer and reply him with the list of other Peers and
+				// their Producers.
+				accept({ peers: otherPeerInfos });
 
-				accept({ peerInfos });
+				// Mark the new Peer as joined.
+				peer.data.joined = true;
+
+				// Notify the new Peer to all other Peers.
+				for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
+				{
+					otherPeer.notify(
+						'newPeer',
+						{
+							peerId      : peer.id,
+							displayName : peer.data.displayName
+						})
+						.catch(() => {});
+				}
 
 				break;
 			}
 
 			case 'changeDisplayName':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { displayName } = request.data;
 
 				// Store the display name into the custom data Object of the protoo
 				// Peer.
-				protooPeer.data.displayName = displayName;
+				peer.data.displayName = displayName;
 
 				// Notify other joined Peers.
-				for (const peer of this._getJoinedPeers({ excludePeer: protooPeer }))
+				for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
 				{
-					peer.notify(
+					otherPeer.notify(
 						'peerDisplayNameChanged',
 						{
-							peerId      : protooPeer.id,
+							peerId      : peer.id,
 							displayName : displayName
 						})
 						.catch(() => {});
@@ -261,9 +262,9 @@ class Room extends EventEmitter
 
 			case 'createWebRtcTransport':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
 					{
@@ -273,7 +274,7 @@ class Room extends EventEmitter
 					});
 
 				// Store the WebRtcTransport into the protoo Peer data Object.
-				protooPeer.data.transports.set(transport.id, transport);
+				peer.data.transports.set(transport.id, transport);
 
 				accept(
 					{
@@ -297,12 +298,12 @@ class Room extends EventEmitter
 
 			case 'connectWebRtcTransport':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { transportId, dtlsParameters } = request.data;
-				const transport = protooPeer.transports.get(transportId);
+				const transport = peer.transports.get(transportId);
 
 				if (!transport)
 					throw new Error(`transport with id "${transportId}" not found`);
@@ -316,12 +317,12 @@ class Room extends EventEmitter
 
 			case 'produce':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { transportId, kind, rtpParameters, appData } = request.data;
-				const transport = protooPeer.transports.get(transportId);
+				const transport = peer.transports.get(transportId);
 
 				if (!transport)
 					throw new Error(`transport with id "${transportId}" not found`);
@@ -330,21 +331,65 @@ class Room extends EventEmitter
 					await transport.produce({ kind, rtpParameters, appData });
 
 				// Store the Producer into the protoo Peer data Object.
-				protooPeer.data.producers.set(producer.id, producer);
+				peer.data.producers.set(producer.id, producer);
 
 				accept({ id: producer.id });
+
+				// Notify the new Producer to all other Peers.
+				for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
+				{
+					otherPeer.notify(
+						'newProducer',
+						{
+							peerId   : peer.id,
+							producer :
+							{
+								id         : producer.id,
+								kind       : producer.kind,
+								appData    : producer.appData,
+								consumable : this._mediasoupRouter.canConsume(
+									{
+										producerId      : producer.id,
+										rtpCapabilities : otherPeer.data.rtpCapabilities
+									})
+							}
+						})
+						.catch(() => {});
+				}
+
+				break;
+			}
+
+			case 'closeProducer':
+			{
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
+
+				const { producerId } = request.data;
+				const producer = peer.producers.get(producerId);
+
+				if (!producer)
+					throw new Error(`producer with id "${producerId}" not found`);
+
+				producer.close();
+
+				// Remove from its map.
+				peer.data.producers.delete(producer.id);
+
+				accept();
 
 				break;
 			}
 
 			case 'pauseProducer':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { producerId } = request.data;
-				const producer = protooPeer.producers.get(producerId);
+				const producer = peer.producers.get(producerId);
 
 				if (!producer)
 					throw new Error(`producer with id "${producerId}" not found`);
@@ -358,12 +403,12 @@ class Room extends EventEmitter
 
 			case 'resumeProducer':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { producerId } = request.data;
-				const producer = protooPeer.producers.get(producerId);
+				const producer = peer.producers.get(producerId);
 
 				if (!producer)
 					throw new Error(`producer with id "${producerId}" not found`);
@@ -375,14 +420,79 @@ class Room extends EventEmitter
 				break;
 			}
 
+			case 'consume':
+			{
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
+
+				const { transportId, producerId } = request.data;
+				const transport = peer.transports.get(transportId);
+
+				if (!transport)
+					throw new Error(`transport with id "${transportId}" not found`);
+
+				const consumer = await transport.consume(
+					{
+						producerId,
+						rtpCapabilities : peer.data.rtpCapabilities
+					});
+
+				// Store the Consumer into the protoo Peer data Object.
+				peer.data.consumers.set(consumer.id, consumer);
+
+				// Reply the peer with the server-side Consumer data.
+				accept(
+					{
+						id            : consumer.id,
+						kind          : consumer.kind,
+						rtpParameters : consumer.rtpParameters
+					});
+
+				consumer.on('transportclose', () =>
+				{
+					// Remove from its map.
+					peer.data.consumers.delete(consumer.id);
+				});
+
+				consumer.on('producerclose', () =>
+				{
+					// Remove from its map.
+					peer.data.consumers.delete(consumer.id);
+
+					peer.notify('consumerClosed', { consumerId: consumer.id })
+						.catch(() => {});
+				});
+
+				consumer.on('producerpause', () =>
+				{
+					peer.notify('consumerPaused', { consumerId: consumer.id })
+						.catch(() => {});
+				});
+
+				consumer.on('producerresume', () =>
+				{
+					peer.notify('consumerResumed', { consumerId: consumer.id })
+						.catch(() => {});
+				});
+
+				consumer.on('layerschange', (layers) =>
+				{
+					peer.notify('consumerLayersChanged', { consumerId: consumer.id, layers })
+						.catch(() => {});
+				});
+
+				break;
+			}
+
 			case 'startConsumer':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { consumerId } = request.data;
-				const consumer = protooPeer.consumers.get(consumerId);
+				const consumer = peer.consumers.get(consumerId);
 
 				if (!consumer)
 					throw new Error(`consumer with id "${consumerId}" not found`);
@@ -394,14 +504,36 @@ class Room extends EventEmitter
 				break;
 			}
 
-			case 'pauseConsumer':
+			case 'closeConsumer':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { consumerId } = request.data;
-				const consumer = protooPeer.consumers.get(consumerId);
+				const consumer = peer.consumers.get(consumerId);
+
+				if (!consumer)
+					throw new Error(`consumer with id "${consumerId}" not found`);
+
+				consumer.close();
+
+				// Remove from its map.
+				peer.data.consumers.delete(consumer.id);
+
+				accept();
+
+				break;
+			}
+
+			case 'pauseConsumer':
+			{
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
+
+				const { consumerId } = request.data;
+				const consumer = peer.consumers.get(consumerId);
 
 				if (!consumer)
 					throw new Error(`consumer with id "${consumerId}" not found`);
@@ -415,12 +547,12 @@ class Room extends EventEmitter
 
 			case 'resumeConsumer':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { consumerId } = request.data;
-				const consumer = protooPeer.consumers.get(consumerId);
+				const consumer = peer.consumers.get(consumerId);
 
 				if (!consumer)
 					throw new Error(`consumer with id "${consumerId}" not found`);
@@ -434,12 +566,12 @@ class Room extends EventEmitter
 
 			case 'setConsumerPreferedLayers':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { consumerId, spatialLayer, temporalLayer } = request.data;
-				const consumer = protooPeer.consumers.get(consumerId);
+				const consumer = peer.consumers.get(consumerId);
 
 				if (!consumer)
 					throw new Error(`consumer with id "${consumerId}" not found`);
@@ -453,12 +585,12 @@ class Room extends EventEmitter
 
 			case 'requestConsumerKeyFrame':
 			{
-				// Ensure the peer is joined.
-				if (!protooPeer.data.joined)
-					throw new Error('peer not yet joined');
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
 
 				const { consumerId } = request.data;
-				const consumer = protooPeer.consumers.get(consumerId);
+				const consumer = peer.consumers.get(consumerId);
 
 				if (!consumer)
 					throw new Error(`consumer with id "${consumerId}" not found`);
