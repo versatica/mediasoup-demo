@@ -19,7 +19,7 @@ const mediasoup = require('mediasoup');
 const AwaitQueue = require('awaitqueue');
 const Logger = require('./lib/Logger');
 const Room = require('./lib/Room');
-const terminal = require('./lib/terminal');
+const interactive = require('./lib/interactive');
 
 const logger = new Logger();
 
@@ -43,8 +43,8 @@ run();
 
 async function run()
 {
-	// Open the interactive terminal.
-	terminal();
+	// Open the interactive console/terminal.
+	interactive();
 
 	// Run a mediasoup Worker.
 	await runMediasoupWorker();
@@ -136,34 +136,24 @@ async function runProtooWebSocketServer()
 		// roomId.
 		queue.push(async () =>
 		{
-			try
+			let room = rooms.get(roomId);
+
+			// If the Room does not exist create a new one.
+			if (!room)
 			{
-				let room = rooms.get(roomId);
+				logger.info('creating a new Room [roomId:%s]', roomId);
 
-				// If the Room does not exist create a new one.
-				if (!room)
-				{
-					logger.info('creating a new Room [roomId:%s]', roomId);
+				room = await Room.create({ mediasoupWorker, roomId, forceH264 });
 
-					room = await Room.create({ mediasoupWorker, roomId, forceH264 });
-
-					rooms.set(roomId, room);
-					room.on('close', () => rooms.delete(roomId));
-				}
-
-				// Accept the protoo WebSocket connection.
-				const protooWebSocketTransport = accept();
-
-				room.handleProtooConnection({ peerId, protooWebSocketTransport });
+				rooms.set(roomId, room);
+				room.on('close', () => rooms.delete(roomId));
 			}
-			catch (error)
-			{
-				logger.error('error creating a new Room: %o', error);
 
-				reject(error);
+			// Accept the protoo WebSocket connection.
+			const protooWebSocketTransport = accept();
 
-				return;
-			}
-		});
+			room.handleProtooConnection({ peerId, protooWebSocketTransport });
+		})
+			.catch(reject);
 	});
 }

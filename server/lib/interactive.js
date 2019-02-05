@@ -101,11 +101,11 @@ function openCommandConsole()
 					stdinLog('');
 					stdinLog('available commands:');
 					stdinLog('- h,  help               : show this message');
-					stdinLog('- wd, workerdump [pid]   : dump mediasoup Worker with given pid or the latest one');
-					stdinLog('- rd, routerdump [id]    : dump mediasoup Router with given id or the latest one');
-					stdinLog('- td, transportdump [id] : dump mediasoup Transport with given id or the latest one');
-					stdinLog('- pd, producerdump [id]  : dump mediasoup Producer with given id or the latest one');
-					stdinLog('- cd, consumerdump [id]  : dump mediasoup Consumer with given id or the latest one');
+					stdinLog('- wd, workerdump [pid]   : dump mediasoup Worker with given pid (or the latest created one)');
+					stdinLog('- rd, routerdump [id]    : dump mediasoup Router with given id (or the latest created one)');
+					stdinLog('- td, transportdump [id] : dump mediasoup Transport with given id (or the latest created one)');
+					stdinLog('- pd, producerdump [id]  : dump mediasoup Producer with given id (or the latest created one)');
+					stdinLog('- cd, consumerdump [id]  : dump mediasoup Consumer with given id (or the latest created one)');
 					stdinLog('- t,  terminal           : open REPL Terminal');
 					stdinLog('');
 					readStdin();
@@ -121,7 +121,7 @@ function openCommandConsole()
 
 					if (!worker)
 					{
-						stdinError('worker not found');
+						stdinError('Worker not found');
 						readStdin();
 						break;
 					}
@@ -150,7 +150,7 @@ function openCommandConsole()
 
 					if (!router)
 					{
-						stdinError('router not found');
+						stdinError('Router not found');
 						readStdin();
 						break;
 					}
@@ -179,7 +179,7 @@ function openCommandConsole()
 
 					if (!transport)
 					{
-						stdinError('transport not found');
+						stdinError('Transport not found');
 						readStdin();
 						break;
 					}
@@ -208,7 +208,7 @@ function openCommandConsole()
 
 					if (!producer)
 					{
-						stdinError('producer not found');
+						stdinError('Producer not found');
 						readStdin();
 						break;
 					}
@@ -237,7 +237,7 @@ function openCommandConsole()
 
 					if (!consumer)
 					{
-						stdinError('consumer not found');
+						stdinError('Consumer not found');
 						readStdin();
 						break;
 					}
