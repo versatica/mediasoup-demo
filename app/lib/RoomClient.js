@@ -822,34 +822,52 @@ export default class RoomClient
 			stateActions.setAudioOnlyInProgress(false));
 	}
 
-	// TODO
-	// restartIce()
-	// {
-	// 	logger.debug('restartIce()');
+	async restartIce()
+	{
+		logger.debug('restartIce()');
 
-	// 	store.dispatch(
-	// 		stateActions.setRestartIceInProgress(true));
+		store.dispatch(
+			stateActions.setRestartIceInProgress(true));
 
-	// 	return Promise.resolve()
-	// 		.then(() =>
-	// 		{
-	// 			this._room.restartIce();
+		try
+		{
+			if (this._sendTransport)
+			{
+				const iceParameters = await this._protoo.request(
+					'restartIce',
+					{ transportId: this._sendTransport.id });
 
-	// 			// Make it artificially longer.
-	// 			setTimeout(() =>
-	// 			{
-	// 				store.dispatch(
-	// 					stateActions.setRestartIceInProgress(false));
-	// 			}, 500);
-	// 		})
-	// 		.catch((error) =>
-	// 		{
-	// 			logger.error('restartIce() failed: %o', error);
+				await this._sendTransport.restartIce({ iceParameters });
+			}
 
-	// 			store.dispatch(
-	// 				stateActions.setRestartIceInProgress(false));
-	// 		});
-	// }
+			if (this._recvTransport)
+			{
+				const iceParameters = await this._protoo.request(
+					'restartIce',
+					{ transportId: this._recvTransport.id });
+
+				await this._recvTransport.restartIce({ iceParameters });
+			}
+
+			store.dispatch(requestActions.notify(
+				{
+					text : 'ICE restarted'
+				}));
+		}
+		catch (error)
+		{
+			logger.error('restartIce() | failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `ICE restart failed: ${error}`
+				}));
+		}
+
+		store.dispatch(
+			stateActions.setRestartIceInProgress(false));
+	}
 
 	async setConsumerPreferredSpatialLayer(consumerId, spatialLayer)
 	{

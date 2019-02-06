@@ -7,8 +7,4 @@
 
 * Simulcast.
 
-* ICE restart.
-
 * Audio levels.
-
-* Explain the `transport.consume()` with `paused: true` in server side and so on.
