@@ -199,6 +199,62 @@ export default class RoomClient
 			this.close();
 		});
 
+		// eslint-disable-next-line no-unused-vars
+		this._protoo.on('request', async (request, accept, reject) =>
+		{
+			logger.debug(
+				'proto "request" event [method:%s, data:%o]',
+				request.method, request.data);
+
+			switch (request.method)
+			{
+				case 'newConsumer':
+				{
+					const {
+						peerId,
+						producerId,
+						id,
+						kind,
+						rtpParameters,
+						appData,
+						producerPaused
+					} = request.data;
+
+					const consumer = await this._recvTransport.consume(
+						{
+							id,
+							producerId,
+							kind,
+							rtpParameters,
+							appData : { ...appData, peerId } // Trick.
+						});
+
+					// Store in the map.
+					this._consumers.set(consumer.id, consumer);
+
+					store.dispatch(stateActions.addConsumer(
+						{
+							id             : consumer.id,
+							source         : consumer.appData.source,
+							locallyPaused  : false,
+							remotelyPaused : producerPaused,
+							track          : consumer.track,
+							codec          : consumer.rtpParameters.codecs[0].name
+						},
+						peerId));
+
+					// We are ready. Answer the protoo request.
+					accept();
+
+					// If audio-only mode is enabled, pause it.
+					if (consumer.kind === 'video' && store.getState().me.audioOnly)
+						this._pauseConsumer(consumer);
+
+					break;
+				}
+			}
+		});
+
 		this._protoo.on('notification', (notification) =>
 		{
 			logger.debug(
@@ -209,15 +265,15 @@ export default class RoomClient
 			{
 				case 'newPeer':
 				{
-					const peerInfo = notification.data;
-					const { displayName } = peerInfo;
+					const peer = notification.data;
+
+					store.dispatch(
+						stateActions.addPeer({ ...peer, consumers: [] }));
 
 					store.dispatch(requestActions.notify(
 						{
-							text : `${displayName} has joined the room`
+							text : `${peer.displayName} has joined the room`
 						}));
-
-					this._handlePeer(peerInfo);
 
 					break;
 				}
@@ -243,15 +299,6 @@ export default class RoomClient
 						{
 							text : `${oldDisplayName} is now ${displayName}`
 						}));
-
-					break;
-				}
-
-				case 'newProducer':
-				{
-					const { peerId, producerInfo } = notification.data;
-
-					this._createConsume(peerId, producerInfo);
 
 					break;
 				}
@@ -910,7 +957,12 @@ export default class RoomClient
 			if (!this._spy)
 			{
 				const transportInfo = await this._protoo.request(
-					'createWebRtcTransport', { forceTcp: this._forceTcp });
+					'createWebRtcTransport',
+					{
+						forceTcp  : this._forceTcp,
+						producing : true,
+						consuming : false
+					});
 
 				const {
 					id,
@@ -967,7 +1019,12 @@ export default class RoomClient
 			// Create mediasoup Transport for receiving.
 			{
 				const transportInfo = await this._protoo.request(
-					'createWebRtcTransport', { forceTcp: this._forceTcp });
+					'createWebRtcTransport',
+					{
+						forceTcp  : this._forceTcp,
+						producing : false,
+						consuming : true
+					});
 
 				const {
 					id,
@@ -999,7 +1056,7 @@ export default class RoomClient
 			}
 
 			// Join now into the room.
-			const { peerInfos } = await this._protoo.request(
+			const { peers } = await this._protoo.request(
 				'join',
 				{
 					displayName     : this._displayName,
@@ -1020,9 +1077,10 @@ export default class RoomClient
 					timeout : 3000
 				}));
 
-			for (const peerInfo of peerInfos)
+			for (const peer of peers)
 			{
-				this._handlePeer(peerInfo);
+				store.dispatch(
+					stateActions.addPeer({ ...peer, consumers: [] }));
 			}
 
 			// Enable mic/webcam.
@@ -1105,90 +1163,6 @@ export default class RoomClient
 			logger.debug('_getWebcamType() | it seems to be a front camera');
 
 			return 'front';
-		}
-	}
-
-	_handlePeer(peerInfo)
-	{
-		const { peerId, displayName, device, producerInfos } = peerInfo;
-
-		store.dispatch(stateActions.addPeer(
-			{
-				id        : peerId,
-				displayName,
-				device,
-				consumers : []
-			}));
-
-		for (const producerInfo of producerInfos)
-		{
-			this._createConsume(peerId, producerInfo);
-		}
-	}
-
-	async _createConsume(peerId, producerInfo)
-	{
-		const {
-			id,
-			kind, // eslint-disable-line no-unused-vars
-			appData,
-			consumable
-		} = producerInfo;
-
-		// If we cannot consume this remote Producer, ignore it.
-		if (!consumable)
-			return;
-
-		try
-		{
-			// NOTE: Store the associated peerId into the Consumer appData.
-			const consumerInfo = await this._protoo.request(
-				'consume',
-				{
-					transportId : this._recvTransport.id,
-					producerId  : id
-				});
-
-			const consumer = await this._recvTransport.consume(
-				{
-					id            : consumerInfo.id,
-					producerId    : id,
-					kind          : consumerInfo.kind,
-					rtpParameters : consumerInfo.rtpParameters,
-					appData       : { ...appData, peerId }
-				});
-
-			if (consumerInfo.paused || consumerInfo.producerPaused)
-				consumer.pause();
-
-			// Store in the map.
-			this._consumers.set(consumer.id, consumer);
-
-			store.dispatch(stateActions.addConsumer(
-				{
-					id             : consumer.id,
-					source         : consumer.appData.source,
-					locallyPaused  : consumerInfo.paused,
-					remotelyPaused : consumerInfo.producerPaused,
-					track          : consumer.track,
-					codec          : consumer.rtpParameters.codecs[0].name
-				},
-				peerId));
-
-			// We know that the serve-side Consumer is created paused, so resume now
-			// that we are ready (unless it's video and we are in audio-only mode).
-			if (consumer.kind !== 'video' || !store.getState().me.audioOnly)
-				this._resumeConsumer(consumer);
-		}
-		catch (error)
-		{
-			logger.error('_createConsume() | failed:%o', error);
-
-			store.dispatch(requestActions.notify(
-				{
-					type : 'error',
-					text : `Error creating Consumer: ${error}`
-				}));
 		}
 	}
 
