@@ -176,8 +176,8 @@ export default class PeerView extends React.Component
 									shouldBlockWhileLoading
 									editProps={{
 										maxLength   : 20,
-										autoCorrect : false,
-										spellCheck  : false
+										autoCorrect : 'false',
+										spellCheck  : 'false'
 									}}
 									onChange={({ displayName }) => onChangeDisplayName(displayName)}
 								/>
@@ -255,6 +255,8 @@ export default class PeerView extends React.Component
 
 	_setTracks(audioTrack, videoTrack)
 	{
+		const { faceDetection } = this.props;
+
 		if (this._audioTrack === audioTrack && this._videoTrack === videoTrack)
 			return;
 
@@ -265,7 +267,9 @@ export default class PeerView extends React.Component
 			this._hark.stop();
 
 		this._stopVideoResolution();
-		this._stopFaceDetection();
+
+		if (faceDetection)
+			this._stopFaceDetection();
 
 		const { video } = this.refs;
 
@@ -287,7 +291,9 @@ export default class PeerView extends React.Component
 			if (videoTrack)
 			{
 				this._startVideoResolution();
-				this._startFaceDetection();
+
+				if (faceDetection)
+					this._startFaceDetection();
 			}
 		}
 		else
@@ -358,9 +364,6 @@ export default class PeerView extends React.Component
 
 	_startFaceDetection()
 	{
-		if (!window.DEMO_DO_FACE_DETECTION)
-			return;
-
 		const { video, canvas } = this.refs;
 
 		const step = () =>
@@ -428,6 +431,7 @@ PeerView.propTypes =
 	videoPreferredProfile         : PropTypes.string,
 	audioCodec                    : PropTypes.string,
 	videoCodec                    : PropTypes.string,
+	faceDetection                 : PropTypes.bool.isRequired,
 	onChangeDisplayName           : PropTypes.func,
 	onChangeVideoPreferredProfile : PropTypes.func,
 	onRequestKeyFrame             : PropTypes.func

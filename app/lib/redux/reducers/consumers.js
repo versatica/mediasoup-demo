@@ -4,6 +4,16 @@ const consumers = (state = initialState, action) =>
 {
 	switch (action.type)
 	{
+		case 'SET_ROOM_STATE':
+		{
+			const roomState = action.payload.state;
+
+			if (roomState === 'closed')
+				return {};
+			else
+				return state;
+		}
+
 		case 'ADD_CONSUMER':
 		{
 			const { consumer } = action.payload;
@@ -49,20 +59,20 @@ const consumers = (state = initialState, action) =>
 			return { ...state, [consumerId]: newConsumer };
 		}
 
-		case 'SET_CONSUMER_EFFECTIVE_PROFILE':
+		case 'SET_CONSUMER_CURRENT_SPATIAL_LAYER':
 		{
-			const { consumerId, profile } = action.payload;
+			const { consumerId, spatialLayer } = action.payload;
 			const consumer = state[consumerId];
-			const newConsumer = { ...consumer, profile };
+			const newConsumer = { ...consumer, currentSpatialLayer: spatialLayer };
 
 			return { ...state, [consumerId]: newConsumer };
 		}
 
-		case 'SET_CONSUMER_PREFERRED_PROFILE':
+		case 'SET_CONSUMER_PREFERRED_SPATIAL_LAYER':
 		{
-			const { consumerId, profile } = action.payload;
+			const { consumerId, spatialLayer } = action.payload;
 			const consumer = state[consumerId];
-			const newConsumer = { ...consumer, preferredProfile: profile };
+			const newConsumer = { ...consumer, preferredSpatialLayer: spatialLayer };
 
 			return { ...state, [consumerId]: newConsumer };
 		}
@@ -77,7 +87,9 @@ const consumers = (state = initialState, action) =>
 		}
 
 		default:
+		{
 			return state;
+		}
 	}
 };
 

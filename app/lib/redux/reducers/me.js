@@ -1,6 +1,6 @@
 const initialState =
 {
-	name                 : null,
+	id                   : null,
 	displayName          : null,
 	displayNameSet       : false,
 	device               : null,
@@ -17,11 +17,31 @@ const me = (state = initialState, action) =>
 {
 	switch (action.type)
 	{
+		case 'SET_ROOM_STATE':
+		{
+			const roomState = action.payload.state;
+
+			if (roomState === 'closed')
+			{
+				return {
+					...state,
+					webcamInProgress     : false,
+					audioOnly            : false,
+					audioOnlyInProgress  : false,
+					restartIceInProgress : false
+				};
+			}
+			else
+			{
+				return state;
+			}
+		}
+
 		case 'SET_ME':
 		{
-			const { peerName, displayName, displayNameSet, device } = action.payload;
+			const { peerId, displayName, displayNameSet, device } = action.payload;
 
-			return { ...state, name: peerName, displayName, displayNameSet, device };
+			return { ...state, id: peerId, displayName, displayNameSet, device };
 		}
 
 		case 'SET_MEDIA_CAPABILITIES':

@@ -9,12 +9,12 @@ import {
 } from 'redux';
 import thunk from 'redux-thunk';
 import { createLogger as createReduxLogger } from 'redux-logger';
-import { getDeviceInfo } from 'mediasoup-client';
 import randomString from 'random-string';
-import randomName from 'node-random-name';
 import * as faceapi from 'face-api.js';
 import Logger from './Logger';
 import * as utils from './utils';
+import randomName from './randomName';
+import deviceInfo from './deviceInfo';
 import RoomClient from './RoomClient';
 import RoomContext from './RoomContext';
 import * as cookiesManager from './cookiesManager';
@@ -45,42 +45,37 @@ const store = createReduxStore(
 	applyReduxMiddleware(...reduxMiddlewares)
 );
 
+global.STORE = store;
+
 RoomClient.init({ store });
 
-const urlParser = new UrlParse(window.location.href, true);
-
-// Enable face detection on demand.
-window.DEMO_DO_FACE_DETECTION = urlParser.query.faceDetection === 'true';
-
-domready(() =>
+domready(async () =>
 {
 	logger.debug('DOM ready');
 
-	// Load stuff and run.
-	Promise.resolve()
-		.then(() => utils.initialize())
-		.then(() =>
-		{
-			if (!window.DEMO_DO_FACE_DETECTION)
-				return;
+	await utils.initialize();
 
-			return faceapi.loadTinyFaceDetectorModel('/resources/face-detector-models');
-		})
-		.then(() => run());
+	run();
 });
 
-function run()
+async function run()
 {
 	logger.debug('run() [environment:%s]', process.env.NODE_ENV);
 
-	const peerName = randomString({ length: 8 }).toLowerCase();
+	const urlParser = new UrlParse(window.location.href, true);
+	const peerId = randomString({ length: 8 }).toLowerCase();
 	let roomId = urlParser.query.roomId;
-	let displayName = urlParser.query.displayName;
-	const isSipEndpoint = urlParser.query.sipEndpoint === 'true';
+	let displayName =
+		urlParser.query.displayName || (cookiesManager.getUser() || {}).displayName;
 	const useSimulcast = urlParser.query.simulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
 	const spy = urlParser.query.spy === 'true';
 	const forceH264 = urlParser.query.forceH264 === 'true';
+	const faceDetection = urlParser.query.faceDetection === 'true';
+
+	// Enable face detection on demand.
+	if (faceDetection)
+		await faceapi.loadTinyFaceDetectorModel('/resources/face-detector-models');
 
 	if (!roomId)
 	{
@@ -109,42 +104,34 @@ function run()
 
 	const roomUrl = roomUrlParser.toString();
 
-	// Get displayName from cookie (if not already given as param).
-	const userCookie = cookiesManager.getUser() || {};
 	let displayNameSet;
 
-	if (!displayName)
-		displayName = userCookie.displayName;
-
+	// If displayName was provided via URL or Cookie, we are done.
 	if (displayName)
 	{
 		displayNameSet = true;
 	}
+	// Otherwise pick a random name and mark as "not set".
 	else
 	{
-		displayName = randomName();
 		displayNameSet = false;
+		displayName = randomName();
 	}
 
-	// Get current device.
-	const device = getDeviceInfo();
-
-	// If a SIP endpoint mangle device info.
-	if (isSipEndpoint)
-	{
-		device.flag = 'sipendpoint';
-		device.name = 'SIP Endpoint';
-		device.version = undefined;
-	}
+	// Get current device info.
+	const device = deviceInfo();
 
 	store.dispatch(
 		stateActions.setRoomUrl(roomUrl));
 
 	store.dispatch(
-		stateActions.setMe({ peerName, displayName, displayNameSet, device }));
+		stateActions.setRoomFaceDetection(faceDetection));
+
+	store.dispatch(
+		stateActions.setMe({ peerId, displayName, displayNameSet, device }));
 
 	roomClient = new RoomClient(
-		{ roomId, peerName, displayName, device, useSimulcast, forceTcp, spy, forceH264 });
+		{ roomId, peerId, displayName, device, useSimulcast, forceTcp, spy, forceH264 });
 
 	// NOTE: For debugging.
 	global.CLIENT = roomClient;
@@ -160,178 +147,6 @@ function run()
 }
 
 // NOTE: Debugging stuff.
-
-let sendTransport;
-let recvTransport;
-let micProducer;
-let webcamProducer;
-let micConsumer;
-let webcamConsumer;
-
-setInterval(() =>
-{
-	if (!roomClient)
-		return;
-
-	sendTransport = roomClient._sendTransport;
-	recvTransport = roomClient._recvTransport;
-	micProducer = roomClient._micProducer;
-	webcamProducer = roomClient._webcamProducer;
-
-	if (roomClient._room.peers[0])
-	{
-		const peer = roomClient._room.peers[0];
-
-		micConsumer = peer.consumers.find((c) => c.kind === 'audio');
-		webcamConsumer = peer.consumers.find((c) => c.kind === 'video');
-	}
-	else
-	{
-		micConsumer = undefined;
-		webcamConsumer = undefined;
-	}
-
-	if (sendTransport)
-		global.PC1 = sendTransport._handler._pc;
-
-	if (recvTransport)
-		global.PC2 = recvTransport._handler._pc;
-
-	if (sendTransport && webcamProducer)
-		global.WEBCAM_SENDER = sendTransport._handler._pc.getSenders()[1];
-}, 2000);
-
-global.__enableSendTransportStats = function()
-{
-	if (!sendTransport)
-	{
-		logger.warn('no send transport producer');
-
-		return;
-	}
-
-	sendTransport.enableStats(5000);
-	sendTransport.on('stats', (stats) => printStats('send transport producer stats', stats));
-};
-
-global.__disableSendTransportStats = function()
-{
-	if (!sendTransport)
-		return;
-
-	sendTransport.disableStats();
-	sendTransport.removeAllListeners('stats');
-};
-
-global.__enableRecvTransportStats = function()
-{
-	if (!recvTransport)
-	{
-		logger.warn('no recv transport producer');
-
-		return;
-	}
-
-	recvTransport.enableStats(5000);
-	recvTransport.on('stats', (stats) => printStats('recv transport producer stats', stats));
-};
-
-global.__disableRecvTransportStats = function()
-{
-	if (!recvTransport)
-		return;
-
-	recvTransport.disableStats();
-	recvTransport.removeAllListeners('stats');
-};
-
-global.__enableMicProducerStats = function()
-{
-	if (!micProducer)
-	{
-		logger.warn('no mic producer');
-
-		return;
-	}
-
-	micProducer.enableStats(5000);
-	micProducer.on('stats', (stats) => printStats('mic producer stats', stats));
-};
-
-global.__disableMicProducerStats = function()
-{
-	if (!micProducer)
-		return;
-
-	micProducer.disableStats();
-	micProducer.removeAllListeners('stats');
-};
-
-global.__enableWebcamProducerStats = function()
-{
-	if (!webcamProducer)
-	{
-		logger.warn('no webcam producer');
-
-		return;
-	}
-
-	webcamProducer.enableStats(5000);
-	webcamProducer.on('stats', (stats) => printStats('webcam producer stats', stats));
-};
-
-global.__disableWebcamProducerStats = function()
-{
-	if (!webcamProducer)
-		return;
-
-	webcamProducer.disableStats();
-	webcamProducer.removeAllListeners('stats');
-};
-
-global.__enableMicConsumerStats = function()
-{
-	if (!micConsumer)
-	{
-		logger.warn('no mic consumer');
-
-		return;
-	}
-
-	micConsumer.enableStats(5000);
-	micConsumer.on('stats', (stats) => printStats('first mic consumer stats', stats));
-};
-
-global.__disableMicConsumerStats = function()
-{
-	if (!micConsumer)
-		return;
-
-	micConsumer.disableStats();
-	micConsumer.removeAllListeners('stats');
-};
-
-global.__enableWebcamConsumerStats = function()
-{
-	if (!webcamConsumer)
-	{
-		logger.warn('no webcam consumer');
-
-		return;
-	}
-
-	webcamConsumer.enableStats(5000);
-	webcamConsumer.on('stats', (stats) => printStats('first webcam consumer stats', stats));
-};
-
-global.__disableWebcamConsumerStats = function()
-{
-	if (!webcamConsumer)
-		return;
-
-	webcamConsumer.disableStats();
-	webcamConsumer.removeAllListeners('stats');
-};
 
 global.__showSendSdps = function()
 {
@@ -354,9 +169,3 @@ global.__showRecvSdps = function()
 	logger.warn(
 		roomClient._recvTransport._handler._pc.localDescription.sdp);
 };
-
-function printStats(title, stats)
-{
-	logger.warn('>>> %s:', title);
-	logger.warn(JSON.stringify(stats, null, '  '));
-}

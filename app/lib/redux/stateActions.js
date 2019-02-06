@@ -14,19 +14,27 @@ export const setRoomState = (state) =>
 	};
 };
 
-export const setRoomActiveSpeaker = (peerName) =>
+export const setRoomActiveSpeaker = (peerId) =>
 {
 	return {
 		type    : 'SET_ROOM_ACTIVE_SPEAKER',
-		payload : { peerName }
+		payload : { peerId }
 	};
 };
 
-export const setMe = ({ peerName, displayName, displayNameSet, device }) =>
+export const setRoomFaceDetection = (flag) =>
+{
+	return {
+		type    : 'SET_FACE_DETECTION',
+		payload : flag
+	};
+};
+
+export const setMe = ({ peerId, displayName, displayNameSet, device }) =>
 {
 	return {
 		type    : 'SET_ME',
-		payload : { peerName, displayName, displayNameSet, device }
+		payload : { peerId, displayName, displayNameSet, device }
 	};
 };
 
@@ -94,19 +102,19 @@ export const removeProducer = (producerId) =>
 	};
 };
 
-export const setProducerPaused = (producerId, originator) =>
+export const setProducerPaused = (producerId) =>
 {
 	return {
 		type    : 'SET_PRODUCER_PAUSED',
-		payload : { producerId, originator }
+		payload : { producerId }
 	};
 };
 
-export const setProducerResumed = (producerId, originator) =>
+export const setProducerResumed = (producerId) =>
 {
 	return {
 		type    : 'SET_PRODUCER_RESUMED',
-		payload : { producerId, originator }
+		payload : { producerId }
 	};
 };
 
@@ -134,35 +142,35 @@ export const addPeer = (peer) =>
 	};
 };
 
-export const removePeer = (peerName) =>
+export const removePeer = (peerId) =>
 {
 	return {
 		type    : 'REMOVE_PEER',
-		payload : { peerName }
+		payload : { peerId }
 	};
 };
 
-export const setPeerDisplayName = (displayName, peerName) =>
+export const setPeerDisplayName = (displayName, peerId) =>
 {
 	return {
 		type    : 'SET_PEER_DISPLAY_NAME',
-		payload : { displayName, peerName }
+		payload : { displayName, peerId }
 	};
 };
 
-export const addConsumer = (consumer, peerName) =>
+export const addConsumer = (consumer, peerId) =>
 {
 	return {
 		type    : 'ADD_CONSUMER',
-		payload : { consumer, peerName }
+		payload : { consumer, peerId }
 	};
 };
 
-export const removeConsumer = (consumerId, peerName) =>
+export const removeConsumer = (consumerId, peerId) =>
 {
 	return {
 		type    : 'REMOVE_CONSUMER',
-		payload : { consumerId, peerName }
+		payload : { consumerId, peerId }
 	};
 };
 
@@ -182,19 +190,19 @@ export const setConsumerResumed = (consumerId, originator) =>
 	};
 };
 
-export const setConsumerEffectiveProfile = (consumerId, profile) =>
+export const setConsumerCurrentSpatialLayer = (consumerId, spatialLayer) =>
 {
 	return {
-		type    : 'SET_CONSUMER_EFFECTIVE_PROFILE',
-		payload : { consumerId, profile }
+		type    : 'SET_CONSUMER_CURRENT_SPATIAL_LAYER',
+		payload : { consumerId, spatialLayer }
 	};
 };
 
-export const setConsumerPreferredProfile = (consumerId, profile) =>
+export const setConsumerPreferredSpatialLayer = (consumerId, spatialLayer) =>
 {
 	return {
-		type    : 'SET_CONSUMER_PREFERRED_PROFILE',
-		payload : { consumerId, profile }
+		type    : 'SET_CONSUMER_PREFERRED_SPATIAL_LAYER',
+		payload : { consumerId, spatialLayer }
 	};
 };
 

@@ -11,7 +11,8 @@ const Peer = (props) =>
 		roomClient,
 		peer,
 		micConsumer,
-		webcamConsumer
+		webcamConsumer,
+		faceDetection
 	} = props;
 
 	const micEnabled = (
@@ -43,16 +44,10 @@ const Peer = (props) =>
 					<div className='icon mic-off' />
 				</If>
 
-				<If condition={!videoVisible}>
+				<If condition={!webcamConsumer}>
 					<div className='icon webcam-off' />
 				</If>
 			</div>
-
-			<If condition={videoVisible && !webcamConsumer.supported}>
-				<div className='incompatible-video'>
-					<p>incompatible video</p>
-				</div>
-			</If>
 
 			<PeerView
 				peer={peer}
@@ -63,6 +58,7 @@ const Peer = (props) =>
 				videoPreferredProfile={videoPreferredProfile}
 				audioCodec={micConsumer ? micConsumer.codec : null}
 				videoCodec={webcamConsumer ? webcamConsumer.codec : null}
+				faceDetection={faceDetection}
 				onChangeVideoPreferredProfile={(profile) =>
 				{
 					roomClient.changeConsumerPreferredProfile(webcamConsumer.id, profile);
@@ -81,12 +77,13 @@ Peer.propTypes =
 	roomClient     : PropTypes.any.isRequired,
 	peer           : appPropTypes.Peer.isRequired,
 	micConsumer    : appPropTypes.Consumer,
-	webcamConsumer : appPropTypes.Consumer
+	webcamConsumer : appPropTypes.Consumer,
+	faceDetection  : PropTypes.bool.isRequired
 };
 
-const mapStateToProps = (state, { name }) =>
+const mapStateToProps = (state, { id }) =>
 {
-	const peer = state.peers[name];
+	const peer = state.peers[id];
 	const consumersArray = peer.consumers
 		.map((consumerId) => state.consumers[consumerId]);
 	const micConsumer =
@@ -97,7 +94,8 @@ const mapStateToProps = (state, { name }) =>
 	return {
 		peer,
 		micConsumer,
-		webcamConsumer
+		webcamConsumer,
+		faceDetection : state.room.faceDetection
 	};
 };
 

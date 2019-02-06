@@ -1,7 +1,7 @@
-export function getProtooUrl(peerName, roomId, forceH264)
+export function getProtooUrl({ roomId, peerId, forceH264 })
 {
 	const hostname = window.location.hostname;
-	let url = `wss://${hostname}:3443/?peerName=${peerName}&roomId=${roomId}`;
+	let url = `wss://${hostname}:3443/?roomId=${roomId}&peerId=${peerId}`;
 
 	if (forceH264)
 		url = `${url}&forceH264=true`;

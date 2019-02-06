@@ -12,101 +12,112 @@ import Me from './Me';
 import Peers from './Peers';
 import Notifications from './Notifications';
 
-const Room = (
-	{
-		roomClient,
-		room,
-		me,
-		amActiveSpeaker,
-		onRoomLinkCopy
-	}) =>
+class Room extends React.Component
 {
-	return (
-		<Appear duration={300}>
-			<div data-component='Room'>
-				<Notifications />
+	render()
+	{
+		const {
+			roomClient,
+			room,
+			me,
+			amActiveSpeaker,
+			onRoomLinkCopy
+		}	= this.props;
 
-				<div className='state'>
-					<div className={classnames('icon', room.state)} />
-					<p className={classnames('text', room.state)}>{room.state}</p>
-				</div>
+		return (
+			<Appear duration={300}>
+				<div data-component='Room'>
+					<Notifications />
 
-				<div className='room-link-wrapper'>
-					<div className='room-link'>
-						<a
-							className='link'
-							href={room.url}
-							target='_blank'
-							rel='noopener noreferrer'
-							onClick={(event) =>
-							{
-								// If this is a 'Open in new window/tab' don't prevent
-								// click default action.
-								if (
-									event.ctrlKey || event.shiftKey || event.metaKey ||
-									// Middle click (IE > 9 and everyone else).
-									(event.button && event.button === 1)
-								)
-								{
-									return;
-								}
-
-								event.preventDefault();
-
-								clipboardCopy(room.url)
-									.then(onRoomLinkCopy);
-							}}
-						>
-							invitation link
-						</a>
+					<div className='state'>
+						<div className={classnames('icon', room.state)} />
+						<p className={classnames('text', room.state)}>{room.state}</p>
 					</div>
-				</div>
 
-				<Peers />
+					<div className='room-link-wrapper'>
+						<div className='room-link'>
+							<a
+								className='link'
+								href={room.url}
+								target='_blank'
+								rel='noopener noreferrer'
+								onClick={(event) =>
+								{
+									// If this is a 'Open in new window/tab' don't prevent
+									// click default action.
+									if (
+										event.ctrlKey || event.shiftKey || event.metaKey ||
+										// Middle click (IE > 9 and everyone else).
+										(event.button && event.button === 1)
+									)
+									{
+										return;
+									}
 
-				<div
-					className={classnames('me-container', {
-						'active-speaker' : amActiveSpeaker
-					})}
-				>
-					<Me />
-				</div>
+									event.preventDefault();
 
-				<div className='sidebar'>
+									clipboardCopy(room.url)
+										.then(onRoomLinkCopy);
+								}}
+							>
+								invitation link
+							</a>
+						</div>
+					</div>
+
+					<Peers />
+
 					<div
-						className={classnames('button', 'audio-only', {
-							on       : me.audioOnly,
-							disabled : me.audioOnlyInProgress
+						className={classnames('me-container', {
+							'active-speaker' : amActiveSpeaker
 						})}
-						data-tip='Toggle audio only mode'
-						data-type='dark'
-						onClick={() =>
-						{
-							me.audioOnly
-								? roomClient.disableAudioOnly()
-								: roomClient.enableAudioOnly();
-						}}
-					/>
+					>
+						<Me />
+					</div>
 
-					<div
-						className={classnames('button', 'restart-ice', {
-							disabled : me.restartIceInProgress
-						})}
-						data-tip='Restart ICE'
-						data-type='dark'
-						onClick={() => roomClient.restartIce()}
+					<div className='sidebar'>
+						<div
+							className={classnames('button', 'audio-only', {
+								on       : me.audioOnly,
+								disabled : me.audioOnlyInProgress
+							})}
+							data-tip='Toggle audio only mode'
+							data-type='dark'
+							onClick={() =>
+							{
+								me.audioOnly
+									? roomClient.disableAudioOnly()
+									: roomClient.enableAudioOnly();
+							}}
+						/>
+
+						<div
+							className={classnames('button', 'restart-ice', {
+								disabled : me.restartIceInProgress
+							})}
+							data-tip='Restart ICE'
+							data-type='dark'
+							onClick={() => roomClient.restartIce()}
+						/>
+					</div>
+
+					<ReactTooltip
+						effect='solid'
+						delayShow={100}
+						delayHide={100}
 					/>
 				</div>
+			</Appear>
+		);
+	}
 
-				<ReactTooltip
-					effect='solid'
-					delayShow={100}
-					delayHide={100}
-				/>
-			</div>
-		</Appear>
-	);
-};
+	componentDidMount()
+	{
+		const { roomClient }	= this.props;
+
+		roomClient.join();
+	}
+}
 
 Room.propTypes =
 {

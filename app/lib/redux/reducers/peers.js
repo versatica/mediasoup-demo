@@ -4,40 +4,50 @@ const peers = (state = initialState, action) =>
 {
 	switch (action.type)
 	{
+		case 'SET_ROOM_STATE':
+		{
+			const roomState = action.payload.state;
+
+			if (roomState === 'closed')
+				return {};
+			else
+				return state;
+		}
+
 		case 'ADD_PEER':
 		{
 			const { peer } = action.payload;
 
-			return { ...state, [peer.name]: peer };
+			return { ...state, [peer.id]: peer };
 		}
 
 		case 'REMOVE_PEER':
 		{
-			const { peerName } = action.payload;
+			const { peerId } = action.payload;
 			const newState = { ...state };
 
-			delete newState[peerName];
+			delete newState[peerId];
 
 			return newState;
 		}
 
 		case 'SET_PEER_DISPLAY_NAME':
 		{
-			const { displayName, peerName } = action.payload;
-			const peer = state[peerName];
+			const { displayName, peerId } = action.payload;
+			const peer = state[peerId];
 
 			if (!peer)
 				throw new Error('no Peer found');
 
 			const newPeer = { ...peer, displayName };
 
-			return { ...state, [newPeer.name]: newPeer };
+			return { ...state, [newPeer.id]: newPeer };
 		}
 
 		case 'ADD_CONSUMER':
 		{
-			const { consumer, peerName } = action.payload;
-			const peer = state[peerName];
+			const { consumer, peerId } = action.payload;
+			const peer = state[peerId];
 
 			if (!peer)
 				throw new Error('no Peer found for new Consumer');
@@ -45,13 +55,13 @@ const peers = (state = initialState, action) =>
 			const newConsumers = [ ...peer.consumers, consumer.id ];
 			const newPeer = { ...peer, consumers: newConsumers };
 
-			return { ...state, [newPeer.name]: newPeer };
+			return { ...state, [newPeer.id]: newPeer };
 		}
 
 		case 'REMOVE_CONSUMER':
 		{
-			const { consumerId, peerName } = action.payload;
-			const peer = state[peerName];
+			const { consumerId, peerId } = action.payload;
+			const peer = state[peerId];
 
 			// NOTE: This means that the Peer was closed before, so it's ok.
 			if (!peer)
@@ -68,7 +78,7 @@ const peers = (state = initialState, action) =>
 
 			const newPeer = { ...peer, consumers: newConsumers };
 
-			return { ...state, [newPeer.name]: newPeer };
+			return { ...state, [newPeer.id]: newPeer };
 		}
 
 		default:

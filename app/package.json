@@ -7,10 +7,11 @@
   "license": "All Rights Reserved",
   "main": "lib/index.jsx",
   "scripts": {
-    "lint": "eslint -c .eslintrc.js lib"
+    "lint": "eslint -c .eslintrc.js --ext .js,.jsx gulpfile.js lib"
   },
   "dependencies": {
     "@babel/runtime": "^7.3.1",
+    "bowser": "^2.1.0",
     "classnames": "^2.2.6",
     "clipboard-copy": "^2.0.1",
     "debug": "^4.1.1",
@@ -19,9 +20,9 @@
     "hark": "^1.2.3",
     "js-cookie": "^2.2.0",
     "mediasoup-client": "^2.4.9",
-    "node-random-name": "^1.0.1",
+    "pokemon": "^1.2.3",
     "prop-types": "^15.6.2",
-    "protoo-client": "^3.0.3",
+    "protoo-client": "^4.0.1",
     "random-string": "^0.2.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",

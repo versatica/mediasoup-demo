@@ -4,6 +4,16 @@ const producers = (state = initialState, action) =>
 {
 	switch (action.type)
 	{
+		case 'SET_ROOM_STATE':
+		{
+			const roomState = action.payload.state;
+
+			if (roomState === 'closed')
+				return {};
+			else
+				return state;
+		}
+
 		case 'ADD_PRODUCER':
 		{
 			const { producer } = action.payload;
@@ -23,28 +33,18 @@ const producers = (state = initialState, action) =>
 
 		case 'SET_PRODUCER_PAUSED':
 		{
-			const { producerId, originator } = action.payload;
+			const { producerId } = action.payload;
 			const producer = state[producerId];
-			let newProducer;
-
-			if (originator === 'local')
-				newProducer = { ...producer, locallyPaused: true };
-			else
-				newProducer = { ...producer, remotelyPaused: true };
+			const newProducer = { ...producer, paused: true };
 
 			return { ...state, [producerId]: newProducer };
 		}
 
 		case 'SET_PRODUCER_RESUMED':
 		{
-			const { producerId, originator } = action.payload;
+			const { producerId } = action.payload;
 			const producer = state[producerId];
-			let newProducer;
-
-			if (originator === 'local')
-				newProducer = { ...producer, locallyPaused: false };
-			else
-				newProducer = { ...producer, remotelyPaused: false };
+			const newProducer = { ...producer, paused: false };
 
 			return { ...state, [producerId]: newProducer };
 		}

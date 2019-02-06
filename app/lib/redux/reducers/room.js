@@ -1,8 +1,9 @@
 const initialState =
 {
-	url               : null,
-	state             : 'new', // new/connecting/connected/disconnected/closed,
-	activeSpeakerName : null
+	url             : null,
+	state           : 'new', // new/connecting/connected/disconnected/closed,
+	activeSpeakerId : null,
+	faceDetection   : false
 };
 
 const room = (state = initialState, action) =>
@@ -20,17 +21,24 @@ const room = (state = initialState, action) =>
 		{
 			const roomState = action.payload.state;
 
-			if (roomState == 'connected')
+			if (roomState === 'connected')
 				return { ...state, state: roomState };
 			else
-				return { ...state, state: roomState, activeSpeakerName: null };
+				return { ...state, state: roomState, activeSpeakerId: null };
 		}
 
 		case 'SET_ROOM_ACTIVE_SPEAKER':
 		{
-			const { peerName } = action.payload;
+			const { peerId } = action.payload;
 
-			return { ...state, activeSpeakerName: peerName };
+			return { ...state, activeSpeakerId: peerId };
+		}
+
+		case 'SET_FACE_DETECTION':
+		{
+			const flag = action.payload;
+
+			return { ...state, faceDetection: flag };
 		}
 
 		default:
