@@ -320,6 +320,14 @@ class Room extends EventEmitter
 				// Store the Producer into the protoo Peer data Object.
 				peer.data.producers.set(producer.id, producer);
 
+				// Set Producer events.
+				producer.on('score', (score) =>
+				{
+					logger.debug(
+						'producer "score" event [producerId:%s, score:%o]',
+						producer.id, score);
+				});
+
 				accept({ id: producer.id });
 
 				// Optimization: Create a server-side Consumer for each Peer.
@@ -621,6 +629,13 @@ class Room extends EventEmitter
 		{
 			consumerPeer.notify('consumerResumed', { consumerId: consumer.id })
 				.catch(() => {});
+		});
+
+		consumer.on('score', (score) =>
+		{
+			logger.debug(
+				'consumer "score" event [consumerId:%s, score:%o]',
+				consumer.id, score);
 		});
 
 		consumer.on('layerschange', (layers) =>

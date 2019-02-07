@@ -232,6 +232,11 @@ export default class RoomClient
 					// Store in the map.
 					this._consumers.set(consumer.id, consumer);
 
+					consumer.on('transportclose', () =>
+					{
+						this._consumers.delete(consumer.id);
+					});
+
 					store.dispatch(stateActions.addConsumer(
 						{
 							id             : consumer.id,
@@ -311,10 +316,10 @@ export default class RoomClient
 					if (!consumer)
 						break;
 
-					const { peerId } = consumer.appData;
-
 					consumer.close();
 					this._consumers.delete(consumerId);
+
+					const { peerId } = consumer.appData;
 
 					store.dispatch(
 						stateActions.removeConsumer(consumerId, peerId));
