@@ -1,6 +1,6 @@
 {
   "name": "mediasoup-demo-app",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "description": "mediasoup demo app",
   "author": "Iñaki Baz Castillo <ibc@aliax.net>",
@@ -19,7 +19,7 @@
     "face-api.js": "^0.18.0",
     "hark": "^1.2.3",
     "js-cookie": "^2.2.0",
-    "mediasoup-client": "^2.4.9",
+    "mediasoup-client": "^3.0.0",
     "pokemon": "^1.2.3",
     "prop-types": "^15.6.2",
     "protoo-client": "^4.0.1",

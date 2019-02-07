@@ -16,7 +16,7 @@ module.exports =
 	protoo :
 	{
 		listenIp   : '0.0.0.0',
-		listenPort : 3443, // NOTE: Don't change it (client app assumes 3443).
+		listenPort : 4443, // NOTE: Don't change it (client app assumes 4443).
 		tls        :
 		{
 			cert : `${__dirname}/certs/mediasoup-demo.localhost.cert.pem`,

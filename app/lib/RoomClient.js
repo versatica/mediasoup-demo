@@ -677,6 +677,10 @@ export default class RoomClient
 			if (!this._webcam.device)
 				throw new Error('no webcam devices');
 
+			// Closing the current video track before asking for a new one (mobiles do not like
+			// having both front/back cameras open at the same time).
+			this._webcamProducer.track.stop();
+
 			logger.debug('changeWebcam() | calling getUserMedia()');
 
 			const stream = await navigator.mediaDevices.getUserMedia(
@@ -690,7 +694,7 @@ export default class RoomClient
 
 			const track = stream.getVideoTracks()[0];
 
-			await this._webcamProducer.replaceTrack(track);
+			await this._webcamProducer.replaceTrack({ track });
 
 			store.dispatch(
 				stateActions.setProducerTrack(this._webcamProducer.id, track));
@@ -747,7 +751,7 @@ export default class RoomClient
 
 			const track = stream.getVideoTracks()[0];
 
-			await this._webcamProducer.replaceTrack(track);
+			await this._webcamProducer.replaceTrack({ track });
 
 			store.dispatch(
 				stateActions.setProducerTrack(this._webcamProducer.id, track));
@@ -1165,7 +1169,7 @@ export default class RoomClient
 			this._webcam.device = array[0];
 
 		store.dispatch(
-			stateActions.setCanChangeWebcam(this._webcams.size >= 2));
+			stateActions.setCanChangeWebcam(this._webcams.size > 1));
 	}
 
 	_getWebcamType(device)
