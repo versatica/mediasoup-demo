@@ -38,8 +38,9 @@ module.exports =
 				'rtp',
 				'srtp',
 				'rtcp',
+				// 'rtx',
 				// 'rbe',
-				// 'rtx'
+				// 'score'
 			],
 			rtcMinPort : 40000,
 			rtcMaxPort : 49999
