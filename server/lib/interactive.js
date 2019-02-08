@@ -17,27 +17,42 @@ module.exports = function()
 	// Run the mediasoup observer API.
 	mediasoup.observer.on('observer:newworker', (worker) =>
 	{
+		// Store the latest worker in a global variable.
+		global.worker = worker;
+
 		workers.set(worker.pid, worker);
 		worker.on('observer:close', () => workers.delete(worker.pid));
 
 		worker.on('observer:newrouter', (router) =>
 		{
+			// Store the latest router in a global variable.
+			global.router = router;
+
 			routers.set(router.id, router);
 			router.on('observer:close', () => routers.delete(router.id));
 
 			router.on('observer:newtransport', (transport) =>
 			{
+				// Store the latest transport in a global variable.
+				global.transport = transport;
+
 				transports.set(transport.id, transport);
 				transport.on('observer:close', () => transports.delete(transport.id));
 
 				transport.on('observer:newproducer', (producer) =>
 				{
+					// Store the latest producer in a global variable.
+					global.producer = producer;
+
 					producers.set(producer.id, producer);
 					producer.on('observer:close', () => producers.delete(producer.id));
 				});
 
 				transport.on('observer:newconsumer', (consumer) =>
 				{
+					// Store the latest consumer in a global variable.
+					global.consumer = consumer;
+
 					consumers.set(consumer.id, consumer);
 					consumer.on('observer:close', () => consumers.delete(consumer.id));
 				});
