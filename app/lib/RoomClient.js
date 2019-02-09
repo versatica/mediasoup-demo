@@ -163,9 +163,6 @@ export default class RoomClient
 				}));
 		});
 
-		// Wait for the protoo connection to be done.
-		await new Promise((resolve) => this._protoo.on('open', resolve));
-
 		this._protoo.on('disconnected', () =>
 		{
 			store.dispatch(requestActions.notify(
@@ -248,7 +245,8 @@ export default class RoomClient
 						},
 						peerId));
 
-					// We are ready. Answer the protoo request.
+					// We are ready. Answer the protoo request so the server will
+					// resume this Consumer (which was paused for now).
 					accept();
 
 					// If audio-only mode is enabled, pause it.
