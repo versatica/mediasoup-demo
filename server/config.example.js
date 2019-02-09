@@ -8,6 +8,8 @@
  * them when appropriate.
  */
 
+const os = require('os');
+
 module.exports =
 {
 	// Listening hostname (just for for `gulp live|open` tasks).
@@ -26,8 +28,9 @@ module.exports =
 	// Media settings.
 	mediasoup :
 	{
+		numWorkers : Object.keys(os.cpus()).length,
 		// mediasoup Worker settings.
-		worker :
+		worker     :
 		{
 			logLevel : 'warn',
 			logTags  :

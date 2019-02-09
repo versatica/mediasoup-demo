@@ -9,6 +9,7 @@ const config = require('./config');
 console.log('- process.env.DEBUG:', process.env.DEBUG);
 console.log('- config.mediasoup.worker.logLevel:', config.mediasoup.worker.logLevel);
 console.log('- config.mediasoup.worker.logTags:', config.mediasoup.worker.logTags);
+console.log('- config.mediasoup.numWorkers:', config.mediasoup.numWorkers);
 /* eslint-enable no-console */
 
 const fs = require('fs');
@@ -35,9 +36,13 @@ const rooms = new Map();
 // @type {protoo.WebSocketServer}
 let protooWebSocketServer;
 
-// mediasoup Worker.
-// @type {mediasoup.Worker}
-let mediasoupWorker;
+// mediasoup Workers.
+// @type {Array<mediasoup.Worker>}
+const mediasoupWorkers = [];
+
+// Index of next mediasoup Worker to use.
+// @type {Number}
+let nextMediasoupWorkerIdx = 0;
 
 run();
 
@@ -47,7 +52,7 @@ async function run()
 	interactive();
 
 	// Run a mediasoup Worker.
-	await runMediasoupWorker();
+	await runMediasoupWorkers();
 
 	// Run a protoo WebSocketServer.
 	await runProtooWebSocketServer();
@@ -59,29 +64,41 @@ async function run()
 		{
 			room.logStatus();
 		}
-	}, 30000);
+	}, 120000);
 }
 
-async function runMediasoupWorker()
+async function runMediasoupWorkers()
 {
-	mediasoupWorker = await mediasoup.createWorker(
+	const { numWorkers } = config.mediasoup;
+
+	logger.info('running %d mediasoup Workers...', numWorkers);
+
+	for (let i = 0; i < numWorkers; ++i)
+	{
+		const worker = await mediasoup.createWorker(
+			{
+				logLevel   : config.mediasoup.worker.logLevel,
+				logTags    : config.mediasoup.worker.logTags,
+				rtcMinPort : config.mediasoup.worker.rtcMinPort,
+				rtcMaxPort : config.mediasoup.worker.rtcMaxPort
+			});
+
+		worker.on('died', () =>
 		{
-			logLevel   : config.mediasoup.worker.logLevel,
-			logTags    : config.mediasoup.worker.logTags,
-			rtcMinPort : config.mediasoup.worker.rtcMinPort,
-			rtcMaxPort : config.mediasoup.worker.rtcMaxPort
+			logger.error(
+				'mediasoup Worker died, exiting  in 2 seconds... [pid:%d]', worker.pid);
+
+			setTimeout(() => process.exit(1), 2000);
 		});
 
-	mediasoupWorker.on('died', () =>
-	{
-		logger.error('mediasoup Worker "died" event, exiting  in 2 seconds...');
-
-		setTimeout(() => process.exit(1), 2000);
-	});
+		mediasoupWorkers.push(worker);
+	}
 }
 
 async function runProtooWebSocketServer()
 {
+	logger.info('running protoo WebSocketServer...');
+
 	// HTTPS server for the protoo WebSocket server.
 	const tls =
 	{
@@ -91,7 +108,7 @@ async function runProtooWebSocketServer()
 
 	const httpsServer = https.createServer(tls, (req, res) =>
 	{
-		res.writeHead(404, 'No HTTP here, please');
+		res.writeHead(404, 'No HTTP here, madda fakka!');
 		res.end();
 	});
 
@@ -120,8 +137,6 @@ async function runProtooWebSocketServer()
 
 		if (!roomId || !peerId)
 		{
-			logger.warn('connection request without roomId and/or peerId');
-
 			reject(400, 'Connection request without roomId and/or peerId');
 
 			return;
@@ -143,6 +158,8 @@ async function runProtooWebSocketServer()
 			{
 				logger.info('creating a new Room [roomId:%s]', roomId);
 
+				const mediasoupWorker = getMediasoupWorker();
+
 				room = await Room.create({ mediasoupWorker, roomId, forceH264 });
 
 				rooms.set(roomId, room);
@@ -156,4 +173,14 @@ async function runProtooWebSocketServer()
 		})
 			.catch(reject);
 	});
+}
+
+function getMediasoupWorker()
+{
+	const worker = mediasoupWorkers[nextMediasoupWorkerIdx];
+
+	if (++nextMediasoupWorkerIdx === mediasoupWorkers.length)
+		nextMediasoupWorkerIdx = 0;
+
+	return worker;
 }
