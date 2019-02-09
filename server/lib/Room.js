@@ -404,28 +404,6 @@ class Room extends EventEmitter
 				break;
 			}
 
-			case 'closeConsumer':
-			{
-				// Ensure the Peer is joined.
-				if (!peer.data.joined)
-					throw new Error('Peer not yet joined');
-
-				const { consumerId } = request.data;
-				const consumer = peer.data.consumers.get(consumerId);
-
-				if (!consumer)
-					throw new Error(`consumer with id "${consumerId}" not found`);
-
-				consumer.close();
-
-				// Remove from its map.
-				peer.data.consumers.delete(consumer.id);
-
-				accept();
-
-				break;
-			}
-
 			case 'pauseConsumer':
 			{
 				// Ensure the Peer is joined.
