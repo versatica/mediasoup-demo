@@ -3,6 +3,11 @@
 This is the changelog of the mediasoup demo application. To check the changes in **mediasoup** and **mediasoup-client** libraries check their corresponding projects.
 
 
+## 2019-02-11
+
+* Remove transport max bitrate artificial limitation.
+
+
 ## 2019-01-25
 
 * Update mediasoup to 2.6.8. It fixes a [crash](https://github.com/versatica/mediasoup/issues/258) in the C++ `TcpConnection` class.

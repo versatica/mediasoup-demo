@@ -3,10 +3,6 @@ const protooServer = require('protoo-server');
 const Logger = require('./Logger');
 const config = require('../config');
 
-const MAX_BITRATE = config.mediasoup.maxBitrate || 1000000;
-const MIN_BITRATE = Math.min(50000, MAX_BITRATE);
-const BITRATE_FACTOR = 0.75;
-
 const logger = new Logger('Room');
 
 class Room extends EventEmitter
@@ -54,9 +50,6 @@ class Room extends EventEmitter
 
 			throw error;
 		}
-
-		// Current max bitrate for all the participants.
-		this._maxBitrate = MAX_BITRATE;
 
 		// Current active speaker.
 		// @type {mediasoup.Peer}
@@ -350,12 +343,11 @@ class Room extends EventEmitter
 			// Update peers max sending  bitrate.
 			if (transport.direction === 'send')
 			{
-				this._updateMaxBitrate();
-
-				transport.on('close', () =>
+				if (config.mediasoup.maxBitrate)
 				{
-					this._updateMaxBitrate();
-				});
+					transport.setMaxBitrate(config.mediasoup.maxBitrate)
+						.catch((error) => logger.error('transport.setMaxBitrate() failed: %s', String(error)));
+				}
 			}
 
 			this._handleMediaTransport(transport);
@@ -570,51 +562,6 @@ class Room extends EventEmitter
 		}
 
 		mediaPeer.receiveNotification(notification);
-	}
-
-	_updateMaxBitrate()
-	{
-		if (this._mediaRoom.closed)
-			return;
-
-		const numPeers = this._mediaRoom.peers.length;
-		const previousMaxBitrate = this._maxBitrate;
-		let newMaxBitrate;
-
-		if (numPeers <= 2)
-		{
-			newMaxBitrate = MAX_BITRATE;
-		}
-		else
-		{
-			newMaxBitrate = Math.round(MAX_BITRATE / ((numPeers - 1) * BITRATE_FACTOR));
-
-			if (newMaxBitrate < MIN_BITRATE)
-				newMaxBitrate = MIN_BITRATE;
-		}
-
-		this._maxBitrate = newMaxBitrate;
-
-		for (const peer of this._mediaRoom.peers)
-		{
-			for (const transport of peer.transports)
-			{
-				if (transport.direction === 'send')
-				{
-					transport.setMaxBitrate(newMaxBitrate)
-						.catch((error) =>
-						{
-							logger.error('transport.setMaxBitrate() failed: %s', String(error));
-						});
-				}
-			}
-		}
-
-		logger.info(
-			'_updateMaxBitrate() [num peers:%s, before:%skbps, now:%skbps]',
-			numPeers,
-			Math.round(previousMaxBitrate / 1000),
-			Math.round(newMaxBitrate / 1000));
 	}
 }
 
