@@ -95,6 +95,7 @@ async function run()
 		{
 			case 'roomId':
 			case 'simulcast':
+			case 'spy':
 				break;
 			default:
 				delete roomUrlParser.query[key];
