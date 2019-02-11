@@ -55,15 +55,11 @@ module.exports =
 			mediaCodecs :
 			[
 				{
-					kind       : 'audio',
-					name       : 'opus',
-					mimeType   : 'audio/opus',
-					clockRate  : 48000,
-					channels   : 2,
-					parameters :
-					{
-						useinbandfec : 1
-					}
+					kind      : 'audio',
+					name      : 'opus',
+					mimeType  : 'audio/opus',
+					clockRate : 48000,
+					channels  : 2
 				},
 				{
 					kind       : 'video',
