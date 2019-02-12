@@ -49,7 +49,8 @@ run();
 async function run()
 {
 	// Open the interactive console/terminal.
-	interactive();
+	if (process.env.INTERACTIVE === 'true' || process.env.INTERACTIVE === '1')
+		interactive();
 
 	// Run a mediasoup Worker.
 	await runMediasoupWorkers();

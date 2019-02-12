@@ -15,6 +15,7 @@
     "debug": "^4.1.1",
     "express": "^4.16.4",
     "mediasoup": "^3.0.0",
+    "pidusage": "^2.0.17",
     "protoo-server": "^4.0.1"
   },
   "devDependencies": {

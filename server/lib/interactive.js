@@ -1,7 +1,8 @@
-const mediasoup = require('mediasoup');
-const readline = require('readline');
-const colors = require('colors/safe');
 const repl = require('repl');
+const readline = require('readline');
+const mediasoup = require('mediasoup');
+const colors = require('colors/safe');
+const pidusage = require('pidusage');
 
 // Maps to store all mediasoup objects.
 const workers = new Map();
@@ -116,6 +117,7 @@ function openCommandConsole()
 					stdinLog('');
 					stdinLog('available commands:');
 					stdinLog('- h,  help               : show this message');
+					stdinLog('- u,  usage              : show CPU and memory usage of the Node.js and mediasoup-worker processes');
 					stdinLog('- wd, workerdump [pid]   : dump mediasoup Worker with given pid (or the latest created one)');
 					stdinLog('- rd, routerdump [id]    : dump mediasoup Router with given id (or the latest created one)');
 					stdinLog('- td, transportdump [id] : dump mediasoup Transport with given id (or the latest created one)');
@@ -125,6 +127,24 @@ function openCommandConsole()
 					stdinLog('');
 					readStdin();
 
+					break;
+				}
+
+				case 'u':
+				case 'usage':
+				{
+					let usage = await pidusage(process.pid);
+
+					stdinLog(`Node.js process [pid:${process.pid}]:\n${JSON.stringify(usage, null, '  ')}`);
+
+					for (const worker of workers.values())
+					{
+						usage = await pidusage(worker.pid);
+
+						stdinLog(`mediasoup-worker process [pid:${worker.pid}]:\n${JSON.stringify(usage, null, '  ')}`);
+					}
+
+					readStdin();
 					break;
 				}
 
