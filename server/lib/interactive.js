@@ -99,9 +99,8 @@ function openCommandConsole()
 	{
 		cmd.question('cmd> ', async (input) =>
 		{
-			const args = input.split(/[\s\t]+/);
-			const command = args[0];
-			const param = args[1];
+			const params = input.split(/[\s\t]+/);
+			const command = params.shift();
 
 			switch (command)
 			{
@@ -116,14 +115,16 @@ function openCommandConsole()
 				{
 					stdinLog('');
 					stdinLog('available commands:');
-					stdinLog('- h,  help               : show this message');
-					stdinLog('- u,  usage              : show CPU and memory usage of the Node.js and mediasoup-worker processes');
-					stdinLog('- wd, workerdump [pid]   : dump mediasoup Worker with given pid (or the latest created one)');
-					stdinLog('- rd, routerdump [id]    : dump mediasoup Router with given id (or the latest created one)');
-					stdinLog('- td, transportdump [id] : dump mediasoup Transport with given id (or the latest created one)');
-					stdinLog('- pd, producerdump [id]  : dump mediasoup Producer with given id (or the latest created one)');
-					stdinLog('- cd, consumerdump [id]  : dump mediasoup Consumer with given id (or the latest created one)');
-					stdinLog('- t,  terminal           : open REPL Terminal');
+					stdinLog('- h,  help                : show this message');
+					stdinLog('- usage                   : show CPU and memory usage of the Node.js and mediasoup-worker processes');
+					stdinLog('- logLevel level          : changes logLevel in all mediasoup Workers');
+					stdinLog('- logTags [tag] [tag] ... : changes logTags in all mediasoup Workers (values separated by space)"');
+					stdinLog('- dw, dumpWorker [pid]    : dump mediasoup Worker with given pid (or the latest created one)');
+					stdinLog('- dr, dumpRouter [id]     : dump mediasoup Router with given id (or the latest created one)');
+					stdinLog('- dt, dumpTransport [id]  : dump mediasoup Transport with given id (or the latest created one)');
+					stdinLog('- dp, dumpProducer [id]   : dump mediasoup Producer with given id (or the latest created one)');
+					stdinLog('- dc, dumpConsumer [id]   : dump mediasoup Consumer with given id (or the latest created one)');
+					stdinLog('- t,  terminal            : open Node REPL Terminal');
 					stdinLog('');
 					readStdin();
 
@@ -144,20 +145,67 @@ function openCommandConsole()
 						stdinLog(`mediasoup-worker process [pid:${worker.pid}]:\n${JSON.stringify(usage, null, '  ')}`);
 					}
 
-					readStdin();
 					break;
 				}
 
-				case 'wd':
-				case 'workerdump':
+				case 'logLevel':
 				{
-					const pid = param || Array.from(workers.keys()).pop();
+					const level = params[0];
+					const promises = [];
+
+					for (const worker of workers.values())
+					{
+						promises.push(worker.updateSettings({ logLevel: level }));
+					}
+
+					try
+					{
+						await Promise.all(promises);
+
+						stdinLog('done');
+					}
+					catch (error)
+					{
+						stdinError(String(error));
+					}
+
+					break;
+				}
+
+				case 'logTags':
+				{
+					const tags = params;
+					const promises = [];
+
+					for (const worker of workers.values())
+					{
+						promises.push(worker.updateSettings({ logTags: tags }));
+					}
+
+					try
+					{
+						await Promise.all(promises);
+
+						stdinLog('done');
+					}
+					catch (error)
+					{
+						stdinError(String(error));
+					}
+
+					break;
+				}
+
+				case 'dw':
+				case 'dumpWorker':
+				{
+					const pid = params[0] || Array.from(workers.keys()).pop();
 					const worker = workers.get(Number(pid));
 
 					if (!worker)
 					{
 						stdinError('Worker not found');
-						readStdin();
+
 						break;
 					}
 
@@ -166,27 +214,25 @@ function openCommandConsole()
 						const dump = await worker.dump();
 
 						stdinLog(`worker.dump():\n${JSON.stringify(dump, null, '  ')}`);
-						readStdin();
 					}
 					catch (error)
 					{
 						stdinError(`worker.dump() failed: ${error}`);
-						readStdin();
 					}
 
 					break;
 				}
 
-				case 'rd':
-				case 'routerdump':
+				case 'dr':
+				case 'dumpRouter':
 				{
-					const id = param || Array.from(routers.keys()).pop();
+					const id = params[0] || Array.from(routers.keys()).pop();
 					const router = routers.get(id);
 
 					if (!router)
 					{
 						stdinError('Router not found');
-						readStdin();
+
 						break;
 					}
 
@@ -195,27 +241,25 @@ function openCommandConsole()
 						const dump = await router.dump();
 
 						stdinLog(`router.dump():\n${JSON.stringify(dump, null, '  ')}`);
-						readStdin();
 					}
 					catch (error)
 					{
 						stdinError(`router.dump() failed: ${error}`);
-						readStdin();
 					}
 
 					break;
 				}
 
-				case 'td':
-				case 'transportdump':
+				case 'dt':
+				case 'dumpTransport':
 				{
-					const id = param || Array.from(transports.keys()).pop();
+					const id = params[0] || Array.from(transports.keys()).pop();
 					const transport = transports.get(id);
 
 					if (!transport)
 					{
 						stdinError('Transport not found');
-						readStdin();
+
 						break;
 					}
 
@@ -224,27 +268,25 @@ function openCommandConsole()
 						const dump = await transport.dump();
 
 						stdinLog(`transport.dump():\n${JSON.stringify(dump, null, '  ')}`);
-						readStdin();
 					}
 					catch (error)
 					{
 						stdinError(`transport.dump() failed: ${error}`);
-						readStdin();
 					}
 
 					break;
 				}
 
-				case 'pd':
-				case 'producerdump':
+				case 'dp':
+				case 'dumpProducer':
 				{
-					const id = param || Array.from(producers.keys()).pop();
+					const id = params[0] || Array.from(producers.keys()).pop();
 					const producer = producers.get(id);
 
 					if (!producer)
 					{
 						stdinError('Producer not found');
-						readStdin();
+
 						break;
 					}
 
@@ -253,27 +295,25 @@ function openCommandConsole()
 						const dump = await producer.dump();
 
 						stdinLog(`producer.dump():\n${JSON.stringify(dump, null, '  ')}`);
-						readStdin();
 					}
 					catch (error)
 					{
 						stdinError(`producer.dump() failed: ${error}`);
-						readStdin();
 					}
 
 					break;
 				}
 
-				case 'cd':
-				case 'consumerdump':
+				case 'dc':
+				case 'dumpConsumer':
 				{
-					const id = param || Array.from(consumers.keys()).pop();
+					const id = params[0] || Array.from(consumers.keys()).pop();
 					const consumer = consumers.get(id);
 
 					if (!consumer)
 					{
 						stdinError('Consumer not found');
-						readStdin();
+
 						break;
 					}
 
@@ -282,12 +322,10 @@ function openCommandConsole()
 						const dump = await consumer.dump();
 
 						stdinLog(`consumer.dump():\n${JSON.stringify(dump, null, '  ')}`);
-						readStdin();
 					}
 					catch (error)
 					{
 						stdinError(`consumer.dump() failed: ${error}`);
-						readStdin();
 					}
 
 					break;
@@ -308,17 +346,17 @@ function openCommandConsole()
 				{
 					stdinError(`unknown command '${command}'`);
 					stdinLog('press \'h\' or \'help\' to get the list of available commands');
-
-					readStdin();
 				}
 			}
+
+			readStdin();
 		});
 	}
 }
 
 function openTerminal()
 {
-	stdinLog('\n[opening REPL Terminal...]');
+	stdinLog('\n[opening Node REPL Terminal...]');
 	stdinLog('here you have access to workers, routers, transports, producers and consumers ES6 maps');
 
 	const terminal = repl.start(
@@ -333,7 +371,7 @@ function openTerminal()
 
 	terminal.on('exit', () =>
 	{
-		stdinLog('\n[exiting REPL Terminal...]');
+		stdinLog('\n[exiting Node REPL Terminal...]');
 
 		isTerminalOpen = false;
 
