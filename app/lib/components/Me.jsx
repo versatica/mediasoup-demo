@@ -119,6 +119,8 @@ class Me extends React.Component
 					videoVisible={videoVisible}
 					audioCodec={micProducer ? micProducer.codec : null}
 					videoCodec={webcamProducer ? webcamProducer.codec : null}
+					audioScore={micProducer ? micProducer.score : null}
+					videoScore={webcamProducer ? webcamProducer.score : null}
 					faceDetection={faceDetection}
 					onChangeDisplayName={(displayName) =>
 					{

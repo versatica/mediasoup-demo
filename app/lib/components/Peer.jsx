@@ -58,6 +58,8 @@ const Peer = (props) =>
 				videoPreferredProfile={videoPreferredProfile}
 				audioCodec={micConsumer ? micConsumer.codec : null}
 				videoCodec={webcamConsumer ? webcamConsumer.codec : null}
+				audioScore={micConsumer ? micConsumer.score : null}
+				videoScore={webcamConsumer ? webcamConsumer.score : null}
 				faceDetection={faceDetection}
 				onChangeVideoPreferredProfile={(profile) =>
 				{

@@ -126,6 +126,14 @@ export const setProducerTrack = (producerId, track) =>
 	};
 };
 
+export const setProducerScore = (producerId, score) =>
+{
+	return {
+		type    : 'SET_PRODUCER_SCORE',
+		payload : { producerId, score }
+	};
+};
+
 export const setWebcamInProgress = (flag) =>
 {
 	return {
@@ -211,6 +219,14 @@ export const setConsumerTrack = (consumerId, track) =>
 	return {
 		type    : 'SET_CONSUMER_TRACK',
 		payload : { consumerId, track }
+	};
+};
+
+export const setConsumerScore = (consumerId, score) =>
+{
+	return {
+		type    : 'SET_CONSUMER_SCORE',
+		payload : { consumerId, score }
 	};
 };
 

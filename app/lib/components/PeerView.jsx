@@ -55,6 +55,8 @@ export default class PeerView extends React.Component
 			videoPreferredProfile,
 			audioCodec,
 			videoCodec,
+			audioScore,
+			videoScore,
 			onChangeDisplayName,
 			onChangeVideoPreferredProfile,
 			onRequestKeyFrame
@@ -71,9 +73,7 @@ export default class PeerView extends React.Component
 				<div className='info'>
 					<div className={classnames('media', { 'is-me': isMe })}>
 						<div
-							className={classnames('box', {
-								clickable : !isMe && videoVisible && videoProfile !== 'default'
-							})}
+							className='box'
 							onClick={(event) =>
 							{
 								event.stopPropagation();
@@ -130,19 +130,22 @@ export default class PeerView extends React.Component
 								onChangeVideoPreferredProfile(newPreferredProfile);
 							}}
 						>
-							<If condition={audioCodec}>
-								<p>{audioCodec}</p>
-							</If>
-
-							<If condition={videoCodec}>
-								<p>
-									{videoCodec} {videoProfile}
-									{videoPreferredProfile ? ` (pref: ${videoPreferredProfile})` : ''}
-								</p>
+							<If condition={audioCodec || videoCodec}>
+								<p>codecs: {`${audioCodec || ''} ${videoCodec || ''}`}</p>
 							</If>
 
 							<If condition={videoVisible && videoResolutionWidth !== null}>
-								<p>{videoResolutionWidth}x{videoResolutionHeight}</p>
+								<p>video resolution: {videoResolutionWidth}x{videoResolutionHeight}</p>
+							</If>
+
+							<If condition={audioScore}>
+								<p>audio score:</p>
+								{this._printScore(audioScore)}
+							</If>
+
+							<If condition={videoScore}>
+								<p>video score:</p>
+								{this._printScore(videoScore)}
 							</If>
 
 							<If condition={!isMe && videoCodec}>
@@ -417,6 +420,28 @@ export default class PeerView extends React.Component
 		canvas.width = 0;
 		canvas.height = 0;
 	}
+
+	_printScore(score)
+	{
+		if (!Array.isArray(score))
+			score = [ score ];
+
+		const lines = [];
+
+		for (const _score of score)
+		{
+			const line = [];
+
+			for (const key of Object.keys(_score))
+			{
+				line.push(`${key}: ${_score[key]}`);
+			}
+
+			lines.push(line.join(', '));
+		}
+
+		return lines.map((line, idx) => <p key={idx}>· {line}</p>);
+	}
 }
 
 PeerView.propTypes =
@@ -431,6 +456,8 @@ PeerView.propTypes =
 	videoPreferredProfile         : PropTypes.string,
 	audioCodec                    : PropTypes.string,
 	videoCodec                    : PropTypes.string,
+	audioScore                    : PropTypes.any,
+	videoScore                    : PropTypes.any,
 	faceDetection                 : PropTypes.bool.isRequired,
 	onChangeDisplayName           : PropTypes.func,
 	onChangeVideoPreferredProfile : PropTypes.func,

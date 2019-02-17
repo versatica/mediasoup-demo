@@ -12,10 +12,6 @@
 	background-size: auto 85%;
 	background-repeat: no-repeat;
 
-	&.clickable {
-		cursor: pointer;
-	}
-
 	> .info {
 		$backgroundTint = #000;
 
@@ -46,15 +42,10 @@
 				background-color: rgba(#000, 0.25);
 				pointer-events: none;
 
-				&.clickable {
-					pointer-events: auto;
-					cursor: pointer;
-				}
-
 				> p {
 					user-select: none;
 					pointer-events: none;
-					margin-bottom: 2px;
+					margin-bottom: 1px;
 					color: rgba(#fff, 0.7);
 					font-size: 10px;
 
@@ -66,6 +57,8 @@
 						pointer-events: auto;
 
 						&:hover {
+							cursor: pointer;
+							color: cyan;
 							text-decoration: underline;
 						}
 					}

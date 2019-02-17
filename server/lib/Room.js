@@ -326,6 +326,14 @@ class Room extends EventEmitter
 					logger.debug(
 						'producer "score" event [producerId:%s, score:%o]',
 						producer.id, score);
+
+					peer.notify(
+						'producerScore',
+						{
+							producerId : producer.id,
+							score      : score
+						})
+						.catch(() => {});
 				});
 
 				accept({ id: producer.id });
@@ -614,6 +622,14 @@ class Room extends EventEmitter
 			logger.debug(
 				'consumer "score" event [consumerId:%s, score:%o]',
 				consumer.id, score);
+
+			consumerPeer.notify(
+				'consumerScore',
+				{
+					consumerId : consumer.id,
+					score      : score
+				})
+				.catch(() => {});
 		});
 
 		consumer.on('layerschange', (layers) =>
@@ -641,6 +657,14 @@ class Room extends EventEmitter
 			// video, resume the Consumer to ask for an efficient key frame.
 			if (producer.kind === 'video')
 				await consumer.resume();
+
+			consumerPeer.notify(
+				'consumerScore',
+				{
+					consumerId : consumer.id,
+					score      : consumer.score
+				})
+				.catch(() => {});
 		}
 		catch (error)
 		{

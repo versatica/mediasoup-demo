@@ -31,7 +31,8 @@
       source : 'mic', // mic/webcam,
       paused : true,
       track  : MediaStreamTrack,
-      codec  : 'opus'
+      codec  : 'opus',
+      score  : [ { ssrc: 1111, score: 10 } ]
     },
     '1112-asdf' :
     {
@@ -42,6 +43,7 @@
       paused      : false,
       track       : MediaStreamTrack,
       codec       : 'vp8',
+      score       : [ { ssrc: 2221, score: 10 }, { ssrc: 2222, score: 9 } ]
     }
   },
   peers :
@@ -65,7 +67,8 @@
       currentSpatialLayer   : undefined,
       preferredSpatialLayer : undefined,
       track                 : MediaStreamTrack,
-      codec                 : 'opus'
+      codec                 : 'opus',
+      score                 : [ { ssrc: 3331, score: 10 } ]
     },
     '5552-zxzx' :
     {
@@ -76,7 +79,8 @@
       currentSpatialLayer   : 1,
       preferredSpatialLayer : 2,
       track                 : null,
-      codec                 : 'h264'
+      codec                 : 'h264',
+      score                 : [ { ssrc: 4441, score: 9 }, { ssrc: 4444, score: 8 } ]
     }
   },
   notifications :

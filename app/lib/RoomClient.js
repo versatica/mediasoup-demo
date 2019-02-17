@@ -266,6 +266,16 @@ export default class RoomClient
 
 			switch (notification.method)
 			{
+				case 'producerScore':
+				{
+					const { producerId, score } = notification.data;
+
+					store.dispatch(
+						stateActions.setProducerScore(producerId, score));
+
+					break;
+				}
+
 				case 'newPeer':
 				{
 					const peer = notification.data;
@@ -364,6 +374,16 @@ export default class RoomClient
 
 					store.dispatch(
 						stateActions.setConsumerCurrentSpatialLayer(consumerId, spatialLayer));
+
+					break;
+				}
+
+				case 'consumerScore':
+				{
+					const { consumerId, score } = notification.data;
+
+					store.dispatch(
+						stateActions.setConsumerScore(consumerId, score));
 
 					break;
 				}
