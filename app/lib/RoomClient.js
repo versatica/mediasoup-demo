@@ -397,6 +397,16 @@ export default class RoomClient
 					break;
 				}
 
+				case 'activeSpeaker':
+				{
+					const { peerId } = notification.data;
+
+					store.dispatch(
+						stateActions.setRoomActiveSpeaker(peerId));
+
+					break;
+				}
+
 				default:
 				{
 					logger.error(

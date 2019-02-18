@@ -30,10 +30,17 @@ class Room extends EventEmitter
 		// Create a mediasoup Router.
 		const mediasoupRouter = await mediasoupWorker.createRouter({ mediaCodecs });
 
-		return new Room({ roomId, protooRoom, mediasoupRouter });
+		// Create a mediasoup AudioLevelObserver.
+		const audioLevelObserver = await mediasoupRouter.createAudioLevelObserver(
+			{
+				threshold : -80,
+				interval  : 800
+			});
+
+		return new Room({ roomId, protooRoom, mediasoupRouter, audioLevelObserver });
 	}
 
-	constructor({ roomId, protooRoom, mediasoupRouter })
+	constructor({ roomId, protooRoom, mediasoupRouter, audioLevelObserver })
 	{
 		super();
 		this.setMaxListeners(Infinity);
@@ -53,6 +60,45 @@ class Room extends EventEmitter
 		// mediasoup Router instance.
 		// @type {mediasoup.Router}
 		this._mediasoupRouter = mediasoupRouter;
+
+		// mediasoup AudioLevelObserver.
+		// @type {mediasoup.AudioLevelObserver}
+		this._audioLevelObserver = audioLevelObserver;
+
+		// Set audioLevelObserver events.
+		this._audioLevelObserver.on('loudest', (producer, volume) =>
+		{
+			logger.debug(
+				'audioLevelObserver "loudest" event [producerId:%s, volume:%s]',
+				producer.id, volume);
+
+			// Notify all Peers.
+			for (const peer of this._getJoinedPeers())
+			{
+				peer.notify(
+					'activeSpeaker',
+					{
+						peerId : producer.appData.peerId,
+						volume : volume
+					})
+					.catch(() => {});
+			}
+		});
+
+		this._audioLevelObserver.on('silence', () =>
+		{
+			logger.debug('audioLevelObserver "silence" event');
+
+			// Notify all Peers.
+			for (const peer of this._getJoinedPeers())
+			{
+				peer.notify('activeSpeaker', { peerId: null })
+					.catch(() => {});
+			}
+		});
+
+		// For debugging.
+		global.audioLevelObserver = this._audioLevelObserver;
 	}
 
 	close()
@@ -308,11 +354,16 @@ class Room extends EventEmitter
 				if (!peer.data.joined)
 					throw new Error('Peer not yet joined');
 
-				const { transportId, kind, rtpParameters, appData } = request.data;
+				const { transportId, kind, rtpParameters } = request.data;
+				let { appData } = request.data;
 				const transport = peer.data.transports.get(transportId);
 
 				if (!transport)
 					throw new Error(`transport with id "${transportId}" not found`);
+
+				// Add peerId into appData to later get the associated Peer during
+				// the 'loudest' event of the audioLevelObserver.
+				appData = { ...appData, peerId: peer.id };
 
 				const producer =
 					await transport.produce({ kind, rtpParameters, appData });
@@ -347,6 +398,13 @@ class Room extends EventEmitter
 							producerPeer : peer,
 							producer
 						});
+				}
+
+				// Add into the audioLevelObserver.
+				if (producer.kind === 'audio')
+				{
+					this._audioLevelObserver.addProducer({ producerId: producer.id })
+						.catch(() => {});
 				}
 
 				break;

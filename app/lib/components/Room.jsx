@@ -133,7 +133,7 @@ const mapStateToProps = (state) =>
 	return {
 		room            : state.room,
 		me              : state.me,
-		amActiveSpeaker : state.me.name === state.room.activeSpeakerName
+		amActiveSpeaker : state.me.id === state.room.activeSpeakerId
 	};
 };
 
