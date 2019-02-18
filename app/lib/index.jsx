@@ -67,7 +67,7 @@ async function run()
 	let roomId = urlParser.query.roomId;
 	let displayName =
 		urlParser.query.displayName || (cookiesManager.getUser() || {}).displayName;
-	const useSimulcast = urlParser.query.simulcast !== 'false';
+	const useSimulcast = urlParser.query.simulcast === 'true';
 	const forceTcp = urlParser.query.forceTcp === 'true';
 	const spy = urlParser.query.spy === 'true';
 	const forceH264 = urlParser.query.forceH264 === 'true';

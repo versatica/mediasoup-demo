@@ -51,14 +51,15 @@ export default class PeerView extends React.Component
 			isMe,
 			peer,
 			videoVisible,
-			videoProfile,
-			videoPreferredProfile,
+			videoMultiLayer,
+			videoCurrentSpatialLayer,
+			videoPreferredSpatialLayer,
 			audioCodec,
 			videoCodec,
 			audioScore,
 			videoScore,
 			onChangeDisplayName,
-			onChangeVideoPreferredProfile,
+			onChangeVideoPreferredSpatialLayer,
 			onRequestKeyFrame
 		} = this.props;
 
@@ -72,70 +73,107 @@ export default class PeerView extends React.Component
 			<div data-component='PeerView'>
 				<div className='info'>
 					<div className={classnames('media', { 'is-me': isMe })}>
-						<div
-							className='box'
-							onClick={(event) =>
-							{
-								event.stopPropagation();
-
-								let newPreferredProfile;
-
-								switch (videoPreferredProfile)
-								{
-									case 'low':
-										newPreferredProfile = 'medium';
-										break;
-
-									case 'medium':
-										newPreferredProfile = 'high';
-										break;
-
-									case 'high':
-										newPreferredProfile = 'low';
-										break;
-
-									default:
-										newPreferredProfile = 'high';
-										break;
-								}
-
-								onChangeVideoPreferredProfile(newPreferredProfile);
-							}}
-							onContextMenu={(event) =>
-							{
-								event.stopPropagation();
-								event.preventDefault(); // Don't show the context menu.
-
-								let newPreferredProfile;
-
-								switch (videoPreferredProfile)
-								{
-									case 'low':
-										newPreferredProfile = 'high';
-										break;
-
-									case 'medium':
-										newPreferredProfile = 'low';
-										break;
-
-									case 'high':
-										newPreferredProfile = 'medium';
-										break;
-
-									default:
-										newPreferredProfile = 'medium';
-										break;
-								}
-
-								onChangeVideoPreferredProfile(newPreferredProfile);
-							}}
-						>
+						<div className='box'>
 							<If condition={audioCodec || videoCodec}>
 								<p>codecs: {`${audioCodec || ''} ${videoCodec || ''}`}</p>
 							</If>
 
 							<If condition={videoVisible && videoResolutionWidth !== null}>
 								<p>video resolution: {videoResolutionWidth}x{videoResolutionHeight}</p>
+							</If>
+
+							<If condition={!isMe && videoMultiLayer}>
+								<p>video layers:</p>
+
+								<p>- current spatial: {videoCurrentSpatialLayer}</p>
+								<p>
+									- preferred spatial: {videoPreferredSpatialLayer}
+									<span>&nbsp;</span>
+									<span
+										className='clickable'
+										onClick={(event) =>
+										{
+											event.stopPropagation();
+
+											let newPreferredSpatialLayer;
+
+											switch (videoPreferredSpatialLayer)
+											{
+												case 0:
+													newPreferredSpatialLayer = 1;
+													break;
+
+												case 1:
+													newPreferredSpatialLayer = 2;
+													break;
+
+												case 2:
+													newPreferredSpatialLayer = 0;
+													break;
+
+												default:
+													newPreferredSpatialLayer = 2;
+													break;
+											}
+
+											onChangeVideoPreferredSpatialLayer(newPreferredSpatialLayer);
+										}}
+									>
+										{'[up]'}
+									</span>
+									<span>&nbsp;</span>
+									<span
+										className='clickable'
+										onClick={(event) =>
+										{
+											event.stopPropagation();
+
+											let newPreferredSpatialLayer;
+
+											switch (videoPreferredSpatialLayer)
+											{
+												case 0:
+													newPreferredSpatialLayer = 2;
+													break;
+
+												case 1:
+													newPreferredSpatialLayer = 0;
+													break;
+
+												case 2:
+													newPreferredSpatialLayer = 1;
+													break;
+
+												default:
+													newPreferredSpatialLayer = 1;
+													break;
+											}
+
+											onChangeVideoPreferredSpatialLayer(newPreferredSpatialLayer);
+										}}
+									>
+										{'[down]'}
+									</span>
+								</p>
+							</If>
+
+							<If condition={!isMe && videoCodec}>
+								<p>
+									<span
+										className='clickable'
+										onClick={(event) =>
+										{
+											event.stopPropagation();
+
+											if (!onRequestKeyFrame)
+												return;
+
+											onRequestKeyFrame();
+										}}
+									>
+										{'[request keyframe]'}
+									</span>
+								</p>
 							</If>
 
 							<If condition={audioScore}>
@@ -146,23 +184,6 @@ export default class PeerView extends React.Component
 							<If condition={videoScore}>
 								<p>video score:</p>
 								{this._printScore(videoScore)}
-							</If>
-
-							<If condition={!isMe && videoCodec}>
-								<p
-									className='clickable'
-									onClick={(event) =>
-									{
-										event.stopPropagation();
-
-										if (!onRequestKeyFrame)
-											return;
-
-										onRequestKeyFrame();
-									}}
-								>
-									{'Request keyframe'}
-								</p>
 							</If>
 						</div>
 					</div>
@@ -207,9 +228,8 @@ export default class PeerView extends React.Component
 				<video
 					ref='video'
 					className={classnames({
-						hidden  : !videoVisible,
 						'is-me' : isMe,
-						loading : videoProfile === 'none'
+						hidden  : !videoVisible
 					})}
 					autoPlay
 					muted={isMe}
@@ -224,7 +244,7 @@ export default class PeerView extends React.Component
 					<div className={classnames('bar', `level${audioVolume}`)} />
 				</div>
 
-				<If condition={videoProfile === 'none'}>
+				<If condition={videoVisible && videoScore < 5}>
 					<div className='spinner-container'>
 						<Spinner />
 					</div>
@@ -440,7 +460,7 @@ export default class PeerView extends React.Component
 			lines.push(line.join(', '));
 		}
 
-		return lines.map((line, idx) => <p key={idx}>· {line}</p>);
+		return lines.map((line, idx) => <p key={idx}>- {line}</p>);
 	}
 }
 
@@ -449,17 +469,18 @@ PeerView.propTypes =
 	isMe : PropTypes.bool,
 	peer : PropTypes.oneOfType(
 		[ appPropTypes.Me, appPropTypes.Peer ]).isRequired,
-	audioTrack                    : PropTypes.any,
-	videoTrack                    : PropTypes.any,
-	videoVisible                  : PropTypes.bool.isRequired,
-	videoProfile                  : PropTypes.string,
-	videoPreferredProfile         : PropTypes.string,
-	audioCodec                    : PropTypes.string,
-	videoCodec                    : PropTypes.string,
-	audioScore                    : PropTypes.any,
-	videoScore                    : PropTypes.any,
-	faceDetection                 : PropTypes.bool.isRequired,
-	onChangeDisplayName           : PropTypes.func,
-	onChangeVideoPreferredProfile : PropTypes.func,
-	onRequestKeyFrame             : PropTypes.func
+	audioTrack                         : PropTypes.any,
+	videoTrack                         : PropTypes.any,
+	videoVisible                       : PropTypes.bool.isRequired,
+	videoMultiLayer                    : PropTypes.bool,
+	videoCurrentSpatialLayer           : PropTypes.number,
+	videoPreferredSpatialLayer         : PropTypes.number,
+	audioCodec                         : PropTypes.string,
+	videoCodec                         : PropTypes.string,
+	audioScore                         : PropTypes.any,
+	videoScore                         : PropTypes.any,
+	faceDetection                      : PropTypes.bool.isRequired,
+	onChangeDisplayName                : PropTypes.func,
+	onChangeVideoPreferredSpatialLayer : PropTypes.func,
+	onRequestKeyFrame                  : PropTypes.func
 };

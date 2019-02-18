@@ -62,6 +62,7 @@
     {
       id                    : '5551-qwer',
       source                : 'mic', // mic/webcam
+      type                  : 'simple',
       locallyPaused         : false,
       remotelyPaused        : false,
       currentSpatialLayer   : undefined,
@@ -74,6 +75,7 @@
     {
       id                    : '5552-zxzx',
       source                : 'webcam',
+      type                  : 'simulcast',
       locallyPaused         : false,
       remotelyPaused        : true,
       currentSpatialLayer   : 1,

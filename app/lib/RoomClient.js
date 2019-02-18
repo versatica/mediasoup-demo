@@ -6,14 +6,21 @@ import * as cookiesManager from './cookiesManager';
 import * as requestActions from './redux/requestActions';
 import * as stateActions from './redux/stateActions';
 
-const logger = new Logger('RoomClient');
-
 const VIDEO_CONSTRAINS =
 {
 	qvga : { width: { ideal: 320 }, height: { ideal: 240 } },
 	vga  : { width: { ideal: 640 }, height: { ideal: 480 } },
 	hd   : { width: { ideal: 1280 }, height: { ideal: 720 } }
 };
+
+const VIDEO_ENCODINGS =
+[
+	{ maxBitrate: 100000 },
+	{ maxBitrate: 300000 },
+	{ maxBitrate: 900000 }
+];
+
+const logger = new Logger('RoomClient');
 
 let store;
 
@@ -213,6 +220,7 @@ export default class RoomClient
 						id,
 						kind,
 						rtpParameters,
+						type,
 						appData,
 						producerPaused
 					} = request.data;
@@ -238,6 +246,7 @@ export default class RoomClient
 						{
 							id             : consumer.id,
 							source         : consumer.appData.source,
+							type           : type,
 							locallyPaused  : false,
 							remotelyPaused : producerPaused,
 							track          : consumer.track,
@@ -587,9 +596,20 @@ export default class RoomClient
 
 			track = stream.getVideoTracks()[0];
 
-			// TODO: Simulcast!
-			this._webcamProducer =
-				await this._sendTransport.produce({ track, appData: { source: 'webcam' } });
+			if (this._useSimulcast)
+			{
+				this._webcamProducer = await this._sendTransport.produce(
+					{
+						track,
+						encodings : VIDEO_ENCODINGS,
+						appData   : { source: 'webcam' }
+					});
+			}
+			else
+			{
+				this._webcamProducer =
+					await this._sendTransport.produce({ track, appData: { source: 'webcam' } });
+			}
 
 			store.dispatch(stateActions.addProducer(
 				{

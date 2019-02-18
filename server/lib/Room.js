@@ -634,7 +634,12 @@ class Room extends EventEmitter
 
 		consumer.on('layerschange', (layers) =>
 		{
-			consumerPeer.notify('consumerLayersChanged', { consumerId: consumer.id, layers })
+			consumerPeer.notify(
+				'consumerLayersChanged',
+				{
+					consumerId : consumer.id,
+					layers
+				})
 				.catch(() => {});
 		});
 
@@ -649,6 +654,7 @@ class Room extends EventEmitter
 					id             : consumer.id,
 					kind           : consumer.kind,
 					rtpParameters  : consumer.rtpParameters,
+					type           : consumer.type,
 					appData        : producer.appData,
 					producerPaused : consumer.producerPaused
 				});

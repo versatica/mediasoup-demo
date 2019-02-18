@@ -39,21 +39,26 @@
 				margin: 4px;
 				padding: 2px 4px;
 				border-radius: 2px;
-				background-color: rgba(#000, 0.25);
-				pointer-events: none;
+				background-color: rgba(#000, 0.75);
+				opacity: 0.5;
+				transition: opacity 0.1s;
+
+				&:hover {
+					opacity: 1;
+				}
 
 				> p {
 					user-select: none;
 					pointer-events: none;
 					margin-bottom: 1px;
-					color: rgba(#fff, 0.7);
-					font-size: 10px;
+					color: #fff;
+					font-size: 11px;
 
 					&:last-child {
 						margin-bottom: 0;
 					}
 
-					&.clickable {
+					&.clickable, .clickable {
 						pointer-events: auto;
 
 						&:hover {
@@ -195,10 +200,6 @@
 		&.hidden {
 			opacity: 0;
 			transition-duration: 0s;
-		}
-
-		&.loading {
-			filter: blur(5px);
 		}
 	}
 

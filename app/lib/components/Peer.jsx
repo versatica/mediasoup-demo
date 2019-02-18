@@ -27,16 +27,6 @@ const Peer = (props) =>
 		!webcamConsumer.remotelyPaused
 	);
 
-	let videoProfile;
-
-	if (webcamConsumer)
-		videoProfile = webcamConsumer.profile;
-
-	let videoPreferredProfile;
-
-	if (webcamConsumer)
-		videoPreferredProfile = webcamConsumer.preferredProfile;
-
 	return (
 		<div data-component='Peer'>
 			<div className='indicators'>
@@ -54,16 +44,23 @@ const Peer = (props) =>
 				audioTrack={micConsumer ? micConsumer.track : null}
 				videoTrack={webcamConsumer ? webcamConsumer.track : null}
 				videoVisible={videoVisible}
-				videoProfile={videoProfile}
-				videoPreferredProfile={videoPreferredProfile}
+				videoMultiLayer={webcamConsumer && webcamConsumer.type !== 'simple'}
+				videoCurrentSpatialLayer={webcamConsumer ? webcamConsumer.currentSpatialLayer : null}
+				videoPreferredSpatialLayer={
+					webcamConsumer
+						? typeof webcamConsumer.preferredSpatialLayer === 'number'
+							? webcamConsumer.preferredSpatialLayer
+							: 2 // NOTE: We know that the preferred spatil layer is 2 because we are cool.
+						: null
+				}
 				audioCodec={micConsumer ? micConsumer.codec : null}
 				videoCodec={webcamConsumer ? webcamConsumer.codec : null}
 				audioScore={micConsumer ? micConsumer.score : null}
 				videoScore={webcamConsumer ? webcamConsumer.score : null}
 				faceDetection={faceDetection}
-				onChangeVideoPreferredProfile={(profile) =>
+				onChangeVideoPreferredSpatialLayer={(spatialLayer) =>
 				{
-					roomClient.changeConsumerPreferredProfile(webcamConsumer.id, profile);
+					roomClient.setConsumerPreferredSpatialLayer(webcamConsumer.id, spatialLayer);
 				}}
 				onRequestKeyFrame={() =>
 				{
