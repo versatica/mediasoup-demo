@@ -33,8 +33,9 @@ class Room extends EventEmitter
 		// Create a mediasoup AudioLevelObserver.
 		const audioLevelObserver = await mediasoupRouter.createAudioLevelObserver(
 			{
-				threshold : -80,
-				interval  : 800
+				maxEntries : 1,
+				threshold  : -80,
+				interval   : 800
 			});
 
 		return new Room({ roomId, protooRoom, mediasoupRouter, audioLevelObserver });
@@ -66,10 +67,12 @@ class Room extends EventEmitter
 		this._audioLevelObserver = audioLevelObserver;
 
 		// Set audioLevelObserver events.
-		this._audioLevelObserver.on('loudest', (producer, volume) =>
+		this._audioLevelObserver.on('volumes', (volumes) =>
 		{
+			const { producer, volume } = volumes[0];
+
 			logger.debug(
-				'audioLevelObserver "loudest" event [producerId:%s, volume:%s]',
+				'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
 				producer.id, volume);
 
 			// Notify all Peers.
