@@ -13,7 +13,7 @@
 		justify-content: center;
 		align-items: center;
 		border-radius: 25px;
-		background-color: rgba(#fff, 0.2);
+		background-color: rgba(#fff, 0.35);
 
 		+desktop() {
 			top: 20px;
@@ -106,12 +106,16 @@
 			border-bottom-left-radius: 4px;
 			box-shadow: 0px 3px 12px 2px rgba(#111, 0.4);
 
+			background-color: rgba(#fff, 0.35);
+
 			> a.link {
 				display: block;;
 				user-select: none;
 				pointer-events: auto;
-				color: #104758;
+				text-transform: uppercase;
+				font-family: 'Roboto';
 				font-weight: 400;
+				color: #fff;
 				cursor: pointer;
 				text-decoration: none;
 				transition-property: opacity;
@@ -120,12 +124,12 @@
 
 				+desktop() {
 					padding: 10px 20px;
-					font-size: 16px;
+					font-size: 12px;
 				}
 
 				+mobile() {
 					padding: 6px 10px;
-					font-size: 14px;
+					font-size: 10px;
 				}
 
 				&:hover {
@@ -157,8 +161,8 @@
 		}
 
 		+mobile() {
-			height: 175px;
-			width: 150px;
+			height: 220px;
+			width: 188px;
 			bottom: 10px;
 			left: 10px;
 			border: 1px solid rgba(#fff, 0.25);
@@ -191,7 +195,7 @@
 			background-position: center;
 			background-size: 75%;
 			background-repeat: no-repeat;
-			background-color: rgba(#fff, 0.15);
+			background-color: rgba(#fff, 0.35);
 			cursor: pointer;
 			transition-property: opacity, background-color;
 			transition-duration: 0.15s;
