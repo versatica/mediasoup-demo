@@ -21,11 +21,11 @@
     "js-cookie": "^2.2.0",
     "mediasoup-client": "^3.0.0",
     "pokemon": "^1.2.3",
-    "prop-types": "^15.7.1",
+    "prop-types": "^15.7.2",
     "protoo-client": "^4.0.1",
     "random-string": "^0.2.0",
-    "react": "^16.8.1",
-    "react-dom": "^16.8.1",
+    "react": "^16.8.2",
+    "react-dom": "^16.8.2",
     "react-redux": "^6.0.0",
     "react-spinner": "^0.2.7",
     "react-tooltip": "^3.9.2",
@@ -37,7 +37,7 @@
     "url-parse": "^1.4.4"
   },
   "devDependencies": {
-    "@babel/core": "^7.2.2",
+    "@babel/core": "^7.3.3",
     "@babel/plugin-proposal-object-rest-spread": "^7.3.2",
     "@babel/plugin-transform-runtime": "^7.2.0",
     "@babel/preset-env": "^7.3.1",
@@ -48,7 +48,7 @@
     "browserify": "^16.2.3",
     "del": "^3.0.0",
     "envify": "^4.1.0",
-    "eslint": "^5.13.0",
+    "eslint": "^5.14.1",
     "eslint-plugin-import": "^2.16.0",
     "eslint-plugin-jsx-control-statements": "^2.2.1",
     "eslint-plugin-react": "^7.12.4",
@@ -69,6 +69,6 @@
     "supports-color": "^6.1.0",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0",
-    "watchify": "^3.11.0"
+    "watchify": "^3.11.1"
   }
 }

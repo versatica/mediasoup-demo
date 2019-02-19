@@ -6,10 +6,10 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
-	background-color: rgba(#7886ff, 0.5);
+	background-color: $COLOR_BG_1;
 	background-image: url('/resources/images/buddy.svg');
 	background-position: bottom;
-	background-size: auto 85%;
+	background-size: auto 80%;
 	background-repeat: no-repeat;
 
 	> .info {
@@ -37,7 +37,7 @@
 
 			> .box {
 				margin: 4px;
-				padding: 2px 4px;
+				padding: 4px 6px;
 				border-radius: 2px;
 				background-color: rgba(#000, 0.75);
 				opacity: 0.5;
@@ -47,10 +47,10 @@
 				}
 
 				> p {
-					user-select: none;
+					cursor: text;
 					pointer-events: none;
 					margin-bottom: 1px;
-					color: #fff;
+					color: rgba(#fff, 0.75);
 					font-size: 11px;
 
 					&:last-child {
@@ -58,6 +58,7 @@
 					}
 
 					&.clickable, .clickable {
+						user-select: none;
 						pointer-events: auto;
 
 						&:hover {

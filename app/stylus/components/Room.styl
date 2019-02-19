@@ -13,7 +13,7 @@
 		justify-content: center;
 		align-items: center;
 		border-radius: 25px;
-		background-color: rgba(#fff, 0.35);
+		background-color: $COLOR_BG_1;
 
 		+desktop() {
 			top: 20px;
@@ -32,10 +32,10 @@
 			border-radius: 100%;
 
 			+desktop() {
-				margin: 5px;
+				margin: 6px;
 				margin-right: 0;
-				height: 20px;
-				width: 20px;
+				height: 16px;
+				width: 16px;
 			}
 
 			+mobile() {
@@ -101,12 +101,10 @@
 
 		> .room-link {
 			width: auto;
-			background-color: rgba(#fff, 0.75);
+			background-color: $COLOR_BG_1;
 			border-bottom-right-radius: 4px;
 			border-bottom-left-radius: 4px;
 			box-shadow: 0px 3px 12px 2px rgba(#111, 0.4);
-
-			background-color: rgba(#fff, 0.35);
 
 			> a.link {
 				display: block;;
@@ -115,12 +113,11 @@
 				text-transform: uppercase;
 				font-family: 'Roboto';
 				font-weight: 400;
-				color: #fff;
+				color: rgba(#fff, 0.75);
 				cursor: pointer;
 				text-decoration: none;
-				transition-property: opacity;
-				transition-duration: 0.25s;
-				opacity: 0.8;
+				transition-property: color;
+				transition-duration: 0.1s;
 
 				+desktop() {
 					padding: 10px 20px;
@@ -133,7 +130,7 @@
 				}
 
 				&:hover {
-					opacity: 1;
+					color: #fff;
 					text-decoration: underline;
 				}
 			}
@@ -146,7 +143,7 @@
 		overflow: hidden;
 		box-shadow: 0px 5px 12px 2px rgba(#111, 0.5);
 		transition-property: border-color;
-		transition-duration: 0.35s;
+		transition-duration: 0.2s;
 
 		&.active-speaker {
 			border-color: #fff;
@@ -162,7 +159,7 @@
 
 		+mobile() {
 			height: 220px;
-			width: 188px;
+			width: 200px;
 			bottom: 10px;
 			left: 10px;
 			border: 1px solid rgba(#fff, 0.25);
@@ -195,7 +192,7 @@
 			background-position: center;
 			background-size: 75%;
 			background-repeat: no-repeat;
-			background-color: rgba(#fff, 0.35);
+			background-color: $COLOR_BG_1;
 			cursor: pointer;
 			transition-property: opacity, background-color;
 			transition-duration: 0.15s;

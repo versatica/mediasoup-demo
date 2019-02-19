@@ -82,7 +82,6 @@ class Room extends React.Component
 								disabled : me.audioOnlyInProgress
 							})}
 							data-tip='Toggle audio only mode'
-							data-type='dark'
 							onClick={() =>
 							{
 								me.audioOnly
@@ -96,15 +95,16 @@ class Room extends React.Component
 								disabled : me.restartIceInProgress
 							})}
 							data-tip='Restart ICE'
-							data-type='dark'
 							onClick={() => roomClient.restartIce()}
 						/>
 					</div>
 
 					<ReactTooltip
+						type='light'
 						effect='solid'
 						delayShow={100}
 						delayHide={100}
+						delayUpdate={50}
 					/>
 				</div>
 			</Appear>

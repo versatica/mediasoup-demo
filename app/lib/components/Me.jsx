@@ -69,7 +69,6 @@ class Me extends React.Component
 				ref={(node) => (this._rootNode = node)}
 				data-tip={tip}
 				data-tip-disable={!tip}
-				data-type='dark'
 			>
 				<If condition={connected}>
 					<div className='controls'>
@@ -129,9 +128,11 @@ class Me extends React.Component
 				/>
 
 				<ReactTooltip
+					type='light'
 					effect='solid'
 					delayShow={100}
 					delayHide={100}
+					delayUpdate={50}
 				/>
 			</div>
 		);
