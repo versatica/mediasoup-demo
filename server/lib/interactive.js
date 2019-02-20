@@ -79,8 +79,9 @@ function openCommandConsole()
 
 	const cmd = readline.createInterface(
 		{
-			input  : process.stdin,
-			output : process.stdout
+			input    : process.stdin,
+			output   : process.stdout,
+			terminal : true
 		});
 
 	cmd.on('close', () =>
@@ -339,7 +340,7 @@ function openCommandConsole()
 					cmd.close();
 					openTerminal();
 
-					break;
+					return;
 				}
 
 				default:
@@ -361,6 +362,9 @@ function openTerminal()
 
 	const terminal = repl.start(
 		{
+			input           : process.stdin,
+			output          : process.stdout,
+			terminal        : true,
 			prompt          : 'terminal> ',
 			useColors       : true,
 			useGlobal       : true,
