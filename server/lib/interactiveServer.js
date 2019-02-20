@@ -69,7 +69,7 @@ class Interactive
 						this.log('- h,  help               : show this message');
 						this.log('- usage                  : show CPU and memory usage of the Node.js and mediasoup-worker processes');
 						this.log('- logLevel level         : changes logLevel in all mediasoup Workers');
-						this.log('- logTags [tag] [tag]    : changes logTags in all mediasoup Workers (values separated by space)"');
+						this.log('- logTags [tag] [tag]    : changes logTags in all mediasoup Workers (values separated by space)');
 						this.log('- dw, dumpWorkers        : dump mediasoup Workers');
 						this.log('- dr, dumpRouter [id]    : dump mediasoup Router with given id (or the latest created one)');
 						this.log('- dt, dumpTransport [id] : dump mediasoup Transport with given id (or the latest created one)');
