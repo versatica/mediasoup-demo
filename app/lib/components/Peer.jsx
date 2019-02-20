@@ -41,6 +41,8 @@ const Peer = (props) =>
 
 			<PeerView
 				peer={peer}
+				audioConsumerId={micConsumer ? micConsumer.id : null}
+				videoConsumerId={webcamConsumer ? webcamConsumer.id : null}
 				audioTrack={micConsumer ? micConsumer.track : null}
 				videoTrack={webcamConsumer ? webcamConsumer.track : null}
 				videoVisible={videoVisible}

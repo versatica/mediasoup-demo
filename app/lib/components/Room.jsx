@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import ReactTooltip from 'react-tooltip';
 import PropTypes from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 import classnames from 'classnames';
 import clipboardCopy from 'clipboard-copy';
 import * as appPropTypes from './appPropTypes';

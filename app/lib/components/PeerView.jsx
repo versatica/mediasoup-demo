@@ -1,7 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 import classnames from 'classnames';
 import Spinner from 'react-spinner';
+import clipboardCopy from 'clipboard-copy';
 import hark from 'hark';
 import * as faceapi from 'face-api.js';
 import * as appPropTypes from './appPropTypes';
@@ -22,6 +24,7 @@ export default class PeerView extends React.Component
 		this.state =
 		{
 			audioVolume           : 0, // Integer from 0 to 10.,
+			showInfo              : window.SHOW_INFO || false,
 			videoResolutionWidth  : null,
 			videoResolutionHeight : null
 		};
@@ -50,6 +53,10 @@ export default class PeerView extends React.Component
 		const {
 			isMe,
 			peer,
+			audioProducerId,
+			videoProducerId,
+			audioConsumerId,
+			videoConsumerId,
 			videoVisible,
 			videoMultiLayer,
 			videoCurrentSpatialLayer,
@@ -65,6 +72,7 @@ export default class PeerView extends React.Component
 
 		const {
 			audioVolume,
+			showInfo,
 			videoResolutionWidth,
 			videoResolutionHeight
 		} = this.state;
@@ -72,120 +80,213 @@ export default class PeerView extends React.Component
 		return (
 			<div data-component='PeerView'>
 				<div className='info'>
-					<div className={classnames('media', { 'is-me': isMe })}>
-						<div className='box'>
-							<If condition={audioCodec || videoCodec}>
-								<p>codecs: {`${audioCodec || ''} ${videoCodec || ''}`}</p>
-							</If>
+					<div
+						className={classnames('info-icon', { on: showInfo })}
+						onClick={() => this.setState({ showInfo: !showInfo })}
+					/>
 
-							<If condition={videoVisible && videoResolutionWidth !== null}>
-								<p>video resolution: {videoResolutionWidth}x{videoResolutionHeight}</p>
-							</If>
+					<div className={classnames('box', { visible: showInfo })}>
+						<If condition={audioProducerId || audioConsumerId}>
+							<h1>audio</h1>
 
-							<If condition={!isMe && videoMultiLayer}>
-								<p>video layers:</p>
-
-								<p>- current spatial: {videoCurrentSpatialLayer}</p>
+							<If condition={audioProducerId}>
 								<p>
-									- preferred spatial: {videoPreferredSpatialLayer}
-									<span>&nbsp;</span>
+									{'id: '}
 									<span
-										className='clickable'
-										onClick={(event) =>
-										{
-											event.stopPropagation();
-
-											let newPreferredSpatialLayer;
-
-											switch (videoPreferredSpatialLayer)
-											{
-												case 0:
-													newPreferredSpatialLayer = 1;
-													break;
-
-												case 1:
-													newPreferredSpatialLayer = 2;
-													break;
-
-												case 2:
-													newPreferredSpatialLayer = 0;
-													break;
-
-												default:
-													newPreferredSpatialLayer = 2;
-													break;
-											}
-
-											onChangeVideoPreferredSpatialLayer(newPreferredSpatialLayer);
-										}}
+										className='copiable'
+										data-tip='Copy audio producer id to clipboard'
+										onClick={() => clipboardCopy(audioProducerId)}
 									>
-										{'[up]'}
-									</span>
-									<span>&nbsp;</span>
-									<span
-										className='clickable'
-										onClick={(event) =>
-										{
-											event.stopPropagation();
-
-											let newPreferredSpatialLayer;
-
-											switch (videoPreferredSpatialLayer)
-											{
-												case 0:
-													newPreferredSpatialLayer = 2;
-													break;
-
-												case 1:
-													newPreferredSpatialLayer = 0;
-													break;
-
-												case 2:
-													newPreferredSpatialLayer = 1;
-													break;
-
-												default:
-													newPreferredSpatialLayer = 1;
-													break;
-											}
-
-											onChangeVideoPreferredSpatialLayer(newPreferredSpatialLayer);
-										}}
-									>
-										{'[down]'}
+										{audioProducerId}
 									</span>
 								</p>
+
+								<ReactTooltip
+									type='light'
+									effect='solid'
+									delayShow={1500}
+									delayHide={50}
+								/>
 							</If>
 
-							<If condition={!isMe && videoCodec}>
+							<If condition={audioConsumerId}>
 								<p>
+									{'id: '}
 									<span
-										className='clickable'
-										onClick={(event) =>
-										{
-											event.stopPropagation();
-
-											if (!onRequestKeyFrame)
-												return;
-
-											onRequestKeyFrame();
-										}}
+										className='copiable'
+										data-tip='Copy video producer id to clipboard'
+										onClick={() => clipboardCopy(audioConsumerId)}
 									>
-										{'[request keyframe]'}
+										{audioConsumerId}
 									</span>
 								</p>
+
+								<ReactTooltip
+									type='light'
+									effect='solid'
+									delayShow={1500}
+									delayHide={50}
+								/>
+							</If>
+
+							<If condition={audioCodec}>
+								<p>codec: {audioCodec}</p>
 							</If>
 
 							<If condition={audioScore}>
-								<p>audio score:</p>
+								<p>score:</p>
 								{this._printScore(audioScore)}
+							</If>
+						</If>
+
+						<If condition={videoProducerId || videoConsumerId}>
+							<h1>video</h1>
+
+							<If condition={videoProducerId}>
+								<p>
+									{'id: '}
+									<span
+										className='copiable'
+										data-tip='Copy audio consumer id to clipboard'
+										onClick={() => clipboardCopy(videoProducerId)}
+									>
+										{videoProducerId}
+									</span>
+								</p>
+
+								<ReactTooltip
+									type='light'
+									effect='solid'
+									delayShow={1500}
+									delayHide={50}
+								/>
+							</If>
+
+							<If condition={videoConsumerId}>
+								<p>
+									{'id: '}
+									<span
+										className='copiable'
+										data-tip='Copy video consumer id to clipboard'
+										onClick={() => clipboardCopy(videoConsumerId)}
+									>
+										{videoConsumerId}
+									</span>
+								</p>
+
+								<ReactTooltip
+									type='light'
+									effect='solid'
+									delayShow={1500}
+									delayHide={50}
+								/>
+							</If>
+
+							<If condition={videoCodec}>
+								<p>codec: {videoCodec}</p>
+							</If>
+
+							<If condition={videoVisible && videoResolutionWidth !== null}>
+								<p>resolution: {videoResolutionWidth}x{videoResolutionHeight}</p>
+							</If>
+
+							<If condition={!isMe && videoMultiLayer}>
+								<p>current spatial layer: {videoCurrentSpatialLayer}</p>
+								<p>
+									preferred spatial layer: {videoPreferredSpatialLayer}
+									<span>{' '}</span>
+									<span
+										className='clickable'
+										onClick={(event) =>
+										{
+											event.stopPropagation();
+
+											let newPreferredSpatialLayer;
+
+											switch (videoPreferredSpatialLayer)
+											{
+												case 0:
+													newPreferredSpatialLayer = 2;
+													break;
+
+												case 1:
+													newPreferredSpatialLayer = 0;
+													break;
+
+												case 2:
+													newPreferredSpatialLayer = 1;
+													break;
+
+												default:
+													newPreferredSpatialLayer = 1;
+													break;
+											}
+
+											onChangeVideoPreferredSpatialLayer(newPreferredSpatialLayer);
+										}}
+									>
+										{'[ down ]'}
+									</span>
+									<span>{' '}</span>
+									<span
+										className='clickable'
+										onClick={(event) =>
+										{
+											event.stopPropagation();
+
+											let newPreferredSpatialLayer;
+
+											switch (videoPreferredSpatialLayer)
+											{
+												case 0:
+													newPreferredSpatialLayer = 1;
+													break;
+
+												case 1:
+													newPreferredSpatialLayer = 2;
+													break;
+
+												case 2:
+													newPreferredSpatialLayer = 0;
+													break;
+
+												default:
+													newPreferredSpatialLayer = 2;
+													break;
+											}
+
+											onChangeVideoPreferredSpatialLayer(newPreferredSpatialLayer);
+										}}
+									>
+										{'[ up ]'}
+									</span>
+								</p>
+
+								<If condition={!isMe && videoCodec}>
+									<p>
+										<span
+											className='clickable'
+											onClick={(event) =>
+											{
+												event.stopPropagation();
+
+												if (!onRequestKeyFrame)
+													return;
+
+												onRequestKeyFrame();
+											}}
+										>
+											{'[ request keyframe ]'}
+										</span>
+									</p>
+								</If>
 							</If>
 
 							<If condition={videoScore}>
-								<p>video score:</p>
+								<p>score:</p>
 								{this._printScore(videoScore)}
 							</If>
-						</div>
+						</If>
 					</div>
 
 					<div className={classnames('peer', { 'is-me': isMe })}>
@@ -460,7 +561,7 @@ export default class PeerView extends React.Component
 			lines.push(line.join(', '));
 		}
 
-		return lines.map((line, idx) => <p key={idx}>- {line}</p>);
+		return lines.map((line, idx) => <p key={idx} className='indent'>{line}</p>);
 	}
 }
 
@@ -469,6 +570,10 @@ PeerView.propTypes =
 	isMe : PropTypes.bool,
 	peer : PropTypes.oneOfType(
 		[ appPropTypes.Me, appPropTypes.Peer ]).isRequired,
+	audioProducerId                    : PropTypes.string,
+	videoProducerId                    : PropTypes.string,
+	audioConsumerId                    : PropTypes.string,
+	videoConsumerId                    : PropTypes.string,
 	audioTrack                         : PropTypes.any,
 	videoTrack                         : PropTypes.any,
 	videoVisible                       : PropTypes.bool.isRequired,

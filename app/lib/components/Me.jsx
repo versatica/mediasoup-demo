@@ -113,6 +113,8 @@ class Me extends React.Component
 				<PeerView
 					isMe
 					peer={me}
+					audioProducerId={micProducer ? micProducer.id : null}
+					videoProducerId={webcamProducer ? webcamProducer.id : null}
 					audioTrack={micProducer ? micProducer.track : null}
 					videoTrack={webcamProducer ? webcamProducer.track : null}
 					videoVisible={videoVisible}

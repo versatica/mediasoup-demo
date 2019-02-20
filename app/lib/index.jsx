@@ -45,7 +45,7 @@ const store = createReduxStore(
 	applyReduxMiddleware(...reduxMiddlewares)
 );
 
-global.STORE = store;
+window.STORE = store;
 
 RoomClient.init({ store });
 
@@ -72,10 +72,14 @@ async function run()
 	const spy = urlParser.query.spy === 'true';
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
+	const info = urlParser.query.info === 'true';
 
 	// Enable face detection on demand.
 	if (faceDetection)
 		await faceapi.loadTinyFaceDetectorModel('/resources/face-detector-models');
+
+	if (info)
+		window.SHOW_INFO = true;
 
 	if (!roomId)
 	{
@@ -135,7 +139,7 @@ async function run()
 		{ roomId, peerId, displayName, device, useSimulcast, forceTcp, spy, forceH264 });
 
 	// NOTE: For debugging.
-	global.CLIENT = roomClient;
+	window.CLIENT = roomClient;
 
 	render(
 		<Provider store={store}>
@@ -149,7 +153,7 @@ async function run()
 
 // NOTE: Debugging stuff.
 
-global.__showSendSdps = function()
+window.__showSendSdps = function()
 {
 	logger.warn('>>> send transport local SDP offer:');
 	logger.warn(
@@ -160,7 +164,7 @@ global.__showSendSdps = function()
 		roomClient._sendTransport._handler._pc.remoteDescription.sdp);
 };
 
-global.__showRecvSdps = function()
+window.__showRecvSdps = function()
 {
 	logger.warn('>>> recv transport remote SDP offer:');
 	logger.warn(
