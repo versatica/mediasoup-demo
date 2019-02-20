@@ -66,16 +66,16 @@ class Interactive
 					{
 						this.log('');
 						this.log('available commands:');
-						this.log('- h,  help                : show this message');
-						this.log('- usage                   : show CPU and memory usage of the Node.js and mediasoup-worker processes');
-						this.log('- logLevel level          : changes logLevel in all mediasoup Workers');
-						this.log('- logTags [tag] [tag] ... : changes logTags in all mediasoup Workers (values separated by space)"');
-						this.log('- dw, dumpWorker [pid]    : dump mediasoup Worker with given pid (or the latest created one)');
-						this.log('- dr, dumpRouter [id]     : dump mediasoup Router with given id (or the latest created one)');
-						this.log('- dt, dumpTransport [id]  : dump mediasoup Transport with given id (or the latest created one)');
-						this.log('- dp, dumpProducer [id]   : dump mediasoup Producer with given id (or the latest created one)');
-						this.log('- dc, dumpConsumer [id]   : dump mediasoup Consumer with given id (or the latest created one)');
-						this.log('- t,  terminal            : open Node REPL Terminal');
+						this.log('- h,  help               : show this message');
+						this.log('- usage                  : show CPU and memory usage of the Node.js and mediasoup-worker processes');
+						this.log('- logLevel level         : changes logLevel in all mediasoup Workers');
+						this.log('- logTags [tag] [tag]    : changes logTags in all mediasoup Workers (values separated by space)"');
+						this.log('- dw, dumpWorkers        : dump mediasoup Workers');
+						this.log('- dr, dumpRouter [id]    : dump mediasoup Router with given id (or the latest created one)');
+						this.log('- dt, dumpTransport [id] : dump mediasoup Transport with given id (or the latest created one)');
+						this.log('- dp, dumpProducer [id]  : dump mediasoup Producer with given id (or the latest created one)');
+						this.log('- dc, dumpConsumer [id]  : dump mediasoup Consumer with given id (or the latest created one)');
+						this.log('- t,  terminal           : open Node REPL Terminal');
 						this.log('');
 						readStdin();
 
@@ -148,27 +148,20 @@ class Interactive
 					}
 
 					case 'dw':
-					case 'dumpWorker':
+					case 'dumpWorkers':
 					{
-						const pid = params[0] || Array.from(workers.keys()).pop();
-						const worker = workers.get(Number(pid));
-
-						if (!worker)
+						for (const worker of workers.values())
 						{
-							this.error('Worker not found');
+							try
+							{
+								const dump = await worker.dump();
 
-							break;
-						}
-
-						try
-						{
-							const dump = await worker.dump();
-
-							this.log(`worker.dump():\n${JSON.stringify(dump, null, '  ')}`);
-						}
-						catch (error)
-						{
-							this.error(`worker.dump() failed: ${error}`);
+								this.log(`worker.dump():\n${JSON.stringify(dump, null, '  ')}`);
+							}
+							catch (error)
+							{
+								this.error(`worker.dump() failed: ${error}`);
+							}
 						}
 
 						break;
