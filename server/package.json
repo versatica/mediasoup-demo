@@ -7,7 +7,8 @@
   "license": "All Rights Reserved",
   "main": "lib/index.js",
   "scripts": {
-    "lint": "eslint -c .eslintrc.js server.js lib"
+    "lint": "eslint -c .eslintrc.js server.js lib connect.js",
+    "connect": "./connect.js"
   },
   "dependencies": {
     "awaitqueue": "^1.0.0",

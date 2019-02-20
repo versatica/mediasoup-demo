@@ -20,7 +20,8 @@ const mediasoup = require('mediasoup');
 const AwaitQueue = require('awaitqueue');
 const Logger = require('./lib/Logger');
 const Room = require('./lib/Room');
-const interactive = require('./lib/interactive');
+const interactiveServer = require('./lib/interactiveServer');
+const interactiveClient = require('./lib/interactiveClient');
 
 const logger = new Logger();
 
@@ -48,9 +49,12 @@ run();
 
 async function run()
 {
-	// Open the interactive console/terminal.
+	// Open the interactive server.
+	await interactiveServer();
+
+	// Open the interactive client.
 	if (process.env.INTERACTIVE === 'true' || process.env.INTERACTIVE === '1')
-		interactive();
+		await interactiveClient();
 
 	// Run a mediasoup Worker.
 	await runMediasoupWorkers();
