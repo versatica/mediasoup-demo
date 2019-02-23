@@ -133,9 +133,12 @@ export default class PeerView extends React.Component
 								<p>codec: {audioCodec}</p>
 							</If>
 
-							<If condition={audioScore}>
-								<p>score:</p>
-								{this._printScore(audioScore)}
+							<If condition={audioProducerId && audioScore}>
+								{this._printProducerScore(audioScore)}
+							</If>
+
+							<If condition={audioConsumerId && audioScore}>
+								{this._printConsumerScore(audioScore)}
 							</If>
 						</If>
 
@@ -282,9 +285,12 @@ export default class PeerView extends React.Component
 								</If>
 							</If>
 
-							<If condition={videoScore}>
-								<p>score:</p>
-								{this._printScore(videoScore)}
+							<If condition={videoProducerId && videoScore}>
+								{this._printProducerScore(videoScore)}
+							</If>
+
+							<If condition={videoConsumerId && videoScore}>
+								{this._printConsumerScore(videoScore)}
 							</If>
 						</If>
 					</div>
@@ -542,26 +548,43 @@ export default class PeerView extends React.Component
 		canvas.height = 0;
 	}
 
-	_printScore(score)
+	_printProducerScore(score)
 	{
-		if (!Array.isArray(score))
-			score = [ score ];
+		const scores = Array.isArray(score) ? score : [ score ];
 
-		const lines = [];
+		return (
+			<React.Fragment>
+				<p>streams:</p>
 
-		for (const _score of score)
-		{
-			const line = [];
+				{
+					// eslint-disable-next-line no-shadow
+					scores.map(({ ssrc, score }, idx) => (
+						<p key={idx} className='indent'>
+							{`ssrc:${ssrc}, score:${score}`}
+						</p>
+					))
+				}
+			</React.Fragment>
+		);
+	}
 
-			for (const key of Object.keys(_score))
-			{
-				line.push(`${key}: ${_score[key]}`);
-			}
+	_printConsumerScore(score)
+	{
+		const scores = Array.isArray(score) ? score : [ score ];
 
-			lines.push(line.join(', '));
-		}
+		return (
+			<React.Fragment>
+				<p>score:</p>
 
-		return lines.map((line, idx) => <p key={idx} className='indent'>{line}</p>);
+				{
+					scores.map(({ producer, consumer }, idx) => (
+						<p key={idx} className='indent'>
+							{`producer${producer}, score:${consumer}`}
+						</p>
+					))
+				}
+			</React.Fragment>
+		);
 	}
 }
 
