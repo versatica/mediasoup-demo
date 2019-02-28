@@ -19,7 +19,7 @@
     "face-api.js": "^0.18.0",
     "hark": "^1.2.3",
     "js-cookie": "^2.2.0",
-    "mediasoup-client": "^3.0.0",
+    "mediasoup-client": "https://github.com/versatica/mediasoup-client.git",
     "pokemon": "^1.2.3",
     "prop-types": "^15.7.2",
     "protoo-client": "^4.0.1",
