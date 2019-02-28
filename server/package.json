@@ -15,7 +15,7 @@
     "colors": "^1.3.3",
     "debug": "^4.1.1",
     "express": "^4.16.4",
-    "mediasoup": "https://github.com/versatica/mediasoup.git#61ca509b9819b971211df7215ab41b1dd335880e",
+    "mediasoup": "https://github.com/versatica/mediasoup.git#v3",
     "pidusage": "^2.0.17",
     "protoo-server": "^4.0.1"
   },
