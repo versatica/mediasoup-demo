@@ -2,7 +2,7 @@
 
 A demo of [mediasoup](https://mediasoup.org).
 
-Try it online at https://v3demo.mediasoup.org.
+Try it online at https://demo.mediasoup.org.
 
 
 ## Installation
