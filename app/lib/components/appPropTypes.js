@@ -11,13 +11,13 @@ export const Room = PropTypes.shape(
 export const Device = PropTypes.shape(
 	{
 		flag    : PropTypes.string.isRequired,
-		name    : PropTypes.string.isRequired,
+		name    : PropTypes.string,
 		version : PropTypes.string
 	});
 
 export const Me = PropTypes.shape(
 	{
-		name                 : PropTypes.string.isRequired,
+		id                   : PropTypes.string.isRequired,
 		displayName          : PropTypes.string,
 		displayNameSet       : PropTypes.bool.isRequired,
 		device               : Device.isRequired,
@@ -32,36 +32,31 @@ export const Me = PropTypes.shape(
 
 export const Producer = PropTypes.shape(
 	{
-		id             : PropTypes.number.isRequired,
-		source         : PropTypes.oneOf([ 'mic', 'webcam' ]).isRequired,
-		deviceLabel    : PropTypes.string,
-		type           : PropTypes.oneOf([ 'front', 'back' ]),
-		locallyPaused  : PropTypes.bool.isRequired,
-		remotelyPaused : PropTypes.bool.isRequired,
-		track          : PropTypes.any,
-		codec          : PropTypes.string.isRequired
+		id          : PropTypes.string.isRequired,
+		deviceLabel : PropTypes.string,
+		type        : PropTypes.oneOf([ 'front', 'back' ]),
+		paused      : PropTypes.bool.isRequired,
+		track       : PropTypes.any,
+		codec       : PropTypes.string.isRequired
 	});
 
 export const Peer = PropTypes.shape(
 	{
-		name        : PropTypes.string.isRequired,
+		id          : PropTypes.string.isRequired,
 		displayName : PropTypes.string,
 		device      : Device.isRequired,
-		consumers   : PropTypes.arrayOf(PropTypes.number).isRequired
+		consumers   : PropTypes.arrayOf(PropTypes.string).isRequired
 	});
 
 export const Consumer = PropTypes.shape(
 	{
-		id               : PropTypes.number.isRequired,
-		peerName         : PropTypes.string.isRequired,
-		source           : PropTypes.oneOf([ 'mic', 'webcam' ]).isRequired,
-		supported        : PropTypes.bool.isRequired,
-		locallyPaused    : PropTypes.bool.isRequired,
-		remotelyPaused   : PropTypes.bool.isRequired,
-		profile          : PropTypes.oneOf([ 'none', 'default', 'low', 'medium', 'high' ]),
-		preferredProfile : PropTypes.oneOf([ 'low', 'medium', 'high' ]),
-		track            : PropTypes.any,
-		codec            : PropTypes.string
+		id                    : PropTypes.string.isRequired,
+		locallyPaused         : PropTypes.bool.isRequired,
+		remotelyPaused        : PropTypes.bool.isRequired,
+		currentSpatialLayer   : PropTypes.number,
+		preferredSpatialLayer : PropTypes.number,
+		track                 : PropTypes.any,
+		codec                 : PropTypes.string
 	});
 
 export const Notification = PropTypes.shape(

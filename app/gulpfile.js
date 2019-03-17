@@ -193,7 +193,7 @@ gulp.task('livebrowser', (done) =>
 			{
 				baseDir : OUTPUT_DIR
 			},
-			https     : config.tls,
+			https     : config.https.tls,
 			ghostMode : false,
 			files     : path.join(OUTPUT_DIR, '**', '*')
 		});
@@ -213,7 +213,7 @@ gulp.task('browser', (done) =>
 			{
 				baseDir : OUTPUT_DIR
 			},
-			https     : config.tls,
+			https     : config.https.tls,
 			ghostMode : false
 		});
 

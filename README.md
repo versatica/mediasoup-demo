@@ -2,7 +2,7 @@
 
 A demo of [mediasoup](https://mediasoup.org).
 
-Try it online at https://demo.mediasoup.org.
+Try it online at https://v3demo.mediasoup.org.
 
 
 ## Installation
@@ -47,7 +47,7 @@ $ npm install -g gulp-cli
 
 ```bash
 $ cd server
-$ node server.js
+$ DEBUG="*mediasoup* *ERROR* *WARN*" INTERACTIVE="true" node server.js
 ```
 
 * In another terminal build and run the browser application:
@@ -84,4 +84,3 @@ $ gulp dist
 ## License
 
 MIT
-

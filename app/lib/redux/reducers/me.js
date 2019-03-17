@@ -1,6 +1,6 @@
 const initialState =
 {
-	name                 : null,
+	id                   : null,
 	displayName          : null,
 	displayNameSet       : false,
 	device               : null,
@@ -10,6 +10,7 @@ const initialState =
 	webcamInProgress     : false,
 	audioOnly            : false,
 	audioOnlyInProgress  : false,
+	audioMuted           : false,
 	restartIceInProgress : false
 };
 
@@ -17,11 +18,32 @@ const me = (state = initialState, action) =>
 {
 	switch (action.type)
 	{
+		case 'SET_ROOM_STATE':
+		{
+			const roomState = action.payload.state;
+
+			if (roomState === 'closed')
+			{
+				return {
+					...state,
+					webcamInProgress     : false,
+					audioOnly            : false,
+					audioOnlyInProgress  : false,
+					audioMuted           : false,
+					restartIceInProgress : false
+				};
+			}
+			else
+			{
+				return state;
+			}
+		}
+
 		case 'SET_ME':
 		{
-			const { peerName, displayName, displayNameSet, device } = action.payload;
+			const { peerId, displayName, displayNameSet, device } = action.payload;
 
-			return { ...state, name: peerName, displayName, displayNameSet, device };
+			return { ...state, id: peerId, displayName, displayNameSet, device };
 		}
 
 		case 'SET_MEDIA_CAPABILITIES':
@@ -68,6 +90,13 @@ const me = (state = initialState, action) =>
 			const { flag } = action.payload;
 
 			return { ...state, audioOnlyInProgress: flag };
+		}
+
+		case 'SET_AUDIO_MUTED_STATE':
+		{
+			const { enabled } = action.payload;
+
+			return { ...state, audioMuted: enabled };
 		}
 
 		case 'SET_RESTART_ICE_IN_PROGRESS':

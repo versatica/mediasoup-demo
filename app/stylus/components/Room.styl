@@ -13,7 +13,7 @@
 		justify-content: center;
 		align-items: center;
 		border-radius: 25px;
-		background-color: rgba(#fff, 0.2);
+		background-color: $COLOR_BG_1;
 
 		+desktop() {
 			top: 20px;
@@ -32,10 +32,10 @@
 			border-radius: 100%;
 
 			+desktop() {
-				margin: 5px;
+				margin: 6px;
 				margin-right: 0;
-				height: 20px;
-				width: 20px;
+				height: 16px;
+				width: 16px;
 			}
 
 			+mobile() {
@@ -101,7 +101,7 @@
 
 		> .room-link {
 			width: auto;
-			background-color: rgba(#fff, 0.75);
+			background-color: $COLOR_BG_1;
 			border-bottom-right-radius: 4px;
 			border-bottom-left-radius: 4px;
 			box-shadow: 0px 3px 12px 2px rgba(#111, 0.4);
@@ -110,26 +110,27 @@
 				display: block;;
 				user-select: none;
 				pointer-events: auto;
-				color: #104758;
+				text-transform: uppercase;
+				font-family: 'Roboto';
 				font-weight: 400;
+				color: rgba(#fff, 0.75);
 				cursor: pointer;
 				text-decoration: none;
-				transition-property: opacity;
-				transition-duration: 0.25s;
-				opacity: 0.8;
+				transition-property: color;
+				transition-duration: 0.1s;
 
 				+desktop() {
 					padding: 10px 20px;
-					font-size: 16px;
+					font-size: 12px;
 				}
 
 				+mobile() {
 					padding: 6px 10px;
-					font-size: 14px;
+					font-size: 10px;
 				}
 
 				&:hover {
-					opacity: 1;
+					color: #fff;
 					text-decoration: underline;
 				}
 			}
@@ -142,23 +143,23 @@
 		overflow: hidden;
 		box-shadow: 0px 5px 12px 2px rgba(#111, 0.5);
 		transition-property: border-color;
-		transition-duration: 0.15s;
+		transition-duration: 0.2s;
 
 		&.active-speaker {
 			border-color: #fff;
 		}
 
 		+desktop() {
-			height: 200px;
-			width: 235px;
+			height: 240px;
+			width: 282px;
 			bottom: 20px;
 			left: 20px;
 			border: 1px solid rgba(#fff, 0.15);
 		}
 
 		+mobile() {
-			height: 175px;
-			width: 150px;
+			height: 220px;
+			width: 200px;
 			bottom: 10px;
 			left: 10px;
 			border: 1px solid rgba(#fff, 0.25);
@@ -191,10 +192,10 @@
 			background-position: center;
 			background-size: 75%;
 			background-repeat: no-repeat;
-			background-color: rgba(#fff, 0.15);
+			background-color: $COLOR_BG_1;
 			cursor: pointer;
 			transition-property: opacity, background-color;
-			transition-duration: 0.15s;
+			transition-duration: 0.2s;
 			border-radius: 100%;
 
 			+desktop() {
@@ -214,22 +215,27 @@
 			&.disabled {
 				pointer-events: none;
 				opacity: 0.5;
+				transition-duration: 0s;
 			}
 
-			&.audio-only {
-				background-image: url('/resources/images/icon_audio_only_white.svg');
+			&.hide-videos {
+				background-image: url('/resources/images/icon_video_white_on.svg');
 
 				&.on {
-					background-image: url('/resources/images/icon_audio_only_black.svg');
+					background-image: url('/resources/images/icon_video_black_off.svg');
+				}
+			}
+
+			&.mute-audio {
+				background-image: url('/resources/images/icon_volume_white_on.svg');
+
+				&.on {
+					background-image: url('/resources/images/icon_volume_black_off.svg');
 				}
 			}
 
 			&.restart-ice {
 				background-image: url('/resources/images/icon_restart_ice_white.svg');
-
-				&.on {
-					background-image: url('/resources/images/icon_restart_ice__black.svg');
-				}
 			}
 		}
 	}

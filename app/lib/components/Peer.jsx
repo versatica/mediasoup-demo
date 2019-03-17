@@ -10,66 +10,65 @@ const Peer = (props) =>
 	const {
 		roomClient,
 		peer,
-		micConsumer,
-		webcamConsumer
+		audioConsumer,
+		videoConsumer,
+		audioMuted,
+		faceDetection
 	} = props;
 
-	const micEnabled = (
-		Boolean(micConsumer) &&
-		!micConsumer.locallyPaused &&
-		!micConsumer.remotelyPaused
+	const audioEnabled = (
+		Boolean(audioConsumer) &&
+		!audioConsumer.locallyPaused &&
+		!audioConsumer.remotelyPaused
 	);
 
 	const videoVisible = (
-		Boolean(webcamConsumer) &&
-		!webcamConsumer.locallyPaused &&
-		!webcamConsumer.remotelyPaused
+		Boolean(videoConsumer) &&
+		!videoConsumer.locallyPaused &&
+		!videoConsumer.remotelyPaused
 	);
-
-	let videoProfile;
-
-	if (webcamConsumer)
-		videoProfile = webcamConsumer.profile;
-
-	let videoPreferredProfile;
-
-	if (webcamConsumer)
-		videoPreferredProfile = webcamConsumer.preferredProfile;
 
 	return (
 		<div data-component='Peer'>
 			<div className='indicators'>
-				<If condition={!micEnabled}>
+				<If condition={!audioEnabled}>
 					<div className='icon mic-off' />
 				</If>
 
-				<If condition={!videoVisible}>
+				<If condition={!videoConsumer}>
 					<div className='icon webcam-off' />
 				</If>
 			</div>
 
-			<If condition={videoVisible && !webcamConsumer.supported}>
-				<div className='incompatible-video'>
-					<p>incompatible video</p>
-				</div>
-			</If>
-
 			<PeerView
 				peer={peer}
-				audioTrack={micConsumer ? micConsumer.track : null}
-				videoTrack={webcamConsumer ? webcamConsumer.track : null}
+				audioConsumerId={audioConsumer ? audioConsumer.id : null}
+				videoConsumerId={videoConsumer ? videoConsumer.id : null}
+				audioTrack={audioConsumer ? audioConsumer.track : null}
+				videoTrack={videoConsumer ? videoConsumer.track : null}
+				audioMuted={audioMuted}
 				videoVisible={videoVisible}
-				videoProfile={videoProfile}
-				videoPreferredProfile={videoPreferredProfile}
-				audioCodec={micConsumer ? micConsumer.codec : null}
-				videoCodec={webcamConsumer ? webcamConsumer.codec : null}
-				onChangeVideoPreferredProfile={(profile) =>
+				videoMultiLayer={videoConsumer && videoConsumer.type !== 'simple'}
+				videoCurrentSpatialLayer={videoConsumer ? videoConsumer.currentSpatialLayer : null}
+				videoPreferredSpatialLayer={
+					videoConsumer
+						? typeof videoConsumer.preferredSpatialLayer === 'number'
+							? videoConsumer.preferredSpatialLayer
+							: 2 // NOTE: We know that the preferred spatil layer is 2 because we are cool.
+						: null
+				}
+				audioCodec={audioConsumer ? audioConsumer.codec : null}
+				videoCodec={videoConsumer ? videoConsumer.codec : null}
+				audioScore={audioConsumer ? audioConsumer.score : null}
+				videoScore={videoConsumer ? videoConsumer.score : null}
+				faceDetection={faceDetection}
+				onChangeVideoPreferredSpatialLayer={(spatialLayer) =>
 				{
-					roomClient.changeConsumerPreferredProfile(webcamConsumer.id, profile);
+					roomClient.setConsumerPreferredSpatialLayer(videoConsumer.id, spatialLayer);
 				}}
 				onRequestKeyFrame={() =>
 				{
-					roomClient.requestConsumerKeyFrame(webcamConsumer.id);
+					roomClient.requestConsumerKeyFrame(videoConsumer.id);
 				}}
 			/>
 		</div>
@@ -78,26 +77,31 @@ const Peer = (props) =>
 
 Peer.propTypes =
 {
-	roomClient     : PropTypes.any.isRequired,
-	peer           : appPropTypes.Peer.isRequired,
-	micConsumer    : appPropTypes.Consumer,
-	webcamConsumer : appPropTypes.Consumer
+	roomClient    : PropTypes.any.isRequired,
+	peer          : appPropTypes.Peer.isRequired,
+	audioConsumer : appPropTypes.Consumer,
+	videoConsumer : appPropTypes.Consumer,
+	audioMuted    : PropTypes.bool,
+	faceDetection : PropTypes.bool.isRequired
 };
 
-const mapStateToProps = (state, { name }) =>
+const mapStateToProps = (state, { id }) =>
 {
-	const peer = state.peers[name];
+	const me = state.me;
+	const peer = state.peers[id];
 	const consumersArray = peer.consumers
 		.map((consumerId) => state.consumers[consumerId]);
-	const micConsumer =
-		consumersArray.find((consumer) => consumer.source === 'mic');
-	const webcamConsumer =
-		consumersArray.find((consumer) => consumer.source === 'webcam');
+	const audioConsumer =
+		consumersArray.find((consumer) => consumer.track.kind === 'audio');
+	const videoConsumer =
+		consumersArray.find((consumer) => consumer.track.kind === 'video');
 
 	return {
 		peer,
-		micConsumer,
-		webcamConsumer
+		audioConsumer,
+		videoConsumer,
+		audioMuted    : me.audioMuted,
+		faceDetection : state.room.faceDetection
 	};
 };
 

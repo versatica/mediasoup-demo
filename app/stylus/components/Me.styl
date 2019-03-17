@@ -5,20 +5,22 @@
 
 	> .controls {
 		position: absolute;
-		z-index: 10
+		z-index: 10;
 		top: 0;
 		left: 0;
 		right: 0;
 		display: flex;
-		flex-direction:; row;
+		flex-direction: row;
 		justify-content: flex-end;
 		align-items: center;
+		pointer-events: none;
 
 		> .button {
 			flex: 0 0 auto;
 			margin: 4px;
 			margin-left: 0;
 			border-radius: 2px;
+			pointer-events: auto;
 			background-position: center;
 			background-size: 75%;
 			background-repeat: no-repeat;
@@ -52,7 +54,7 @@
 			}
 
 			&.on {
-				background-color: rgba(#fff, 0.7);
+				background-color: rgba(#fff, 0.85);
 			}
 
 			&.mic {

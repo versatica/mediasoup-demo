@@ -2,6 +2,7 @@
 
 global-reset();
 
+@import './variables';
 @import './mixins';
 @import './fonts';
 @import './reset';
@@ -9,11 +10,13 @@ global-reset();
 html {
 	height: 100%;
 	box-sizing: border-box;
-	background-image: url('/resources/images/body-bg-2.jpg');
-	background-attachment: fixed;
-	background-position: center;
-	background-size: cover;
-	background-repeat: no-repeat;
+	// background-image: url('/resources/images/body-bg-2.jpg');
+	// background-attachment: fixed;
+	// background-position: center;
+	// background-size: cover;
+	// background-repeat: no-repeat;
+	background: #141E30;
+	background: linear-gradient(to top, #243B55, #141E30);
 	font-family: 'Roboto';
 	font-weight: 300;
 

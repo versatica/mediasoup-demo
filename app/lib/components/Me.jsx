@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
 import classnames from 'classnames';
-import { getDeviceInfo } from 'mediasoup-client';
+import * as cookiesManager from '../cookiesManager';
 import * as appPropTypes from './appPropTypes';
 import { withRoomContext } from '../RoomContext';
 import PeerView from './PeerView';
@@ -16,12 +16,6 @@ class Me extends React.Component
 
 		this._mounted = false;
 		this._rootNode = null;
-		this._tooltip = true;
-
-		// TODO: Issue when using react-tooltip in Edge:
-		//   https://github.com/wwayne/react-tooltip/issues/328
-		if (getDeviceInfo().flag === 'msedge')
-			this._tooltip = false;
 	}
 
 	render()
@@ -30,17 +24,18 @@ class Me extends React.Component
 			roomClient,
 			connected,
 			me,
-			micProducer,
-			webcamProducer
+			audioProducer,
+			videoProducer,
+			faceDetection
 		} = this.props;
 
 		let micState;
 
 		if (!me.canSendMic)
 			micState = 'unsupported';
-		else if (!micProducer)
+		else if (!audioProducer)
 			micState = 'unsupported';
-		else if (!micProducer.locallyPaused && !micProducer.remotelyPaused)
+		else if (!audioProducer.paused)
 			micState = 'on';
 		else
 			micState = 'off';
@@ -49,23 +44,19 @@ class Me extends React.Component
 
 		if (!me.canSendWebcam)
 			webcamState = 'unsupported';
-		else if (webcamProducer)
+		else if (videoProducer)
 			webcamState = 'on';
 		else
 			webcamState = 'off';
 
 		let changeWebcamState;
 
-		if (Boolean(webcamProducer) && me.canChangeWebcam)
+		if (Boolean(videoProducer) && me.canChangeWebcam)
 			changeWebcamState = 'on';
 		else
 			changeWebcamState = 'unsupported';
 
-		const videoVisible = (
-			Boolean(webcamProducer) &&
-			!webcamProducer.locallyPaused &&
-			!webcamProducer.remotelyPaused
-		);
+		const videoVisible = Boolean(videoProducer) && !videoProducer.paused;
 
 		let tip;
 
@@ -78,7 +69,6 @@ class Me extends React.Component
 				ref={(node) => (this._rootNode = node)}
 				data-tip={tip}
 				data-tip-disable={!tip}
-				data-type='dark'
 			>
 				<If condition={connected}>
 					<div className='controls'>
@@ -98,9 +88,16 @@ class Me extends React.Component
 							})}
 							onClick={() =>
 							{
-								webcamState === 'on'
-									? roomClient.disableWebcam()
-									: roomClient.enableWebcam();
+								if (webcamState === 'on')
+								{
+									cookiesManager.setDevices({ webcamEnabled: false });
+									roomClient.disableWebcam();
+								}
+								else
+								{
+									cookiesManager.setDevices({ webcamEnabled: true });
+									roomClient.enableWebcam();
+								}
 							}}
 						/>
 
@@ -116,24 +113,29 @@ class Me extends React.Component
 				<PeerView
 					isMe
 					peer={me}
-					audioTrack={micProducer ? micProducer.track : null}
-					videoTrack={webcamProducer ? webcamProducer.track : null}
+					audioProducerId={audioProducer ? audioProducer.id : null}
+					videoProducerId={videoProducer ? videoProducer.id : null}
+					audioTrack={audioProducer ? audioProducer.track : null}
+					videoTrack={videoProducer ? videoProducer.track : null}
 					videoVisible={videoVisible}
-					audioCodec={micProducer ? micProducer.codec : null}
-					videoCodec={webcamProducer ? webcamProducer.codec : null}
+					audioCodec={audioProducer ? audioProducer.codec : null}
+					videoCodec={videoProducer ? videoProducer.codec : null}
+					audioScore={audioProducer ? audioProducer.score : null}
+					videoScore={videoProducer ? videoProducer.score : null}
+					faceDetection={faceDetection}
 					onChangeDisplayName={(displayName) =>
 					{
 						roomClient.changeDisplayName(displayName);
 					}}
 				/>
 
-				<If condition={this._tooltip}>
-					<ReactTooltip
-						effect='solid'
-						delayShow={100}
-						delayHide={100}
-					/>
-				</If>
+				<ReactTooltip
+					type='light'
+					effect='solid'
+					delayShow={100}
+					delayHide={100}
+					delayUpdate={50}
+				/>
 			</div>
 		);
 	}
@@ -142,16 +144,13 @@ class Me extends React.Component
 	{
 		this._mounted = true;
 
-		if (this._tooltip)
+		setTimeout(() =>
 		{
-			setTimeout(() =>
-			{
-				if (!this._mounted || this.props.me.displayNameSet)
-					return;
+			if (!this._mounted || this.props.me.displayNameSet)
+				return;
 
-				ReactTooltip.show(this._rootNode);
-			}, 4000);
-		}
+			ReactTooltip.show(this._rootNode);
+		}, 4000);
 	}
 
 	componentWillUnmount()
@@ -161,36 +160,35 @@ class Me extends React.Component
 
 	componentWillReceiveProps(nextProps)
 	{
-		if (this._tooltip)
-		{
-			if (nextProps.me.displayNameSet)
-				ReactTooltip.hide(this._rootNode);
-		}
+		if (nextProps.me.displayNameSet)
+			ReactTooltip.hide(this._rootNode);
 	}
 }
 
 Me.propTypes =
 {
-	roomClient     : PropTypes.any.isRequired,
-	connected      : PropTypes.bool.isRequired,
-	me             : appPropTypes.Me.isRequired,
-	micProducer    : appPropTypes.Producer,
-	webcamProducer : appPropTypes.Producer
+	roomClient    : PropTypes.any.isRequired,
+	connected     : PropTypes.bool.isRequired,
+	me            : appPropTypes.Me.isRequired,
+	audioProducer : appPropTypes.Producer,
+	videoProducer : appPropTypes.Producer,
+	faceDetection : PropTypes.bool.isRequired
 };
 
 const mapStateToProps = (state) =>
 {
 	const producersArray = Object.values(state.producers);
-	const micProducer =
-		producersArray.find((producer) => producer.source === 'mic');
-	const webcamProducer =
-		producersArray.find((producer) => producer.source === 'webcam');
+	const audioProducer =
+		producersArray.find((producer) => producer.track.kind === 'audio');
+	const videoProducer =
+		producersArray.find((producer) => producer.track.kind === 'video');
 
 	return {
-		connected      : state.room.state === 'connected',
-		me             : state.me,
-		micProducer    : micProducer,
-		webcamProducer : webcamProducer
+		connected     : state.room.state === 'connected',
+		me            : state.me,
+		audioProducer : audioProducer,
+		videoProducer : videoProducer,
+		faceDetection : state.room.faceDetection
 	};
 };
 

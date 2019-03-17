@@ -4,13 +4,14 @@
 {
   room :
   {
-    url               : 'https://example.io/?&roomId=d0el8y34',
-    state             : 'connected', // new/connecting/connected/closed
-    activeSpeakerName : 'alice'
+    url             : 'https://demo.mediasoup.org/?roomId=d0el8y34',
+    state           : 'connected', // new/connecting/connected/closed
+    activeSpeakerId : 'alice',
+    faceDetection   : false
   },
   me :
   {
-    name                 : 'bob',
+    id                   : 'bob',
     displayName          : 'Bob McFLower',
     displayNameSet       : false, // true if got from cookie or manually set.
     device               : { flag: 'firefox', name: 'Firefox', version: '61' },
@@ -20,68 +21,65 @@
     webcamInProgress     : false,
     audioOnly            : false,
     audioOnlyInProgress  : false,
+    audioMuted           : false,
     restartIceInProgress : false
   },
   producers :
   {
-    1111 :
+    '1111-qwer' :
     {
-      id             : 1111,
-      source         : 'mic', // mic/webcam,
-      locallyPaused  : true,
-      remotelyPaused : false,
-      track          : MediaStreamTrack,
-      codec          : 'opus'
+      id     : '1111-qwer',
+      paused : true,
+      track  : MediaStreamTrack,
+      codec  : 'opus',
+      score  : [ { ssrc: 1111, score: 10 } ]
     },
-    1112 :
+    '1112-asdf' :
     {
-      id             : 1112,
-      source         : 'webcam', // mic/webcam
-      deviceLabel    : 'Macbook Webcam',
-      type           : 'front', // front/back
-      locallyPaused  : false,
-      remotelyPaused : false,
-      track          : MediaStreamTrack,
-      codec          : 'vp8',
+      id          : '1112-asdf',
+      deviceLabel : 'Macbook Webcam',
+      type        : 'front', // front/back
+      paused      : false,
+      track       : MediaStreamTrack,
+      codec       : 'vp8',
+      score       : [ { ssrc: 2221, score: 10 }, { ssrc: 2222, score: 9 } ]
     }
   },
   peers :
   {
     'alice' :
     {
-      name        : 'alice',
+      id        : 'alice',
       displayName : 'Alice Thomsom',
       device      : { flag: 'chrome', name: 'Chrome', version: '58' },
-      consumers   : [ 5551, 5552 ]
+      consumers   : [ '5551-qwer', '5552-zxzx' ]
     }
   },
   consumers :
   {
-    5551 :
+    '5551-qwer' :
     {
-      id               : 5551,
-      peerName         : 'alice',
-      source           : 'mic', // mic/webcam
-      supported        : true,
-      locallyPaused    : false,
-      remotelyPaused   : false,
-      profile          : 'default',
-      preferredProfile : null,
-      track            : MediaStreamTrack,
-      codec            : 'opus'
+      id                    : '5551-qwer',
+      type                  : 'simple',
+      locallyPaused         : false,
+      remotelyPaused        : false,
+      currentSpatialLayer   : undefined,
+      preferredSpatialLayer : undefined,
+      track                 : MediaStreamTrack,
+      codec                 : 'opus',
+      score                 : [ { ssrc: 3331, score: 10 } ]
     },
-    5552 :
+    '5552-zxzx' :
     {
-      id               : 5552,
-      peerName         : 'alice',
-      source           : 'webcam',
-      supported        : false,
-      locallyPaused    : false,
-      remotelyPaused   : true,
-      profile          : 'medium',
-      preferredProfile : 'high',
-      track            : null,
-      codec            : 'h264'
+      id                    : '5552-zxzx',
+      type                  : 'simulcast',
+      locallyPaused         : false,
+      remotelyPaused        : true,
+      currentSpatialLayer   : 1,
+      preferredSpatialLayer : 2,
+      track                 : null,
+      codec                 : 'h264',
+      score                 : [ { ssrc: 4441, score: 9 }, { ssrc: 4444, score: 8 } ]
     }
   },
   notifications :
