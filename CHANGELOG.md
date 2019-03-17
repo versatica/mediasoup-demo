@@ -3,6 +3,11 @@
 This is the changelog of the mediasoup demo application. To check the changes in **mediasoup** and **mediasoup-client** libraries check their corresponding projects.
 
 
+## 2019-03-17
+
+* Moving app and server to mediasoup v3.
+
+
 ## 2019-02-11
 
 * Remove transport max bitrate artificial limitation.
