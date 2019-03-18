@@ -1,4 +1,4 @@
-# mediasoup-demo
+# mediasoup-demo v3
 
 A demo of [mediasoup](https://mediasoup.org).
 

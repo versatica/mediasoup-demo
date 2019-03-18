@@ -126,10 +126,6 @@ ${HTTPIE_COMMAND} -v \
 
 echo ">>> running ffmpeg..."
 
-#
-# ffmpeg options:
-# -g 90: Send key frames every 3 seconds (somehow because framerate is 30).
-#
 ffmpeg \
 	-re \
 	-v info \
@@ -139,6 +135,5 @@ ffmpeg \
 	-acodec libopus -ab 128k -ac 2 -ar 48000 \
 	-map 0:v:0 \
 	-pix_fmt yuv420p -c:v libvpx -b:v 1000k -deadline realtime -cpu-used 4 \
-	-g 90 \
 	-f tee \
 	"[select=a:f=rtp:ssrc=${AUDIO_SSRC}:payload_type=${AUDIO_PT}]rtp://${audioTransportIp}:${audioTransportPort}?rtcpport=${audioTransportRtcpPort}|[select=v:f=rtp:ssrc=${VIDEO_SSRC}:payload_type=${VIDEO_PT}]rtp://${videoTransportIp}:${videoTransportPort}?rtcpport=${videoTransportRtcpPort}"
