@@ -69,11 +69,21 @@ AUDIO_PT=100
 VIDEO_SSRC=2222
 VIDEO_PT=101
 
+#
+# Verify that a room with id ROOM_ID does exist by sending a simlpe HTTP GET. If
+# not abort since we are not allowed to initiate a room..
+#
 echo ">>> verifying that room '${ROOM_ID}' exists..."
 
 ${HTTPIE_COMMAND} \
 	GET ${SERVER_URL}/rooms/${ROOM_ID} > /dev/null
 
+#
+# Create a Broadcaster entity in the server by sending a POST with our metadata.
+# Note that this is not related to mediasoup at all, but will become just a JS
+# object in the Node.js application to hold our metadata and mediasoup Transports
+# and Producers.
+#
 echo ">>> creating Broadcaster..."
 
 ${HTTPIE_COMMAND} \
@@ -83,9 +93,18 @@ ${HTTPIE_COMMAND} \
 	device:='{"name": "FFmpeg"}' \
 	> /dev/null
 
-# Delete the Broadcaster when the command terminates.
+#
+# Upon script termination delete the Broadcaster in the server by sending a
+# HTTP DELETE.
+#
 trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID} > /dev/null' EXIT
 
+#
+# Create a PlainRtpTransport in the mediasoup to send our audio and video tracks
+# using plain RTP over UDP. Do it via HTTP post specifying type:"plain" and
+# multiSource:true to tell the server to accept RTP from any IP:port (we can do
+# this because we know that ffmpeg does not expect to receive RTCP).
+#
 echo ">>> creating mediasoup PlainRtpTransport for producing audio and video..."
 
 res=$(${HTTPIE_COMMAND} \
@@ -94,9 +113,16 @@ res=$(${HTTPIE_COMMAND} \
 	multiSource:=true \
 	2> /dev/null)
 
-# Parse JSON response into Shell variables.
+#
+# Parse JSON response into Shell variables and extract the PlainRtpTransport id,
+# IP and port.
+#
 eval "$(echo ${res} | jq -r '@sh "transportId=\(.id) transportIp=\(.ip) transportPort=\(.port)"')"
 
+#
+# Create a mediasoup Producer to send audio by sending our RTP parameters via a
+# HTTP POST.
+#
 echo ">>> creating mediasoup audio Producer..."
 
 ${HTTPIE_COMMAND} -v \
@@ -105,6 +131,10 @@ ${HTTPIE_COMMAND} -v \
 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"audio/opus\", \"payloadType\":${AUDIO_PT}, \"clockRate\":48000, \"channels\":2, \"parameters\":{ \"sprop-stereo\":1 } }], \"encodings\": [{ \"ssrc\":${AUDIO_SSRC} }] }" \
 	> /dev/null
 
+#
+# Create a mediasoup Producer to send video by sending our RTP parameters via a
+# HTTP POST.
+#
 echo ">>> creating mediasoup video Producer..."
 
 ${HTTPIE_COMMAND} -v \
@@ -113,6 +143,12 @@ ${HTTPIE_COMMAND} -v \
 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/vp8\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000 }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
 	> /dev/null
 
+#
+# Run ffmpeg command and make it send audio and video RTP with codec payload and
+# SSRC values matching those that we have previously signaled in the Producers
+# creation above. Also, tell ffmpeg to send the RTP to the mediasoup
+# PlainRtpTransport ip and port.
+#
 echo ">>> running ffmpeg..."
 
 ffmpeg \

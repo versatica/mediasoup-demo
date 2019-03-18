@@ -88,6 +88,9 @@ async function run()
 	}, 120000);
 }
 
+/**
+ * Launch as many mediasoup Workers as given in the configuration file.
+ */
 async function runMediasoupWorkers()
 {
 	const { numWorkers } = config.mediasoup;
@@ -116,6 +119,9 @@ async function runMediasoupWorkers()
 	}
 }
 
+/**
+ * Create an Express based API server to manage Broadcaster requests.
+ */
 async function createExpressApp()
 {
 	logger.info('creating Express app...');
@@ -124,6 +130,10 @@ async function createExpressApp()
 
 	expressApp.use(bodyParser.json());
 
+	/**
+	 * For every API request, verify that the roomId in the path matches and
+	 * existing room.
+	 */
 	expressApp.param(
 		'roomId', (req, res, next, roomId) =>
 		{
@@ -141,6 +151,10 @@ async function createExpressApp()
 			next();
 		});
 
+	/**
+	 * API GET resource that returns the mediasoup Router RTP capabilities of
+	 * the room.
+	 */
 	expressApp.get(
 		'/rooms/:roomId', (req, res) =>
 		{
@@ -149,6 +163,9 @@ async function createExpressApp()
 			res.status(200).json({ rtpCapabilities });
 		});
 
+	/**
+	 * POST API to create a Broadcaster.
+	 */
 	expressApp.post(
 		'/rooms/:roomId/broadcasters', (req, res) =>
 		{
@@ -163,6 +180,9 @@ async function createExpressApp()
 			res.status(200).send('broadcaster created');
 		});
 
+	/**
+	 * DELETE API to delete a Broadcaster.
+	 */
 	expressApp.delete(
 		'/rooms/:roomId/broadcasters/:broadcasterId', (req, res) =>
 		{
@@ -173,6 +193,12 @@ async function createExpressApp()
 			res.status(200).send('broadcaster deleted');
 		});
 
+	/**
+	 * POST API to create a mediasoup Transport associated to a Broadcaster.
+	 * It can be a PLainRtpTransport or a WebRtcTransport depending on the
+	 * type parameters in the body. There are also additional parameters for
+	 * PLainRtpTransport.
+	 */
 	expressApp.post(
 		'/rooms/:roomId/broadcasters/:broadcasterId/transports', async (req, res, next) =>
 		{
@@ -198,6 +224,11 @@ async function createExpressApp()
 			}
 		});
 
+	/**
+	 * POST API to connect a Transport belonging to a Broadcaster. Not needed
+	 * for PlainRtpTransport if it was created with comedia or multiSource options
+	 * set to true.
+	 */
 	expressApp.post(
 		'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/connect',
 		async (req, res, next) =>
@@ -222,6 +253,12 @@ async function createExpressApp()
 			}
 		});
 
+	/**
+	 * POST API to create a mediasoup Producer associated to a Broadcaster.
+	 * The exact Transport in which the Producer must be created is signaled in
+	 * the URL path. Body parameters include kind and rtpParameters of the
+	 * Producer.
+	 */
 	expressApp.post(
 		'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/producers',
 		async (req, res, next) =>
@@ -247,6 +284,9 @@ async function createExpressApp()
 			}
 		});
 
+	/**
+	 * Error handler.
+	 */
 	expressApp.use(
 		(error, req, res, next) =>
 		{
@@ -266,6 +306,10 @@ async function createExpressApp()
 		});
 }
 
+/**
+ * Create a Node.js HTTPS server. It listens in the IP and port given in the
+ * configuration file and reuses the Express application as request listener.
+ */
 async function runHttpsServer()
 {
 	logger.info('running an HTTPS server...');
@@ -285,6 +329,9 @@ async function runHttpsServer()
 	});
 }
 
+/**
+ * Create a protoo WebSocketServer to allow WebSocket connections from browsers.
+ */
 async function runProtooWebSocketServer()
 {
 	logger.info('running protoo WebSocketServer...');
@@ -339,6 +386,9 @@ async function runProtooWebSocketServer()
 	});
 }
 
+/**
+ * Get next mediasoup Worker.
+ */
 function getMediasoupWorker()
 {
 	const worker = mediasoupWorkers[nextMediasoupWorkerIdx];
@@ -349,6 +399,9 @@ function getMediasoupWorker()
 	return worker;
 }
 
+/**
+ * Get a Room instance (or create one if it does not exist).
+ */
 async function getOrCreateRoom({ roomId, forceH264 = false })
 {
 	let room = rooms.get(roomId);
