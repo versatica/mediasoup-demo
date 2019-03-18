@@ -5,8 +5,24 @@ const config = require('../config');
 
 const logger = new Logger('Room');
 
+/**
+ * Room class.
+ *
+ * This is not a "mediasoup Room" by itself, by a custom class that holds
+ * a protoo Room (for signaling with WebSocket clients) and a mediasoup Router
+ * (for sending and receiving media to/from those WebSocket peers).
+ */
 class Room extends EventEmitter
 {
+	/**
+	 * Factory function that creates and returns Room instance.
+	 *
+	 * @param {mediasoup.Worker} mediasoupWorker - The mediasoup Worker in which a new
+	 *   mediasoup Router must be created.
+	 * @param {String} roomId - Id of the Room instance.
+	 * @param {Boolean} [forceH264=false] - Whether just H264 must be used in the
+	 *   mediasoup Router video codecs.
+	 */
 	static async create({ mediasoupWorker, roomId, forceH264 = false })
 	{
 		logger.info('create() [roomId:%s, forceH264:%s]', roomId, forceH264);
@@ -114,6 +130,9 @@ class Room extends EventEmitter
 		global.audioLevelObserver = this._audioLevelObserver;
 	}
 
+	/**
+	 * Closes the Room instance by closing the protoo Room and the mediasoup Router.
+	 */
 	close()
 	{
 		logger.debug('close()');
@@ -139,6 +158,14 @@ class Room extends EventEmitter
 			this._mediasoupRouter._transports.size); // NOTE: Private API.
 	}
 
+	/**
+	 * Called from server.js upon a protoo WebSocket connection request from a
+	 * browser.
+	 *
+	 * @param {String} peerId - The id of the protoo peer to be created.
+	 * @param {protoo.WebSocketTransport} protooWebSocketTransport - The associated
+	 *   protoo WebSocket transport.
+	 */
 	handleProtooConnection({ peerId, protooWebSocketTransport })
 	{
 		const existingPeer = this._protooRoom.getPeer(peerId);
@@ -154,6 +181,7 @@ class Room extends EventEmitter
 
 		let peer;
 
+		// Create a new protoo Peer with the given peerId.
 		try
 		{
 			peer = this._protooRoom.createPeer(peerId, protooWebSocketTransport);
@@ -162,6 +190,14 @@ class Room extends EventEmitter
 		{
 			logger.error('protooRoom.createPeer() failed:%o', error);
 		}
+
+		// Use the peer.data object to store mediasoup related objects.
+
+		// Not joined after a custom protoo 'join' request is later received.
+		peer.data.joined = false;
+		peer.data.displayName = undefined;
+		peer.data.device = undefined;
+		peer.data.rtpCapabilities = undefined;
 
 		// Have mediasoup related maps ready even before the Peer joins since we
 		// allow creating Transports before joining.
@@ -234,6 +270,13 @@ class Room extends EventEmitter
 		return this._mediasoupRouter.rtpCapabilities;
 	}
 
+	/**
+	 * Create a Broadcaster. This is for HTTP API requests (see server.js).
+	 *
+	 * @type {String} id - Broadcaster id.
+	 * @type {String} displayName - Descriptive name.
+	 * @type {Object} [device] - Additional info with name, version and flags fields.
+	 */
 	createBroadcaster({ id, displayName, device = {} })
 	{
 		if (typeof id !== 'string' || !id)
@@ -263,6 +306,7 @@ class Room extends EventEmitter
 			}
 		};
 
+		// Store the Broadcaster into the map.
 		this._broadcasters.set(broadcaster.id, broadcaster);
 
 		// Notify the new Broadcaster to all Peers.
@@ -279,6 +323,11 @@ class Room extends EventEmitter
 		}
 	}
 
+	/**
+	 * Delete a Broadcaster.
+	 *
+	 * @type {String} broadcasterId
+	 */
 	deleteBroadcaster({ broadcasterId })
 	{
 		const broadcaster = this._broadcasters.get(broadcasterId);
@@ -300,6 +349,19 @@ class Room extends EventEmitter
 		}
 	}
 
+	/**
+	 * Create a mediasoup Transport associated to a Broadcaster. It can be a
+	 * PlainRtpTransport or a WebRtcTransport
+	 *
+	 * @type {String} broadcasterId
+	 * @type {String} type - Can be 'plain' (PlainRtpTransport) or 'webrtc'
+	 *   (WebRtcTransport).
+	 * @type {Boolean} [rtcpMux=true] - Just for PlainRtpTransport, use RTCP mux.
+	 * @type {Boolean} [comedia=true] - Just for PlainRtpTransport, enable remote IP:port
+	 *   autodetection.
+	 * @type {Boolean} [multiSource=false] - Just for PlainRtpTransport, allow RTP from any
+	 *   remote IP and port (no RTCP feedback will be sent to the remote).
+	 */
 	async createBroadcasterTransport(
 		{
 			broadcasterId,
@@ -364,7 +426,13 @@ class Room extends EventEmitter
 		}
 	}
 
-	// This is just for WebRtcTransports.
+	/**
+	 * Connect a Broadcaster mediasoup WebRtcTransport.
+	 *
+	 * @type {String} broadcasterId
+	 * @type {String} transportId
+	 * @type {RTCDtlsParameters} dtlsParameters - Remote DTLS parameters.
+	 */
 	async connectBroadcasterTransport(
 		{
 			broadcasterId,
@@ -392,6 +460,14 @@ class Room extends EventEmitter
 		await transport.connect({ dtlsParameters });
 	}
 
+	/**
+	 * Connect a mediasoup Producer associated to a Broadcaster.
+	 *
+	 * @type {String} broadcasterId
+	 * @type {String} transportId
+	 * @type {String} kind - 'audio' or 'video' kind for the Producer.
+	 * @type {RTCRtpParameters} rtpParameters - RTP parameters for the Producer.
+	 */
 	async createBroadcasterProducer(
 		{
 			broadcasterId,
@@ -453,6 +529,9 @@ class Room extends EventEmitter
 		return { id: producer.id };
 	}
 
+	/**
+	 * Handle protoo requests from browsers.
+	 */
 	async _handleProtooRequest(peer, request, accept, reject)
 	{
 		switch (request.method)
@@ -887,12 +966,18 @@ class Room extends EventEmitter
 		}
 	}
 
+	/**
+	 * Helper to get the list of joined protoo peers.
+	 */
 	_getJoinedPeers({ excludePeer = undefined } = {})
 	{
 		return this._protooRoom.peers
 			.filter((peer) => peer.data.joined && peer !== excludePeer);
 	}
 
+	/**
+	 * Creates a mediasoup Consumer for the given mediasoup Producer.
+	 */
 	async _createConsumer({ consumerPeer, producerPeer, producer })
 	{
 		// Optimization:
