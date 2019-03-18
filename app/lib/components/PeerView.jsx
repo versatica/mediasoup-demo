@@ -399,6 +399,7 @@ export default class PeerView extends React.Component
 
 		if (videoElem)
 		{
+			videoElem.oncanplay = null;
 			videoElem.onplay = null;
 			videoElem.onpause = null;
 		}
