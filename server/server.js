@@ -177,7 +177,7 @@ async function createExpressApp()
 		'/rooms/:roomId/broadcasters/:broadcasterId/transports', async (req, res, next) =>
 		{
 			const { broadcasterId } = req.params;
-			const { type, rtcpMux } = req.body;
+			const { type, rtcpMux, comedia, multiSource } = req.body;
 
 			try
 			{
@@ -185,7 +185,9 @@ async function createExpressApp()
 					{
 						broadcasterId,
 						type,
-						rtcpMux
+						rtcpMux,
+						comedia,
+						multiSource
 					});
 
 				res.status(200).json(data);

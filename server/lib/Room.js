@@ -300,7 +300,14 @@ class Room extends EventEmitter
 		}
 	}
 
-	async createBroadcasterTransport({ broadcasterId, type, rtcpMux = true })
+	async createBroadcasterTransport(
+		{
+			broadcasterId,
+			type,
+			rtcpMux = true,
+			comedia = true,
+			multiSource = false
+		})
 	{
 		const broadcaster = this._broadcasters.get(broadcasterId);
 
@@ -333,9 +340,10 @@ class Room extends EventEmitter
 			{
 				const transport = await this._mediasoupRouter.createPlainRtpTransport(
 					{
-						listenIp : config.mediasoup.webRtcTransport.listenIps[0],
-						rtcpMux  : Boolean(rtcpMux),
-						comedia  : true
+						listenIp    : config.mediasoup.webRtcTransport.listenIps[0],
+						rtcpMux     : Boolean(rtcpMux),
+						comedia     : Boolean(comedia),
+						multiSource : Boolean(multiSource)
 					});
 
 				// Store it.
