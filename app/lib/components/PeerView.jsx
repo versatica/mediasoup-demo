@@ -213,18 +213,17 @@ export default class PeerView extends React.Component
 								}
 							>
 								<p>
-									max spatial layer: {maxSpatialLayer}
+									max spatial layer: {maxSpatialLayer > -1 ? maxSpatialLayer : 'none'}
 									<span>{' '}</span>
 									<span
-										className='clickable'
+										className={classnames({
+											clickable : maxSpatialLayer > -1
+										})}
 										onClick={(event) =>
 										{
 											event.stopPropagation();
 
 											const newMaxSpatialLayer = maxSpatialLayer -1;
-
-											if (newMaxSpatialLayer < 0)
-												return;
 
 											onChangeMaxSendingSpatialLayer(newMaxSpatialLayer);
 											this.setState({ maxSpatialLayer: newMaxSpatialLayer });
@@ -234,15 +233,14 @@ export default class PeerView extends React.Component
 									</span>
 									<span>{' '}</span>
 									<span
-										className='clickable'
+										className={classnames({
+											clickable : maxSpatialLayer < videoRtpParameters.encodings.length - 1
+										})}
 										onClick={(event) =>
 										{
 											event.stopPropagation();
 
 											const newMaxSpatialLayer = maxSpatialLayer + 1;
-
-											if (newMaxSpatialLayer > videoRtpParameters.encodings.length - 1)
-												return;
 
 											onChangeMaxSendingSpatialLayer(newMaxSpatialLayer);
 											this.setState({ maxSpatialLayer: newMaxSpatialLayer });
@@ -279,10 +277,6 @@ export default class PeerView extends React.Component
 												case 2:
 													newPreferredSpatialLayer = 1;
 													break;
-
-												default:
-													newPreferredSpatialLayer = 1;
-													break;
 											}
 
 											onChangeVideoPreferredSpatialLayer(newPreferredSpatialLayer);
@@ -311,10 +305,6 @@ export default class PeerView extends React.Component
 
 												case 2:
 													newPreferredSpatialLayer = 0;
-													break;
-
-												default:
-													newPreferredSpatialLayer = 2;
 													break;
 											}
 
