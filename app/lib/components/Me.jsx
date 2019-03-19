@@ -115,6 +115,8 @@ class Me extends React.Component
 					peer={me}
 					audioProducerId={audioProducer ? audioProducer.id : null}
 					videoProducerId={videoProducer ? videoProducer.id : null}
+					audioRtpParameters={audioProducer ? audioProducer.rtpParameters : null}
+					videoRtpParameters={videoProducer ? videoProducer.rtpParameters : null}
 					audioTrack={audioProducer ? audioProducer.track : null}
 					videoTrack={videoProducer ? videoProducer.track : null}
 					videoVisible={videoVisible}
@@ -126,6 +128,10 @@ class Me extends React.Component
 					onChangeDisplayName={(displayName) =>
 					{
 						roomClient.changeDisplayName(displayName);
+					}}
+					onChangeMaxSendingSpatialLayer={(spatialLayer) =>
+					{
+						roomClient.setMaxSendingSpatialLayer(spatialLayer);
 					}}
 				/>
 

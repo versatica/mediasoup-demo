@@ -284,6 +284,7 @@ export default class RoomClient
 							type           : type,
 							locallyPaused  : false,
 							remotelyPaused : producerPaused,
+							rtpParameters  : consumer.rtpParameters,
 							track          : consumer.track,
 							codec          : consumer.rtpParameters.codecs[0].mimeType.split('/')[1]
 						},
@@ -496,10 +497,11 @@ export default class RoomClient
 
 			store.dispatch(stateActions.addProducer(
 				{
-					id     : this._micProducer.id,
-					paused : this._micProducer.paused,
-					track  : this._micProducer.track,
-					codec  : this._micProducer.rtpParameters.codecs[0].mimeType.split('/')[1]
+					id            : this._micProducer.id,
+					paused        : this._micProducer.paused,
+					track         : this._micProducer.track,
+					rtpParameters : this._micProducer.rtpParameters,
+					codec         : this._micProducer.rtpParameters.codecs[0].mimeType.split('/')[1]
 				}));
 
 			this._micProducer.on('transportclose', () =>
@@ -688,12 +690,13 @@ export default class RoomClient
 
 			store.dispatch(stateActions.addProducer(
 				{
-					id          : this._webcamProducer.id,
-					deviceLabel : device.label,
-					type        : this._getWebcamType(device),
-					paused      : this._webcamProducer.paused,
-					track       : this._webcamProducer.track,
-					codec       : this._webcamProducer.rtpParameters.codecs[0].mimeType.split('/')[1]
+					id            : this._webcamProducer.id,
+					deviceLabel   : device.label,
+					type          : this._getWebcamType(device),
+					paused        : this._webcamProducer.paused,
+					track         : this._webcamProducer.track,
+					rtpParameters : this._webcamProducer.rtpParameters,
+					codec         : this._webcamProducer.rtpParameters.codecs[0].mimeType.split('/')[1]
 				}));
 
 			this._webcamProducer.on('transportclose', () =>
@@ -1004,6 +1007,26 @@ export default class RoomClient
 
 		store.dispatch(
 			stateActions.setRestartIceInProgress(false));
+	}
+
+	async setMaxSendingSpatialLayer(spatialLayer)
+	{
+		logger.debug('setMaxSendingSpatialLayer() [spatialLayer:%s]', spatialLayer);
+
+		try
+		{
+			await this._webcamProducer.setMaxSpatialLayer(spatialLayer);
+		}
+		catch (error)
+		{
+			logger.error('setMaxSendingSpatialLayer() | failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `Error setting max sending video spatial layer: ${error}`
+				}));
+		}
 	}
 
 	async setConsumerPreferredSpatialLayer(consumerId, spatialLayer)

@@ -32,12 +32,13 @@ export const Me = PropTypes.shape(
 
 export const Producer = PropTypes.shape(
 	{
-		id          : PropTypes.string.isRequired,
-		deviceLabel : PropTypes.string,
-		type        : PropTypes.oneOf([ 'front', 'back' ]),
-		paused      : PropTypes.bool.isRequired,
-		track       : PropTypes.any,
-		codec       : PropTypes.string.isRequired
+		id            : PropTypes.string.isRequired,
+		deviceLabel   : PropTypes.string,
+		type          : PropTypes.oneOf([ 'front', 'back' ]),
+		paused        : PropTypes.bool.isRequired,
+		track         : PropTypes.any.isRequired,
+		rtpParameters : PropTypes.object.isRequired,
+		codec         : PropTypes.string.isRequired
 	});
 
 export const Peer = PropTypes.shape(

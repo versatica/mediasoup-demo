@@ -44,6 +44,8 @@ const Peer = (props) =>
 				peer={peer}
 				audioConsumerId={audioConsumer ? audioConsumer.id : null}
 				videoConsumerId={videoConsumer ? videoConsumer.id : null}
+				audioRtpParameters={audioConsumer ? audioConsumer.rtpParameters : null}
+				videoRtpParameters={videoConsumer ? videoConsumer.rtpParameters : null}
 				audioTrack={audioConsumer ? audioConsumer.track : null}
 				videoTrack={videoConsumer ? videoConsumer.track : null}
 				audioMuted={audioMuted}

@@ -28,11 +28,12 @@
   {
     '1111-qwer' :
     {
-      id     : '1111-qwer',
-      paused : true,
-      track  : MediaStreamTrack,
-      codec  : 'opus',
-      score  : [ { ssrc: 1111, score: 10 } ]
+      id            : '1111-qwer',
+      paused        : true,
+      track         : MediaStreamTrack,
+      codec         : 'opus',
+      rtpParameters : {},
+      score         : [ { ssrc: 1111, score: 10 } ]
     },
     '1112-asdf' :
     {
@@ -66,6 +67,7 @@
       currentSpatialLayer   : undefined,
       preferredSpatialLayer : undefined,
       track                 : MediaStreamTrack,
+      rtpParameters         : {},
       codec                 : 'opus',
       score                 : [ { ssrc: 3331, score: 10 } ]
     },
@@ -77,6 +79,7 @@
       remotelyPaused        : true,
       currentSpatialLayer   : 1,
       preferredSpatialLayer : 2,
+      rtpParameters         : {},
       track                 : null,
       codec                 : 'h264',
       score                 : [ { ssrc: 4441, score: 9 }, { ssrc: 4444, score: 8 } ]

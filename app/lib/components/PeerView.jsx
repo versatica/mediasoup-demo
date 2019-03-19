@@ -31,7 +31,8 @@ export default class PeerView extends React.Component
 			videoResolutionWidth  : null,
 			videoResolutionHeight : null,
 			videoCanPlay          : false,
-			videoElemPaused       : false
+			videoElemPaused       : false,
+			maxSpatialLayer       : null
 		};
 
 		// Latest received video track.
@@ -62,6 +63,7 @@ export default class PeerView extends React.Component
 			videoProducerId,
 			audioConsumerId,
 			videoConsumerId,
+			videoRtpParameters,
 			audioMuted,
 			videoVisible,
 			videoMultiLayer,
@@ -72,6 +74,7 @@ export default class PeerView extends React.Component
 			audioScore,
 			videoScore,
 			onChangeDisplayName,
+			onChangeMaxSendingSpatialLayer,
 			onChangeVideoPreferredSpatialLayer,
 			onRequestKeyFrame
 		} = this.props;
@@ -82,7 +85,8 @@ export default class PeerView extends React.Component
 			videoResolutionWidth,
 			videoResolutionHeight,
 			videoCanPlay,
-			videoElemPaused
+			videoElemPaused,
+			maxSpatialLayer
 		} = this.state;
 
 		return (
@@ -199,6 +203,54 @@ export default class PeerView extends React.Component
 
 							<If condition={videoVisible && videoResolutionWidth !== null}>
 								<p>resolution: {videoResolutionWidth}x{videoResolutionHeight}</p>
+							</If>
+
+							<If
+								condition={
+									videoVisible &&
+									videoProducerId &&
+									videoRtpParameters.encodings.length > 1
+								}
+							>
+								<p>
+									max spatial layer: {maxSpatialLayer}
+									<span>{' '}</span>
+									<span
+										className='clickable'
+										onClick={(event) =>
+										{
+											event.stopPropagation();
+
+											const newMaxSpatialLayer = maxSpatialLayer -1;
+
+											if (newMaxSpatialLayer < 0)
+												return;
+
+											onChangeMaxSendingSpatialLayer(newMaxSpatialLayer);
+											this.setState({ maxSpatialLayer: newMaxSpatialLayer });
+										}}
+									>
+										{'[ down ]'}
+									</span>
+									<span>{' '}</span>
+									<span
+										className='clickable'
+										onClick={(event) =>
+										{
+											event.stopPropagation();
+
+											const newMaxSpatialLayer = maxSpatialLayer + 1;
+
+											if (newMaxSpatialLayer > videoRtpParameters.encodings.length - 1)
+												return;
+
+											onChangeMaxSendingSpatialLayer(newMaxSpatialLayer);
+											this.setState({ maxSpatialLayer: newMaxSpatialLayer });
+										}}
+									>
+										{'[ up ]'}
+									</span>
+								</p>
 							</If>
 
 							<If condition={!isMe && videoMultiLayer}>
@@ -407,7 +459,26 @@ export default class PeerView extends React.Component
 
 	componentWillReceiveProps(nextProps)
 	{
-		const { audioTrack, videoTrack } = nextProps;
+		const {
+			isMe,
+			audioTrack,
+			videoTrack,
+			videoRtpParameters
+		} = nextProps;
+
+		const { maxSpatialLayer } = this.state;
+
+		if (isMe && videoRtpParameters && maxSpatialLayer === null)
+		{
+			this.setState(
+				{
+					maxSpatialLayer : videoRtpParameters.encodings.length - 1
+				});
+		}
+		else if (isMe && !videoRtpParameters && maxSpatialLayer !== null)
+		{
+			this.setState({ maxSpatialLayer: null });
+		}
 
 		this._setTracks(audioTrack, videoTrack);
 	}
@@ -662,6 +733,8 @@ PeerView.propTypes =
 	videoProducerId                    : PropTypes.string,
 	audioConsumerId                    : PropTypes.string,
 	videoConsumerId                    : PropTypes.string,
+	audioRtpParameters                 : PropTypes.object,
+	videoRtpParameters                 : PropTypes.object,
 	audioTrack                         : PropTypes.any,
 	videoTrack                         : PropTypes.any,
 	audioMuted                         : PropTypes.bool,
@@ -675,6 +748,7 @@ PeerView.propTypes =
 	videoScore                         : PropTypes.any,
 	faceDetection                      : PropTypes.bool.isRequired,
 	onChangeDisplayName                : PropTypes.func,
+	onChangeMaxSendingSpatialLayer     : PropTypes.func,
 	onChangeVideoPreferredSpatialLayer : PropTypes.func,
 	onRequestKeyFrame                  : PropTypes.func
 };
