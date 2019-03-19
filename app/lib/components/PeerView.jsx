@@ -715,7 +715,7 @@ export default class PeerView extends React.Component
 				{
 					scores.map(({ producer, consumer }, idx) => (
 						<p key={idx} className='indent'>
-							{`producer${producer}, consumer:${consumer}`}
+							{`producer:${producer}, consumer:${consumer}`}
 						</p>
 					))
 				}
