@@ -611,9 +611,9 @@ export default class PeerView extends React.Component
 						.sort((a, b) =>
 						{
 							if (a.rid)
-								return (a.rid > b.rid ? -1 : 1);
+								return (a.rid > b.rid ? 1 : -1);
 							else
-								return (a.ssrc > b.ssrc ? -1 : 1);
+								return (a.ssrc > b.ssrc ? 1 : -1);
 						})
 						.map(({ ssrc, rid, score }, idx) => ( // eslint-disable-line no-shadow
 							<p key={idx} className='indent'>
