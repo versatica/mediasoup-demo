@@ -489,7 +489,8 @@ export default class RoomClient
 					track,
 					codecOptions :
 					{
-						opusStereo : 1
+						opusStereo : 1,
+						opusDtx    : 1
 					}
 				});
 
