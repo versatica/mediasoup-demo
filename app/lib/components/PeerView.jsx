@@ -607,20 +607,27 @@ export default class PeerView extends React.Component
 				<p>streams:</p>
 
 				{
-					// eslint-disable-next-line no-shadow
-					scores.map(({ ssrc, rid, score }, idx) => (
-						<p key={idx} className='indent'>
-							<Choose>
-								<When condition={rid !== undefined}>
-									{`rid:${rid}, ssrc:${ssrc}, score:${score}`}
-								</When>
+					scores
+						.sort((a, b) =>
+						{
+							if (a.rid)
+								return (a.rid > b.rid ? -1 : 1);
+							else
+								return (a.ssrc > b.ssrc ? -1 : 1);
+						})
+						.map(({ ssrc, rid, score }, idx) => ( // eslint-disable-line no-shadow
+							<p key={idx} className='indent'>
+								<Choose>
+									<When condition={rid !== undefined}>
+										{`rid:${rid}, ssrc:${ssrc}, score:${score}`}
+									</When>
 
-								<Otherwise>
-									{`ssrc:${ssrc}, score:${score}`}
-								</Otherwise>
-							</Choose>
-						</p>
-					))
+									<Otherwise>
+										{`ssrc:${ssrc}, score:${score}`}
+									</Otherwise>
+								</Choose>
+							</p>
+						))
 				}
 			</React.Fragment>
 		);
