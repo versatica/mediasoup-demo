@@ -43,7 +43,9 @@ module.exports =
 				'rtcp',
 				// 'rtx',
 				// 'rbe',
-				// 'score'
+				// 'score',
+				// 'simulcast',
+				// 'svc'
 			],
 			rtcMinPort : 40000,
 			rtcMaxPort : 49999
