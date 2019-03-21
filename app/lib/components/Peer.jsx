@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import * as appPropTypes from './appPropTypes';
 import { withRoomContext } from '../RoomContext';
+import * as stateActions from '../redux/stateActions';
 import PeerView from './PeerView';
 
 const Peer = (props) =>
@@ -13,7 +14,8 @@ const Peer = (props) =>
 		audioConsumer,
 		videoConsumer,
 		audioMuted,
-		faceDetection
+		faceDetection,
+		onSetStatsPeerId
 	} = props;
 
 	const audioEnabled = (
@@ -72,6 +74,7 @@ const Peer = (props) =>
 				{
 					roomClient.requestConsumerKeyFrame(videoConsumer.id);
 				}}
+				onStatsClick={onSetStatsPeerId}
 			/>
 		</div>
 	);
@@ -79,12 +82,13 @@ const Peer = (props) =>
 
 Peer.propTypes =
 {
-	roomClient    : PropTypes.any.isRequired,
-	peer          : appPropTypes.Peer.isRequired,
-	audioConsumer : appPropTypes.Consumer,
-	videoConsumer : appPropTypes.Consumer,
-	audioMuted    : PropTypes.bool,
-	faceDetection : PropTypes.bool.isRequired
+	roomClient       : PropTypes.any.isRequired,
+	peer             : appPropTypes.Peer.isRequired,
+	audioConsumer    : appPropTypes.Consumer,
+	videoConsumer    : appPropTypes.Consumer,
+	audioMuted       : PropTypes.bool,
+	faceDetection    : PropTypes.bool.isRequired,
+	onSetStatsPeerId : PropTypes.func.isRequired
 };
 
 const mapStateToProps = (state, { id }) =>
@@ -107,9 +111,16 @@ const mapStateToProps = (state, { id }) =>
 	};
 };
 
+const mapDispatchToProps = (dispatch) =>
+{
+	return {
+		onSetStatsPeerId : (peerId) => dispatch(stateActions.setRoomStatsPeerId(peerId))
+	};
+};
+
 const PeerContainer = withRoomContext(connect(
 	mapStateToProps,
-	undefined
+	mapDispatchToProps
 )(Peer));
 
 export default PeerContainer;

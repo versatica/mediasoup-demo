@@ -10,6 +10,7 @@ import * as requestActions from '../redux/requestActions';
 import { Appear } from './transitions';
 import Me from './Me';
 import Peers from './Peers';
+import Stats from './Stats';
 import Notifications from './Notifications';
 
 class Room extends React.Component
@@ -111,6 +112,8 @@ class Room extends React.Component
 							onClick={() => roomClient.restartIce()}
 						/>
 					</div>
+
+					<Stats />
 
 					<ReactTooltip
 						type='light'

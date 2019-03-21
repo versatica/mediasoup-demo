@@ -1174,6 +1174,56 @@ export default class RoomClient
 		return this._protoo.request('getConsumerStats', { consumerId });
 	}
 
+	async getSendTransportLocalStats()
+	{
+		logger.debug('getSendTransportLocalStats()');
+
+		if (!this._sendTransport)
+			return;
+
+		return this._sendTransport.getStats();
+	}
+
+	async getRecvTransportLocalStats()
+	{
+		logger.debug('getRecvTransportLocalStats()');
+
+		if (!this._recvTransport)
+			return;
+
+		return this._recvTransport.getStats();
+	}
+
+	async getMicLocalStats()
+	{
+		logger.debug('getMicLocalStats()');
+
+		if (!this._micProducer)
+			return;
+
+		return this._micProducer.getStats();
+	}
+
+	async getWebcamLocalStats()
+	{
+		logger.debug('getWebcamLocalStats()');
+
+		if (!this._webcamProducer)
+			return;
+
+		return this._webcamProducer.getStats();
+	}
+
+	async getConsumerLocalStats(consumerId)
+	{
+		const consumer = this._consumers.get(consumerId);
+
+		if (!consumer)
+			return;
+
+		return consumer.getStats();
+	}
+
 	async _joinRoom()
 	{
 		logger.debug('_joinRoom()');

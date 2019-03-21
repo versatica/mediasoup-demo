@@ -6,6 +6,7 @@ import classnames from 'classnames';
 import * as cookiesManager from '../cookiesManager';
 import * as appPropTypes from './appPropTypes';
 import { withRoomContext } from '../RoomContext';
+import * as stateActions from '../redux/stateActions';
 import PeerView from './PeerView';
 
 class Me extends React.Component
@@ -26,7 +27,8 @@ class Me extends React.Component
 			me,
 			audioProducer,
 			videoProducer,
-			faceDetection
+			faceDetection,
+			onSetStatsPeerId
 		} = this.props;
 
 		let micState;
@@ -133,6 +135,7 @@ class Me extends React.Component
 					{
 						roomClient.setMaxSendingSpatialLayer(spatialLayer);
 					}}
+					onStatsClick={onSetStatsPeerId}
 				/>
 
 				<ReactTooltip
@@ -173,12 +176,13 @@ class Me extends React.Component
 
 Me.propTypes =
 {
-	roomClient    : PropTypes.any.isRequired,
-	connected     : PropTypes.bool.isRequired,
-	me            : appPropTypes.Me.isRequired,
-	audioProducer : appPropTypes.Producer,
-	videoProducer : appPropTypes.Producer,
-	faceDetection : PropTypes.bool.isRequired
+	roomClient       : PropTypes.any.isRequired,
+	connected        : PropTypes.bool.isRequired,
+	me               : appPropTypes.Me.isRequired,
+	audioProducer    : appPropTypes.Producer,
+	videoProducer    : appPropTypes.Producer,
+	faceDetection    : PropTypes.bool.isRequired,
+	onSetStatsPeerId : PropTypes.func.isRequired
 };
 
 const mapStateToProps = (state) =>
@@ -198,9 +202,16 @@ const mapStateToProps = (state) =>
 	};
 };
 
+const mapDispatchToProps = (dispatch) =>
+{
+	return {
+		onSetStatsPeerId : (peerId) => dispatch(stateActions.setRoomStatsPeerId(peerId))
+	};
+};
+
 const MeContainer = withRoomContext(connect(
 	mapStateToProps,
-	undefined
+	mapDispatchToProps
 )(Me));
 
 export default MeContainer;

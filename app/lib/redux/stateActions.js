@@ -22,6 +22,14 @@ export const setRoomActiveSpeaker = (peerId) =>
 	};
 };
 
+export const setRoomStatsPeerId = (peerId) =>
+{
+	return {
+		type    : 'SET_ROOM_STATS_PEER_ID',
+		payload : { peerId }
+	};
+};
+
 export const setRoomFaceDetection = (flag) =>
 {
 	return {

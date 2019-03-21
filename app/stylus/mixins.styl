@@ -13,6 +13,12 @@ text-fill-color()
 	-moz-text-fill-color: arguments;
 	text-fill-color: arguments;
 
+textWithEllipsis() {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
 mobile()
 	@media (max-device-width: 720px)
 		{block}

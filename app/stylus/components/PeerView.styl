@@ -31,37 +31,49 @@
 			rgba($backgroundTint, 0.1) 80%,
 			rgba($backgroundTint, 0.5) 100%);
 
-		> .info-icon {
-			pointer-events: auto;
-			margin: 4px;
-			background-position: center;
-			background-size: 100%;
-			background-repeat: no-repeat;
-			cursor: pointer;
-			transition-property: opacity, background-color;
-			transition-duration: 0.15s;
+		> .icons {
+			display: flex;
+			flex-direction: row;
 
-			+desktop() {
-				width: 28px;
-				height: 28px;
-				opacity: 0.75;
+			> .icon {
+				pointer-events: auto;
+				margin: 4px;
+				margin-right: 0;
+				background-position: center;
+				background-size: 100%;
+				background-repeat: no-repeat;
+				cursor: pointer;
+				transition-property: opacity, background-color;
+				transition-duration: 0.15s;
 
-				&:hover {
-					opacity: 1;
+				+desktop() {
+					width: 28px;
+					height: 28px;
+					opacity: 0.75;
+
+					&:hover {
+						opacity: 1;
+					}
 				}
-			}
 
-			+mobile() {
-				width: 26px;
-				height: 26px;
-			}
+				+mobile() {
+					width: 26px;
+					height: 26px;
+				}
 
-			&.on {
-				background-image: url('/resources/images/icon_info_white_on.svg');
-			}
+				&.info {
+					&.on {
+						background-image: url('/resources/images/icon_info_white_on.svg');
+					}
 
-			&:not(.on) {
-				background-image: url('/resources/images/icon_info_white_off.svg');
+					&:not(.on) {
+						background-image: url('/resources/images/icon_info_white_off.svg');
+					}
+				}
+
+				&.stats {
+					background-image: url('/resources/images/icon_stats_white_on.svg');
+				}
 			}
 		}
 
