@@ -712,6 +712,23 @@ export default class RoomClient
 		this._room.join(this._peerName, { displayName, device })
 			.then(() =>
 			{
+				// NOTE: Stuff to play remote audios due to browsers' new autoplay policy.
+				//
+				// Just get access to the mic and DO NOT close the mic track for a while.
+				// Super hack!
+
+				return navigator.mediaDevices.getUserMedia({ audio: true })
+					.then((stream) =>
+					{
+						const audioTrack = stream.getAudioTracks()[0];
+
+						audioTrack.enabled = false;
+
+						setTimeout(() => audioTrack.stop(), 120000);
+					});
+			})
+			.then(() =>
+			{
 				// Create Transport for sending (unless we are spy).
 				if (!this._spy)
 				{
