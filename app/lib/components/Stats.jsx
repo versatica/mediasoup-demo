@@ -13,18 +13,26 @@ class Stats extends React.Component
 
 		this.state =
 		{
-			sendTransportRemoteStats : null,
-			recvTransportRemoteStats : null,
-			audioProducerRemoteStats : null,
-			videoProducerRemoteStats : null,
-			audioConsumerRemoteStats : null,
-			videoConsumerRemoteStats : null,
-			sendTransportLocalStats  : null,
-			recvTransportLocalStats  : null,
-			audioProducerLocalStats  : null,
-			videoProducerLocalStats  : null,
-			audioConsumerLocalStats  : null,
-			videoConsumerLocalStats  : null
+			showSendTransportRemoteStats : true,
+			showRecvTransportRemoteStats : true,
+			showAudioRemoteStats         : true,
+			showVideoRemoteStats         : true,
+			showSendTransportLocalStats  : true,
+			showRecvTransportLocalStats  : true,
+			showAudioLocalStats          : true,
+			showVideoLocalStats          : true,
+			sendTransportRemoteStats     : null,
+			recvTransportRemoteStats     : null,
+			audioProducerRemoteStats     : null,
+			videoProducerRemoteStats     : null,
+			audioConsumerRemoteStats     : null,
+			videoConsumerRemoteStats     : null,
+			sendTransportLocalStats      : null,
+			recvTransportLocalStats      : null,
+			audioProducerLocalStats      : null,
+			videoProducerLocalStats      : null,
+			audioConsumerLocalStats      : null,
+			videoConsumerLocalStats      : null
 		};
 
 		this._delayTimer = null;
@@ -40,6 +48,14 @@ class Stats extends React.Component
 		} = this.props;
 
 		const {
+			showSendTransportRemoteStats,
+			showRecvTransportRemoteStats,
+			showAudioRemoteStats,
+			showVideoRemoteStats,
+			showSendTransportLocalStats,
+			showRecvTransportLocalStats,
+			showAudioLocalStats,
+			showVideoLocalStats,
 			sendTransportRemoteStats,
 			recvTransportRemoteStats,
 			audioProducerRemoteStats,
@@ -58,68 +74,192 @@ class Stats extends React.Component
 			<div data-component='Stats'>
 				<div className={classnames('content', { visible: peerId })}>
 					<div className='header'>
-						<div
-							className='close-icon'
-							onClick={onClose}
-						/>
+						<div className='info'>
+							<div
+								className='close-icon'
+								onClick={onClose}
+							/>
 
-						<Choose>
-							<When condition={isMe}>
-								<h1>Your Stats</h1>
-							</When>
+							<Choose>
+								<When condition={isMe}>
+									<h1>Your Stats</h1>
+								</When>
 
-							<Otherwise>
-								<h1>Stats of {peerDisplayName}</h1>
-							</Otherwise>
-						</Choose>
+								<Otherwise>
+									<h1>Stats of {peerDisplayName}</h1>
+								</Otherwise>
+							</Choose>
+						</div>
+
+						<div className='list'>
+							<If condition={isMe}>
+								<p>
+									{'send transport stats: '}
+									<span
+										className={classnames({ on: showSendTransportRemoteStats })}
+										onClick={() =>
+										{
+											this.setState(
+												{
+													showSendTransportRemoteStats : !showSendTransportRemoteStats
+												});
+										}}
+									>
+										{'[remote]'}
+									</span>
+									<span>{' '}</span>
+									<span
+										className={classnames({ on: showSendTransportLocalStats })}
+										onClick={() =>
+										{
+											this.setState(
+												{
+													showSendTransportLocalStats : !showSendTransportLocalStats
+												});
+										}}
+									>
+										{'[local]'}
+									</span>
+								</p>
+							</If>
+
+							<If condition={isMe}>
+								<p>
+									{'recv transport stats: '}
+									<span
+										className={classnames({ on: showRecvTransportRemoteStats })}
+										onClick={() =>
+										{
+											this.setState(
+												{
+													showRecvTransportRemoteStats : !showRecvTransportRemoteStats
+												});
+										}}
+									>
+										{'[remote]'}
+									</span>
+									<span>{' '}</span>
+									<span
+										className={classnames({ on: showRecvTransportLocalStats })}
+										onClick={() =>
+										{
+											this.setState(
+												{
+													showRecvTransportLocalStats : !showRecvTransportLocalStats
+												});
+										}}
+									>
+										{'[local]'}
+									</span>
+								</p>
+							</If>
+
+							<p>
+								{'audio stats: '}
+								<span
+									className={classnames({ on: showAudioRemoteStats })}
+									onClick={() =>
+									{
+										this.setState(
+											{
+												showAudioRemoteStats : !showAudioRemoteStats
+											});
+									}}
+								>
+									{'[remote]'}
+								</span>
+								<span>{' '}</span>
+								<span
+									className={classnames({ on: showAudioLocalStats })}
+									onClick={() =>
+									{
+										this.setState(
+											{
+												showAudioLocalStats : !showAudioLocalStats
+											});
+									}}
+								>
+									{'[local]'}
+								</span>
+							</p>
+
+							<p>
+								{'video stats: '}
+								<span
+									className={classnames({ on: showVideoRemoteStats })}
+									onClick={() =>
+									{
+										this.setState(
+											{
+												showVideoRemoteStats : !showVideoRemoteStats
+											});
+									}}
+								>
+									{'[remote]'}
+								</span>
+								<span>{' '}</span>
+								<span
+									className={classnames({ on: showVideoLocalStats })}
+									onClick={() =>
+									{
+										this.setState(
+											{
+												showVideoLocalStats : !showVideoLocalStats
+											});
+									}}
+								>
+									{'[local]'}
+								</span>
+							</p>
+						</div>
 					</div>
 
 					<div className='stats'>
-						<If condition={sendTransportRemoteStats}>
+						<If condition={showSendTransportRemoteStats && sendTransportRemoteStats}>
 							{this._printStats('send transport remote stats', sendTransportRemoteStats)}
 						</If>
 
-						<If condition={recvTransportRemoteStats}>
+						<If condition={showRecvTransportRemoteStats && recvTransportRemoteStats}>
 							{this._printStats('recv transport remote stats', recvTransportRemoteStats)}
 						</If>
 
-						<If condition={audioProducerRemoteStats}>
+						<If condition={showAudioRemoteStats && audioProducerRemoteStats}>
 							{this._printStats('audio producer remote stats', audioProducerRemoteStats)}
 						</If>
 
-						<If condition={videoProducerRemoteStats}>
+						<If condition={showVideoRemoteStats && videoProducerRemoteStats}>
 							{this._printStats('video producer remote stats', videoProducerRemoteStats)}
 						</If>
 
-						<If condition={audioConsumerRemoteStats}>
+						<If condition={showAudioRemoteStats && audioConsumerRemoteStats}>
 							{this._printStats('audio consumer remote stats', audioConsumerRemoteStats)}
 						</If>
 
-						<If condition={videoConsumerRemoteStats}>
+						<If condition={showVideoRemoteStats && videoConsumerRemoteStats}>
 							{this._printStats('video consumer remote stats', videoConsumerRemoteStats)}
 						</If>
 
-						<If condition={sendTransportLocalStats}>
+						<If condition={showSendTransportLocalStats && sendTransportLocalStats}>
 							{this._printStats('send transport local stats', sendTransportLocalStats)}
 						</If>
 
-						<If condition={recvTransportLocalStats}>
+						<If condition={showRecvTransportLocalStats && recvTransportLocalStats}>
 							{this._printStats('recv transport local stats', recvTransportLocalStats)}
 						</If>
 
-						<If condition={audioProducerLocalStats}>
+						<If condition={showAudioLocalStats && audioProducerLocalStats}>
 							{this._printStats('audio producer local stats', audioProducerLocalStats)}
 						</If>
 
-						<If condition={videoProducerLocalStats}>
+						<If condition={showVideoLocalStats && videoProducerLocalStats}>
 							{this._printStats('video producer local stats', videoProducerLocalStats)}
 						</If>
 
-						<If condition={audioConsumerLocalStats}>
+						<If condition={showAudioLocalStats && audioConsumerLocalStats}>
 							{this._printStats('audio consumer local stats', audioConsumerLocalStats)}
 						</If>
 
-						<If condition={videoConsumerLocalStats}>
+						<If condition={showVideoLocalStats && videoConsumerLocalStats}>
 							{this._printStats('video consumer local stats', videoConsumerLocalStats)}
 						</If>
 					</div>
@@ -149,7 +289,24 @@ class Stats extends React.Component
 
 	async _start()
 	{
-		const { roomClient, isMe, audioConsumerId, videoConsumerId } = this.props;
+		const {
+			roomClient,
+			isMe,
+			audioConsumerId,
+			videoConsumerId
+		} = this.props;
+
+		const {
+			showSendTransportRemoteStats,
+			showRecvTransportRemoteStats,
+			showAudioRemoteStats,
+			showVideoRemoteStats,
+			showSendTransportLocalStats,
+			showRecvTransportLocalStats,
+			showAudioLocalStats,
+			showVideoLocalStats
+		} = this.state;
+
 		let sendTransportRemoteStats = null;
 		let recvTransportRemoteStats = null;
 		let audioProducerRemoteStats = null;
@@ -165,43 +322,79 @@ class Stats extends React.Component
 
 		if (isMe)
 		{
-			sendTransportRemoteStats = await roomClient.getSendTransportRemoteStats()
-				.catch(() => {});
+			if (showSendTransportRemoteStats)
+			{
+				sendTransportRemoteStats = await roomClient.getSendTransportRemoteStats()
+					.catch(() => {});
+			}
 
-			recvTransportRemoteStats = await roomClient.getRecvTransportRemoteStats()
-				.catch(() => {});
+			if (showRecvTransportRemoteStats)
+			{
+				recvTransportRemoteStats = await roomClient.getRecvTransportRemoteStats()
+					.catch(() => {});
+			}
 
-			audioProducerRemoteStats = await roomClient.getMicRemoteStats()
-				.catch(() => {});
+			if (showAudioRemoteStats)
+			{
+				audioProducerRemoteStats = await roomClient.getMicRemoteStats()
+					.catch(() => {});
+			}
 
-			videoProducerRemoteStats = await roomClient.getWebcamRemoteStats()
-				.catch(() => {});
+			if (showVideoRemoteStats)
+			{
+				videoProducerRemoteStats = await roomClient.getWebcamRemoteStats()
+					.catch(() => {});
+			}
 
-			sendTransportLocalStats = await roomClient.getSendTransportLocalStats()
-				.catch(() => {});
+			if (showSendTransportLocalStats)
+			{
+				sendTransportLocalStats = await roomClient.getSendTransportLocalStats()
+					.catch(() => {});
+			}
 
-			recvTransportLocalStats = await roomClient.getRecvTransportLocalStats()
-				.catch(() => {});
+			if (showRecvTransportLocalStats)
+			{
+				recvTransportLocalStats = await roomClient.getRecvTransportLocalStats()
+					.catch(() => {});
+			}
 
-			audioProducerLocalStats = await roomClient.getMicLocalStats()
-				.catch(() => {});
+			if (showAudioLocalStats)
+			{
+				audioProducerLocalStats = await roomClient.getMicLocalStats()
+					.catch(() => {});
+			}
 
-			videoProducerLocalStats = await roomClient.getWebcamLocalStats()
-				.catch(() => {});
+			if (showVideoLocalStats)
+			{
+				videoProducerLocalStats = await roomClient.getWebcamLocalStats()
+					.catch(() => {});
+			}
 		}
 		else
 		{
-			audioConsumerRemoteStats = await roomClient.getConsumerRemoteStats(audioConsumerId)
-				.catch(() => {});
+			if (showAudioRemoteStats)
+			{
+				audioConsumerRemoteStats = await roomClient.getConsumerRemoteStats(audioConsumerId)
+					.catch(() => {});
+			}
 
-			videoConsumerRemoteStats = await roomClient.getConsumerRemoteStats(videoConsumerId)
-				.catch(() => {});
+			if (showVideoRemoteStats)
+			{
+				videoConsumerRemoteStats = await roomClient.getConsumerRemoteStats(videoConsumerId)
+					.catch(() => {});
+			}
 
-			audioConsumerLocalStats = await roomClient.getConsumerLocalStats(audioConsumerId)
-				.catch(() => {});
+			if (showAudioLocalStats)
+			{
+				audioConsumerLocalStats = await roomClient.getConsumerLocalStats(audioConsumerId)
+					.catch(() => {});
+			}
 
-			videoConsumerLocalStats = await roomClient.getConsumerLocalStats(videoConsumerId)
-				.catch(() => {});
+			if (showVideoLocalStats)
+			{
+				videoConsumerLocalStats = await roomClient.getConsumerLocalStats(videoConsumerId)
+					.catch(() => {});
+			}
 		}
 
 		this.setState(
