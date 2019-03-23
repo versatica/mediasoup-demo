@@ -525,6 +525,8 @@ class Room extends EventEmitter
 						request.method);
 
 					reject(400, 'no mediasoup Peer');
+
+					return;
 				}
 
 				// TODO: Temporal to catch a possible bug.
