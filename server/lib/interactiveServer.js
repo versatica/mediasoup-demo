@@ -425,46 +425,46 @@ class Interactive
 
 function runMediasoupObserver()
 {
-	mediasoup.observer.on('observer:newworker', (worker) =>
+	mediasoup.observer.on('newworker', (worker) =>
 	{
 		// Store the latest worker in a global variable.
 		global.worker = worker;
 
 		workers.set(worker.pid, worker);
-		worker.on('observer:close', () => workers.delete(worker.pid));
+		worker.observer.on('close', () => workers.delete(worker.pid));
 
-		worker.on('observer:newrouter', (router) =>
+		worker.observer.on('newrouter', (router) =>
 		{
 			// Store the latest router in a global variable.
 			global.router = router;
 
 			routers.set(router.id, router);
-			router.on('observer:close', () => routers.delete(router.id));
+			router.observer.on('close', () => routers.delete(router.id));
 
-			router.on('observer:newtransport', (transport) =>
+			router.observer.on('newtransport', (transport) =>
 			{
 				// Store the latest transport in a global variable.
 				global.transport = transport;
 
 				transports.set(transport.id, transport);
-				transport.on('observer:close', () => transports.delete(transport.id));
+				transport.observer.on('close', () => transports.delete(transport.id));
 
-				transport.on('observer:newproducer', (producer) =>
+				transport.observer.on('newproducer', (producer) =>
 				{
 					// Store the latest producer in a global variable.
 					global.producer = producer;
 
 					producers.set(producer.id, producer);
-					producer.on('observer:close', () => producers.delete(producer.id));
+					producer.observer.on('close', () => producers.delete(producer.id));
 				});
 
-				transport.on('observer:newconsumer', (consumer) =>
+				transport.observer.on('newconsumer', (consumer) =>
 				{
 					// Store the latest consumer in a global variable.
 					global.consumer = consumer;
 
 					consumers.set(consumer.id, consumer);
-					consumer.on('observer:close', () => consumers.delete(consumer.id));
+					consumer.observer.on('close', () => consumers.delete(consumer.id));
 				});
 			});
 		});
