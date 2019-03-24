@@ -158,26 +158,40 @@ async function createExpressApp()
 	expressApp.get(
 		'/rooms/:roomId', (req, res) =>
 		{
-			const rtpCapabilities = req.room.getRouterRtpCapabilities();
+			const data = req.room.getRouterRtpCapabilities();
 
-			res.status(200).json({ rtpCapabilities });
+			res.status(200).json(data);
 		});
 
 	/**
 	 * POST API to create a Broadcaster.
 	 */
 	expressApp.post(
-		'/rooms/:roomId/broadcasters', (req, res) =>
+		'/rooms/:roomId/broadcasters', async (req, res, next) =>
 		{
 			const {
 				id,
 				displayName,
-				device
+				device,
+				rtpCapabilities
 			} = req.body;
 
-			req.room.createBroadcaster({ id, displayName, device });
+			try
+			{
+				const data = await req.room.createBroadcaster(
+					{
+						id,
+						displayName,
+						device,
+						rtpCapabilities
+					});
 
-			res.status(200).send('broadcaster created');
+				res.status(200).json(data);
+			}
+			catch (error)
+			{
+				next(error);
+			}
 		});
 
 	/**
@@ -200,7 +214,8 @@ async function createExpressApp()
 	 * PLainRtpTransport.
 	 */
 	expressApp.post(
-		'/rooms/:roomId/broadcasters/:broadcasterId/transports', async (req, res, next) =>
+		'/rooms/:roomId/broadcasters/:broadcasterId/transports',
+		async (req, res, next) =>
 		{
 			const { broadcasterId } = req.params;
 			const { type, rtcpMux, comedia, multiSource } = req.body;
@@ -274,6 +289,36 @@ async function createExpressApp()
 						transportId,
 						kind,
 						rtpParameters
+					});
+
+				res.status(200).json(data);
+			}
+			catch (error)
+			{
+				next(error);
+			}
+		});
+
+	/**
+	 * POST API to create a mediasoup Consumer associated to a Broadcaster.
+	 * The exact Transport in which the Consumer must be created is signaled in
+	 * the URL path. Query parameters must include the desired producerId to
+	 * consume.
+	 */
+	expressApp.post(
+		'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/consume',
+		async (req, res, next) =>
+		{
+			const { broadcasterId, transportId } = req.params;
+			const { producerId } = req.query;
+
+			try
+			{
+				const data = await req.room.createBroadcasterConsumer(
+					{
+						broadcasterId,
+						transportId,
+						producerId
 					});
 
 				res.status(200).json(data);

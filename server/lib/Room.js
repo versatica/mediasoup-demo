@@ -17,6 +17,8 @@ class Room extends EventEmitter
 	/**
 	 * Factory function that creates and returns Room instance.
 	 *
+	 * @async
+	 *
 	 * @param {mediasoup.Worker} mediasoupWorker - The mediasoup Worker in which a new
 	 *   mediasoup Router must be created.
 	 * @param {String} roomId - Id of the Room instance.
@@ -79,8 +81,10 @@ class Room extends EventEmitter
 		// - {Object} data
 		//   - {String} displayName
 		//   - {Object} device
+		//   - {RTCRtpCapabilities} rtpCapabilities
 		//   - {Map<String, mediasoup.Transport>} transports
 		//   - {Map<String, mediasoup.Producer>} producers
+		//   - {Map<String, mediasoup.Consumers>} consumers
 		// @type {Map<String, Object>}
 		this._broadcasters = new Map();
 
@@ -273,11 +277,14 @@ class Room extends EventEmitter
 	/**
 	 * Create a Broadcaster. This is for HTTP API requests (see server.js).
 	 *
+	 * @async
+	 *
 	 * @type {String} id - Broadcaster id.
 	 * @type {String} displayName - Descriptive name.
 	 * @type {Object} [device] - Additional info with name, version and flags fields.
+	 * @type {RTCRtpCapabilities} [rtpCapabilities] - Device RTP capabilities.
 	 */
-	createBroadcaster({ id, displayName, device = {} })
+	async createBroadcaster({ id, displayName, device = {}, rtpCapabilities })
 	{
 		if (typeof id !== 'string' || !id)
 			throw new TypeError('missing body.id');
@@ -285,6 +292,8 @@ class Room extends EventEmitter
 			throw new TypeError('missing body.displayName');
 		else if (typeof device.name !== 'string' || !device.name)
 			throw new TypeError('missing body.device.name');
+		else if (rtpCapabilities && typeof rtpCapabilities !== 'object')
+			throw new TypeError('wrong body.rtpCapabilities');
 
 		if (this._broadcasters.has(id))
 			throw new Error(`broadcaster with id "${id}" already exists`);
@@ -301,8 +310,10 @@ class Room extends EventEmitter
 					name    : device.name || 'Unknown device',
 					version : device.version
 				},
+				rtpCapabilities,
 				transports : new Map(),
-				producers  : new Map()
+				producers  : new Map(),
+				consumers  : new Map()
 			}
 		};
 
@@ -321,6 +332,50 @@ class Room extends EventEmitter
 				})
 				.catch(() => {});
 		}
+
+		// Reply with the list of Peers and their Producers.
+		const peerInfos = [];
+		const joinedPeers = this._getJoinedPeers();
+
+		// Just fill the list of Peers if the Broadcaster provided its rtpCapabilities.
+		if (rtpCapabilities)
+		{
+			for (const joinedPeer of joinedPeers)
+			{
+				const peerInfo =
+				{
+					id          : joinedPeer.id,
+					displayName : joinedPeer.data.displayName,
+					device      : joinedPeer.data.device,
+					producers   : []
+				};
+
+				for (const producer of joinedPeer.data.producers.values())
+				{
+					// Ignore Producers that the Broadcaster cannot consumer.
+					if (
+						!this._mediasoupRouter.canConsume(
+							{
+								producerId : producer.id,
+								rtpCapabilities
+							})
+					)
+					{
+						continue;
+					}
+
+					peerInfo.producers.push(
+						{
+							id   : producer.id,
+							kind : producer.kind
+						});
+				}
+
+				peerInfos.push(peerInfo);
+			}
+		}
+
+		return { peers: peerInfos };
 	}
 
 	/**
@@ -352,6 +407,8 @@ class Room extends EventEmitter
 	/**
 	 * Create a mediasoup Transport associated to a Broadcaster. It can be a
 	 * PlainRtpTransport or a WebRtcTransport
+	 *
+	 * @async
 	 *
 	 * @type {String} broadcasterId
 	 * @type {String} type - Can be 'plain' (PlainRtpTransport) or 'webrtc'
@@ -429,6 +486,8 @@ class Room extends EventEmitter
 	/**
 	 * Connect a Broadcaster mediasoup WebRtcTransport.
 	 *
+	 * @async
+	 *
 	 * @type {String} broadcasterId
 	 * @type {String} transportId
 	 * @type {RTCDtlsParameters} dtlsParameters - Remote DTLS parameters.
@@ -461,7 +520,9 @@ class Room extends EventEmitter
 	}
 
 	/**
-	 * Connect a mediasoup Producer associated to a Broadcaster.
+	 * Create a mediasoup Producer associated to a Broadcaster.
+	 *
+	 * @async
 	 *
 	 * @type {String} broadcasterId
 	 * @type {String} transportId
@@ -494,12 +555,12 @@ class Room extends EventEmitter
 		broadcaster.data.producers.set(producer.id, producer);
 
 		// Set Producer events.
-		producer.on('score', (score) =>
-		{
-			logger.debug(
-				'broadcaster producer "score" event [producerId:%s, score:%o]',
-				producer.id, score);
-		});
+		// producer.on('score', (score) =>
+		// {
+		// 	logger.debug(
+		// 		'broadcaster producer "score" event [producerId:%s, score:%o]',
+		// 		producer.id, score);
+		// });
 
 		producer.on('videoorientationchange', (videoOrientation) =>
 		{
@@ -530,7 +591,70 @@ class Room extends EventEmitter
 	}
 
 	/**
+	 * Create a mediasoup Consumer associated to a Broadcaster.
+	 *
+	 * @async
+	 *
+	 * @type {String} broadcasterId
+	 * @type {String} transportId
+	 * @type {String} producerId
+	 */
+	async createBroadcasterConsumer(
+		{
+			broadcasterId,
+			transportId,
+			producerId
+		}
+	)
+	{
+		const broadcaster = this._broadcasters.get(broadcasterId);
+
+		if (!broadcaster)
+			throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
+
+		if (!broadcaster.data.rtpCapabilities)
+			throw new Error('broadcaster does not have rtpCapabilities');
+
+		const transport = broadcaster.data.transports.get(transportId);
+
+		if (!transport)
+			throw new Error(`transport with id "${transportId}" does not exist`);
+
+		const consumer = await transport.consume(
+			{
+				producerId,
+				rtpCapabilities : broadcaster.data.rtpCapabilities
+			});
+
+		// Store it.
+		broadcaster.data.consumers.set(consumer.id, consumer);
+
+		// Set Consumer events.
+		consumer.on('transportclose', () =>
+		{
+			// Remove from its map.
+			broadcaster.data.consumers.delete(consumer.id);
+		});
+
+		consumer.on('producerclose', () =>
+		{
+			// Remove from its map.
+			broadcaster.data.consumers.delete(consumer.id);
+		});
+
+		return {
+			id            : consumer.id,
+			producerId,
+			kind          : consumer.kind,
+			rtpParameters : consumer.rtpParameters,
+			type          : consumer.type
+		};
+	}
+
+	/**
 	 * Handle protoo requests from browsers.
+	 *
+	 * @async
 	 */
 	async _handleProtooRequest(peer, request, accept, reject)
 	{
@@ -702,16 +826,11 @@ class Room extends EventEmitter
 				// Set Producer events.
 				producer.on('score', (score) =>
 				{
-					logger.debug(
-						'producer "score" event [producerId:%s, score:%o]',
-						producer.id, score);
+					// logger.debug(
+					// 	'producer "score" event [producerId:%s, score:%o]',
+					// 	producer.id, score);
 
-					peer.notify(
-						'producerScore',
-						{
-							producerId : producer.id,
-							score      : score
-						})
+					peer.notify('producerScore', { producerId: producer.id, score })
 						.catch(() => {});
 				});
 
@@ -977,6 +1096,8 @@ class Room extends EventEmitter
 
 	/**
 	 * Creates a mediasoup Consumer for the given mediasoup Producer.
+	 *
+	 * @async
 	 */
 	async _createConsumer({ consumerPeer, producerPeer, producer })
 	{
@@ -1063,16 +1184,11 @@ class Room extends EventEmitter
 
 		consumer.on('score', (score) =>
 		{
-			logger.debug(
-				'consumer "score" event [consumerId:%s, score:%o]',
-				consumer.id, score);
+			// logger.debug(
+			// 	'consumer "score" event [consumerId:%s, score:%o]',
+			// 	consumer.id, score);
 
-			consumerPeer.notify(
-				'consumerScore',
-				{
-					consumerId : consumer.id,
-					score      : score
-				})
+			consumerPeer.notify('consumerScore', { consumerId: consumer.id, score })
 				.catch(() => {});
 		});
 
