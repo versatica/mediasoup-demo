@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
+import { Appear } from './transitions';
 import { withRoomContext } from '../RoomContext';
 import * as stateActions from '../redux/stateActions';
 
@@ -443,24 +444,26 @@ class Stats extends React.Component
 			stats = Array.from(stats.values());
 
 		return (
-			<div className='items'>
-				<h2>{title}</h2>
+			<Appear duration={150}>
+				<div className='items'>
+					<h2>{title}</h2>
 
-				{
-					stats.map((item, idx) => (
-						<div className='item' key={idx}>
-							{
-								Object.keys(item).map((key) => (
-									<div className='line' key={key}>
-										<p className='key'>{key}</p>
-										<p className='value'>{JSON.stringify(item[key], null, '  ')}</p>
-									</div>
-								))
-							}
-						</div>
-					))
-				}
-			</div>
+					{
+						stats.map((item, idx) => (
+							<div className='item' key={idx}>
+								{
+									Object.keys(item).map((key) => (
+										<div className='line' key={key}>
+											<p className='key'>{key}</p>
+											<p className='value'>{JSON.stringify(item[key], null, '  ')}</p>
+										</div>
+									))
+								}
+							</div>
+						))
+					}
+				</div>
+			</Appear>
 		);
 	}
 }
