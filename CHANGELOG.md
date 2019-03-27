@@ -27,3 +27,8 @@ This is the changelog of the mediasoup demo application. To check the changes in
 ## 2019-03-21
 
 * Always ask mic to avoid browsers' autoplay policy when in spy mode.
+
+
+## 2019-03-27
+
+* Upgrade mediasoup-client to 2.4.10 (better support for Safari >= 12.1).
