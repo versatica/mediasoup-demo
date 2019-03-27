@@ -274,7 +274,7 @@ class Stats extends React.Component
 
 		if (peerId && !prevProps.peerId)
 		{
-			this._start();
+			this._delayTimer = setTimeout(() => this._start(), 250);
 		}
 		else if (!peerId && prevProps.peerId)
 		{
