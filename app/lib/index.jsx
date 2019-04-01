@@ -69,7 +69,8 @@ async function run()
 		urlParser.query.displayName || (cookiesManager.getUser() || {}).displayName;
 	const useSimulcast = urlParser.query.simulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
-	const spy = urlParser.query.spy === 'true';
+	const produce = urlParser.query.produce !== 'false';
+	const consume = urlParser.query.consume !== 'false';
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const info = urlParser.query.info === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
@@ -100,7 +101,8 @@ async function run()
 		{
 			case 'roomId':
 			case 'simulcast':
-			case 'spy':
+			case 'produce':
+			case 'consume':
 				break;
 			default:
 				delete roomUrlParser.query[key];
@@ -144,7 +146,8 @@ async function run()
 			device,
 			useSimulcast,
 			forceTcp,
-			spy,
+			produce,
+			consume,
 			forceH264,
 			externalVideo
 		});

@@ -167,10 +167,11 @@ class Room extends EventEmitter
 	 * browser.
 	 *
 	 * @param {String} peerId - The id of the protoo peer to be created.
+	 * @param {Boolean} consume - Whether this peer wants to consume from others.
 	 * @param {protoo.WebSocketTransport} protooWebSocketTransport - The associated
 	 *   protoo WebSocket transport.
 	 */
-	handleProtooConnection({ peerId, protooWebSocketTransport })
+	handleProtooConnection({ peerId, consume, protooWebSocketTransport })
 	{
 		const existingPeer = this._protooRoom.getPeer(peerId);
 
@@ -198,6 +199,7 @@ class Room extends EventEmitter
 		// Use the peer.data object to store mediasoup related objects.
 
 		// Not joined after a custom protoo 'join' request is later received.
+		peer.data.consume = consume;
 		peer.data.joined = false;
 		peer.data.displayName = undefined;
 		peer.data.device = undefined;
@@ -352,7 +354,7 @@ class Room extends EventEmitter
 
 				for (const producer of joinedPeer.data.producers.values())
 				{
-					// Ignore Producers that the Broadcaster cannot consumer.
+					// Ignore Producers that the Broadcaster cannot consume.
 					if (
 						!this._mediasoupRouter.canConsume(
 							{
@@ -674,9 +676,6 @@ class Room extends EventEmitter
 					throw new Error('Peer already joined');
 
 				const { displayName, device, rtpCapabilities } = request.data;
-
-				if (typeof rtpCapabilities !== 'object')
-					throw new TypeError('missing rtpCapabilities');
 
 				// Store client data into the protoo Peer data object.
 				peer.data.displayName = displayName;
@@ -1110,6 +1109,7 @@ class Room extends EventEmitter
 
 		// NOTE: Don't create the Consumer if the remote Peer cannot consume it.
 		if (
+			!consumerPeer.data.rtpCapabilities ||
 			!this._mediasoupRouter.canConsume(
 				{
 					producerId      : producer.id,
@@ -1120,14 +1120,14 @@ class Room extends EventEmitter
 			return;
 		}
 
-		// Must take the WebRtcTransport the remote Peer is using for consuming.
+		// Must take the Transport the remote Peer is using for consuming.
 		const transport = Array.from(consumerPeer.data.transports.values())
 			.find((t) => t.appData.consuming);
 
 		// This should not happen.
 		if (!transport)
 		{
-			logger.warn('_createConsumer() | WebRtcTransport for consuming not found');
+			logger.warn('_createConsumer() | Transport for consuming not found');
 
 			return;
 		}

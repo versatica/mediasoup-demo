@@ -45,7 +45,8 @@ export default class RoomClient
 			device,
 			useSimulcast,
 			forceTcp,
-			spy,
+			produce,
+			consume,
 			forceH264,
 			externalVideo
 		}
@@ -71,9 +72,13 @@ export default class RoomClient
 		// @type {Boolean}
 		this._forceTcp = forceTcp;
 
-		// Whether we should be a spy.
+		// Whether we want to produce audio/video.
 		// @type {Boolean}
-		this._spy = spy;
+		this._produce = produce;
+
+		// Whether we should consume.
+		// @type {Boolean}
+		this._consume = consume;
 
 		// Whether we want to force H264 codec.
 		// @type {Boolean}
@@ -239,6 +244,13 @@ export default class RoomClient
 			{
 				case 'newConsumer':
 				{
+					if (!this._consume)
+					{
+						reject(403, 'I do not want to consume');
+
+						return;
+					}
+
 					const {
 						peerId,
 						producerId,
@@ -924,7 +936,7 @@ export default class RoomClient
 
 		if (
 			!this._webcamProducer &&
-			!this._spy &&
+			this._produce &&
 			(cookiesManager.getDevices() || {}).webcamEnabled
 		)
 		{
@@ -1250,8 +1262,8 @@ export default class RoomClient
 				setTimeout(() => audioTrack.stop(), 120000);
 			}
 
-			// Create mediasoup Transport for sending (unless we are spy).
-			if (!this._spy)
+			// Create mediasoup Transport for sending (unless we don't want to produce).
+			if (this._produce)
 			{
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
@@ -1313,7 +1325,8 @@ export default class RoomClient
 					});
 			}
 
-			// Create mediasoup Transport for receiving.
+			// Create mediasoup Transport for sending (unless we don't want to consume).
+			if (this._consume)
 			{
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
@@ -1353,12 +1366,15 @@ export default class RoomClient
 			}
 
 			// Join now into the room.
+			// NOTE: Don't send our RTP capabilities if we don't want to consume.
 			const { peers } = await this._protoo.request(
 				'join',
 				{
 					displayName     : this._displayName,
 					device          : this._device,
-					rtpCapabilities : this._mediasoupDevice.rtpCapabilities
+					rtpCapabilities : this._consume
+						? this._mediasoupDevice.rtpCapabilities
+						: undefined
 				});
 
 			store.dispatch(
@@ -1381,7 +1397,7 @@ export default class RoomClient
 			}
 
 			// Enable mic/webcam.
-			if (!this._spy)
+			if (this._produce)
 			{
 				// Set our media capabilities.
 				store.dispatch(stateActions.setMediaCapabilities(
