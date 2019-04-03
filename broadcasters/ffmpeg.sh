@@ -151,6 +151,11 @@ ${HTTPIE_COMMAND} -v \
 #
 echo ">>> running ffmpeg..."
 
+#
+# NOTES:
+# - We can add ?pkt_size=1200 to each rtp:// URI to limit the max packet size
+#   to 1200 bytes.
+#
 ffmpeg \
 	-re \
 	-v info \
