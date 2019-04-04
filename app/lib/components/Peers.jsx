@@ -38,8 +38,6 @@ Peers.propTypes =
 
 const mapStateToProps = (state) =>
 {
-	// TODO: This is not OK since it's creating a new array every time, so triggering a
-	// component rendering.
 	const peersArray = Object.values(state.peers);
 
 	return {
@@ -48,6 +46,19 @@ const mapStateToProps = (state) =>
 	};
 };
 
-const PeersContainer = connect(mapStateToProps)(Peers);
+const PeersContainer = connect(
+	mapStateToProps,
+	null,
+	null,
+	{
+		areStatesEqual : (next, prev) =>
+		{
+			return (
+				prev.peers === next.peers &&
+				prev.room.activeSpeakerId === next.room.activeSpeakerId
+			);
+		}
+	}
+)(Peers);
 
 export default PeersContainer;
