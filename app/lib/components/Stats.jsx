@@ -14,26 +14,26 @@ class Stats extends React.Component
 
 		this.state =
 		{
-			showSendTransportRemoteStats : true,
-			showRecvTransportRemoteStats : true,
 			showAudioRemoteStats         : true,
 			showVideoRemoteStats         : true,
-			showSendTransportLocalStats  : true,
-			showRecvTransportLocalStats  : true,
+			showSendTransportRemoteStats : true,
+			showRecvTransportRemoteStats : true,
 			showAudioLocalStats          : true,
 			showVideoLocalStats          : true,
-			sendTransportRemoteStats     : null,
-			recvTransportRemoteStats     : null,
+			showSendTransportLocalStats  : true,
+			showRecvTransportLocalStats  : true,
 			audioProducerRemoteStats     : null,
 			videoProducerRemoteStats     : null,
 			audioConsumerRemoteStats     : null,
 			videoConsumerRemoteStats     : null,
-			sendTransportLocalStats      : null,
-			recvTransportLocalStats      : null,
+			sendTransportRemoteStats     : null,
+			recvTransportRemoteStats     : null,
 			audioProducerLocalStats      : null,
 			videoProducerLocalStats      : null,
 			audioConsumerLocalStats      : null,
-			videoConsumerLocalStats      : null
+			videoConsumerLocalStats      : null,
+			sendTransportLocalStats      : null,
+			recvTransportLocalStats      : null
 		};
 
 		this._delayTimer = null;
@@ -49,26 +49,26 @@ class Stats extends React.Component
 		} = this.props;
 
 		const {
-			showSendTransportRemoteStats,
-			showRecvTransportRemoteStats,
 			showAudioRemoteStats,
 			showVideoRemoteStats,
-			showSendTransportLocalStats,
-			showRecvTransportLocalStats,
+			showSendTransportRemoteStats,
+			showRecvTransportRemoteStats,
 			showAudioLocalStats,
 			showVideoLocalStats,
-			sendTransportRemoteStats,
-			recvTransportRemoteStats,
+			showSendTransportLocalStats,
+			showRecvTransportLocalStats,
 			audioProducerRemoteStats,
 			videoProducerRemoteStats,
 			audioConsumerRemoteStats,
 			videoConsumerRemoteStats,
-			sendTransportLocalStats,
-			recvTransportLocalStats,
+			sendTransportRemoteStats,
+			recvTransportRemoteStats,
 			audioProducerLocalStats,
 			videoProducerLocalStats,
 			audioConsumerLocalStats,
-			videoConsumerLocalStats
+			videoConsumerLocalStats,
+			sendTransportLocalStats,
+			recvTransportLocalStats
 		} = this.state;
 
 		return (
@@ -93,6 +93,64 @@ class Stats extends React.Component
 						</div>
 
 						<div className='list'>
+							<p>
+								{'audio stats: '}
+								<span
+									className={classnames({ on: showAudioRemoteStats })}
+									onClick={() =>
+									{
+										this.setState(
+											{
+												showAudioRemoteStats : !showAudioRemoteStats
+											});
+									}}
+								>
+									{'[remote]'}
+								</span>
+								<span>{' '}</span>
+								<span
+									className={classnames({ on: showAudioLocalStats })}
+									onClick={() =>
+									{
+										this.setState(
+											{
+												showAudioLocalStats : !showAudioLocalStats
+											});
+									}}
+								>
+									{'[local]'}
+								</span>
+							</p>
+
+							<p>
+								{'video stats: '}
+								<span
+									className={classnames({ on: showVideoRemoteStats })}
+									onClick={() =>
+									{
+										this.setState(
+											{
+												showVideoRemoteStats : !showVideoRemoteStats
+											});
+									}}
+								>
+									{'[remote]'}
+								</span>
+								<span>{' '}</span>
+								<span
+									className={classnames({ on: showVideoLocalStats })}
+									onClick={() =>
+									{
+										this.setState(
+											{
+												showVideoLocalStats : !showVideoLocalStats
+											});
+									}}
+								>
+									{'[local]'}
+								</span>
+							</p>
+
 							<If condition={isMe}>
 								<p>
 									{'send transport stats: '}
@@ -154,76 +212,10 @@ class Stats extends React.Component
 									</span>
 								</p>
 							</If>
-
-							<p>
-								{'audio stats: '}
-								<span
-									className={classnames({ on: showAudioRemoteStats })}
-									onClick={() =>
-									{
-										this.setState(
-											{
-												showAudioRemoteStats : !showAudioRemoteStats
-											});
-									}}
-								>
-									{'[remote]'}
-								</span>
-								<span>{' '}</span>
-								<span
-									className={classnames({ on: showAudioLocalStats })}
-									onClick={() =>
-									{
-										this.setState(
-											{
-												showAudioLocalStats : !showAudioLocalStats
-											});
-									}}
-								>
-									{'[local]'}
-								</span>
-							</p>
-
-							<p>
-								{'video stats: '}
-								<span
-									className={classnames({ on: showVideoRemoteStats })}
-									onClick={() =>
-									{
-										this.setState(
-											{
-												showVideoRemoteStats : !showVideoRemoteStats
-											});
-									}}
-								>
-									{'[remote]'}
-								</span>
-								<span>{' '}</span>
-								<span
-									className={classnames({ on: showVideoLocalStats })}
-									onClick={() =>
-									{
-										this.setState(
-											{
-												showVideoLocalStats : !showVideoLocalStats
-											});
-									}}
-								>
-									{'[local]'}
-								</span>
-							</p>
 						</div>
 					</div>
 
 					<div className='stats'>
-						<If condition={showSendTransportRemoteStats && sendTransportRemoteStats}>
-							{this._printStats('send transport remote stats', sendTransportRemoteStats)}
-						</If>
-
-						<If condition={showRecvTransportRemoteStats && recvTransportRemoteStats}>
-							{this._printStats('recv transport remote stats', recvTransportRemoteStats)}
-						</If>
-
 						<If condition={showAudioRemoteStats && audioProducerRemoteStats}>
 							{this._printStats('audio producer remote stats', audioProducerRemoteStats)}
 						</If>
@@ -240,12 +232,12 @@ class Stats extends React.Component
 							{this._printStats('video consumer remote stats', videoConsumerRemoteStats)}
 						</If>
 
-						<If condition={showSendTransportLocalStats && sendTransportLocalStats}>
-							{this._printStats('send transport local stats', sendTransportLocalStats)}
+						<If condition={showSendTransportRemoteStats && sendTransportRemoteStats}>
+							{this._printStats('send transport remote stats', sendTransportRemoteStats)}
 						</If>
 
-						<If condition={showRecvTransportLocalStats && recvTransportLocalStats}>
-							{this._printStats('recv transport local stats', recvTransportLocalStats)}
+						<If condition={showRecvTransportRemoteStats && recvTransportRemoteStats}>
+							{this._printStats('recv transport remote stats', recvTransportRemoteStats)}
 						</If>
 
 						<If condition={showAudioLocalStats && audioProducerLocalStats}>
@@ -262,6 +254,14 @@ class Stats extends React.Component
 
 						<If condition={showVideoLocalStats && videoConsumerLocalStats}>
 							{this._printStats('video consumer local stats', videoConsumerLocalStats)}
+						</If>
+
+						<If condition={showSendTransportLocalStats && sendTransportLocalStats}>
+							{this._printStats('send transport local stats', sendTransportLocalStats)}
+						</If>
+
+						<If condition={showRecvTransportLocalStats && recvTransportLocalStats}>
+							{this._printStats('recv transport local stats', recvTransportLocalStats)}
 						</If>
 					</div>
 				</div>
@@ -298,43 +298,31 @@ class Stats extends React.Component
 		} = this.props;
 
 		const {
-			showSendTransportRemoteStats,
-			showRecvTransportRemoteStats,
 			showAudioRemoteStats,
 			showVideoRemoteStats,
-			showSendTransportLocalStats,
-			showRecvTransportLocalStats,
+			showSendTransportRemoteStats,
+			showRecvTransportRemoteStats,
 			showAudioLocalStats,
-			showVideoLocalStats
+			showVideoLocalStats,
+			showSendTransportLocalStats,
+			showRecvTransportLocalStats
 		} = this.state;
 
-		let sendTransportRemoteStats = null;
-		let recvTransportRemoteStats = null;
 		let audioProducerRemoteStats = null;
 		let videoProducerRemoteStats = null;
 		let audioConsumerRemoteStats = null;
 		let videoConsumerRemoteStats = null;
-		let sendTransportLocalStats = null;
-		let recvTransportLocalStats = null;
+		let sendTransportRemoteStats = null;
+		let recvTransportRemoteStats = null;
 		let audioProducerLocalStats = null;
 		let videoProducerLocalStats = null;
 		let audioConsumerLocalStats = null;
 		let videoConsumerLocalStats = null;
+		let sendTransportLocalStats = null;
+		let recvTransportLocalStats = null;
 
 		if (isMe)
 		{
-			if (showSendTransportRemoteStats)
-			{
-				sendTransportRemoteStats = await roomClient.getSendTransportRemoteStats()
-					.catch(() => {});
-			}
-
-			if (showRecvTransportRemoteStats)
-			{
-				recvTransportRemoteStats = await roomClient.getRecvTransportRemoteStats()
-					.catch(() => {});
-			}
-
 			if (showAudioRemoteStats)
 			{
 				audioProducerRemoteStats = await roomClient.getMicRemoteStats()
@@ -347,15 +335,15 @@ class Stats extends React.Component
 					.catch(() => {});
 			}
 
-			if (showSendTransportLocalStats)
+			if (showSendTransportRemoteStats)
 			{
-				sendTransportLocalStats = await roomClient.getSendTransportLocalStats()
+				sendTransportRemoteStats = await roomClient.getSendTransportRemoteStats()
 					.catch(() => {});
 			}
 
-			if (showRecvTransportLocalStats)
+			if (showRecvTransportRemoteStats)
 			{
-				recvTransportLocalStats = await roomClient.getRecvTransportLocalStats()
+				recvTransportRemoteStats = await roomClient.getRecvTransportRemoteStats()
 					.catch(() => {});
 			}
 
@@ -368,6 +356,18 @@ class Stats extends React.Component
 			if (showVideoLocalStats)
 			{
 				videoProducerLocalStats = await roomClient.getWebcamLocalStats()
+					.catch(() => {});
+			}
+
+			if (showSendTransportLocalStats)
+			{
+				sendTransportLocalStats = await roomClient.getSendTransportLocalStats()
+					.catch(() => {});
+			}
+
+			if (showRecvTransportLocalStats)
+			{
+				recvTransportLocalStats = await roomClient.getRecvTransportLocalStats()
 					.catch(() => {});
 			}
 		}
@@ -400,18 +400,18 @@ class Stats extends React.Component
 
 		this.setState(
 			{
-				sendTransportRemoteStats,
-				recvTransportRemoteStats,
 				audioProducerRemoteStats,
 				videoProducerRemoteStats,
 				audioConsumerRemoteStats,
 				videoConsumerRemoteStats,
-				sendTransportLocalStats,
-				recvTransportLocalStats,
+				sendTransportRemoteStats,
+				recvTransportRemoteStats,
 				audioProducerLocalStats,
 				videoProducerLocalStats,
 				audioConsumerLocalStats,
-				videoConsumerLocalStats
+				videoConsumerLocalStats,
+				sendTransportLocalStats,
+				recvTransportLocalStats
 			});
 
 		this._delayTimer = setTimeout(() => this._start(), 2500);
@@ -423,18 +423,18 @@ class Stats extends React.Component
 
 		this.setState(
 			{
-				sendTransportRemoteStats : null,
-				recvTransportRemoteStats : null,
 				audioProducerRemoteStats : null,
 				videoProducerRemoteStats : null,
 				audioConsumerRemoteStats : null,
 				videoConsumerRemoteStats : null,
-				sendTransportLocalStats  : null,
-				recvTransportLocalStats  : null,
+				sendTransportRemoteStats : null,
+				recvTransportRemoteStats : null,
 				audioProducerLocalStats  : null,
 				videoProducerLocalStats  : null,
 				audioConsumerLocalStats  : null,
-				videoConsumerLocalStats  : null
+				videoConsumerLocalStats  : null,
+				sendTransportLocalStats  : null,
+				recvTransportLocalStats  : null
 			});
 	}
 
@@ -455,7 +455,17 @@ class Stats extends React.Component
 									Object.keys(item).map((key) => (
 										<div className='line' key={key}>
 											<p className='key'>{key}</p>
-											<p className='value'>{JSON.stringify(item[key], null, '  ')}</p>
+											<p className='value'>
+												<Choose>
+													<When condition={typeof item[key] === 'number'}>
+														{JSON.stringify(Math.round(item[key] * 100) / 100, null, '  ')}
+													</When>
+
+													<Otherwise>
+														{JSON.stringify(item[key], null, '  ')}
+													</Otherwise>
+												</Choose>
+											</p>
 										</div>
 									))
 								}
