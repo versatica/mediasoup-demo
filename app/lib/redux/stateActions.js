@@ -214,19 +214,19 @@ export const setConsumerResumed = (consumerId, originator) =>
 	};
 };
 
-export const setConsumerCurrentSpatialLayer = (consumerId, spatialLayer) =>
+export const setConsumerCurrentLayers = (consumerId, spatialLayer, temporalLayer) =>
 {
 	return {
-		type    : 'SET_CONSUMER_CURRENT_SPATIAL_LAYER',
-		payload : { consumerId, spatialLayer }
+		type    : 'SET_CONSUMER_CURRENT_LAYERS',
+		payload : { consumerId, spatialLayer, temporalLayer }
 	};
 };
 
-export const setConsumerPreferredSpatialLayer = (consumerId, spatialLayer) =>
+export const setConsumerPreferredLayers = (consumerId, spatialLayer, temporalLayer) =>
 {
 	return {
-		type    : 'SET_CONSUMER_PREFERRED_SPATIAL_LAYER',
-		payload : { consumerId, spatialLayer }
+		type    : 'SET_CONSUMER_PREFERRED_LAYERS',
+		payload : { consumerId, spatialLayer, temporalLayer }
 	};
 };
 

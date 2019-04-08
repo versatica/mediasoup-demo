@@ -48,27 +48,34 @@ const Peer = (props) =>
 				videoConsumerId={videoConsumer ? videoConsumer.id : null}
 				audioRtpParameters={audioConsumer ? audioConsumer.rtpParameters : null}
 				videoRtpParameters={videoConsumer ? videoConsumer.rtpParameters : null}
+				consumerSpatialLayers={videoConsumer ? videoConsumer.spatialLayers : null}
+				consumerTemporalLayers={videoConsumer ? videoConsumer.temporalLayers : null}
+				consumerCurrentSpatialLayer={
+					videoConsumer ? videoConsumer.currentSpatialLayer : null
+				}
+				consumerCurrentTemporalLayer={
+					videoConsumer ? videoConsumer.currentTemporalLayer : null
+				}
+				consumerPreferredSpatialLayer={
+					videoConsumer ? videoConsumer.preferredSpatialLayer : null
+				}
+				consumerPreferredTemporalLayer={
+					videoConsumer ? videoConsumer.preferredTemporalLayer : null
+				}
 				audioTrack={audioConsumer ? audioConsumer.track : null}
 				videoTrack={videoConsumer ? videoConsumer.track : null}
 				audioMuted={audioMuted}
 				videoVisible={videoVisible}
 				videoMultiLayer={videoConsumer && videoConsumer.type !== 'simple'}
-				videoCurrentSpatialLayer={videoConsumer ? videoConsumer.currentSpatialLayer : null}
-				videoPreferredSpatialLayer={
-					videoConsumer
-						? typeof videoConsumer.preferredSpatialLayer === 'number'
-							? videoConsumer.preferredSpatialLayer
-							: 2 // NOTE: We know that the preferred spatil layer is 2 because we are cool.
-						: null
-				}
 				audioCodec={audioConsumer ? audioConsumer.codec : null}
 				videoCodec={videoConsumer ? videoConsumer.codec : null}
 				audioScore={audioConsumer ? audioConsumer.score : null}
 				videoScore={videoConsumer ? videoConsumer.score : null}
 				faceDetection={faceDetection}
-				onChangeVideoPreferredSpatialLayer={(spatialLayer) =>
+				onChangeVideoPreferredLayers={(spatialLayer, temporalLayer) =>
 				{
-					roomClient.setConsumerPreferredSpatialLayer(videoConsumer.id, spatialLayer);
+					roomClient.setConsumerPreferredLayers(
+						videoConsumer.id, spatialLayer, temporalLayer);
 				}}
 				onRequestKeyFrame={() =>
 				{

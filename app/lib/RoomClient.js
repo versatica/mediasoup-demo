@@ -290,15 +290,23 @@ export default class RoomClient
 						this._consumers.delete(consumer.id);
 					});
 
+					const { spatialLayers, temporalLayers } =
+						mediasoupClient.parseScalabilityMode(
+							consumer.rtpParameters.encodings[0].scalabilityMode);
+
 					store.dispatch(stateActions.addConsumer(
 						{
-							id             : consumer.id,
-							type           : type,
-							locallyPaused  : false,
-							remotelyPaused : producerPaused,
-							rtpParameters  : consumer.rtpParameters,
-							track          : consumer.track,
-							codec          : consumer.rtpParameters.codecs[0].mimeType.split('/')[1]
+							id                     : consumer.id,
+							type                   : type,
+							locallyPaused          : false,
+							remotelyPaused         : producerPaused,
+							rtpParameters          : consumer.rtpParameters,
+							spatialLayers          : spatialLayers,
+							temporalLayers         : temporalLayers,
+							preferredSpatialLayer  : spatialLayers - 1,
+							preferredTemporalLayer : temporalLayers - 1,
+							codec                  : consumer.rtpParameters.codecs[0].mimeType.split('/')[1],
+							track                  : consumer.track
 						},
 						peerId));
 
@@ -422,15 +430,14 @@ export default class RoomClient
 
 				case 'consumerLayersChanged':
 				{
-					const { consumerId, layers } = notification.data;
-					const { spatialLayer } = layers;
+					const { consumerId, spatialLayer, temporalLayer } = notification.data;
 					const consumer = this._consumers.get(consumerId);
 
 					if (!consumer)
 						break;
 
-					store.dispatch(
-						stateActions.setConsumerCurrentSpatialLayer(consumerId, spatialLayer));
+					store.dispatch(stateActions.setConsumerCurrentLayers(
+						consumerId, spatialLayer, temporalLayer));
 
 					break;
 				}
@@ -1041,28 +1048,28 @@ export default class RoomClient
 		}
 	}
 
-	async setConsumerPreferredSpatialLayer(consumerId, spatialLayer)
+	async setConsumerPreferredLayers(consumerId, spatialLayer, temporalLayer)
 	{
 		logger.debug(
-			'changeConsumerPreferredSpatialLayer() [consumerId:%s, spatialLayer:%s]',
-			consumerId, spatialLayer);
+			'setConsumerPreferredLayers() [consumerId:%s, spatialLayer:%s, temporalLayer:%s]',
+			consumerId, spatialLayer, temporalLayer);
 
 		try
 		{
 			await this._protoo.request(
-				'setConsumerPreferedLayers', { consumerId, spatialLayer });
+				'setConsumerPreferedLayers', { consumerId, spatialLayer, temporalLayer });
 
-			store.dispatch(
-				stateActions.setConsumerPreferredSpatialLayer(consumerId, spatialLayer));
+			store.dispatch(stateActions.setConsumerPreferredLayers(
+				consumerId, spatialLayer, temporalLayer));
 		}
 		catch (error)
 		{
-			logger.error('setConsumerPreferredSpatialLayer() | failed:%o', error);
+			logger.error('setConsumerPreferredLayers() | failed:%o', error);
 
 			store.dispatch(requestActions.notify(
 				{
 					type : 'error',
-					text : `Error setting Consumer preferred spatial layer: ${error}`
+					text : `Error setting Consumer preferred layers: ${error}`
 				}));
 		}
 	}

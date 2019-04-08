@@ -61,29 +61,37 @@
   {
     '5551-qwer' :
     {
-      id                    : '5551-qwer',
-      type                  : 'simple',
-      locallyPaused         : false,
-      remotelyPaused        : false,
-      currentSpatialLayer   : undefined,
-      preferredSpatialLayer : undefined,
-      track                 : MediaStreamTrack,
-      rtpParameters         : {},
-      codec                 : 'opus',
-      score                 : [ { ssrc: 3331, score: 10 } ]
+      id                     : '5551-qwer',
+      type                   : 'simple',
+      locallyPaused          : false,
+      remotelyPaused         : false,
+      rtpParameters          : {},
+      codec                  : 'opus',
+      spatialLayers          : 1,
+      temporalLayers         : 1,
+      currentSpatialLayer    : undefined,
+      currentTemporalLayer   : undefined,
+      preferredSpatialLayer  : undefined,
+      preferredTemporalLayer : undefined,
+      track                  : MediaStreamTrack,
+      score                  : [ { ssrc: 3331, score: 10 } ]
     },
     '5552-zxzx' :
     {
-      id                    : '5552-zxzx',
-      type                  : 'simulcast',
-      locallyPaused         : false,
-      remotelyPaused        : true,
-      currentSpatialLayer   : 1,
-      preferredSpatialLayer : 2,
-      rtpParameters         : {},
-      track                 : null,
-      codec                 : 'h264',
-      score                 : [ { ssrc: 4441, score: 9 }, { ssrc: 4444, score: 8 } ]
+      id                     : '5552-zxzx',
+      type                   : 'simulcast',
+      locallyPaused          : false,
+      remotelyPaused         : true,
+      rtpParameters          : {},
+      codec                  : 'h264',
+      spatialLayers          : 1,
+      temporalLayers         : 1,
+      currentSpatialLayer    : 1,
+      currentTemporalLayer   : 1,
+      preferredSpatialLayer  : 2,
+      preferredTemporalLayer : 2,
+      track                  : MediaStreamTrack,
+      score                  : [ { ssrc: 4441, score: 9 }, { ssrc: 4444, score: 8 } ]
     }
   },
   notifications :

@@ -59,20 +59,30 @@ const consumers = (state = initialState, action) =>
 			return { ...state, [consumerId]: newConsumer };
 		}
 
-		case 'SET_CONSUMER_CURRENT_SPATIAL_LAYER':
+		case 'SET_CONSUMER_CURRENT_LAYERS':
 		{
-			const { consumerId, spatialLayer } = action.payload;
+			const { consumerId, spatialLayer, temporalLayer } = action.payload;
 			const consumer = state[consumerId];
-			const newConsumer = { ...consumer, currentSpatialLayer: spatialLayer };
+			const newConsumer =
+			{
+				...consumer,
+				currentSpatialLayer  : spatialLayer,
+				currentTemporalLayer : temporalLayer
+			};
 
 			return { ...state, [consumerId]: newConsumer };
 		}
 
-		case 'SET_CONSUMER_PREFERRED_SPATIAL_LAYER':
+		case 'SET_CONSUMER_PREFERRED_LAYERS':
 		{
-			const { consumerId, spatialLayer } = action.payload;
+			const { consumerId, spatialLayer, temporalLayer } = action.payload;
 			const consumer = state[consumerId];
-			const newConsumer = { ...consumer, preferredSpatialLayer: spatialLayer };
+			const newConsumer =
+			{
+				...consumer,
+				preferredSpatialLayer  : spatialLayer,
+				preferredTemporalLayer : temporalLayer
+			};
 
 			return { ...state, [consumerId]: newConsumer };
 		}

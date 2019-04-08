@@ -64,18 +64,22 @@ export default class PeerView extends React.Component
 			audioConsumerId,
 			videoConsumerId,
 			videoRtpParameters,
+			consumerSpatialLayers,
+			consumerTemporalLayers,
+			consumerCurrentSpatialLayer,
+			consumerCurrentTemporalLayer,
+			consumerPreferredSpatialLayer,
+			consumerPreferredTemporalLayer,
 			audioMuted,
 			videoVisible,
 			videoMultiLayer,
-			videoCurrentSpatialLayer,
-			videoPreferredSpatialLayer,
 			audioCodec,
 			videoCodec,
 			audioScore,
 			videoScore,
 			onChangeDisplayName,
 			onChangeMaxSendingSpatialLayer,
-			onChangeVideoPreferredSpatialLayer,
+			onChangeVideoPreferredLayers,
 			onRequestKeyFrame,
 			onStatsClick
 		} = this.props;
@@ -260,9 +264,11 @@ export default class PeerView extends React.Component
 							</If>
 
 							<If condition={!isMe && videoMultiLayer}>
-								<p>current spatial layer: {videoCurrentSpatialLayer}</p>
 								<p>
-									preferred spatial layer: {videoPreferredSpatialLayer}
+									{`current spatial-temporal layers: ${consumerCurrentSpatialLayer} ${consumerCurrentTemporalLayer}`}
+								</p>
+								<p>
+									{`preferred spatial-temporal layers: ${consumerPreferredSpatialLayer} ${consumerPreferredTemporalLayer}`}
 									<span>{' '}</span>
 									<span
 										className='clickable'
@@ -270,24 +276,25 @@ export default class PeerView extends React.Component
 										{
 											event.stopPropagation();
 
-											let newPreferredSpatialLayer;
+											let newPreferredSpatialLayer = consumerPreferredSpatialLayer;
+											let newPreferredTemporalLayer;
 
-											switch (videoPreferredSpatialLayer)
+											if (consumerPreferredTemporalLayer > 0)
 											{
-												case 0:
-													newPreferredSpatialLayer = 2;
-													break;
+												newPreferredTemporalLayer = consumerPreferredTemporalLayer - 1;
+											}
+											else
+											{
+												if (consumerPreferredSpatialLayer > 0)
+													newPreferredSpatialLayer = consumerPreferredSpatialLayer - 1;
+												else
+													newPreferredSpatialLayer = consumerSpatialLayers - 1;
 
-												case 1:
-													newPreferredSpatialLayer = 0;
-													break;
-
-												case 2:
-													newPreferredSpatialLayer = 1;
-													break;
+												newPreferredTemporalLayer = consumerTemporalLayers - 1;
 											}
 
-											onChangeVideoPreferredSpatialLayer(newPreferredSpatialLayer);
+											onChangeVideoPreferredLayers(
+												newPreferredSpatialLayer, newPreferredTemporalLayer);
 										}}
 									>
 										{'[ down ]'}
@@ -299,24 +306,25 @@ export default class PeerView extends React.Component
 										{
 											event.stopPropagation();
 
-											let newPreferredSpatialLayer;
+											let newPreferredSpatialLayer = consumerPreferredSpatialLayer;
+											let newPreferredTemporalLayer;
 
-											switch (videoPreferredSpatialLayer)
+											if (consumerPreferredTemporalLayer < consumerTemporalLayers - 1)
 											{
-												case 0:
-													newPreferredSpatialLayer = 1;
-													break;
-
-												case 1:
-													newPreferredSpatialLayer = 2;
-													break;
-
-												case 2:
+												newPreferredTemporalLayer = consumerPreferredTemporalLayer + 1;
+											}
+											else
+											{
+												if (consumerPreferredSpatialLayer < consumerSpatialLayers - 1)
+													newPreferredSpatialLayer = consumerPreferredSpatialLayer + 1;
+												else
 													newPreferredSpatialLayer = 0;
-													break;
+
+												newPreferredTemporalLayer = 0;
 											}
 
-											onChangeVideoPreferredSpatialLayer(newPreferredSpatialLayer);
+											onChangeVideoPreferredLayers(
+												newPreferredSpatialLayer, newPreferredTemporalLayer);
 										}}
 									>
 										{'[ up ]'}
@@ -727,27 +735,31 @@ PeerView.propTypes =
 	isMe : PropTypes.bool,
 	peer : PropTypes.oneOfType(
 		[ appPropTypes.Me, appPropTypes.Peer ]).isRequired,
-	audioProducerId                    : PropTypes.string,
-	videoProducerId                    : PropTypes.string,
-	audioConsumerId                    : PropTypes.string,
-	videoConsumerId                    : PropTypes.string,
-	audioRtpParameters                 : PropTypes.object,
-	videoRtpParameters                 : PropTypes.object,
-	audioTrack                         : PropTypes.any,
-	videoTrack                         : PropTypes.any,
-	audioMuted                         : PropTypes.bool,
-	videoVisible                       : PropTypes.bool.isRequired,
-	videoMultiLayer                    : PropTypes.bool,
-	videoCurrentSpatialLayer           : PropTypes.number,
-	videoPreferredSpatialLayer         : PropTypes.number,
-	audioCodec                         : PropTypes.string,
-	videoCodec                         : PropTypes.string,
-	audioScore                         : PropTypes.any,
-	videoScore                         : PropTypes.any,
-	faceDetection                      : PropTypes.bool.isRequired,
-	onChangeDisplayName                : PropTypes.func,
-	onChangeMaxSendingSpatialLayer     : PropTypes.func,
-	onChangeVideoPreferredSpatialLayer : PropTypes.func,
-	onRequestKeyFrame                  : PropTypes.func,
-	onStatsClick                       : PropTypes.func.isRequired
+	audioProducerId                : PropTypes.string,
+	videoProducerId                : PropTypes.string,
+	audioConsumerId                : PropTypes.string,
+	videoConsumerId                : PropTypes.string,
+	audioRtpParameters             : PropTypes.object,
+	videoRtpParameters             : PropTypes.object,
+	consumerSpatialLayers          : PropTypes.number,
+	consumerTemporalLayers         : PropTypes.number,
+	consumerCurrentSpatialLayer    : PropTypes.number,
+	consumerCurrentTemporalLayer   : PropTypes.number,
+	consumerPreferredSpatialLayer  : PropTypes.number,
+	consumerPreferredTemporalLayer : PropTypes.number,
+	audioTrack                     : PropTypes.any,
+	videoTrack                     : PropTypes.any,
+	audioMuted                     : PropTypes.bool,
+	videoVisible                   : PropTypes.bool.isRequired,
+	videoMultiLayer                : PropTypes.bool,
+	audioCodec                     : PropTypes.string,
+	videoCodec                     : PropTypes.string,
+	audioScore                     : PropTypes.any,
+	videoScore                     : PropTypes.any,
+	faceDetection                  : PropTypes.bool.isRequired,
+	onChangeDisplayName            : PropTypes.func,
+	onChangeMaxSendingSpatialLayer : PropTypes.func,
+	onChangeVideoPreferredLayers   : PropTypes.func,
+	onRequestKeyFrame              : PropTypes.func,
+	onStatsClick                   : PropTypes.func.isRequired
 };
