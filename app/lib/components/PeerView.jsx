@@ -588,10 +588,7 @@ export default class PeerView extends React.Component
 	{
 		this._videoResolutionPeriodicTimer = setInterval(() =>
 		{
-			const {
-				videoResolutionWidth,
-				videoResolutionHeight
-			} = this.state;
+			const { videoResolutionWidth, videoResolutionHeight } = this.state;
 			const { videoElem } = this.refs;
 
 			if (
@@ -605,7 +602,7 @@ export default class PeerView extends React.Component
 						videoResolutionHeight : videoElem.videoHeight
 					});
 			}
-		}, 1000);
+		}, 500);
 	}
 
 	_stopVideoResolution()
