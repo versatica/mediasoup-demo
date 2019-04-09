@@ -101,9 +101,9 @@ class Room extends EventEmitter
 		{
 			const { producer, volume } = volumes[0];
 
-			logger.debug(
-				'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
-				producer.id, volume);
+			// logger.debug(
+			// 	'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
+			// 	producer.id, volume);
 
 			// Notify all Peers.
 			for (const peer of this._getJoinedPeers())
@@ -120,7 +120,7 @@ class Room extends EventEmitter
 
 		this._audioLevelObserver.on('silence', () =>
 		{
-			logger.debug('audioLevelObserver "silence" event');
+			// logger.debug('audioLevelObserver "silence" event');
 
 			// Notify all Peers.
 			for (const peer of this._getJoinedPeers())
