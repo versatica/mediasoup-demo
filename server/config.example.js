@@ -42,7 +42,7 @@ module.exports =
 				'srtp',
 				'rtcp',
 				// 'rtx',
-				// 'rbe',
+				// 'bwe',
 				// 'score',
 				// 'simulcast',
 				// 'svc'
