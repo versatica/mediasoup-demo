@@ -1192,14 +1192,14 @@ class Room extends EventEmitter
 				.catch(() => {});
 		});
 
-		consumer.on('layerschange', ({ spatialLayer, temporalLayer }) =>
+		consumer.on('layerschange', (layers) =>
 		{
 			consumerPeer.notify(
 				'consumerLayersChanged',
 				{
-					consumerId : consumer.id,
-					spatialLayer,
-					temporalLayer
+					consumerId    : consumer.id,
+					spatialLayer  : layers ? layers.spatialLayer : null,
+					temporalLayer : layers ? layers.temporalLayer : null
 				})
 				.catch(() => {});
 		});
