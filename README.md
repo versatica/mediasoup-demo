@@ -1,6 +1,6 @@
 # mediasoup-demo v2
 
-A demo of [mediasoup](https://mediasoup.org).
+A demo application of [mediasoup](https://mediasoup.org) **v2**.
 
 Try it online at https://v2demo.mediasoup.org.
 
