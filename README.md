@@ -1,8 +1,8 @@
 # mediasoup-demo v3
 
-A demo of [mediasoup](https://mediasoup.org).
+A demo application of [mediasoup](https://mediasoup.org) **v3**.
 
-Try it online at https://demo.mediasoup.org.
+Try it online at https://v3demo.mediasoup.org.
 
 
 ## Installation
@@ -11,6 +11,7 @@ Try it online at https://demo.mediasoup.org.
 
 ```bash
 $ git clone https://github.com/versatica/mediasoup-demo.git
+$ git checkout v3
 $ cd mediasoup-demo
 ```
 
