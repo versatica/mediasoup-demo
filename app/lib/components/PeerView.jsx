@@ -709,20 +709,10 @@ export default class PeerView extends React.Component
 
 	_printConsumerScore(id, score)
 	{
-		const scores = Array.isArray(score) ? score : [ score ];
-
 		return (
-			<React.Fragment key={id}>
-				<p>score:</p>
-
-				{
-					scores.map(({ producer, consumer }, idx) => (
-						<p key={idx} className='indent'>
-							{`producer:${producer}, consumer:${consumer}`}
-						</p>
-					))
-				}
-			</React.Fragment>
+			<p key={id}>
+				{`score:${score.score}, producerScore:${score.producerScore}`}
+			</p>
 		);
 	}
 }
