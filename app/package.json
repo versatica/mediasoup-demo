@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.4.3",
-    "bowser": "^2.1.2",
+    "bowser": "^2.3.0",
     "classnames": "^2.2.6",
     "clipboard-copy": "^3.0.0",
     "debug": "^4.1.1",
@@ -49,7 +49,7 @@
     "del": "^4.1.0",
     "envify": "^4.1.0",
     "eslint": "^5.16.0",
-    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-import": "^2.17.1",
     "eslint-plugin-jsx-control-statements": "^2.2.1",
     "eslint-plugin-react": "^7.12.4",
     "gulp": "^4.0.0",
