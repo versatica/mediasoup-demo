@@ -26,15 +26,15 @@
     "random-string": "^0.2.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "react-redux": "^6.0.1",
+    "react-redux": "^7.0.2",
     "react-spinner": "^0.2.7",
     "react-tooltip": "^3.10.0",
-    "react-transition-group": "^2.8.0",
+    "react-transition-group": "^4.0.0",
     "redux": "^4.0.1",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
     "riek": "^1.1.0",
-    "url-parse": "^1.4.4"
+    "url-parse": "^1.4.6"
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",
@@ -49,7 +49,7 @@
     "del": "^4.1.0",
     "envify": "^4.1.0",
     "eslint": "^5.16.0",
-    "eslint-plugin-import": "^2.17.1",
+    "eslint-plugin-import": "^2.17.2",
     "eslint-plugin-jsx-control-statements": "^2.2.1",
     "eslint-plugin-react": "^7.12.4",
     "gulp": "^4.0.0",
