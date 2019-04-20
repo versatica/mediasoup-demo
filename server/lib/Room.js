@@ -439,11 +439,14 @@ class Room extends EventEmitter
 		{
 			case 'webrtc':
 			{
+				const { initialAvailableOutgoingBitrate } = config.mediasoup.webRtcTransport;
+
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
 					{
 						listenIps : config.mediasoup.webRtcTransport.listenIps,
 						enableUdp : true,
-						enableTcp : false
+						enableTcp : false,
+						initialAvailableOutgoingBitrate
 					});
 
 				// Store it.
@@ -736,6 +739,10 @@ class Room extends EventEmitter
 				// initiate mediasoup Transports and be ready when he later joins.
 
 				const { forceTcp, producing, consuming } = request.data;
+				const {
+					maxIncomingBitrate,
+					initialAvailableOutgoingBitrate
+				} = config.mediasoup.webRtcTransport;
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
 					{
@@ -743,6 +750,7 @@ class Room extends EventEmitter
 						enableUdp : !forceTcp,
 						enableTcp : true,
 						preferUdp : true,
+						initialAvailableOutgoingBitrate,
 						appData   : { producing, consuming }
 					});
 
@@ -758,8 +766,6 @@ class Room extends EventEmitter
 					});
 
 				// If set, apply max incoming bitrate limit.
-				const { maxIncomingBitrate } = config.mediasoup.webRtcTransport;
-
 				if (maxIncomingBitrate)
 				{
 					try { await transport.setMaxIncomingBitrate(maxIncomingBitrate); }

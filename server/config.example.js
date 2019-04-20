@@ -104,7 +104,8 @@ module.exports =
 			[
 				{ ip: '1.2.3.4', announcedIp: null }
 			],
-			maxIncomingBitrate : 1500000
+			maxIncomingBitrate              : 1500000,
+			initialAvailableOutgoingBitrate : 1000000
 		}
 	}
 };
