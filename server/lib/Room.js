@@ -1135,7 +1135,7 @@ class Room extends EventEmitter
 
 				try
 				{
-					await throttle.stop();
+					await throttle.stop({});
 
 					logger.warn('network throttle stopped');
 
