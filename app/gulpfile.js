@@ -187,9 +187,10 @@ gulp.task('livebrowser', (done) =>
 
 	browserSync(
 		{
-			open   : 'external',
-			host   : config.domain,
-			server :
+			open      : 'external',
+			host      : config.domain,
+			startPath : '/?info=true&throttle=true',
+			server    :
 			{
 				baseDir : OUTPUT_DIR
 			},
