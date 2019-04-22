@@ -26,6 +26,8 @@
     "random-string": "^0.2.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
+    "react-draggable": "^3.3.0",
+    "react-dropzone": "^10.1.4",
     "react-redux": "^7.0.2",
     "react-spinner": "^0.2.7",
     "react-tooltip": "^3.10.0",
@@ -34,6 +36,7 @@
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
     "riek": "^1.1.0",
+    "uninstall": "0.0.0",
     "url-parse": "^1.4.6"
   },
   "devDependencies": {

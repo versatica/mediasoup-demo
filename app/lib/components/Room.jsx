@@ -12,6 +12,7 @@ import Me from './Me';
 import Peers from './Peers';
 import Stats from './Stats';
 import Notifications from './Notifications';
+import NetworkThrottle from './NetworkThrottle';
 
 class Room extends React.Component
 {
@@ -114,6 +115,8 @@ class Room extends React.Component
 					</div>
 
 					<Stats />
+
+					<NetworkThrottle />
 
 					<ReactTooltip
 						type='light'
