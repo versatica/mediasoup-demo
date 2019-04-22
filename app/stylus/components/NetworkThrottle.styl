@@ -87,7 +87,6 @@
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			background: lighten($COLOR_BG_1, 15%);
 			border: none;
 			border-radius: 2px;
 			font-weight: 400;
@@ -101,10 +100,15 @@
 
 			&:disabled {
 				opacity: 0.5;
+				cursor: default;
 			}
 
 			&.apply {
 				background: #e9736e;
+			}
+
+			&.reset {
+				background: lighten($COLOR_BG_1, 15%);
 			}
 		}
 	}
