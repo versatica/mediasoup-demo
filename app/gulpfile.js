@@ -189,7 +189,7 @@ gulp.task('livebrowser', (done) =>
 		{
 			open      : 'external',
 			host      : config.domain,
-			startPath : '/?info=true&throttle=true',
+			startPath : '/?info=true&throttleSecret=foo',
 			server    :
 			{
 				baseDir : OUTPUT_DIR

@@ -130,7 +130,7 @@ class NetworkThrottle extends React.Component
 
 	async _apply()
 	{
-		const { roomClient } = this.props;
+		const { roomClient, secret } = this.props;
 		let { uplink, downlink, rtt } = this.state;
 
 		uplink = Number(uplink) || 0;
@@ -139,16 +139,20 @@ class NetworkThrottle extends React.Component
 
 		this.setState({ disabled: true });
 
-		await roomClient.applyNetworkThrottle({ uplink, downlink, rtt });
+		await roomClient.applyNetworkThrottle(
+			{ uplink, downlink, rtt, secret });
 
-		window.onunload = () => roomClient.resetNetworkThrottle({ silent: true });
+		window.onunload = () =>
+		{
+			roomClient.resetNetworkThrottle({ silent: true, secret });
+		};
 
 		this.setState({ disabled: false });
 	}
 
 	async _reset()
 	{
-		const { roomClient } = this.props;
+		const { roomClient, secret } = this.props;
 
 		this.setState(
 			{
@@ -160,7 +164,7 @@ class NetworkThrottle extends React.Component
 
 		this.setState({ disabled: true });
 
-		await roomClient.resetNetworkThrottle();
+		await roomClient.resetNetworkThrottle({ secret });
 
 		this.setState({ disabled: false });
 	}
@@ -168,7 +172,8 @@ class NetworkThrottle extends React.Component
 
 NetworkThrottle.propTypes =
 {
-	roomClient : PropTypes.any.isRequired
+	roomClient : PropTypes.any.isRequired,
+	secret     : PropTypes.string.isRequired
 };
 
 export default withRoomContext(NetworkThrottle);

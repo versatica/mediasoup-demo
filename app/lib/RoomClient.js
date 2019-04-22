@@ -1243,7 +1243,7 @@ export default class RoomClient
 		return consumer.getStats();
 	}
 
-	async applyNetworkThrottle({ uplink, downlink, rtt })
+	async applyNetworkThrottle({ uplink, downlink, rtt, secret })
 	{
 		logger.debug(
 			'applyNetworkThrottle() [uplink:%s, downlink:%s, rtt:%s]',
@@ -1253,7 +1253,7 @@ export default class RoomClient
 		{
 			await this._protoo.request(
 				'applyNetworkThrottle',
-				{ uplink, downlink, rtt });
+				{ uplink, downlink, rtt, secret });
 		}
 		catch (error)
 		{
@@ -1267,13 +1267,13 @@ export default class RoomClient
 		}
 	}
 
-	async resetNetworkThrottle({ silent = false } = {})
+	async resetNetworkThrottle({ silent = false, secret })
 	{
 		logger.debug('resetNetworkThrottle()');
 
 		try
 		{
-			await this._protoo.request('resetNetworkThrottle');
+			await this._protoo.request('resetNetworkThrottle', { secret });
 		}
 		catch (error)
 		{

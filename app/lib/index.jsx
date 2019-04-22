@@ -75,7 +75,7 @@ async function run()
 	const info = urlParser.query.info === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
-	const throttle = urlParser.query.throttle === 'true';
+	const throttleSecret = urlParser.query.throttleSecret;
 
 	// Enable face detection on demand.
 	if (faceDetection)
@@ -84,8 +84,8 @@ async function run()
 	if (info)
 		window.SHOW_INFO = true;
 
-	if (throttle)
-		window.NETWORK_THROTTLE = true;
+	if (throttleSecret)
+		window.NETWORK_THROTTLE_SECRET = throttleSecret;
 
 	if (!roomId)
 	{

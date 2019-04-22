@@ -1084,18 +1084,18 @@ class Room extends EventEmitter
 
 			case 'applyNetworkThrottle':
 			{
-				if (process.env.NETWORK_THROTTLE_ENABLED !== 'true')
+				const DefaultUplink = 1000000;
+				const DefaultDownlink = 1000000;
+				const DefaultRtt = 0;
+
+				const { uplink, downlink, rtt, secret } = request.data;
+
+				if (!secret || secret !== process.env.NETWORK_THROTTLE_SECRET)
 				{
 					reject(403, 'operation NOT allowed, modda fuckaa');
 
 					return;
 				}
-
-				const DefaultUplink = 1000000;
-				const DefaultDownlink = 1000000;
-				const DefaultRtt = 0;
-
-				const { uplink, downlink, rtt } = request.data;
 
 				try
 				{
@@ -1126,7 +1126,9 @@ class Room extends EventEmitter
 
 			case 'resetNetworkThrottle':
 			{
-				if (process.env.NETWORK_THROTTLE_ENABLED !== 'true')
+				const { secret } = request.data;
+
+				if (!secret || secret !== process.env.NETWORK_THROTTLE_SECRET)
 				{
 					reject(403, 'operation NOT allowed, modda fuckaa');
 
