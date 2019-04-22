@@ -1,5 +1,6 @@
 const EventEmitter = require('events').EventEmitter;
 const protoo = require('protoo-server');
+const throttle = require('@sitespeed.io/throttle');
 const Logger = require('./Logger');
 const config = require('../config');
 
@@ -1077,6 +1078,75 @@ class Room extends EventEmitter
 				const stats = await consumer.getStats();
 
 				accept(stats);
+
+				break;
+			}
+
+			case 'applyNetworkThrottle':
+			{
+				if (process.env.NETWORK_THROTTLE_ENABLED !== 'true')
+				{
+					reject(403, 'operation NOT allowed, modda fuckaa');
+
+					return;
+				}
+
+				const DefaultUplink = 1000000;
+				const DefaultDownlink = 1000000;
+				const DefaultRtt = 0;
+
+				const { uplink, downlink, rtt } = request.data;
+
+				try
+				{
+					await throttle.start(
+						{
+							up   : uplink || DefaultUplink,
+							down : downlink || DefaultDownlink,
+							rtt  : rtt || DefaultRtt
+						});
+
+					logger.warn(
+						'network throttle set [uplink:%s, downlink:%s, rtt:%s]',
+						uplink || DefaultUplink,
+						downlink || DefaultDownlink,
+						rtt || DefaultRtt);
+
+					accept();
+				}
+				catch (error)
+				{
+					logger.error('network throttle apply failed: %o', error);
+
+					reject(500, error.toString());
+				}
+
+				break;
+			}
+
+			case 'resetNetworkThrottle':
+			{
+				if (process.env.NETWORK_THROTTLE_ENABLED !== 'true')
+				{
+					reject(403, 'operation NOT allowed, modda fuckaa');
+
+					return;
+				}
+
+				try
+				{
+					await throttle.stop();
+
+					logger.warn('network throttle stopped');
+
+					accept();
+				}
+				catch (error)
+				{
+					logger.error('network throttle stop failed: %o', error);
+
+					reject(500, error.toString());
+				}
 
 				break;
 			}

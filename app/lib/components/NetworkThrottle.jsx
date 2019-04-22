@@ -1,10 +1,7 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import Draggable from 'react-draggable';
 import PropTypes from 'prop-types';
-import classnames from 'classnames';
 import { withRoomContext } from '../RoomContext';
-import * as stateActions from '../redux/stateActions';
 
 class NetworkThrottle extends React.Component
 {
@@ -23,12 +20,7 @@ class NetworkThrottle extends React.Component
 
 	render()
 	{
-		const {
-			uplink,
-			downlink,
-			rtt,
-			disabled
-		} = this.state;
+		const { uplink, downlink, rtt, disabled } = this.state;
 
 		return (
 			<Draggable
@@ -56,6 +48,7 @@ class NetworkThrottle extends React.Component
 							<input
 								className='value'
 								type='text'
+								placeholder='NO LIMIT'
 								disabled={disabled}
 								pattern='[0-9]*'
 								value={uplink}
@@ -73,6 +66,7 @@ class NetworkThrottle extends React.Component
 							<input
 								className='value'
 								type='text'
+								placeholder='NO LIMIT'
 								disabled={disabled}
 								pattern='[0-9]*'
 								value={downlink}
@@ -90,6 +84,7 @@ class NetworkThrottle extends React.Component
 							<input
 								className='value'
 								type='text'
+								placeholder='NOT SET'
 								disabled={disabled}
 								pattern='[0-9]*'
 								value={rtt}
@@ -113,7 +108,10 @@ class NetworkThrottle extends React.Component
 						<button
 							type='submit'
 							className='apply'
-							disabled={disabled}
+							disabled={
+								disabled ||
+								(!uplink.trim() && !downlink.trim() && !rtt.trim())
+							}
 						>
 							APPLY
 						</button>
@@ -123,23 +121,35 @@ class NetworkThrottle extends React.Component
 		);
 	}
 
-	_apply()
+	componentWillUnmount()
 	{
-		const {
-			uplink,
-			downlink,
-			rtt
-		} = this.state;
+		const { roomClient } = this.props;
 
-		console.warn('APPLY: uplink:%s, rtt:%s', uplink, rtt);
+		roomClient.resetNetworkThrottle({ silent: true });
+	}
+
+	async _apply()
+	{
+		const { roomClient } = this.props;
+		let { uplink, downlink, rtt } = this.state;
+
+		uplink = Number(uplink) || 0;
+		downlink = Number(downlink) || 0;
+		rtt = Number(rtt) || 0;
 
 		this.setState({ disabled: true });
 
-		setTimeout(() => this.setState({ disabled: false }), 1000);
+		await roomClient.applyNetworkThrottle({ uplink, downlink, rtt });
+
+		window.onunload = () => roomClient.resetNetworkThrottle({ silent: true });
+
+		this.setState({ disabled: false });
 	}
 
-	_reset()
+	async _reset()
 	{
+		const { roomClient } = this.props;
+
 		this.setState(
 			{
 				uplink   : '',
@@ -148,42 +158,17 @@ class NetworkThrottle extends React.Component
 				disabled : false
 			});
 
-		// TODO: Send command.
+		this.setState({ disabled: true });
+
+		await roomClient.resetNetworkThrottle();
+
+		this.setState({ disabled: false });
 	}
 }
 
 NetworkThrottle.propTypes =
 {
-
+	roomClient : PropTypes.any.isRequired
 };
 
-const mapStateToProps = (state) =>
-{
-	// const producersArray = Object.values(state.producers);
-	// const audioProducer =
-	// 	producersArray.find((producer) => producer.track.kind === 'audio');
-	// const videoProducer =
-	// 	producersArray.find((producer) => producer.track.kind === 'video');
-
-	// return {
-	// 	connected     : state.room.state === 'connected',
-	// 	me            : state.me,
-	// 	audioProducer : audioProducer,
-	// 	videoProducer : videoProducer,
-	// 	faceDetection : state.room.faceDetection
-	// };
-
-	return {};
-};
-
-const mapDispatchToProps = (dispatch) =>
-{
-	return {};
-};
-
-const NetworkThrottleContainer = withRoomContext(connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(NetworkThrottle));
-
-export default NetworkThrottleContainer;
+export default withRoomContext(NetworkThrottle);

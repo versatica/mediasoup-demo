@@ -116,7 +116,9 @@ class Room extends React.Component
 
 					<Stats />
 
-					<NetworkThrottle />
+					<If condition={window.NETWORK_THROTTLE}>
+						<NetworkThrottle />
+					</If>
 
 					<ReactTooltip
 						type='light'

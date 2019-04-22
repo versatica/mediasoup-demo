@@ -1243,6 +1243,53 @@ export default class RoomClient
 		return consumer.getStats();
 	}
 
+	async applyNetworkThrottle({ uplink, downlink, rtt })
+	{
+		logger.debug(
+			'applyNetworkThrottle() [uplink:%s, downlink:%s, rtt:%s]',
+			uplink, downlink, rtt);
+
+		try
+		{
+			await this._protoo.request(
+				'applyNetworkThrottle',
+				{ uplink, downlink, rtt });
+		}
+		catch (error)
+		{
+			logger.error('applyNetworkThrottle() | failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `Error applying network throttle: ${error}`
+				}));
+		}
+	}
+
+	async resetNetworkThrottle({ silent = false } = {})
+	{
+		logger.debug('resetNetworkThrottle()');
+
+		try
+		{
+			await this._protoo.request('resetNetworkThrottle');
+		}
+		catch (error)
+		{
+			if (!silent)
+			{
+				logger.error('resetNetworkThrottle() | failed:%o', error);
+
+				store.dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : `Error resetting network throttle: ${error}`
+					}));
+			}
+		}
+	}
+
 	async _joinRoom()
 	{
 		logger.debug('_joinRoom()');

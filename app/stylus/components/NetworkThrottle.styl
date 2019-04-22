@@ -57,7 +57,17 @@
 				transition-duration: 0.1s;
 
 				&:disabled {
-					opacity: 0.65;
+					opacity: 0.5;
+				}
+
+				&::placeholder {
+					color: rgba($COLOR_BG_2, 0.25);
+				}
+
+				&:focus {
+					&::placeholder {
+						color: transparent;
+					}
 				}
 			}
 		}
@@ -77,7 +87,7 @@
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			background: lighten($COLOR_BG_1, 35%);
+			background: lighten($COLOR_BG_1, 15%);
 			border: none;
 			border-radius: 2px;
 			font-weight: 400;
@@ -90,7 +100,7 @@
 			transition-duration: 0.1s;
 
 			&:disabled {
-				opacity: 0.65;
+				opacity: 0.5;
 			}
 
 			&.apply {
