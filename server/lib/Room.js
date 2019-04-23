@@ -97,6 +97,10 @@ class Room extends EventEmitter
 		// @type {mediasoup.AudioLevelObserver}
 		this._audioLevelObserver = audioLevelObserver;
 
+		// Network throttled.
+		// @type {Boolean}
+		this._networkThrottled = false;
+
 		// Set audioLevelObserver events.
 		this._audioLevelObserver.on('volumes', (volumes) =>
 		{
@@ -152,6 +156,13 @@ class Room extends EventEmitter
 
 		// Emit 'close' event.
 		this.emit('close');
+
+		// Stop network throttling.
+		if (this._networkThrottled)
+		{
+			throttle.stop({})
+				.catch(() => {});
+		}
 	}
 
 	logStatus()
