@@ -202,6 +202,49 @@ gulp.task('livebrowser', (done) =>
 	done();
 });
 
+gulp.task('livebrowserdevel', async (done) =>
+{
+	const config = require('../server/config');
+
+	await new Promise((resolve) =>
+	{
+		browserSync.create('producer1').init(
+			{
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel&info=true&throttleSecret=foo&consume=false',
+				server    :
+				{
+					baseDir : OUTPUT_DIR
+				},
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
+	});
+
+	await new Promise((resolve) =>
+	{
+		browserSync.create('consumer1').init(
+			{
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel&info=true&throttleSecret=foo&produce=false',
+				server    :
+				{
+					baseDir : OUTPUT_DIR
+				},
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
+	});
+
+	done();
+});
+
 gulp.task('browser', (done) =>
 {
 	const config = require('../server/config');
@@ -264,6 +307,17 @@ gulp.task('live', gulp.series(
 	'resources',
 	'watch',
 	'livebrowser'
+));
+
+gulp.task('livedevel', gulp.series(
+	'clean',
+	'lint',
+	'bundle:watch',
+	'html',
+	'css',
+	'resources',
+	'watch',
+	'livebrowserdevel'
 ));
 
 gulp.task('open', gulp.series('browser'));
