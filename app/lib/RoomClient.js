@@ -15,9 +15,9 @@ const VIDEO_CONSTRAINS =
 
 const VIDEO_ENCODINGS =
 [
-	{ maxBitrate: 100000 },
-	{ maxBitrate: 300000 },
-	{ maxBitrate: 900000 }
+	{ maxBitrate: 180000, scaleResolutionDownBy: 4 },
+	{ maxBitrate: 360000, scaleResolutionDownBy: 2 },
+	{ maxBitrate: 1500000, scaleResolutionDownBy: 1 }
 ];
 
 const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
