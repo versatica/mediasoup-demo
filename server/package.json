@@ -13,7 +13,7 @@
   "dependencies": {
     "@sitespeed.io/throttle": "^0.5.1",
     "awaitqueue": "^1.0.0",
-    "body-parser": "^1.18.3",
+    "body-parser": "^1.19.0",
     "colors": "^1.3.3",
     "debug": "^4.1.1",
     "express": "^4.16.4",
