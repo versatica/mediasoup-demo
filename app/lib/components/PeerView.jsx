@@ -401,8 +401,11 @@ export default class PeerView extends React.Component
 				<video
 					ref='videoElem'
 					className={classnames({
-						'is-me' : isMe,
-						hidden  : !videoVisible || !videoCanPlay
+						'is-me'         : isMe,
+						hidden          : !videoVisible || !videoCanPlay,
+						'network-error' : (
+							videoVisible && videoMultiLayer && consumerCurrentSpatialLayer === null
+						)
 					})}
 					autoPlay
 					muted
