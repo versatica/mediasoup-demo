@@ -36,7 +36,6 @@
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
     "riek": "^1.1.0",
-    "uninstall": "0.0.0",
     "url-parse": "^1.4.7"
   },
   "devDependencies": {
