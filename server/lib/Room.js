@@ -25,10 +25,14 @@ class Room extends EventEmitter
 	 * @param {String} roomId - Id of the Room instance.
 	 * @param {Boolean} [forceH264=false] - Whether just H264 must be used in the
 	 *   mediasoup Router video codecs.
+	 * @param {Boolean} [forceVP9=false] - Whether just VP9 must be used in the
+	 *   mediasoup Router video codecs.
 	 */
-	static async create({ mediasoupWorker, roomId, forceH264 = false })
+	static async create({ mediasoupWorker, roomId, forceH264 = false, forceVP9 = false })
 	{
-		logger.info('create() [roomId:%s, forceH264:%s]', roomId, forceH264);
+		logger.info(
+			'create() [roomId:%s, forceH264:%s, forceVP9:%s]',
+			roomId, forceH264, forceVP9);
 
 		// Create a protoo Room instance.
 		const protooRoom = new protoo.Room();
@@ -43,6 +47,15 @@ class Room extends EventEmitter
 				.filter((codec) => (
 					codec.kind === 'audio' ||
 					codec.mimeType.toLowerCase() === 'video/h264'
+				));
+		}
+		// If forceVP9 is given, remove all video codecs but VP9.
+		if (forceVP9)
+		{
+			mediaCodecs = mediaCodecs
+				.filter((codec) => (
+					codec.kind === 'audio' ||
+					codec.mimeType.toLowerCase() === 'video/vp9'
 				));
 		}
 

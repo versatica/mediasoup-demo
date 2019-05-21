@@ -48,6 +48,7 @@ export default class RoomClient
 			produce,
 			consume,
 			forceH264,
+			forceVP9,
 			externalVideo
 		}
 	)
@@ -80,10 +81,6 @@ export default class RoomClient
 		// @type {Boolean}
 		this._consume = consume;
 
-		// Whether we want to force H264 codec.
-		// @type {Boolean}
-		this._forceH264 = forceH264;
-
 		// External video.
 		// @type {HTMLVideoElement}
 		this._externalVideo = null;
@@ -112,7 +109,7 @@ export default class RoomClient
 
 		// Protoo URL.
 		// @type {String}
-		this._protooUrl = getProtooUrl({ roomId, peerId, forceH264 });
+		this._protooUrl = getProtooUrl({ roomId, peerId, forceH264, forceVP9 });
 
 		// protoo-client Peer instance.
 		// @type {protooClient.Peer}

@@ -16,13 +16,13 @@
     "body-parser": "^1.19.0",
     "colors": "^1.3.3",
     "debug": "^4.1.1",
-    "express": "^4.16.4",
+    "express": "^4.17.0",
     "mediasoup": "github:versatica/mediasoup#v3",
     "pidusage": "^2.0.17",
     "protoo-server": "^4.0.3"
   },
   "devDependencies": {
-    "gulp": "^4.0.1",
+    "gulp": "^4.0.2",
     "gulp-eslint": "^5.0.0",
     "gulp-plumber": "^1.2.1"
   }
