@@ -13,11 +13,16 @@ const VIDEO_CONSTRAINS =
 	hd   : { width: { ideal: 1280 }, height: { ideal: 720 } }
 };
 
-const VIDEO_ENCODINGS =
+const VIDEO_SIMULCAST_ENCODINGS =
 [
 	{ maxBitrate: 180000, scaleResolutionDownBy: 4 },
 	{ maxBitrate: 360000, scaleResolutionDownBy: 2 },
 	{ maxBitrate: 1500000, scaleResolutionDownBy: 1 }
+];
+
+const VIDEO_SVC_ENCODINGS =
+[
+	{ scalabilityMode: 'S3T3' }
 ];
 
 const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
@@ -689,15 +694,38 @@ export default class RoomClient
 
 			if (this._useSimulcast)
 			{
-				this._webcamProducer = await this._sendTransport.produce(
-					{
-						track,
-						encodings    : VIDEO_ENCODINGS,
-						codecOptions :
+				// If VP9 is the only available video codec then use SVC.
+				const firstVideoCodec = this._mediasoupDevice
+					.rtpCapabilities
+					.codecs
+					.find((c) => c.kind === 'video');
+
+				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
+				{
+					logger.debug('enabling VP9 SVC');
+
+					this._webcamProducer = await this._sendTransport.produce(
 						{
-							videoGoogleStartBitrate : 1000
-						}
-					});
+							track,
+							encodings    : VIDEO_SVC_ENCODINGS,
+							codecOptions :
+							{
+								videoGoogleStartBitrate : 1000
+							}
+						});
+				}
+				else
+				{
+					this._webcamProducer = await this._sendTransport.produce(
+						{
+							track,
+							encodings    : VIDEO_SIMULCAST_ENCODINGS,
+							codecOptions :
+							{
+								videoGoogleStartBitrate : 1000
+							}
+						});
+				}
 			}
 			else
 			{
