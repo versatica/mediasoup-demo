@@ -7,7 +7,8 @@
   "license": "All Rights Reserved",
   "main": "lib/index.jsx",
   "scripts": {
-    "lint": "eslint -c .eslintrc.js --ext .js,.jsx gulpfile.js lib"
+    "lint": "eslint -c .eslintrc.js --ext .js,.jsx gulpfile.js lib",
+    "start": "gulp live"
   },
   "dependencies": {
     "@babel/runtime": "^7.4.4",

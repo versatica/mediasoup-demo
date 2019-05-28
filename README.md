@@ -37,12 +37,6 @@ $ cd app
 $ npm install
 ```
 
-* Globally install `gulp-cli` NPM module (may need `sudo`):
-
-```bash
-$ npm install -g gulp-cli
-```
-
 
 ## Run it locally
 
@@ -50,20 +44,26 @@ $ npm install -g gulp-cli
 
 ```bash
 $ cd server
-$ DEBUG="*mediasoup* *ERROR* *WARN*" INTERACTIVE="true" node server.js
+$ npm start
 ```
 
-* In another terminal build and run the browser application:
+* In a different terminal build and run the browser application:
 
 ```bash
 $ cd app
-$ gulp live
+$ npm start
 ```
 
 * Enjoy.
 
 
 ## Deploy it in a server
+
+* Globally install `gulp-cli` NPM module (may need `sudo`):
+
+```bash
+$ npm install -g gulp-cli
+```
 
 * Build the production ready browser application:
 
@@ -72,11 +72,16 @@ $ cd app
 $ gulp dist
 ```
 
-* Upload the entire `server` folder to your server and make your web server (Apache, Nginx...) expose the `server/public` folder.
+* Upload the entire `server` folder to your server and make your web server (Apache, Nginx, etc) expose the `server/public` folder.
 
 * Edit your `server/config.js` with appropriate settings (listening IP/port, logging options, **valid** TLS certificate, etc).
 
-* Within your server, run the server side Node.js application. We recommend using the [pm2](https://www.npmjs.com/package/pm2) NPM daemon launcher, but any other can be used.
+* Within your server, run the Node.js application by setting the `DEBUG` environment variable according to your needs ([more info](https://mediasoup.org/documentation/v3/mediasoup/debugging/)):
+
+```bash
+$ DEBUG="*mediasoup* *ERROR* *WARN*" node server.js
+```
+* If you wish to run it as daemon/service you can use [pm2](https://www.npmjs.com/package/pm2) process manager. Or you can dockerize it among other options.
 
 
 ## Author
