@@ -83,6 +83,12 @@ $ DEBUG="*mediasoup* *ERROR* *WARN*" node server.js
 ```
 * If you wish to run it as daemon/service you can use [pm2](https://www.npmjs.com/package/pm2) process manager. Or you can dockerize it among other options.
 
+* The Node.js application exposes an interactive terminal. When running as daemon (in background) the host administrator can connect to it by entering into the `server` folder and running:
+
+```bash
+$ npm run connect
+```
+
 
 ## Author
 
