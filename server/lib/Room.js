@@ -275,23 +275,20 @@ class Room extends EventEmitter
 				transport.close();
 			}
 
-			// If this is the latest Peer in the room, close the room after a while.
+			// If this is the latest Peer in the room, close the room.
 			if (this._protooRoom.peers.length === 0)
 			{
-				setTimeout(() =>
+				if (this._closed)
+					return;
+
+				if (this._protooRoom.peers.length === 0)
 				{
-					if (this._closed)
-						return;
+					logger.info(
+						'last Peer in the room left, closing the room [roomId:%s]',
+						this._roomId);
 
-					if (this._protooRoom.peers.length === 0)
-					{
-						logger.info(
-							'last Peer in the room left, closing the room [roomId:%s]',
-							this._roomId);
-
-						this.close();
-					}
-				}, 60000);
+					this.close();
+				}
 			}
 		});
 	}
