@@ -11,8 +11,8 @@ Try it online at https://v3demo.mediasoup.org.
 
 ```bash
 $ git clone https://github.com/versatica/mediasoup-demo.git
-$ git checkout v3
 $ cd mediasoup-demo
+$ git checkout v3
 ```
 
 * Set up the server:
