@@ -461,14 +461,18 @@ class Room extends EventEmitter
 		{
 			case 'webrtc':
 			{
-				const { initialAvailableOutgoingBitrate } = config.mediasoup.webRtcTransport;
+				const {
+					initialAvailableOutgoingBitrate,
+					minimumAvailableOutgoingBitrate
+				} = config.mediasoup.webRtcTransport;
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
 					{
 						listenIps : config.mediasoup.webRtcTransport.listenIps,
 						enableUdp : true,
 						enableTcp : false,
-						initialAvailableOutgoingBitrate
+						initialAvailableOutgoingBitrate,
+						minimumAvailableOutgoingBitrate
 					});
 
 				// Store it.
@@ -763,7 +767,8 @@ class Room extends EventEmitter
 				const { forceTcp, producing, consuming } = request.data;
 				const {
 					maxIncomingBitrate,
-					initialAvailableOutgoingBitrate
+					initialAvailableOutgoingBitrate,
+					minimumAvailableOutgoingBitrate
 				} = config.mediasoup.webRtcTransport;
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
@@ -773,6 +778,7 @@ class Room extends EventEmitter
 						enableTcp : true,
 						preferUdp : true,
 						initialAvailableOutgoingBitrate,
+						minimumAvailableOutgoingBitrate,
 						appData   : { producing, consuming }
 					});
 
