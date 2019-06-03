@@ -12,7 +12,7 @@ const os = require('os');
 
 module.exports =
 {
-	// Listening hostname (just for `gulp live` or `gulp open` tasks).
+	// Listening hostname (just for `gulp live` task).
 	domain : 'localhost',
 	// Signaling settings (protoo WebSocket server and HTTP API server).
 	https  :

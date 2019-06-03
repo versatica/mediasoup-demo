@@ -54,6 +54,7 @@ export default class RoomClient
 			consume,
 			forceH264,
 			forceVP9,
+			svc,
 			externalVideo
 		}
 	)
@@ -157,6 +158,10 @@ export default class RoomClient
 			device     : null,
 			resolution : 'hd'
 		};
+
+		// Set custom SVC scalability mode.
+		if (svc)
+			VIDEO_SVC_ENCODINGS[0].scalabilityMode = svc;
 	}
 
 	close()

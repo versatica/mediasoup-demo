@@ -9,8 +9,18 @@
  *   Generates the browser app in development mode (unless NODE_ENV is set
  *   to 'production'), opens it and watches for changes in the source code.
  *
+ * gulp devel
+ *   Generates the browser app in development mode (unless NODE_ENV is set
+ *   to 'production'), opens two browsers and watches for changes in the source
+ *   code.
+ *
+ * gulp devel:vp9
+ *   Generates the browser app in development mode (unless NODE_ENV is set
+ *   to 'production'), opens two browsers forcing VP9 and watches for changes in
+ *   the source code.
+ *
  * gulp
- *   Alias for `gulp live`.
+ *   Alias for `gulp dist`.
  */
 
 const fs = require('fs');
@@ -181,7 +191,7 @@ gulp.task('bundle:watch', () =>
 	return bundle({ watch: true });
 });
 
-gulp.task('livebrowser', (done) =>
+gulp.task('browser', (done) =>
 {
 	const config = require('../server/config');
 
@@ -202,7 +212,7 @@ gulp.task('livebrowser', (done) =>
 	done();
 });
 
-gulp.task('livebrowserdevel', async (done) =>
+gulp.task('browser:default', async (done) =>
 {
 	const config = require('../server/config');
 
@@ -212,7 +222,7 @@ gulp.task('livebrowserdevel', async (done) =>
 			{
 				open      : 'external',
 				host      : config.domain,
-				startPath : '/?roomId=devel&info=true&throttleSecret=foo&consume=false',
+				startPath : '/?roomId=devel:default&info=true&throttleSecret=foo&consume=false',
 				server    :
 				{
 					baseDir : OUTPUT_DIR
@@ -230,7 +240,7 @@ gulp.task('livebrowserdevel', async (done) =>
 			{
 				open      : 'external',
 				host      : config.domain,
-				startPath : '/?roomId=devel&info=true&throttleSecret=foo&produce=false',
+				startPath : '/?roomId=devel:default&info=true&throttleSecret=foo&produce=false',
 				server    :
 				{
 					baseDir : OUTPUT_DIR
@@ -245,21 +255,45 @@ gulp.task('livebrowserdevel', async (done) =>
 	done();
 });
 
-gulp.task('browser', (done) =>
+gulp.task('browser:vp9', async (done) =>
 {
 	const config = require('../server/config');
 
-	browserSync(
-		{
-			open   : 'external',
-			host   : config.domain,
-			server :
+	await new Promise((resolve) =>
+	{
+		browserSync.create('producer1').init(
 			{
-				baseDir : OUTPUT_DIR
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&consume=false&forceVP9=true&svc=L3T3',
+				server    :
+				{
+					baseDir : OUTPUT_DIR
+				},
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
 			},
-			https     : config.https.tls,
-			ghostMode : false
-		});
+			resolve);
+	});
+
+	await new Promise((resolve) =>
+	{
+		browserSync.create('consumer1').init(
+			{
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&produce=false&forceVP9=true&svc=L3T3',
+				server    :
+				{
+					baseDir : OUTPUT_DIR
+				},
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
+	});
 
 	done();
 });
@@ -306,20 +340,27 @@ gulp.task('live', gulp.series(
 	'css',
 	'resources',
 	'watch',
-	'livebrowser'
+	'browser'
 ));
 
-gulp.task('livedevel', gulp.series(
+gulp.task('devel:base', gulp.series(
 	'clean',
 	'lint',
 	'bundle:watch',
 	'html',
 	'css',
 	'resources',
-	'watch',
-	'livebrowserdevel'
+	'watch'
 ));
 
-gulp.task('open', gulp.series('browser'));
+gulp.task('devel', gulp.series(
+	'devel:base',
+	'browser:default'
+));
 
-gulp.task('default', gulp.series('live'));
+gulp.task('devel:vp9', gulp.series(
+	'devel:base',
+	'browser:vp9'
+));
+
+gulp.task('default', gulp.series('dist'));

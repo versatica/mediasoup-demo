@@ -73,6 +73,7 @@ async function run()
 	const consume = urlParser.query.consume !== 'false';
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
+	const svc = urlParser.query.svc;
 	const info = urlParser.query.info === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
@@ -155,6 +156,7 @@ async function run()
 			consume,
 			forceH264,
 			forceVP9,
+			svc,
 			externalVideo
 		});
 
