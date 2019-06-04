@@ -265,7 +265,7 @@ gulp.task('browser:vp9', async (done) =>
 			{
 				open      : 'external',
 				host      : config.domain,
-				startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&consume=false&forceVP9=true&svc=L3T3',
+				startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&consume=false&forceVP9=true&svc=L3T3&sharingSimulcast=true',
 				server    :
 				{
 					baseDir : OUTPUT_DIR
@@ -283,7 +283,7 @@ gulp.task('browser:vp9', async (done) =>
 			{
 				open      : 'external',
 				host      : config.domain,
-				startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&produce=false&forceVP9=true&svc=L3T3',
+				startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&produce=false&forceVP9=true&svc=L3T3&sharingSimulcast=true',
 				server    :
 				{
 					baseDir : OUTPUT_DIR
