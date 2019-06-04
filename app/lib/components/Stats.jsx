@@ -336,7 +336,7 @@ class Stats extends React.Component
 													</When>
 
 													<Otherwise>
-														{JSON.stringify(item[key], null, '  ')}
+														<pre>{JSON.stringify(item[key], null, '  ')}</pre>
 													</Otherwise>
 												</Choose>
 											</p>
