@@ -49,6 +49,7 @@ export default class RoomClient
 			displayName,
 			device,
 			useSimulcast,
+			useSharingSimulcast,
 			forceTcp,
 			produce,
 			consume,
@@ -112,6 +113,10 @@ export default class RoomClient
 		// Whether simulcast should be used.
 		// @type {Boolean}
 		this._useSimulcast = useSimulcast;
+
+		// Whether simulcast should be used in desktop sharing.
+		// @type {Boolean}
+		this._useSharingSimulcast = useSharingSimulcast;
 
 		// Protoo URL.
 		// @type {String}
@@ -986,11 +991,7 @@ export default class RoomClient
 
 			track = stream.getVideoTracks()[0];
 
-			// TODO: It seems that sharing still fails with simulcast in VP8, so disable
-			// for now.
-
-			// eslint-disable-next-line no-constant-condition
-			if (this._useSimulcast && false)
+			if (this._useSharingSimulcast)
 			{
 				// If VP9 is the only available video codec then use SVC.
 				const firstVideoCodec = this._mediasoupDevice

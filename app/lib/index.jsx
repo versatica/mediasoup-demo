@@ -68,6 +68,7 @@ async function run()
 	let displayName =
 		urlParser.query.displayName || (cookiesManager.getUser() || {}).displayName;
 	const useSimulcast = urlParser.query.simulcast !== 'false';
+	const useSharingSimulcast = urlParser.query.sharingSimulcast === 'true';
 	const forceTcp = urlParser.query.forceTcp === 'true';
 	const produce = urlParser.query.produce !== 'false';
 	const consume = urlParser.query.consume !== 'false';
@@ -107,8 +108,15 @@ async function run()
 		{
 			case 'roomId':
 			case 'simulcast':
+			case 'sharingSimulcast':
 			case 'produce':
 			case 'consume':
+			case 'forceH264':
+			case 'forceVP9':
+			case 'svc':
+			case 'info':
+			case 'faceDetection':
+			case 'externalVideo':
 				break;
 			default:
 				delete roomUrlParser.query[key];
@@ -151,6 +159,7 @@ async function run()
 			displayName,
 			device,
 			useSimulcast,
+			useSharingSimulcast,
 			forceTcp,
 			produce,
 			consume,
