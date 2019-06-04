@@ -236,16 +236,16 @@ class Stats extends React.Component
 			sendTransportLocalStats = await roomClient.getSendTransportLocalStats()
 				.catch(() => {});
 
-			audioProducerRemoteStats = await roomClient.getMicRemoteStats()
+			audioProducerRemoteStats = await roomClient.getAudioRemoteStats()
 				.catch(() => {});
 
-			audioProducerLocalStats = await roomClient.getMicLocalStats()
+			audioProducerLocalStats = await roomClient.getAudioLocalStats()
 				.catch(() => {});
 
-			videoProducerRemoteStats = await roomClient.getWebcamRemoteStats()
+			videoProducerRemoteStats = await roomClient.getVideoRemoteStats()
 				.catch(() => {});
 
-			videoProducerLocalStats = await roomClient.getWebcamLocalStats()
+			videoProducerLocalStats = await roomClient.getVideoLocalStats()
 				.catch(() => {});
 		}
 		else

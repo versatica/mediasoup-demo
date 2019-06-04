@@ -141,6 +141,10 @@ export default class RoomClient
 		// @type {mediasoupClient.Producer}
 		this._webcamProducer = null;
 
+		// Local share mediasoup Producer.
+		// @type {mediasoupClient.Producer}
+		this._shareProducer = null;
+
 		// mediasoup Consumers.
 		// @type {Map<String, mediasoupClient.Consumer>}
 		this._consumers = new Map();
@@ -649,6 +653,8 @@ export default class RoomClient
 
 		if (this._webcamProducer)
 			return;
+		else if (this._shareProducer)
+			await this.disableShare();
 
 		if (!this._mediasoupDevice.canProduce('video'))
 		{
@@ -705,32 +711,22 @@ export default class RoomClient
 					.codecs
 					.find((c) => c.kind === 'video');
 
-				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
-				{
-					logger.debug('enabling VP9 SVC');
+				let encodings;
 
-					this._webcamProducer = await this._sendTransport.produce(
-						{
-							track,
-							encodings    : VIDEO_SVC_ENCODINGS,
-							codecOptions :
-							{
-								videoGoogleStartBitrate : 1000
-							}
-						});
-				}
+				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
+					encodings = VIDEO_SVC_ENCODINGS;
 				else
-				{
-					this._webcamProducer = await this._sendTransport.produce(
+					encodings = VIDEO_SIMULCAST_ENCODINGS;
+
+				this._webcamProducer = await this._sendTransport.produce(
+					{
+						track,
+						encodings,
+						codecOptions :
 						{
-							track,
-							encodings    : VIDEO_SIMULCAST_ENCODINGS,
-							codecOptions :
-							{
-								videoGoogleStartBitrate : 1000
-							}
-						});
-				}
+							videoGoogleStartBitrate : 1000
+						}
+					});
 			}
 			else
 			{
@@ -940,6 +936,171 @@ export default class RoomClient
 			stateActions.setWebcamInProgress(false));
 	}
 
+	async enableShare()
+	{
+		logger.debug('enableShare()');
+
+		if (this._shareProducer)
+			return;
+		else if (this._webcamProducer)
+			await this.disableWebcam();
+
+		if (!this._mediasoupDevice.canProduce('video'))
+		{
+			logger.error('enableShare() | cannot produce video');
+
+			return;
+		}
+
+		let track;
+
+		store.dispatch(
+			stateActions.setShareInProgress(true));
+
+		try
+		{
+			logger.debug('enableShare() | calling getUserMedia()');
+
+			const stream = await navigator.mediaDevices.getDisplayMedia(
+				{
+					audio : false,
+					video :
+					{
+						displaySurface : 'monitor',
+						logicalSurface : true,
+						cursor         : true,
+						width          : { max: 1920 },
+						height         : { max: 1080 },
+						frame          : { max: 5 }
+					}
+				});
+
+			// May mean cancelled (in some implementations).
+			if (!stream)
+			{
+				store.dispatch(
+					stateActions.setShareInProgress(true));
+
+				return;
+			}
+
+			track = stream.getVideoTracks()[0];
+
+			// TODO: It seems that sharing still fails with simulcast in VP8, so disable
+			// for now.
+
+			// eslint-disable-next-line no-constant-condition
+			if (this._useSimulcast && false)
+			{
+				// If VP9 is the only available video codec then use SVC.
+				const firstVideoCodec = this._mediasoupDevice
+					.rtpCapabilities
+					.codecs
+					.find((c) => c.kind === 'video');
+
+				let encodings;
+
+				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
+					encodings = VIDEO_SVC_ENCODINGS;
+				else
+					encodings = VIDEO_SIMULCAST_ENCODINGS;
+
+				this._shareProducer = await this._sendTransport.produce(
+					{
+						track,
+						encodings,
+						codecOptions :
+						{
+							videoGoogleStartBitrate : 1000
+						},
+						appData :
+						{
+							share : true
+						}
+					});
+			}
+			else
+			{
+				this._shareProducer = await this._sendTransport.produce({ track });
+			}
+
+			store.dispatch(stateActions.addProducer(
+				{
+					id            : this._shareProducer.id,
+					type          : 'share',
+					paused        : this._shareProducer.paused,
+					track         : this._shareProducer.track,
+					rtpParameters : this._shareProducer.rtpParameters,
+					codec         : this._shareProducer.rtpParameters.codecs[0].mimeType.split('/')[1]
+				}));
+
+			this._shareProducer.on('transportclose', () =>
+			{
+				this._shareProducer = null;
+			});
+
+			this._shareProducer.on('trackended', () =>
+			{
+				store.dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : 'Share disconnected!'
+					}));
+
+				this.disableShare()
+					.catch(() => {});
+			});
+		}
+		catch (error)
+		{
+			logger.error('enableShare() | failed:%o', error);
+
+			if (error.name !== 'NotAllowedError')
+			{
+				store.dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : `Error sharing: ${error}`
+					}));
+			}
+
+			if (track)
+				track.stop();
+		}
+
+		store.dispatch(
+			stateActions.setShareInProgress(false));
+	}
+
+	async disableShare()
+	{
+		logger.debug('disableShare()');
+
+		if (!this._shareProducer)
+			return;
+
+		this._shareProducer.close();
+
+		store.dispatch(
+			stateActions.removeProducer(this._shareProducer.id));
+
+		try
+		{
+			await this._protoo.request(
+				'closeProducer', { producerId: this._shareProducer.id });
+		}
+		catch (error)
+		{
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `Error closing server-side share Producer: ${error}`
+				}));
+		}
+
+		this._shareProducer = null;
+	}
+
 	async enableAudioOnly()
 	{
 		logger.debug('enableAudioOnly()');
@@ -1064,7 +1225,10 @@ export default class RoomClient
 
 		try
 		{
-			await this._webcamProducer.setMaxSpatialLayer(spatialLayer);
+			if (this._webcamProducer)
+				await this._webcamProducer.setMaxSpatialLayer(spatialLayer);
+			else if (this._shareProducer)
+				await this._shareProducer.setMaxSpatialLayer(spatialLayer);
 		}
 		catch (error)
 		{
@@ -1189,9 +1353,9 @@ export default class RoomClient
 			'getTransportStats', { transportId: this._recvTransport.id });
 	}
 
-	async getMicRemoteStats()
+	async getAudioRemoteStats()
 	{
-		logger.debug('getMicRemoteStats()');
+		logger.debug('getAudioRemoteStats()');
 
 		if (!this._micProducer)
 			return;
@@ -1200,15 +1364,17 @@ export default class RoomClient
 			'getProducerStats', { producerId: this._micProducer.id });
 	}
 
-	async getWebcamRemoteStats()
+	async getVideoRemoteStats()
 	{
-		logger.debug('getWebcamRemoteStats()');
+		logger.debug('getVideoRemoteStats()');
 
-		if (!this._webcamProducer)
+		const producer = this._webcamProducer || this._shareProducer;
+
+		if (!producer)
 			return;
 
 		return this._protoo.request(
-			'getProducerStats', { producerId: this._webcamProducer.id });
+			'getProducerStats', { producerId: producer.id });
 	}
 
 	async getConsumerRemoteStats(consumerId)
@@ -1243,9 +1409,9 @@ export default class RoomClient
 		return this._recvTransport.getStats();
 	}
 
-	async getMicLocalStats()
+	async getAudioLocalStats()
 	{
-		logger.debug('getMicLocalStats()');
+		logger.debug('getAudioLocalStats()');
 
 		if (!this._micProducer)
 			return;
@@ -1253,14 +1419,16 @@ export default class RoomClient
 		return this._micProducer.getStats();
 	}
 
-	async getWebcamLocalStats()
+	async getVideoLocalStats()
 	{
-		logger.debug('getWebcamLocalStats()');
+		logger.debug('getVideoLocalStats()');
 
-		if (!this._webcamProducer)
+		const producer = this._webcamProducer || this._shareProducer;
+
+		if (!producer)
 			return;
 
-		return this._webcamProducer.getStats();
+		return producer.getStats();
 	}
 
 	async getConsumerLocalStats(consumerId)

@@ -20,6 +20,7 @@
     canSendWebcam        : true,
     canChangeWebcam      : false,
     webcamInProgress     : false,
+    shareInProgress      : false,
     audioOnly            : false,
     audioOnlyInProgress  : false,
     audioMuted           : false,
@@ -40,7 +41,7 @@
     {
       id          : '1112-asdf',
       deviceLabel : 'Macbook Webcam',
-      type        : 'front', // front/back
+      type        : 'front', // front/back/share
       paused      : false,
       track       : MediaStreamTrack,
       codec       : 'vp8',

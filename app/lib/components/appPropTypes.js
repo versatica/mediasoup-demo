@@ -34,7 +34,7 @@ export const Producer = PropTypes.shape(
 	{
 		id            : PropTypes.string.isRequired,
 		deviceLabel   : PropTypes.string,
-		type          : PropTypes.oneOf([ 'front', 'back' ]),
+		type          : PropTypes.oneOf([ 'front', 'back', 'share' ]),
 		paused        : PropTypes.bool.isRequired,
 		track         : PropTypes.any.isRequired,
 		rtpParameters : PropTypes.object.isRequired,

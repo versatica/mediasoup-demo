@@ -46,17 +46,24 @@ class Me extends React.Component
 
 		if (!me.canSendWebcam)
 			webcamState = 'unsupported';
-		else if (videoProducer)
+		else if (videoProducer && videoProducer.type !== 'share')
 			webcamState = 'on';
 		else
 			webcamState = 'off';
 
 		let changeWebcamState;
 
-		if (Boolean(videoProducer) && me.canChangeWebcam)
+		if (Boolean(videoProducer) && videoProducer.type !== 'share' && me.canChangeWebcam)
 			changeWebcamState = 'on';
 		else
 			changeWebcamState = 'unsupported';
+
+		let shareState;
+
+		if (Boolean(videoProducer) && videoProducer.type === 'share')
+			shareState = 'on';
+		else
+			shareState = 'off';
 
 		const videoVisible = Boolean(videoProducer) && !videoProducer.paused;
 
@@ -108,6 +115,19 @@ class Me extends React.Component
 								disabled : me.webcamInProgress
 							})}
 							onClick={() => roomClient.changeWebcam()}
+						/>
+
+						<div
+							className={classnames('button', 'share', shareState, {
+								disabled : me.shareInProgress
+							})}
+							onClick={() =>
+							{
+								if (shareState === 'on')
+									roomClient.disableShare();
+								else
+									roomClient.enableShare();
+							}}
 						/>
 					</div>
 				</If>

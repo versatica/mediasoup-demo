@@ -8,6 +8,7 @@ const initialState =
 	canSendWebcam        : false,
 	canChangeWebcam      : false,
 	webcamInProgress     : false,
+	shareInProgress      : false,
 	audioOnly            : false,
 	audioOnlyInProgress  : false,
 	audioMuted           : false,
@@ -27,6 +28,7 @@ const me = (state = initialState, action) =>
 				return {
 					...state,
 					webcamInProgress     : false,
+					shareInProgress      : false,
 					audioOnly            : false,
 					audioOnlyInProgress  : false,
 					audioMuted           : false,
@@ -65,6 +67,13 @@ const me = (state = initialState, action) =>
 			const { flag } = action.payload;
 
 			return { ...state, webcamInProgress: flag };
+		}
+
+		case 'SET_SHARE_IN_PROGRESS':
+		{
+			const { flag } = action.payload;
+
+			return { ...state, shareInProgress: flag };
 		}
 
 		case 'SET_DISPLAY_NAME':

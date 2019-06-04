@@ -158,6 +158,14 @@ export const setWebcamInProgress = (flag) =>
 	};
 };
 
+export const setShareInProgress = (flag) =>
+{
+	return {
+		type    : 'SET_SHARE_IN_PROGRESS',
+		payload : { flag }
+	};
+};
+
 export const addPeer = (peer) =>
 {
 	return {
