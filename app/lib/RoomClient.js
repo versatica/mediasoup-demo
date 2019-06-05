@@ -25,6 +25,11 @@ const VIDEO_SVC_ENCODINGS =
 	{ scalabilityMode: 'S3T3' }
 ];
 
+const VIDEO_KSVC_ENCODINGS =
+[
+	{ scalabilityMode: 'S3T3_KEY' }
+];
+
 const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
 
 const logger = new Logger('RoomClient');
@@ -170,7 +175,10 @@ export default class RoomClient
 
 		// Set custom SVC scalability mode.
 		if (svc)
+		{
 			VIDEO_SVC_ENCODINGS[0].scalabilityMode = svc;
+			VIDEO_KSVC_ENCODINGS[0].scalabilityMode = `${svc}_KEY`;
+		}
 	}
 
 	close()
@@ -1002,7 +1010,7 @@ export default class RoomClient
 				let encodings;
 
 				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
-					encodings = VIDEO_SVC_ENCODINGS;
+					encodings = VIDEO_KSVC_ENCODINGS;
 				else
 					encodings = VIDEO_SIMULCAST_ENCODINGS;
 
