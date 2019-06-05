@@ -20,11 +20,13 @@ const VIDEO_SIMULCAST_ENCODINGS =
 	{ maxBitrate: 1500000, scaleResolutionDownBy: 1 }
 ];
 
+// Used for VP9 desktop sharing.
 const VIDEO_SVC_ENCODINGS =
 [
-	{ scalabilityMode: 'S3T3' }
+	{ scalabilityMode: 'S3T3', dtx: true }
 ];
 
+// Used for VP9 webcam video.
 const VIDEO_KSVC_ENCODINGS =
 [
 	{ scalabilityMode: 'S3T3_KEY' }

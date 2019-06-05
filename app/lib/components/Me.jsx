@@ -93,7 +93,7 @@ class Me extends React.Component
 
 						<div
 							className={classnames('button', 'webcam', webcamState, {
-								disabled : me.webcamInProgress
+								disabled : me.webcamInProgress || me.shareInProgress
 							})}
 							onClick={() =>
 							{
@@ -112,14 +112,14 @@ class Me extends React.Component
 
 						<div
 							className={classnames('button', 'change-webcam', changeWebcamState, {
-								disabled : me.webcamInProgress
+								disabled : me.webcamInProgress || me.shareInProgress
 							})}
 							onClick={() => roomClient.changeWebcam()}
 						/>
 
 						<div
 							className={classnames('button', 'share', shareState, {
-								disabled : me.shareInProgress
+								disabled : me.shareInProgress || me.webcamInProgress
 							})}
 							onClick={() =>
 							{

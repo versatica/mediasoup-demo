@@ -329,7 +329,7 @@ class Stats extends React.Component
 									Object.keys(item).map((key) => (
 										<div className='line' key={key}>
 											<p className='key'>{key}</p>
-											<p className='value'>
+											<div className='value'>
 												<Choose>
 													<When condition={typeof item[key] === 'number'}>
 														{JSON.stringify(Math.round(item[key] * 100) / 100, null, '  ')}
@@ -339,7 +339,7 @@ class Stats extends React.Component
 														<pre>{JSON.stringify(item[key], null, '  ')}</pre>
 													</Otherwise>
 												</Choose>
-											</p>
+											</div>
 										</div>
 									))
 								}
