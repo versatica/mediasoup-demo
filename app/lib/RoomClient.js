@@ -727,7 +727,7 @@ export default class RoomClient
 				let encodings;
 
 				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
-					encodings = VIDEO_SVC_ENCODINGS;
+					encodings = VIDEO_KSVC_ENCODINGS;
 				else
 					encodings = VIDEO_SIMULCAST_ENCODINGS;
 
@@ -1010,7 +1010,7 @@ export default class RoomClient
 				let encodings;
 
 				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
-					encodings = VIDEO_KSVC_ENCODINGS;
+					encodings = VIDEO_SVC_ENCODINGS;
 				else
 					encodings = VIDEO_SIMULCAST_ENCODINGS;
 
