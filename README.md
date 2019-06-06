@@ -5,6 +5,12 @@ A demo application of [mediasoup](https://mediasoup.org) **v3**.
 Try it online at https://v3demo.mediasoup.org.
 
 
+## Resources
+
+* mediasoup website and documentation: [mediasoup.org](https://mediasoup.org)
+* mediasoup support forum: [mediasoup.discourse.group](https://mediasoup.discourse.group)
+
+
 ## Installation
 
 * Clone the project:
