@@ -31,10 +31,10 @@ module.exports =
 	mediasoup :
 	{
 		// Number of mediasoup workers to launch.
-		numWorkers : Object.keys(os.cpus()).length,
-		// mediasoup Worker settings.
+		numWorkers     : Object.keys(os.cpus()).length,
+		// mediasoup WorkerSettings.
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WorkerSettings
-		worker     :
+		workerSettings :
 		{
 			logLevel : 'warn',
 			logTags  :
@@ -45,18 +45,18 @@ module.exports =
 				'rtp',
 				'srtp',
 				'rtcp',
-				// 'rtx',
-				// 'bwe',
-				// 'score',
-				// 'simulcast',
-				// 'svc'
+				'rtx',
+				'bwe',
+				'score',
+				'simulcast',
+				'svc'
 			],
 			rtcMinPort : 40000,
 			rtcMaxPort : 49999
 		},
 		// mediasoup Router options.
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#RouterOptions
-		router :
+		routerOptions :
 		{
 			mediaCodecs :
 			[
@@ -111,17 +111,26 @@ module.exports =
 				}
 			]
 		},
-		// mediasoup WebRtcTransport options.
+		// mediasoup WebRtcTransport options for WebRTC endpoints (mediasoup-client,
+		// libmediasoupclient).
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions
-		webRtcTransport :
+		webRtcTransportOptions :
 		{
 			listenIps :
 			[
 				{ ip: '1.2.3.4', announcedIp: null }
 			],
-			maxIncomingBitrate              : 1500000,
 			initialAvailableOutgoingBitrate : 1000000,
-			minimumAvailableOutgoingBitrate : 300000
+			minimumAvailableOutgoingBitrate : 300000,
+			// Additional options that are not part of WebRtcTransportOptions.
+			maxIncomingBitrate              : 1500000
+		},
+		// mediasoup PlainRtpTransport options for legacy RTP endpoints (FFmpeg,
+		// GStreamer).
+		// See https://mediasoup.org/documentation/v3/mediasoup/api/#PlainRtpTransportOptions
+		plainRtpTransportOptions :
+		{
+			listenIp : { ip: '192.168.1.123', announcedIp: null }
 		}
 	}
 };

@@ -38,7 +38,7 @@ class Room extends EventEmitter
 		const protooRoom = new protoo.Room();
 
 		// Router media codecs.
-		let mediaCodecs = config.mediasoup.router.mediaCodecs;
+		let { mediaCodecs } = config.mediasoup.routerOptions;
 
 		// If forceH264 is given, remove all video codecs but H264.
 		if (forceH264)
@@ -430,7 +430,7 @@ class Room extends EventEmitter
 
 	/**
 	 * Create a mediasoup Transport associated to a Broadcaster. It can be a
-	 * PlainRtpTransport or a WebRtcTransport
+	 * PlainRtpTransport or a WebRtcTransport.
 	 *
 	 * @async
 	 *
@@ -461,19 +461,8 @@ class Room extends EventEmitter
 		{
 			case 'webrtc':
 			{
-				const {
-					initialAvailableOutgoingBitrate,
-					minimumAvailableOutgoingBitrate
-				} = config.mediasoup.webRtcTransport;
-
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					{
-						listenIps : config.mediasoup.webRtcTransport.listenIps,
-						enableUdp : true,
-						enableTcp : false,
-						initialAvailableOutgoingBitrate,
-						minimumAvailableOutgoingBitrate
-					});
+					config.mediasoup.webRtcTransportOptions);
 
 				// Store it.
 				broadcaster.data.transports.set(transport.id, transport);
@@ -488,13 +477,16 @@ class Room extends EventEmitter
 
 			case 'plain':
 			{
+				const plainRtpTransportOptions =
+				{
+					...config.mediasoup.plainRtpTransportOptions,
+					rtcpMux     : Boolean(rtcpMux),
+					comedia     : Boolean(comedia),
+					multiSource : Boolean(multiSource)
+				};
+
 				const transport = await this._mediasoupRouter.createPlainRtpTransport(
-					{
-						listenIp    : config.mediasoup.webRtcTransport.listenIps[0],
-						rtcpMux     : Boolean(rtcpMux),
-						comedia     : Boolean(comedia),
-						multiSource : Boolean(multiSource)
-					});
+					plainRtpTransportOptions);
 
 				// Store it.
 				broadcaster.data.transports.set(transport.id, transport);
@@ -765,22 +757,20 @@ class Room extends EventEmitter
 				// initiate mediasoup Transports and be ready when he later joins.
 
 				const { forceTcp, producing, consuming } = request.data;
-				const {
-					maxIncomingBitrate,
-					initialAvailableOutgoingBitrate,
-					minimumAvailableOutgoingBitrate
-				} = config.mediasoup.webRtcTransport;
+				const webRtcTransportOptions =
+				{
+					...config.mediasoup.webRtcTransportOptions,
+					appData : { producing, consuming }
+				};
+
+				if (forceTcp)
+				{
+					webRtcTransportOptions.enableUdp = false;
+					webRtcTransportOptions.enableTcp = true;
+				}
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					{
-						listenIps : config.mediasoup.webRtcTransport.listenIps,
-						enableUdp : !forceTcp,
-						enableTcp : true,
-						preferUdp : true,
-						initialAvailableOutgoingBitrate,
-						minimumAvailableOutgoingBitrate,
-						appData   : { producing, consuming }
-					});
+					webRtcTransportOptions);
 
 				// Store the WebRtcTransport into the protoo Peer data Object.
 				peer.data.transports.set(transport.id, transport);
@@ -792,6 +782,8 @@ class Room extends EventEmitter
 						iceCandidates  : transport.iceCandidates,
 						dtlsParameters : transport.dtlsParameters
 					});
+
+				const { maxIncomingBitrate } = config.mediasoup.webRtcTransportOptions;
 
 				// If set, apply max incoming bitrate limit.
 				if (maxIncomingBitrate)

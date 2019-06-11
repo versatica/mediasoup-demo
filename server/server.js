@@ -6,10 +6,14 @@ process.env.DEBUG = process.env.DEBUG || '*INFO* *WARN* *ERROR*';
 const config = require('./config');
 
 /* eslint-disable no-console */
-console.log('- process.env.DEBUG:', process.env.DEBUG);
-console.log('- config.mediasoup.worker.logLevel:', config.mediasoup.worker.logLevel);
-console.log('- config.mediasoup.worker.logTags:', config.mediasoup.worker.logTags);
 console.log('- config.mediasoup.numWorkers:', config.mediasoup.numWorkers);
+console.log('- process.env.DEBUG:', process.env.DEBUG);
+console.log(
+	'- config.mediasoup.workerSettings.logLevel:',
+	config.mediasoup.workerSettings.logLevel);
+console.log(
+	'- config.mediasoup.workerSettings.logTags:',
+	config.mediasoup.workerSettings.logTags);
 /* eslint-enable no-console */
 
 const fs = require('fs');
@@ -101,10 +105,10 @@ async function runMediasoupWorkers()
 	{
 		const worker = await mediasoup.createWorker(
 			{
-				logLevel   : config.mediasoup.worker.logLevel,
-				logTags    : config.mediasoup.worker.logTags,
-				rtcMinPort : config.mediasoup.worker.rtcMinPort,
-				rtcMaxPort : config.mediasoup.worker.rtcMaxPort
+				logLevel   : config.mediasoup.workerSettings.logLevel,
+				logTags    : config.mediasoup.workerSettings.logTags,
+				rtcMinPort : config.mediasoup.workerSettings.rtcMinPort,
+				rtcMaxPort : config.mediasoup.workerSettings.rtcMaxPort
 			});
 
 		worker.on('died', () =>
