@@ -229,6 +229,7 @@ class Room extends EventEmitter
 		peer.data.displayName = undefined;
 		peer.data.device = undefined;
 		peer.data.rtpCapabilities = undefined;
+		peer.data.sctpCapabilities = undefined;
 
 		// Have mediasoup related maps ready even before the Peer joins since we
 		// allow creating Transports before joining.
@@ -471,7 +472,8 @@ class Room extends EventEmitter
 					id             : transport.id,
 					iceParameters  : transport.iceParameters,
 					iceCandidates  : transport.iceCandidates,
-					dtlsParameters : transport.dtlsParameters
+					dtlsParameters : transport.dtlsParameters,
+					sctpParameters : transport.sctpParameters
 				};
 			}
 
@@ -696,19 +698,28 @@ class Room extends EventEmitter
 				if (peer.data.joined)
 					throw new Error('Peer already joined');
 
-				const { displayName, device, rtpCapabilities } = request.data;
+				const {
+					displayName,
+					device,
+					rtpCapabilities,
+					sctpCapabilities
+				} = request.data;
 
 				// Store client data into the protoo Peer data object.
 				peer.data.displayName = displayName;
 				peer.data.device = device;
 				peer.data.rtpCapabilities = rtpCapabilities;
+				peer.data.sctpCapabilities = sctpCapabilities;
 
 				// Tell the new Peer about already joined Peers.
 				// And also create Consumers for existing Producers.
 
 				const peerInfos = [];
 				const joinedPeers =
-					[ ...this._getJoinedPeers(), ...Array.from(this._broadcasters.values()) ];
+				[
+					...this._getJoinedPeers(),
+					...Array.from(this._broadcasters.values())
+				];
 
 				for (const joinedPeer of joinedPeers)
 				{
@@ -780,7 +791,8 @@ class Room extends EventEmitter
 						id             : transport.id,
 						iceParameters  : transport.iceParameters,
 						iceCandidates  : transport.iceCandidates,
-						dtlsParameters : transport.dtlsParameters
+						dtlsParameters : transport.dtlsParameters,
+						sctpParameters : transport.sctpParameters
 					});
 
 				const { maxIncomingBitrate } = config.mediasoup.webRtcTransportOptions;

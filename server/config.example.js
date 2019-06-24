@@ -121,7 +121,8 @@ module.exports =
 				{ ip: '1.2.3.4', announcedIp: null }
 			],
 			initialAvailableOutgoingBitrate : 1000000,
-			minimumAvailableOutgoingBitrate : 300000,
+			minimumAvailableOutgoingBitrate : 600000,
+			enableSctp                      : true,
 			// Additional options that are not part of WebRtcTransportOptions.
 			maxIncomingBitrate              : 1500000
 		},
@@ -130,7 +131,8 @@ module.exports =
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#PlainRtpTransportOptions
 		plainRtpTransportOptions :
 		{
-			listenIp : { ip: '192.168.1.123', announcedIp: null }
+			listenIp   : { ip: '192.168.1.123', announcedIp: null },
+			enableSctp : true
 		}
 	}
 };

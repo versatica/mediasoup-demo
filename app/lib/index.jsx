@@ -68,7 +68,7 @@ async function run()
 	let displayName =
 		urlParser.query.displayName || (cookiesManager.getUser() || {}).displayName;
 	const useSimulcast = urlParser.query.simulcast !== 'false';
-	const useSharingSimulcast = urlParser.query.sharingSimulcast === 'true';
+	const useSharingSimulcast = urlParser.query.sharingSimulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
 	const produce = urlParser.query.produce !== 'false';
 	const consume = urlParser.query.consume !== 'false';
@@ -210,9 +210,15 @@ window.__recvSdps = function()
 setInterval(() =>
 {
 	if (window.CLIENT._sendTransport)
+	{
 		window.PC1 = window.CLIENT._sendTransport._handler._pc;
+		window.DC1 = window.CLIENT._dataProducer;
+	}
 	else
+	{
 		delete window.PC1;
+		delete window.DC1;
+	}
 
 	if (window.CLIENT._recvTransport)
 		window.PC2 = window.CLIENT._recvTransport._handler._pc;

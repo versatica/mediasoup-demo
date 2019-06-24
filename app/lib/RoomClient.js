@@ -20,19 +20,22 @@ const VIDEO_SIMULCAST_ENCODINGS =
 	{ maxBitrate: 1500000, scaleResolutionDownBy: 1 }
 ];
 
-// Used for VP9 desktop sharing.
-const VIDEO_SVC_ENCODINGS =
-[
-	{ scalabilityMode: 'S3T3', dtx: true }
-];
-
 // Used for VP9 webcam video.
 const VIDEO_KSVC_ENCODINGS =
 [
 	{ scalabilityMode: 'S3T3_KEY' }
 ];
 
+// Used for VP9 desktop sharing.
+const VIDEO_SVC_ENCODINGS =
+[
+	{ scalabilityMode: 'S3T3', dtx: true }
+];
+
 const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
+
+// TODO: Remove when done.
+const ENABLE_DATACHANNEL = false;
 
 const logger = new Logger('RoomClient');
 
@@ -156,6 +159,10 @@ export default class RoomClient
 		// Local share mediasoup Producer.
 		// @type {mediasoupClient.Producer}
 		this._shareProducer = null;
+
+		// Local DataProducer.
+		// @type {mediasoupClient.DataProducer}
+		this._dataProducer = null;
 
 		// mediasoup Consumers.
 		// @type {Map<String, mediasoupClient.Consumer>}
@@ -986,7 +993,7 @@ export default class RoomClient
 						cursor         : true,
 						width          : { max: 1920 },
 						height         : { max: 1080 },
-						frame          : { max: 5 }
+						frame          : { max: 30 }
 					}
 				});
 
@@ -1012,9 +1019,14 @@ export default class RoomClient
 				let encodings;
 
 				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
+				{
 					encodings = VIDEO_SVC_ENCODINGS;
+				}
 				else
-					encodings = VIDEO_SIMULCAST_ENCODINGS;
+				{
+					encodings = VIDEO_SIMULCAST_ENCODINGS
+						.map((encoding) => ({ ...encoding, dtx: true }));
+				}
 
 				this._shareProducer = await this._sendTransport.produce(
 					{
@@ -1540,7 +1552,8 @@ export default class RoomClient
 					id,
 					iceParameters,
 					iceCandidates,
-					dtlsParameters
+					dtlsParameters,
+					sctpParameters
 				} = transportInfo;
 
 				this._sendTransport = this._mediasoupDevice.createSendTransport(
@@ -1548,7 +1561,8 @@ export default class RoomClient
 						id,
 						iceParameters,
 						iceCandidates,
-						dtlsParameters
+						dtlsParameters,
+						sctpParameters
 					});
 
 				this._sendTransport.on(
@@ -1586,6 +1600,38 @@ export default class RoomClient
 							errback(error);
 						}
 					});
+
+				// TODO: DataChannel stuff.
+				let nextDataProducerId = 0;
+
+				this._sendTransport.on(
+					'produceData', async ({ sctpStreamParameters, appData }, callback, errback) =>
+					{
+						logger.warn(
+							'"produceData" event: [sctpStreamParameters:%o, appData:%o]',
+							sctpStreamParameters, appData);
+
+						try
+						{
+							// eslint-disable-next-line no-shadow
+							const { id } = await this._protoo.request(
+								'produceData',
+								{
+									transportId : this._sendTransport.id,
+									sctpStreamParameters,
+									appData
+								});
+
+							callback({ id });
+						}
+						catch (error)
+						{
+							// errback(error);
+
+							// TODO
+							callback({ id: `xxxx-${++nextDataProducerId}` });
+						}
+					});
 			}
 
 			// Create mediasoup Transport for sending (unless we don't want to consume).
@@ -1603,7 +1649,8 @@ export default class RoomClient
 					id,
 					iceParameters,
 					iceCandidates,
-					dtlsParameters
+					dtlsParameters,
+					sctpParameters
 				} = transportInfo;
 
 				this._recvTransport = this._mediasoupDevice.createRecvTransport(
@@ -1611,7 +1658,8 @@ export default class RoomClient
 						id,
 						iceParameters,
 						iceCandidates,
-						dtlsParameters
+						dtlsParameters,
+						sctpParameters
 					});
 
 				this._recvTransport.on(
@@ -1637,7 +1685,8 @@ export default class RoomClient
 					device          : this._device,
 					rtpCapabilities : this._consume
 						? this._mediasoupDevice.rtpCapabilities
-						: undefined
+						: undefined,
+					sctpCapabilities : this._mediasoupDevice.sctpCapabilities
 				});
 
 			store.dispatch(
@@ -1675,6 +1724,36 @@ export default class RoomClient
 
 				if (!devicesCookie || devicesCookie.webcamEnabled || this._externalVideo)
 					this.enableWebcam();
+
+				// TODO: Here?
+				if (ENABLE_DATACHANNEL)
+				{
+					// Create DataProducer.
+					this._dataProducer = await this._sendTransport.produceData(
+						{
+							ordered  : true,
+							priority : 'medium',
+							appData  : { info: 'my-DataProducer' }
+						});
+
+					// TODO: For testing DataConsumer.
+					if (this._consume)
+					{
+						window.DataConsumer = await this._recvTransport.consumeData(
+							{
+								id                   : '2222-2222-2222',
+								dataProducerId       : '1111-1111-1111',
+								sctpStreamParameters :
+								{
+									streamId          : 222,
+									ordered           : false,
+									maxPacketLifeTime : 10000,
+									maxRetransmits    : 4
+								},
+								appData : { info: 'my-DataConsumer' }
+							});
+					}
+				}
 			}
 		}
 		catch (error)
