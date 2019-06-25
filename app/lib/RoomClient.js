@@ -58,6 +58,7 @@ export default class RoomClient
 			peerId,
 			displayName,
 			device,
+			handler,
 			useSimulcast,
 			useSharingSimulcast,
 			forceTcp,
@@ -119,6 +120,11 @@ export default class RoomClient
 			this._externalVideo.play()
 				.catch((error) => logger.warn('externalVideo.play() failed:%o', error));
 		}
+
+		// Custom mediasoup-client handler (to override default browser detection if
+		// desired).
+		// @type {String}
+		this._handler = handler;
 
 		// Whether simulcast should be used.
 		// @type {Boolean}
@@ -1517,7 +1523,8 @@ export default class RoomClient
 
 		try
 		{
-			this._mediasoupDevice = new mediasoupClient.Device();
+			this._mediasoupDevice =
+				new mediasoupClient.Device({ Handler: this._handler });
 
 			const routerRtpCapabilities =
 				await this._protoo.request('getRouterRtpCapabilities');

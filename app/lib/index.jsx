@@ -67,6 +67,7 @@ async function run()
 	let roomId = urlParser.query.roomId;
 	let displayName =
 		urlParser.query.displayName || (cookiesManager.getUser() || {}).displayName;
+	const handler = urlParser.query.handler;
 	const useSimulcast = urlParser.query.simulcast !== 'false';
 	const useSharingSimulcast = urlParser.query.sharingSimulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
@@ -158,6 +159,7 @@ async function run()
 			peerId,
 			displayName,
 			device,
+			handler,
 			useSimulcast,
 			useSharingSimulcast,
 			forceTcp,
