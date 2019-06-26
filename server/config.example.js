@@ -49,7 +49,8 @@ module.exports =
 				'bwe',
 				'score',
 				'simulcast',
-				'svc'
+				'svc',
+				'sctp'
 			],
 			rtcMinPort : 40000,
 			rtcMaxPort : 49999
