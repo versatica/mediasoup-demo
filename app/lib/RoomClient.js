@@ -174,6 +174,10 @@ export default class RoomClient
 		// @type {Map<String, mediasoupClient.Consumer>}
 		this._consumers = new Map();
 
+		// mediasoup DataConsumers.
+		// @type {Map<String, mediasoupClient.DataConsumer>}
+		this._dataConsumers = new Map();
+
 		// Map of webcam MediaDeviceInfos indexed by deviceId.
 		// @type {Map<String, MediaDeviceInfos>}
 		this._webcams = new Map();
@@ -350,12 +354,62 @@ export default class RoomClient
 						peerId));
 
 					// We are ready. Answer the protoo request so the server will
-					// resume this Consumer (which was paused for now).
+					// resume this Consumer (which was paused for now if video).
 					accept();
 
 					// If audio-only mode is enabled, pause it.
 					if (consumer.kind === 'video' && store.getState().me.audioOnly)
 						this._pauseConsumer(consumer);
+
+					break;
+				}
+
+				case 'newDataConsumer':
+				{
+					if (!this._consume)
+					{
+						reject(403, 'I do not want to data consume');
+
+						return;
+					}
+
+					const {
+						peerId,
+						dataProducerId,
+						id,
+						sctpStreamParameters,
+						appData
+					} = request.data;
+
+					const dataConsumer = await this._recvTransport.consumeData(
+						{
+							id,
+							dataProducerId,
+							sctpStreamParameters,
+							appData : { ...appData, peerId } // Trick.
+						});
+
+					// Store in the map.
+					this._dataConsumers.set(dataConsumer.id, dataConsumer);
+
+					dataConsumer.on('transportclose', () =>
+					{
+						this._dataConsumers.delete(dataConsumer.id);
+					});
+
+					// TODO: REMOVE
+					window.DC = dataConsumer;
+
+					// TODO: do it
+					// store.dispatch(stateActions.addDataConsumer(
+					// 	{
+					// 		id                   : dataConsumer.id,
+					// 		sctpStreamParameters : dataConsumer.sctpStreamParameters
+					// 	},
+					// 	peerId));
+
+					// We are ready. Answer the protoo request.
+					accept();
 
 					break;
 				}
@@ -487,6 +541,28 @@ export default class RoomClient
 
 					store.dispatch(
 						stateActions.setConsumerScore(consumerId, score));
+
+					break;
+				}
+
+				case 'dataConsumerClosed':
+				{
+					const { dataConsumerId } = notification.data;
+					const dataConsumer = this._dataConsumers.get(dataConsumerId);
+
+					console.warn('"dataConsumerClosed" [dataConsumer:%o]', dataConsumer);
+
+					if (!dataConsumer)
+						break;
+
+					dataConsumer.close();
+					this._dataConsumers.delete(dataConsumerId);
+
+					const { peerId } = dataConsumer.appData;
+
+					// TODO: Do it
+					// store.dispatch(
+					// 	stateActions.removeDataConsumer(dataConsumerId, peerId));
 
 					break;
 				}
@@ -1550,9 +1626,10 @@ export default class RoomClient
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
 					{
-						forceTcp  : this._forceTcp,
-						producing : true,
-						consuming : false
+						forceTcp         : this._forceTcp,
+						producing        : true,
+						consuming        : false,
+						sctpCapabilities : this._mediasoupDevice.sctpCapabilities
 					});
 
 				const {
@@ -1608,13 +1685,10 @@ export default class RoomClient
 						}
 					});
 
-				// TODO: DataChannel stuff.
-				let nextDataProducerId = 0;
-
 				this._sendTransport.on(
 					'produceData', async ({ sctpStreamParameters, appData }, callback, errback) =>
 					{
-						logger.warn(
+						logger.debug(
 							'"produceData" event: [sctpStreamParameters:%o, appData:%o]',
 							sctpStreamParameters, appData);
 
@@ -1633,10 +1707,7 @@ export default class RoomClient
 						}
 						catch (error)
 						{
-							// errback(error);
-
-							// TODO
-							callback({ id: `xxxx-${++nextDataProducerId}` });
+							errback(error);
 						}
 					});
 			}
@@ -1647,9 +1718,10 @@ export default class RoomClient
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
 					{
-						forceTcp  : this._forceTcp,
-						producing : false,
-						consuming : true
+						forceTcp         : this._forceTcp,
+						producing        : false,
+						consuming        : true,
+						sctpCapabilities : this._mediasoupDevice.sctpCapabilities
 					});
 
 				const {
@@ -1692,8 +1764,7 @@ export default class RoomClient
 					device          : this._device,
 					rtpCapabilities : this._consume
 						? this._mediasoupDevice.rtpCapabilities
-						: undefined,
-					sctpCapabilities : this._mediasoupDevice.sctpCapabilities
+						: undefined
 				});
 
 			store.dispatch(
@@ -1732,7 +1803,6 @@ export default class RoomClient
 				if (!devicesCookie || devicesCookie.webcamEnabled || this._externalVideo)
 					this.enableWebcam();
 
-				// TODO: Here?
 				if (ENABLE_DATACHANNEL)
 				{
 					// Create DataProducer.
@@ -1742,24 +1812,6 @@ export default class RoomClient
 							priority : 'medium',
 							appData  : { info: 'my-DataProducer' }
 						});
-
-					// TODO: For testing DataConsumer.
-					if (this._consume)
-					{
-						window.DataConsumer = await this._recvTransport.consumeData(
-							{
-								id                   : '2222-2222-2222',
-								dataProducerId       : '1111-1111-1111',
-								sctpStreamParameters :
-								{
-									streamId          : 222,
-									ordered           : false,
-									maxPacketLifeTime : 10000,
-									maxRetransmits    : 4
-								},
-								appData : { info: 'my-DataConsumer' }
-							});
-					}
 				}
 			}
 		}

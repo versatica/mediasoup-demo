@@ -229,13 +229,14 @@ class Room extends EventEmitter
 		peer.data.displayName = undefined;
 		peer.data.device = undefined;
 		peer.data.rtpCapabilities = undefined;
-		peer.data.sctpCapabilities = undefined;
 
 		// Have mediasoup related maps ready even before the Peer joins since we
 		// allow creating Transports before joining.
 		peer.data.transports = new Map();
 		peer.data.producers = new Map();
 		peer.data.consumers = new Map();
+		peer.data.dataProducers = new Map();
+		peer.data.dataConsumers = new Map();
 
 		peer.on('request', (request, accept, reject) =>
 		{
@@ -450,7 +451,8 @@ class Room extends EventEmitter
 			type,
 			rtcpMux = true,
 			comedia = true,
-			multiSource = false
+			multiSource = false,
+			sctpCapabilities = {}
 		})
 	{
 		const broadcaster = this._broadcasters.get(broadcasterId);
@@ -462,8 +464,14 @@ class Room extends EventEmitter
 		{
 			case 'webrtc':
 			{
+				const webRtcTransportOptions =
+				{
+					...config.mediasoup.webRtcTransportOptions,
+					numSctpStreams : sctpCapabilities.numStreams
+				};
+
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					config.mediasoup.webRtcTransportOptions);
+					webRtcTransportOptions);
 
 				// Store it.
 				broadcaster.data.transports.set(transport.id, transport);
@@ -701,15 +709,13 @@ class Room extends EventEmitter
 				const {
 					displayName,
 					device,
-					rtpCapabilities,
-					sctpCapabilities
+					rtpCapabilities
 				} = request.data;
 
 				// Store client data into the protoo Peer data object.
 				peer.data.displayName = displayName;
 				peer.data.device = device;
 				peer.data.rtpCapabilities = rtpCapabilities;
-				peer.data.sctpCapabilities = sctpCapabilities;
 
 				// Tell the new Peer about already joined Peers.
 				// And also create Consumers for existing Producers.
@@ -737,6 +743,16 @@ class Room extends EventEmitter
 								consumerPeer : peer,
 								producerPeer : joinedPeer,
 								producer
+							});
+					}
+
+					for (const dataProducer of joinedPeer.data.dataProducers.values())
+					{
+						this._createDataConsumer(
+							{
+								dataConsumerPeer : peer,
+								dataProducerPeer : joinedPeer,
+								dataProducer
 							});
 					}
 				}
@@ -767,11 +783,18 @@ class Room extends EventEmitter
 				// NOTE: Don't require that the Peer is joined here, so the client can
 				// initiate mediasoup Transports and be ready when he later joins.
 
-				const { forceTcp, producing, consuming } = request.data;
+				const {
+					forceTcp,
+					producing,
+					consuming,
+					sctpCapabilities
+				} = request.data;
+
 				const webRtcTransportOptions =
 				{
 					...config.mediasoup.webRtcTransportOptions,
-					appData : { producing, consuming }
+					numSctpStreams : sctpCapabilities.numStreams,
+					appData        : { producing, consuming }
 				};
 
 				if (forceTcp)
@@ -1033,6 +1056,40 @@ class Room extends EventEmitter
 				await consumer.requestKeyFrame();
 
 				accept();
+
+				break;
+			}
+
+			case 'produceData':
+			{
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
+
+				const { transportId, sctpStreamParameters, appData } = request.data;
+				const transport = peer.data.transports.get(transportId);
+
+				if (!transport)
+					throw new Error(`transport with id "${transportId}" not found`);
+
+				const dataProducer =
+					await transport.produceData({ sctpStreamParameters, appData });
+
+				// Store the Producer into the protoo Peer data Object.
+				peer.data.dataProducers.set(dataProducer.id, dataProducer);
+
+				accept({ id: dataProducer.id });
+
+				// Create a server-side Consumer for each Peer.
+				for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
+				{
+					this._createDataConsumer(
+						{
+							dataConsumerPeer : otherPeer,
+							dataProducerPeer : peer,
+							dataProducer
+						});
+				}
 
 				break;
 			}
@@ -1345,6 +1402,81 @@ class Room extends EventEmitter
 		catch (error)
 		{
 			logger.warn('_createConsumer() | failed:%o', error);
+		}
+	}
+
+	/**
+	 * Creates a mediasoup DataConsumer for the given mediasoup DataProducer.
+	 *
+	 * @async
+	 */
+	async _createDataConsumer({ dataConsumerPeer, dataProducerPeer, dataProducer })
+	{
+		// Must take the Transport the remote Peer is using for consuming.
+		const transport = Array.from(dataConsumerPeer.data.transports.values())
+			.find((t) => t.appData.consuming);
+
+		// This should not happen.
+		if (!transport)
+		{
+			logger.warn('_createDataConsumer() | Transport for consuming not found');
+
+			return;
+		}
+
+		// Create the DataConsumer.
+		let dataConsumer;
+
+		try
+		{
+			dataConsumer = await transport.consumeData(
+				{
+					dataProducerId : dataProducer.id
+				});
+		}
+		catch (error)
+		{
+			logger.warn('_createDataConsumer() | transport.consumeData():%o', error);
+
+			return;
+		}
+
+		// Store the DataConsumer into the protoo dataConsumerPeer data Object.
+		dataConsumerPeer.data.dataConsumers.set(dataConsumer.id, dataConsumer);
+
+		// Set DataConsumer events.
+		dataConsumer.on('transportclose', () =>
+		{
+			// Remove from its map.
+			dataConsumerPeer.data.dataConsumers.delete(dataConsumer.id);
+		});
+
+		dataConsumer.on('dataproducerclose', () =>
+		{
+			// Remove from its map.
+			dataConsumerPeer.data.dataConsumers.delete(dataConsumer.id);
+
+			dataConsumerPeer.notify(
+				'dataConsumerClosed', { dataConsumerId: dataConsumer.id })
+				.catch(() => {});
+		});
+
+		// Send a protoo request to the remote Peer with Consumer parameters.
+		try
+		{
+			await dataConsumerPeer.request(
+				'newDataConsumer',
+				{
+					peerId               : dataProducerPeer.id,
+					dataProducerId       : dataProducer.id,
+					id                   : dataConsumer.id,
+					sctpStreamParameters : dataConsumer.sctpStreamParameters,
+					appData              : dataProducer.appData
+				});
+		}
+		catch (error)
+		{
+			logger.warn('_createDataConsumer() | failed:%o', error);
 		}
 	}
 }

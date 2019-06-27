@@ -214,12 +214,12 @@ setInterval(() =>
 	if (window.CLIENT._sendTransport)
 	{
 		window.PC1 = window.CLIENT._sendTransport._handler._pc;
-		window.DC1 = window.CLIENT._dataProducer;
+		window.DP1 = window.CLIENT._dataProducer;
 	}
 	else
 	{
 		delete window.PC1;
-		delete window.DC1;
+		delete window.DP1;
 	}
 
 	if (window.CLIENT._recvTransport)

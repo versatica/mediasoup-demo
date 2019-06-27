@@ -12,6 +12,8 @@ const routers = new Map();
 const transports = new Map();
 const producers = new Map();
 const consumers = new Map();
+const dataProducers = new Map();
+const dataConsumers = new Map();
 
 const SOCKET_PATH = '/tmp/mediasoup-demo.sock';
 
@@ -66,19 +68,23 @@ class Interactive
 					{
 						this.log('');
 						this.log('available commands:');
-						this.log('- h,  help                : show this message');
-						this.log('- usage                   : show CPU and memory usage of the Node.js and mediasoup-worker processes');
-						this.log('- logLevel level          : changes logLevel in all mediasoup Workers');
-						this.log('- logTags [tag] [tag]     : changes logTags in all mediasoup Workers (values separated by space)');
-						this.log('- dw, dumpWorkers         : dump mediasoup Workers');
-						this.log('- dr, dumpRouter [id]     : dump mediasoup Router with given id (or the latest created one)');
-						this.log('- dt, dumpTransport [id]  : dump mediasoup Transport with given id (or the latest created one)');
-						this.log('- dp, dumpProducer [id]   : dump mediasoup Producer with given id (or the latest created one)');
-						this.log('- dc, dumpConsumer [id]   : dump mediasoup Consumer with given id (or the latest created one)');
-						this.log('- st, statsTransport [id] : get stats for mediasoup Transport with given id (or the latest created one)');
-						this.log('- sp, statsProducer [id]  : get stats for mediasoup Producer with given id (or the latest created one)');
-						this.log('- sc, statsConsumer [id]  : get stats for mediasoup Consumer with given id (or the latest created one)');
-						this.log('- t,  terminal            : open Node REPL Terminal');
+						this.log('- h,  help                    : show this message');
+						this.log('- usage                       : show CPU and memory usage of the Node.js and mediasoup-worker processes');
+						this.log('- logLevel level              : changes logLevel in all mediasoup Workers');
+						this.log('- logTags [tag] [tag]         : changes logTags in all mediasoup Workers (values separated by space)');
+						this.log('- dw, dumpWorkers             : dump mediasoup Workers');
+						this.log('- dr, dumpRouter [id]         : dump mediasoup Router with given id (or the latest created one)');
+						this.log('- dt, dumpTransport [id]      : dump mediasoup Transport with given id (or the latest created one)');
+						this.log('- dp, dumpProducer [id]       : dump mediasoup Producer with given id (or the latest created one)');
+						this.log('- dc, dumpConsumer [id]       : dump mediasoup Consumer with given id (or the latest created one)');
+						this.log('- ddp, dumpDataProducer [id]  : dump mediasoup DataProducer with given id (or the latest created one)');
+						this.log('- ddc, dumpDataConsumer [id]  : dump mediasoup DataConsumer with given id (or the latest created one)');
+						this.log('- st, statsTransport [id]     : get stats for mediasoup Transport with given id (or the latest created one)');
+						this.log('- sp, statsProducer [id]      : get stats for mediasoup Producer with given id (or the latest created one)');
+						this.log('- sc, statsConsumer [id]      : get stats for mediasoup Consumer with given id (or the latest created one)');
+						this.log('- sdp, statsDataProducer [id] : get stats for mediasoup DataProducer with given id (or the latest created one)');
+						this.log('- sdc, statsDataConsumer [id] : get stats for mediasoup DataConsumer with given id (or the latest created one)');
+						this.log('- t,  terminal                : open Node REPL Terminal');
 						this.log('');
 						readStdin();
 
@@ -278,6 +284,60 @@ class Interactive
 						break;
 					}
 
+					case 'ddp':
+					case 'dumpDataProducer':
+					{
+						const id = params[0] || Array.from(dataProducers.keys()).pop();
+						const dataProducer = dataProducers.get(id);
+
+						if (!dataProducer)
+						{
+							this.error('DataProducer not found');
+
+							break;
+						}
+
+						try
+						{
+							const dump = await dataProducer.dump();
+
+							this.log(`dataProducer.dump():\n${JSON.stringify(dump, null, '  ')}`);
+						}
+						catch (error)
+						{
+							this.error(`dataProducer.dump() failed: ${error}`);
+						}
+
+						break;
+					}
+
+					case 'ddc':
+					case 'dumpDataConsumer':
+					{
+						const id = params[0] || Array.from(dataConsumers.keys()).pop();
+						const dataConsumer = dataConsumers.get(id);
+
+						if (!dataConsumer)
+						{
+							this.error('DataConsumer not found');
+
+							break;
+						}
+
+						try
+						{
+							const dump = await dataConsumer.dump();
+
+							this.log(`dataConsumer.dump():\n${JSON.stringify(dump, null, '  ')}`);
+						}
+						catch (error)
+						{
+							this.error(`dataConsumer.dump() failed: ${error}`);
+						}
+
+						break;
+					}
+
 					case 'st':
 					case 'statsTransport':
 					{
@@ -359,6 +419,60 @@ class Interactive
 						break;
 					}
 
+					case 'sdp':
+					case 'statsDataProducer':
+					{
+						const id = params[0] || Array.from(dataProducers.keys()).pop();
+						const dataProducer = dataProducers.get(id);
+
+						if (!dataProducer)
+						{
+							this.error('DataProducer not found');
+
+							break;
+						}
+
+						try
+						{
+							const stats = await dataProducer.getStats();
+
+							this.log(`dataProducer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
+						}
+						catch (error)
+						{
+							this.error(`dataProducer.getStats() failed: ${error}`);
+						}
+
+						break;
+					}
+
+					case 'sdc':
+					case 'statsDataConsumer':
+					{
+						const id = params[0] || Array.from(dataConsumers.keys()).pop();
+						const dataConsumer = dataConsumers.get(id);
+
+						if (!dataConsumer)
+						{
+							this.error('DataConsumer not found');
+
+							break;
+						}
+
+						try
+						{
+							const stats = await dataConsumer.getStats();
+
+							this.log(`dataConsumer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
+						}
+						catch (error)
+						{
+							this.error(`dataConsumer.getStats() failed: ${error}`);
+						}
+
+						break;
+					}
+
 					case 't':
 					case 'terminal':
 					{
@@ -387,7 +501,7 @@ class Interactive
 	openTerminal()
 	{
 		this.log('\n[opening Node REPL Terminal...]');
-		this.log('here you have access to workers, routers, transports, producers and consumers ES6 maps');
+		this.log('here you have access to workers, routers, transports, producers, consumers, dataProducers and dataConsumers ES6 maps');
 
 		const terminal = repl.start(
 			{
@@ -466,6 +580,24 @@ function runMediasoupObserver()
 					consumers.set(consumer.id, consumer);
 					consumer.observer.on('close', () => consumers.delete(consumer.id));
 				});
+
+				transport.observer.on('newdataproducer', (dataProducer) =>
+				{
+					// Store the latest dataProducer in a global variable.
+					global.dataProducer = dataProducer;
+
+					dataProducers.set(dataProducer.id, dataProducer);
+					dataProducer.observer.on('close', () => dataProducers.delete(dataProducer.id));
+				});
+
+				transport.observer.on('newdataconsumer', (dataConsumer) =>
+				{
+					// Store the latest dataConsumer in a global variable.
+					global.dataConsumer = dataConsumer;
+
+					dataConsumers.set(dataConsumer.id, dataConsumer);
+					dataConsumer.observer.on('close', () => dataConsumers.delete(dataConsumer.id));
+				});
 			});
 		});
 	});
@@ -482,6 +614,8 @@ module.exports = async function()
 	global.transports = transports;
 	global.producers = producers;
 	global.consumers = consumers;
+	global.dataProducers = dataProducers;
+	global.dataConsumers = dataConsumers;
 
 	const server = net.createServer((socket) =>
 	{
