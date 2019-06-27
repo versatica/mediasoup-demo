@@ -22,10 +22,12 @@ class Stats extends React.Component
 			audioProducerLocalStats  : null,
 			videoProducerRemoteStats : null,
 			videoProducerLocalStats  : null,
+			dataProducerRemoteStats  : null,
 			audioConsumerRemoteStats : null,
 			audioConsumerLocalStats  : null,
 			videoConsumerRemoteStats : null,
-			videoConsumerLocalStats  : null
+			videoConsumerLocalStats  : null,
+			dataConsumerRemoteStats  : null
 		};
 
 		this._delayTimer = null;
@@ -49,10 +51,12 @@ class Stats extends React.Component
 			audioProducerLocalStats,
 			videoProducerRemoteStats,
 			videoProducerLocalStats,
+			dataProducerRemoteStats,
 			audioConsumerRemoteStats,
 			audioConsumerLocalStats,
 			videoConsumerRemoteStats,
-			videoConsumerLocalStats
+			videoConsumerLocalStats,
+			dataConsumerRemoteStats
 		} = this.state;
 
 		return (
@@ -113,6 +117,15 @@ class Stats extends React.Component
 								</p>
 							</If>
 
+							<If condition={dataProducerRemoteStats}>
+								<p>
+									{'data stats: '}
+									<a href='#data-producer-remote-stats'>[remote]</a>
+									<span>{' '}</span>
+									<a className='disabled'>[local]</a>
+								</p>
+							</If>
+
 							<If condition={audioConsumerRemoteStats || audioConsumerLocalStats}>
 								<p>
 									{'audio stats: '}
@@ -128,6 +141,15 @@ class Stats extends React.Component
 									<a href='#video-consumer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a href='#video-consumer-local-stats'>[local]</a>
+								</p>
+							</If>
+
+							<If condition={dataConsumerRemoteStats}>
+								<p>
+									{'data stats: '}
+									<a href='#data-consumer-remote-stats'>[remote]</a>
+									<span>{' '}</span>
+									<a className='disabled'>[local]</a>
 								</p>
 							</If>
 						</div>
@@ -166,6 +188,10 @@ class Stats extends React.Component
 							{this._printStats('video producer local stats', videoProducerLocalStats)}
 						</If>
 
+						<If condition={dataProducerRemoteStats}>
+							{this._printStats('data producer remote stats', dataProducerRemoteStats)}
+						</If>
+
 						<If condition={audioConsumerRemoteStats}>
 							{this._printStats('audio consumer remote stats', audioConsumerRemoteStats)}
 						</If>
@@ -180,6 +206,10 @@ class Stats extends React.Component
 
 						<If condition={videoConsumerLocalStats}>
 							{this._printStats('video consumer local stats', videoConsumerLocalStats)}
+						</If>
+
+						<If condition={dataConsumerRemoteStats}>
+							{this._printStats('data consumer remote stats', dataConsumerRemoteStats)}
 						</If>
 					</div>
 				</div>
@@ -212,7 +242,8 @@ class Stats extends React.Component
 			roomClient,
 			isMe,
 			audioConsumerId,
-			videoConsumerId
+			videoConsumerId,
+			dataConsumerId
 		} = this.props;
 
 		let sendTransportRemoteStats = null;
@@ -223,10 +254,12 @@ class Stats extends React.Component
 		let audioProducerLocalStats = null;
 		let videoProducerRemoteStats = null;
 		let videoProducerLocalStats = null;
+		let dataProducerRemoteStats = null;
 		let audioConsumerRemoteStats = null;
 		let audioConsumerLocalStats = null;
 		let videoConsumerRemoteStats = null;
 		let videoConsumerLocalStats = null;
+		let dataConsumerRemoteStats = null;
 
 		if (isMe)
 		{
@@ -246,6 +279,9 @@ class Stats extends React.Component
 				.catch(() => {});
 
 			videoProducerLocalStats = await roomClient.getVideoLocalStats()
+				.catch(() => {});
+
+			dataProducerRemoteStats = await roomClient.getDataProducerRemoteStats()
 				.catch(() => {});
 		}
 		else
@@ -267,6 +303,9 @@ class Stats extends React.Component
 
 			videoConsumerLocalStats = await roomClient.getConsumerLocalStats(videoConsumerId)
 				.catch(() => {});
+
+			dataConsumerRemoteStats = await roomClient.getDataConsumerRemoteStats(dataConsumerId)
+				.catch(() => {});
 		}
 
 		this.setState(
@@ -279,10 +318,12 @@ class Stats extends React.Component
 				audioProducerLocalStats,
 				videoProducerRemoteStats,
 				videoProducerLocalStats,
+				dataProducerRemoteStats,
 				audioConsumerRemoteStats,
 				audioConsumerLocalStats,
 				videoConsumerRemoteStats,
-				videoConsumerLocalStats
+				videoConsumerLocalStats,
+				dataConsumerRemoteStats
 			});
 
 		this._delayTimer = setTimeout(() => this._start(), 2500);
@@ -302,10 +343,12 @@ class Stats extends React.Component
 				audioProducerLocalStats  : null,
 				videoProducerRemoteStats : null,
 				videoProducerLocalStats  : null,
+				dataProducerRemoteStats  : null,
 				audioConsumerRemoteStats : null,
 				audioConsumerLocalStats  : null,
 				videoConsumerRemoteStats : null,
-				videoConsumerLocalStats  : null
+				videoConsumerLocalStats  : null,
+				dataConsumerRemoteStats  : null
 			});
 	}
 
@@ -360,6 +403,7 @@ Stats.propTypes =
 	isMe            : PropTypes.bool,
 	audioConsumerId : PropTypes.string,
 	videoConsumerId : PropTypes.string,
+	dataConsumerId  : PropTypes.string,
 	onClose         : PropTypes.func.isRequired
 };
 
@@ -375,6 +419,7 @@ const mapStateToProps = (state) =>
 	const peer = isMe ? me : peers[statsPeerId];
 	let audioConsumerId;
 	let videoConsumerId;
+	let dataConsumerId;
 
 	if (!isMe)
 	{
@@ -393,6 +438,8 @@ const mapStateToProps = (state) =>
 					break;
 			}
 		}
+
+		dataConsumerId = peer.dataConsumers[0];
 	}
 
 	return {
@@ -400,7 +447,8 @@ const mapStateToProps = (state) =>
 		peerDisplayName : peer.displayName,
 		isMe,
 		audioConsumerId,
-		videoConsumerId
+		videoConsumerId,
+		dataConsumerId
 	};
 };
 

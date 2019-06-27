@@ -1173,6 +1173,36 @@ class Room extends EventEmitter
 				break;
 			}
 
+			case 'getDataProducerStats':
+			{
+				const { dataProducerId } = request.data;
+				const dataProducer = peer.data.dataProducers.get(dataProducerId);
+
+				if (!dataProducer)
+					throw new Error(`dataProducer with id "${dataProducerId}" not found`);
+
+				const stats = await dataProducer.getStats();
+
+				accept(stats);
+
+				break;
+			}
+
+			case 'getDataConsumerStats':
+			{
+				const { dataConsumerId } = request.data;
+				const dataConsumer = peer.data.dataConsumers.get(dataConsumerId);
+
+				if (!dataConsumer)
+					throw new Error(`dataConsumer with id "${dataConsumerId}" not found`);
+
+				const stats = await dataConsumer.getStats();
+
+				accept(stats);
+
+				break;
+			}
+
 			case 'applyNetworkThrottle':
 			{
 				const DefaultUplink = 1000000;

@@ -150,6 +150,22 @@ export const setProducerScore = (producerId, score) =>
 	};
 };
 
+export const addDataProducer = (dataProducer) =>
+{
+	return {
+		type    : 'ADD_DATA_PRODUCER',
+		payload : { dataProducer }
+	};
+};
+
+export const removeDataProducer = (dataProducerId) =>
+{
+	return {
+		type    : 'REMOVE_DATA_PRODUCER',
+		payload : { dataProducerId }
+	};
+};
+
 export const setWebcamInProgress = (flag) =>
 {
 	return {
@@ -251,6 +267,22 @@ export const setConsumerScore = (consumerId, score) =>
 	return {
 		type    : 'SET_CONSUMER_SCORE',
 		payload : { consumerId, score }
+	};
+};
+
+export const addDataConsumer = (dataConsumer, peerId) =>
+{
+	return {
+		type    : 'ADD_DATA_CONSUMER',
+		payload : { dataConsumer, peerId }
+	};
+};
+
+export const removeDataConsumer = (dataConsumerId, peerId) =>
+{
+	return {
+		type    : 'REMOVE_DATA_CONSUMER',
+		payload : { dataConsumerId, peerId }
 	};
 };
 

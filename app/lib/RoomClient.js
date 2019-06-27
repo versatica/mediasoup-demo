@@ -457,13 +457,12 @@ export default class RoomClient
 						// TODO: REMOVE
 						window.DC = dataConsumer;
 
-						// TODO
-						// store.dispatch(stateActions.addDataConsumer(
-						// 	{
-						// 		id                   : dataConsumer.id,
-						// 		sctpStreamParameters : dataConsumer.sctpStreamParameters
-						// 	},
-						// 	peerId));
+						store.dispatch(stateActions.addDataConsumer(
+							{
+								id                   : dataConsumer.id,
+								sctpStreamParameters : dataConsumer.sctpStreamParameters
+							},
+							peerId));
 
 						// We are ready. Answer the protoo request.
 						accept();
@@ -507,7 +506,8 @@ export default class RoomClient
 					const peer = notification.data;
 
 					store.dispatch(
-						stateActions.addPeer({ ...peer, consumers: [] }));
+						stateActions.addPeer(
+							{ ...peer, consumers: [], dataConsumers: [] }));
 
 					store.dispatch(requestActions.notify(
 						{
@@ -626,9 +626,8 @@ export default class RoomClient
 
 					const { peerId } = dataConsumer.appData;
 
-					// TODO: Do it
-					// store.dispatch(
-					// 	stateActions.removeDataConsumer(dataConsumerId, peerId));
+					store.dispatch(
+						stateActions.removeDataConsumer(dataConsumerId, peerId));
 
 					break;
 				}
@@ -1486,12 +1485,11 @@ export default class RoomClient
 					appData           : { info: 'my-DataProducer' }
 				});
 
-			// TODO
-			// store.dispatch(stateActions.addDataProducer(
-			// 	{
-			// 		id                   : this._dataProducer.id,
-			// 		sctpStreamParameters : this._dataProducer.sctpStreamParameters
-			// 	}));
+			store.dispatch(stateActions.addDataProducer(
+				{
+					id                   : this._dataProducer.id,
+					sctpStreamParameters : this._dataProducer.sctpStreamParameters
+				}));
 
 			this._dataProducer.on('transportclose', () =>
 			{
@@ -1638,6 +1636,31 @@ export default class RoomClient
 			return;
 
 		return this._protoo.request('getConsumerStats', { consumerId });
+	}
+
+	async getDataProducerRemoteStats()
+	{
+		logger.debug('getDataProducerRemoteStats()');
+
+		const dataProducer = this._dataProducer;
+
+		if (!dataProducer)
+			return;
+
+		return this._protoo.request(
+			'getDataProducerStats', { dataProducerId: dataProducer.id });
+	}
+
+	async getDataConsumerRemoteStats(dataConsumerId)
+	{
+		logger.debug('getDataConsumerRemoteStats()');
+
+		const dataConsumer = this._dataConsumers.get(dataConsumerId);
+
+		if (!dataConsumer)
+			return;
+
+		return this._protoo.request('getDataConsumerStats', { dataConsumerId });
 	}
 
 	async getSendTransportLocalStats()
@@ -1930,7 +1953,8 @@ export default class RoomClient
 			for (const peer of peers)
 			{
 				store.dispatch(
-					stateActions.addPeer({ ...peer, consumers: [] }));
+					stateActions.addPeer(
+						{ ...peer, consumers: [], dataConsumers: [] }));
 			}
 
 			// Enable mic/webcam.

@@ -48,14 +48,23 @@
       score       : [ { ssrc: 2221, score: 10 }, { ssrc: 2222, score: 9 } ]
     }
   },
+  dataProducers :
+  {
+    '4444-4444' :
+    {
+      id                   : '4444-4444',
+      sctpStreamParameters : {}
+    }
+  },
   peers :
   {
     'alice' :
     {
-      id        : 'alice',
-      displayName : 'Alice Thomsom',
-      device      : { flag: 'chrome', name: 'Chrome', version: '58' },
-      consumers   : [ '5551-qwer', '5552-zxzx' ]
+      id              : 'alice',
+      displayName     : 'Alice Thomsom',
+      device          : { flag: 'chrome', name: 'Chrome', version: '58' },
+      consumers       : [ '5551-qwer', '5552-zxzx' ],
+      dataConsumers   : [ '6661-asdf' ]
     }
   },
   consumers :
@@ -93,6 +102,14 @@
       preferredTemporalLayer : 2,
       track                  : MediaStreamTrack,
       score                  : [ { ssrc: 4441, score: 9 }, { ssrc: 4444, score: 8 } ]
+    }
+  },
+  dataConsumers :
+  {
+    '5551-qwer' :
+    {
+      id                   : '5551-qwer',
+      sctpStreamParameters : {}
     }
   },
   notifications :
