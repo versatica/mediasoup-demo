@@ -79,6 +79,7 @@ async function run()
 	const info = urlParser.query.info === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
+	const datachannel = urlParser.query.datachannel === 'true';
 	const throttleSecret = urlParser.query.throttleSecret;
 
 	// Enable face detection on demand.
@@ -118,6 +119,7 @@ async function run()
 			case 'info':
 			case 'faceDetection':
 			case 'externalVideo':
+			case 'datachannel':
 				break;
 			default:
 				delete roomUrlParser.query[key];
@@ -168,7 +170,8 @@ async function run()
 			forceH264,
 			forceVP9,
 			svc,
-			externalVideo
+			externalVideo,
+			datachannel
 		});
 
 	// NOTE: For debugging.

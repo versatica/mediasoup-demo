@@ -34,9 +34,6 @@ const VIDEO_SVC_ENCODINGS =
 
 const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
 
-// TODO: Remove when done.
-const ENABLE_DATACHANNEL = false;
-
 const logger = new Logger('RoomClient');
 
 let store;
@@ -67,7 +64,8 @@ export default class RoomClient
 			forceH264,
 			forceVP9,
 			svc,
-			externalVideo
+			externalVideo,
+			datachannel
 		}
 	)
 	{
@@ -120,6 +118,11 @@ export default class RoomClient
 			this._externalVideo.play()
 				.catch((error) => logger.warn('externalVideo.play() failed:%o', error));
 		}
+
+		// TODO: Temporal during development.
+		// Enable DataChannel.
+		// @type {Boolean}
+		this._enableDataChannel = datachannel;
 
 		// Custom mediasoup-client handler (to override default browser detection if
 		// desired).
@@ -549,8 +552,6 @@ export default class RoomClient
 				{
 					const { dataConsumerId } = notification.data;
 					const dataConsumer = this._dataConsumers.get(dataConsumerId);
-
-					console.warn('"dataConsumerClosed" [dataConsumer:%o]', dataConsumer);
 
 					if (!dataConsumer)
 						break;
@@ -1803,14 +1804,15 @@ export default class RoomClient
 				if (!devicesCookie || devicesCookie.webcamEnabled || this._externalVideo)
 					this.enableWebcam();
 
-				if (ENABLE_DATACHANNEL)
+				if (this._enableDataChannel)
 				{
 					// Create DataProducer.
 					this._dataProducer = await this._sendTransport.produceData(
 						{
-							ordered  : true,
-							priority : 'medium',
-							appData  : { info: 'my-DataProducer' }
+							ordered           : true,
+							maxPacketLifeTime : 16000,
+							priority          : 'medium',
+							appData           : { info: 'my-DataProducer' }
 						});
 				}
 			}
