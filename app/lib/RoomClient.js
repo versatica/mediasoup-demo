@@ -400,10 +400,49 @@ export default class RoomClient
 						this._dataConsumers.delete(dataConsumer.id);
 					});
 
+					dataConsumer.on('open', () =>
+					{
+						logger.debug('DataConsumer "open" event');
+					});
+
+					dataConsumer.on('close', () =>
+					{
+						logger.error('DataConsumer "close" event');
+
+						this._dataConsumers.delete(dataConsumer.id);
+
+						store.dispatch(requestActions.notify(
+							{
+								type : 'error',
+								text : 'DataConsumer closed'
+							}));
+					});
+
+					dataConsumer.on('error', (error) =>
+					{
+						logger.error('DataConsumer "error" event:%o', error);
+
+						store.dispatch(requestActions.notify(
+							{
+								type : 'error',
+								text : `DataConsumer error: ${error}`
+							}));
+					});
+
+					dataConsumer.on('message', (message) =>
+					{
+						logger.debug('DataConsumer "message" event: %o', message);
+
+						store.dispatch(requestActions.notify(
+							{
+								text : `DataConsumer message: ${message}`
+							}));
+					});
+
 					// TODO: REMOVE
 					window.DC = dataConsumer;
 
-					// TODO: do it
+					// TODO
 					// store.dispatch(stateActions.addDataConsumer(
 					// 	{
 					// 		id                   : dataConsumer.id,
@@ -1399,6 +1438,86 @@ export default class RoomClient
 		}
 	}
 
+	async enableDataProducer()
+	{
+		logger.debug('enableDataProducer()');
+
+		// TODO: Temporal.
+		if (!this._enableDataChannel)
+			return;
+
+		if (this._dataProducer)
+			return;
+
+		try
+		{
+			// Create DataProducer.
+			this._dataProducer = await this._sendTransport.produceData(
+				{
+					ordered           : true,
+					maxPacketLifeTime : 16000,
+					priority          : 'medium',
+					appData           : { info: 'my-DataProducer' }
+				});
+
+			// TODO
+			// store.dispatch(stateActions.addDataProducer(
+			// 	{
+			// 		id                   : this._dataProducer.id,
+			// 		sctpStreamParameters : this._dataProducer.sctpStreamParameters
+			// 	}));
+
+			this._dataProducer.on('transportclose', () =>
+			{
+				this._dataProducer = null;
+			});
+
+			this._dataProducer.on('open', () =>
+			{
+				logger.debug('enableDataProducer() | "open" event');
+			});
+
+			this._dataProducer.on('close', () =>
+			{
+				logger.error('enableDataProducer() | "close" event');
+
+				this._dataProducer = null;
+
+				store.dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : 'DataProducer closed'
+					}));
+			});
+
+			this._dataProducer.on('error', (error) =>
+			{
+				logger.error('enableDataProducer() | "error" event:%o', error);
+
+				store.dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : `DataProducer error: ${error}`
+					}));
+			});
+
+			this._dataProducer.on('bufferedamountlow', () =>
+			{
+				logger.warn('enableDataProducer() | "bufferedamountlow" event');
+			});
+		}
+		catch (error)
+		{
+			logger.error('enableDataProducer() | failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `Error enabling dataProducer: ${error}`
+				}));
+		}
+	}
+
 	async changeDisplayName(displayName)
 	{
 		logger.debug('changeDisplayName() [displayName:"%s"]', displayName);
@@ -1765,7 +1884,8 @@ export default class RoomClient
 					device          : this._device,
 					rtpCapabilities : this._consume
 						? this._mediasoupDevice.rtpCapabilities
-						: undefined
+						: undefined,
+					sctpCapabilities : this._mediasoupDevice.sctpCapabilities
 				});
 
 			store.dispatch(
@@ -1804,17 +1924,7 @@ export default class RoomClient
 				if (!devicesCookie || devicesCookie.webcamEnabled || this._externalVideo)
 					this.enableWebcam();
 
-				if (this._enableDataChannel)
-				{
-					// Create DataProducer.
-					this._dataProducer = await this._sendTransport.produceData(
-						{
-							ordered           : true,
-							maxPacketLifeTime : 16000,
-							priority          : 'medium',
-							appData           : { info: 'my-DataProducer' }
-						});
-				}
+				this.enableDataProducer();
 			}
 		}
 		catch (error)

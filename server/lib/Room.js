@@ -229,6 +229,7 @@ class Room extends EventEmitter
 		peer.data.displayName = undefined;
 		peer.data.device = undefined;
 		peer.data.rtpCapabilities = undefined;
+		peer.data.sctpCapabilities = undefined;
 
 		// Have mediasoup related maps ready even before the Peer joins since we
 		// allow creating Transports before joining.
@@ -467,7 +468,7 @@ class Room extends EventEmitter
 				const webRtcTransportOptions =
 				{
 					...config.mediasoup.webRtcTransportOptions,
-					numSctpStreams : sctpCapabilities.numStreams
+					numSctpStreams : (sctpCapabilities || {}).numStreams
 				};
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
@@ -709,13 +710,15 @@ class Room extends EventEmitter
 				const {
 					displayName,
 					device,
-					rtpCapabilities
+					rtpCapabilities,
+					sctpCapabilities
 				} = request.data;
 
 				// Store client data into the protoo Peer data object.
 				peer.data.displayName = displayName;
 				peer.data.device = device;
 				peer.data.rtpCapabilities = rtpCapabilities;
+				peer.data.sctpCapabilities = sctpCapabilities;
 
 				// Tell the new Peer about already joined Peers.
 				// And also create Consumers for existing Producers.
@@ -793,7 +796,7 @@ class Room extends EventEmitter
 				const webRtcTransportOptions =
 				{
 					...config.mediasoup.webRtcTransportOptions,
-					numSctpStreams : sctpCapabilities.numStreams,
+					numSctpStreams : (sctpCapabilities || {}).numStreams,
 					appData        : { producing, consuming }
 				};
 
@@ -1412,6 +1415,10 @@ class Room extends EventEmitter
 	 */
 	async _createDataConsumer({ dataConsumerPeer, dataProducerPeer, dataProducer })
 	{
+		// NOTE: Don't create the DataConsumer if the remote Peer cannot consume it.
+		if (!dataConsumerPeer.data.sctpCapabilities)
+			return;
+
 		// Must take the Transport the remote Peer is using for consuming.
 		const transport = Array.from(dataConsumerPeer.data.transports.values())
 			.find((t) => t.appData.consuming);
