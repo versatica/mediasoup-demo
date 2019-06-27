@@ -318,51 +318,64 @@ export default class RoomClient
 						};
 					}
 
-					const consumer = await this._recvTransport.consume(
+					try
+					{
+						const consumer = await this._recvTransport.consume(
+							{
+								id,
+								producerId,
+								kind,
+								rtpParameters,
+								codecOptions,
+								appData : { ...appData, peerId } // Trick.
+							});
+
+						// Store in the map.
+						this._consumers.set(consumer.id, consumer);
+
+						consumer.on('transportclose', () =>
 						{
-							id,
-							producerId,
-							kind,
-							rtpParameters,
-							codecOptions,
-							appData : { ...appData, peerId } // Trick.
+							this._consumers.delete(consumer.id);
 						});
 
-					// Store in the map.
-					this._consumers.set(consumer.id, consumer);
+						const { spatialLayers, temporalLayers } =
+							mediasoupClient.parseScalabilityMode(
+								consumer.rtpParameters.encodings[0].scalabilityMode);
 
-					consumer.on('transportclose', () =>
+						store.dispatch(stateActions.addConsumer(
+							{
+								id                     : consumer.id,
+								type                   : type,
+								locallyPaused          : false,
+								remotelyPaused         : producerPaused,
+								rtpParameters          : consumer.rtpParameters,
+								spatialLayers          : spatialLayers,
+								temporalLayers         : temporalLayers,
+								preferredSpatialLayer  : spatialLayers - 1,
+								preferredTemporalLayer : temporalLayers - 1,
+								codec                  : consumer.rtpParameters.codecs[0].mimeType.split('/')[1],
+								track                  : consumer.track
+							},
+							peerId));
+
+						// We are ready. Answer the protoo request so the server will
+						// resume this Consumer (which was paused for now if video).
+						accept();
+
+						// If audio-only mode is enabled, pause it.
+						if (consumer.kind === 'video' && store.getState().me.audioOnly)
+							this._pauseConsumer(consumer);
+					}
+					catch (error)
 					{
-						this._consumers.delete(consumer.id);
-					});
+						logger.error('"newConsumer" request failed:%o', error);
 
-					const { spatialLayers, temporalLayers } =
-						mediasoupClient.parseScalabilityMode(
-							consumer.rtpParameters.encodings[0].scalabilityMode);
-
-					store.dispatch(stateActions.addConsumer(
-						{
-							id                     : consumer.id,
-							type                   : type,
-							locallyPaused          : false,
-							remotelyPaused         : producerPaused,
-							rtpParameters          : consumer.rtpParameters,
-							spatialLayers          : spatialLayers,
-							temporalLayers         : temporalLayers,
-							preferredSpatialLayer  : spatialLayers - 1,
-							preferredTemporalLayer : temporalLayers - 1,
-							codec                  : consumer.rtpParameters.codecs[0].mimeType.split('/')[1],
-							track                  : consumer.track
-						},
-						peerId));
-
-					// We are ready. Answer the protoo request so the server will
-					// resume this Consumer (which was paused for now if video).
-					accept();
-
-					// If audio-only mode is enabled, pause it.
-					if (consumer.kind === 'video' && store.getState().me.audioOnly)
-						this._pauseConsumer(consumer);
+						store.dispatch(requestActions.notify(
+							{
+								type : 'error',
+								text : `Error creating a Consumer: ${error}`
+							}));
+					}
 
 					break;
 				}
@@ -384,74 +397,87 @@ export default class RoomClient
 						appData
 					} = request.data;
 
-					const dataConsumer = await this._recvTransport.consumeData(
+					try
+					{
+						const dataConsumer = await this._recvTransport.consumeData(
+							{
+								id,
+								dataProducerId,
+								sctpStreamParameters,
+								appData : { ...appData, peerId } // Trick.
+							});
+
+						// Store in the map.
+						this._dataConsumers.set(dataConsumer.id, dataConsumer);
+
+						dataConsumer.on('transportclose', () =>
 						{
-							id,
-							dataProducerId,
-							sctpStreamParameters,
-							appData : { ...appData, peerId } // Trick.
+							this._dataConsumers.delete(dataConsumer.id);
 						});
 
-					// Store in the map.
-					this._dataConsumers.set(dataConsumer.id, dataConsumer);
+						dataConsumer.on('open', () =>
+						{
+							logger.debug('DataConsumer "open" event');
+						});
 
-					dataConsumer.on('transportclose', () =>
+						dataConsumer.on('close', () =>
+						{
+							logger.error('DataConsumer "close" event');
+
+							this._dataConsumers.delete(dataConsumer.id);
+
+							store.dispatch(requestActions.notify(
+								{
+									type : 'error',
+									text : 'DataConsumer closed'
+								}));
+						});
+
+						dataConsumer.on('error', (error) =>
+						{
+							logger.error('DataConsumer "error" event:%o', error);
+
+							store.dispatch(requestActions.notify(
+								{
+									type : 'error',
+									text : `DataConsumer error: ${error}`
+								}));
+						});
+
+						dataConsumer.on('message', (message) =>
+						{
+							logger.debug('DataConsumer "message" event: %o', message);
+
+							store.dispatch(requestActions.notify(
+								{
+									text : `DataConsumer message: ${message}`
+								}));
+						});
+
+						// TODO: REMOVE
+						window.DC = dataConsumer;
+
+						// TODO
+						// store.dispatch(stateActions.addDataConsumer(
+						// 	{
+						// 		id                   : dataConsumer.id,
+						// 		sctpStreamParameters : dataConsumer.sctpStreamParameters
+						// 	},
+						// 	peerId));
+
+						// We are ready. Answer the protoo request.
+						accept();
+					}
+					catch (error)
 					{
-						this._dataConsumers.delete(dataConsumer.id);
-					});
-
-					dataConsumer.on('open', () =>
-					{
-						logger.debug('DataConsumer "open" event');
-					});
-
-					dataConsumer.on('close', () =>
-					{
-						logger.error('DataConsumer "close" event');
-
-						this._dataConsumers.delete(dataConsumer.id);
+						logger.error('"newDataConsumer" request failed:%o', error);
 
 						store.dispatch(requestActions.notify(
 							{
 								type : 'error',
-								text : 'DataConsumer closed'
+								text : `Error creating a DataConsumer: ${error}`
 							}));
-					});
-
-					dataConsumer.on('error', (error) =>
-					{
-						logger.error('DataConsumer "error" event:%o', error);
-
-						store.dispatch(requestActions.notify(
-							{
-								type : 'error',
-								text : `DataConsumer error: ${error}`
-							}));
-					});
-
-					dataConsumer.on('message', (message) =>
-					{
-						logger.debug('DataConsumer "message" event: %o', message);
-
-						store.dispatch(requestActions.notify(
-							{
-								text : `DataConsumer message: ${message}`
-							}));
-					});
-
-					// TODO: REMOVE
-					window.DC = dataConsumer;
-
-					// TODO
-					// store.dispatch(stateActions.addDataConsumer(
-					// 	{
-					// 		id                   : dataConsumer.id,
-					// 		sctpStreamParameters : dataConsumer.sctpStreamParameters
-					// 	},
-					// 	peerId));
-
-					// We are ready. Answer the protoo request.
-					accept();
+					}
 
 					break;
 				}
@@ -1513,7 +1539,7 @@ export default class RoomClient
 			store.dispatch(requestActions.notify(
 				{
 					type : 'error',
-					text : `Error enabling dataProducer: ${error}`
+					text : `Error enabling DataProducer: ${error}`
 				}));
 		}
 	}
