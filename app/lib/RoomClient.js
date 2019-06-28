@@ -64,8 +64,7 @@ export default class RoomClient
 			forceH264,
 			forceVP9,
 			svc,
-			externalVideo,
-			datachannel
+			externalVideo
 		}
 	)
 	{
@@ -118,11 +117,6 @@ export default class RoomClient
 			this._externalVideo.play()
 				.catch((error) => logger.warn('externalVideo.play() failed:%o', error));
 		}
-
-		// TODO: Temporal during development.
-		// Enable DataChannel.
-		// @type {Boolean}
-		this._enableDataChannel = datachannel;
 
 		// Custom mediasoup-client handler (to override default browser detection if
 		// desired).
@@ -1472,10 +1466,6 @@ export default class RoomClient
 	async enableDataProducer()
 	{
 		logger.debug('enableDataProducer()');
-
-		// TODO: Temporal.
-		if (!this._enableDataChannel)
-			return;
 
 		if (this._dataProducer)
 			return;
