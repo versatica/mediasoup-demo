@@ -394,6 +394,8 @@ export default class RoomClient
 						dataProducerId,
 						id,
 						sctpStreamParameters,
+						label,
+						protocol,
 						appData
 					} = request.data;
 
@@ -404,6 +406,8 @@ export default class RoomClient
 								id,
 								dataProducerId,
 								sctpStreamParameters,
+								label,
+								protocol,
 								appData : { ...appData, peerId } // Trick.
 							});
 
@@ -460,7 +464,9 @@ export default class RoomClient
 						store.dispatch(stateActions.addDataConsumer(
 							{
 								id                   : dataConsumer.id,
-								sctpStreamParameters : dataConsumer.sctpStreamParameters
+								sctpStreamParameters : dataConsumer.sctpStreamParameters,
+								label                : dataConsumer.label,
+								protocol             : dataConsumer.protocol
 							},
 							peerId));
 
@@ -1481,6 +1487,8 @@ export default class RoomClient
 				{
 					ordered           : true,
 					maxPacketLifeTime : 16000,
+					label             : 'chat 😊',
+					protocol          : 'foo & bar',
 					priority          : 'medium',
 					appData           : { info: 'my-DataProducer' }
 				});
@@ -1488,7 +1496,9 @@ export default class RoomClient
 			store.dispatch(stateActions.addDataProducer(
 				{
 					id                   : this._dataProducer.id,
-					sctpStreamParameters : this._dataProducer.sctpStreamParameters
+					sctpStreamParameters : this._dataProducer.sctpStreamParameters,
+					label                : this._dataProducer.label,
+					protocol             : this._dataProducer.protocol
 				}));
 
 			this._dataProducer.on('transportclose', () =>
@@ -1854,31 +1864,41 @@ export default class RoomClient
 						}
 					});
 
-				this._sendTransport.on(
-					'produceData', async ({ sctpStreamParameters, appData }, callback, errback) =>
+				this._sendTransport.on('produceData', async (
 					{
-						logger.debug(
-							'"produceData" event: [sctpStreamParameters:%o, appData:%o]',
-							sctpStreamParameters, appData);
+						sctpStreamParameters,
+						label,
+						protocol,
+						appData
+					},
+					callback,
+					errback
+				) =>
+				{
+					logger.debug(
+						'"produceData" event: [sctpStreamParameters:%o, appData:%o]',
+						sctpStreamParameters, appData);
 
-						try
-						{
-							// eslint-disable-next-line no-shadow
-							const { id } = await this._protoo.request(
-								'produceData',
-								{
-									transportId : this._sendTransport.id,
-									sctpStreamParameters,
-									appData
-								});
+					try
+					{
+						// eslint-disable-next-line no-shadow
+						const { id } = await this._protoo.request(
+							'produceData',
+							{
+								transportId : this._sendTransport.id,
+								sctpStreamParameters,
+								label,
+								protocol,
+								appData
+							});
 
-							callback({ id });
-						}
-						catch (error)
-						{
-							errback(error);
-						}
-					});
+						callback({ id });
+					}
+					catch (error)
+					{
+						errback(error);
+					}
+				});
 			}
 
 			// Create mediasoup Transport for sending (unless we don't want to consume).

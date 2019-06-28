@@ -1069,14 +1069,26 @@ class Room extends EventEmitter
 				if (!peer.data.joined)
 					throw new Error('Peer not yet joined');
 
-				const { transportId, sctpStreamParameters, appData } = request.data;
+				const {
+					transportId,
+					sctpStreamParameters,
+					label,
+					protocol,
+					appData
+				} = request.data;
+
 				const transport = peer.data.transports.get(transportId);
 
 				if (!transport)
 					throw new Error(`transport with id "${transportId}" not found`);
 
-				const dataProducer =
-					await transport.produceData({ sctpStreamParameters, appData });
+				const dataProducer = await transport.produceData(
+					{
+						sctpStreamParameters,
+						label,
+						protocol,
+						appData
+					});
 
 				// Store the Producer into the protoo Peer data Object.
 				peer.data.dataProducers.set(dataProducer.id, dataProducer);
@@ -1508,6 +1520,8 @@ class Room extends EventEmitter
 					dataProducerId       : dataProducer.id,
 					id                   : dataConsumer.id,
 					sctpStreamParameters : dataConsumer.sctpStreamParameters,
+					label                : dataConsumer.label,
+					protocol             : dataConsumer.protocol,
 					appData              : dataProducer.appData
 				});
 		}

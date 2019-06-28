@@ -53,7 +53,9 @@
     '4444-4444' :
     {
       id                   : '4444-4444',
-      sctpStreamParameters : {}
+      sctpStreamParameters : {},
+      label                : 'foo',
+      protocol             : ''
     }
   },
   peers :
@@ -109,7 +111,9 @@
     '5551-qwer' :
     {
       id                   : '5551-qwer',
-      sctpStreamParameters : {}
+      sctpStreamParameters : {},
+      label                : 'bar',
+      protocol             : 'something'
     }
   },
   notifications :
