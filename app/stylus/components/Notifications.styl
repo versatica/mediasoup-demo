@@ -28,8 +28,16 @@
 		border-radius: 4px;
 		display: flex;
 		flex-direction: row;
-		justify-content: center;
+		justify-content: flex-start;
 		align-items: center;
+
+		+desktop() {
+			min-width: 75%;
+		}
+
+		+mobile() {
+			width: 100%;
+		}
 
 		&.Appear-appear {
 			visibility: hidden;
