@@ -163,9 +163,13 @@ export default class RoomClient
 		// @type {mediasoupClient.Producer}
 		this._shareProducer = null;
 
-		// Local DataProducer.
+		// Local chat DataProducer.
 		// @type {mediasoupClient.DataProducer}
-		this._dataProducer = null;
+		this._chatDataProducer = null;
+
+		// Local bot DataProducer.
+		// @type {mediasoupClient.DataProducer}
+		this._botDataProducer = null;
 
 		// mediasoup Consumers.
 		// @type {Map<String, mediasoupClient.Consumer>}
@@ -445,6 +449,9 @@ export default class RoomClient
 						dataConsumer.on('message', (message) =>
 						{
 							logger.debug('DataConsumer "message" event: %o', message);
+
+							// TODO: For debugging.
+							window.DC_MESSAGE = message;
 
 							const { peers } = store.getState();
 							const peersArray = Object.keys(peers)
@@ -1474,83 +1481,196 @@ export default class RoomClient
 		}
 	}
 
-	async enableDataProducer()
+	async enableChatDataProducer()
 	{
-		logger.debug('enableDataProducer()');
+		logger.debug('enableChatDataProducer()');
 
-		if (this._dataProducer)
+		if (this._chatDataProducer)
 			return;
 
 		try
 		{
-			// Create DataProducer.
-			this._dataProducer = await this._sendTransport.produceData(
+			// Create chat DataProducer.
+			this._chatDataProducer = await this._sendTransport.produceData(
 				{
 					ordered           : true,
 					maxPacketLifeTime : 16000,
-					label             : 'chat 😊',
-					protocol          : 'foo & bar',
+					label             : 'chat',
 					priority          : 'medium',
-					appData           : { info: 'my-DataProducer' }
+					appData           : { info: 'my-chat-DataProducer' }
 				});
 
 			store.dispatch(stateActions.addDataProducer(
 				{
-					id                   : this._dataProducer.id,
-					sctpStreamParameters : this._dataProducer.sctpStreamParameters,
-					label                : this._dataProducer.label,
-					protocol             : this._dataProducer.protocol
+					id                   : this._chatDataProducer.id,
+					sctpStreamParameters : this._chatDataProducer.sctpStreamParameters,
+					label                : this._chatDataProducer.label,
+					protocol             : this._chatDataProducer.protocol
 				}));
 
-			this._dataProducer.on('transportclose', () =>
+			this._chatDataProducer.on('transportclose', () =>
 			{
-				this._dataProducer = null;
+				this._chatDataProducer = null;
 			});
 
-			this._dataProducer.on('open', () =>
+			this._chatDataProducer.on('open', () =>
 			{
-				logger.debug('enableDataProducer() | "open" event');
+				logger.debug('chat DataProducer "open" event');
 			});
 
-			this._dataProducer.on('close', () =>
+			this._chatDataProducer.on('close', () =>
 			{
-				logger.error('enableDataProducer() | "close" event');
+				logger.error('chat DataProducer "close" event');
 
-				this._dataProducer = null;
+				this._chatDataProducer = null;
 
 				store.dispatch(requestActions.notify(
 					{
 						type : 'error',
-						text : 'DataProducer closed'
+						text : 'Chat DataProducer closed'
 					}));
 			});
 
-			this._dataProducer.on('error', (error) =>
+			this._chatDataProducer.on('error', (error) =>
 			{
-				logger.error('enableDataProducer() | "error" event:%o', error);
+				logger.error('chat DataProducer "error" event:%o', error);
 
 				store.dispatch(requestActions.notify(
 					{
 						type : 'error',
-						text : `DataProducer error: ${error}`
+						text : `Chat DataProducer error: ${error}`
 					}));
 			});
 
-			this._dataProducer.on('bufferedamountlow', () =>
+			this._chatDataProducer.on('bufferedamountlow', () =>
 			{
-				logger.debug('enableDataProducer() | "bufferedamountlow" event');
+				logger.debug('chat DataProducer "bufferedamountlow" event');
 			});
 		}
 		catch (error)
 		{
-			logger.error('enableDataProducer() | failed:%o', error);
+			logger.error('enableChatDataProducer() | failed:%o', error);
 
 			store.dispatch(requestActions.notify(
 				{
 					type : 'error',
-					text : `Error enabling DataProducer: ${error}`
+					text : `Error enabling chat DataProducer: ${error}`
 				}));
 		}
+	}
+
+	async enableBotDataProducer()
+	{
+		logger.debug('enableBotDataProducer()');
+
+		if (this._botDataProducer)
+			return;
+
+		try
+		{
+			// Create chat DataProducer.
+			this._botDataProducer = await this._sendTransport.produceData(
+				{
+					ordered           : true,
+					maxPacketLifeTime : 16000,
+					label             : 'bot',
+					priority          : 'medium',
+					appData           : { info: 'my-bot-DataProducer' }
+				});
+
+			store.dispatch(stateActions.addDataProducer(
+				{
+					id                   : this._botDataProducer.id,
+					sctpStreamParameters : this._botDataProducer.sctpStreamParameters,
+					label                : this._botDataProducer.label,
+					protocol             : this._botDataProducer.protocol
+				}));
+
+			this._botDataProducer.on('transportclose', () =>
+			{
+				this._botDataProducer = null;
+			});
+
+			this._botDataProducer.on('open', () =>
+			{
+				logger.debug('bot DataProducer "open" event');
+			});
+
+			this._botDataProducer.on('close', () =>
+			{
+				logger.error('bot DataProducer "close" event');
+
+				this._botDataProducer = null;
+
+				store.dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : 'Bot DataProducer closed'
+					}));
+			});
+
+			this._botDataProducer.on('error', (error) =>
+			{
+				logger.error('bot DataProducer "error" event:%o', error);
+
+				store.dispatch(requestActions.notify(
+					{
+						type : 'error',
+						text : `Bot DataProducer error: ${error}`
+					}));
+			});
+
+			this._botDataProducer.on('bufferedamountlow', () =>
+			{
+				logger.debug('bot DataProducer "bufferedamountlow" event');
+			});
+		}
+		catch (error)
+		{
+			logger.error('enableBotDataProducer() | failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `Error enabling bot DataProducer: ${error}`
+				}));
+		}
+	}
+
+	async sendChatMessage(text)
+	{
+		logger.debug('sendChatMessage() [text:"%s]', text);
+
+		if (!this._chatDataProducer)
+		{
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : 'No chat DataProducer'
+				}));
+
+			return;
+		}
+
+		this._chatDataProducer.send(text);
+	}
+
+	async sendBotMessage(text)
+	{
+		logger.debug('sendBotMessage() [text:"%s]', text);
+
+		if (!this._botDataProducer)
+		{
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : 'No bot DataProducer'
+				}));
+
+			return;
+		}
+
+		this._botDataProducer.send(text);
 	}
 
 	async changeDisplayName(displayName)
@@ -1649,11 +1769,24 @@ export default class RoomClient
 		return this._protoo.request('getConsumerStats', { consumerId });
 	}
 
-	async getDataProducerRemoteStats()
+	async getChatDataProducerRemoteStats()
 	{
-		logger.debug('getDataProducerRemoteStats()');
+		logger.debug('getChatDataProducerRemoteStats()');
 
-		const dataProducer = this._dataProducer;
+		const dataProducer = this._chatDataProducer;
+
+		if (!dataProducer)
+			return;
+
+		return this._protoo.request(
+			'getDataProducerStats', { dataProducerId: dataProducer.id });
+	}
+
+	async getBotDataProducerRemoteStats()
+	{
+		logger.debug('getBotDataProducerRemoteStats()');
+
+		const dataProducer = this._botDataProducer;
 
 		if (!dataProducer)
 			return;
@@ -1995,7 +2128,8 @@ export default class RoomClient
 				if (!devicesCookie || devicesCookie.webcamEnabled || this._externalVideo)
 					this.enableWebcam();
 
-				this.enableDataProducer();
+				this.enableChatDataProducer();
+				this.enableBotDataProducer();
 			}
 		}
 		catch (error)

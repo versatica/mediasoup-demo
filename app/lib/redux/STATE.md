@@ -54,7 +54,14 @@
     {
       id                   : '4444-4444',
       sctpStreamParameters : {},
-      label                : 'foo',
+      label                : 'chat',
+      protocol             : ''
+    },
+    '4444-4445' :
+    {
+      id                   : '4444-4445',
+      sctpStreamParameters : {},
+      label                : 'bot',
       protocol             : ''
     }
   },
@@ -112,7 +119,7 @@
     {
       id                   : '5551-qwer',
       sctpStreamParameters : {},
-      label                : 'bar',
+      label                : 'chat',
       protocol             : 'something'
     }
   },

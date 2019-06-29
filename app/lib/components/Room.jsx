@@ -9,6 +9,7 @@ import { withRoomContext } from '../RoomContext';
 import * as requestActions from '../redux/requestActions';
 import { Appear } from './transitions';
 import Me from './Me';
+import ChatInput from './ChatInput';
 import Peers from './Peers';
 import Stats from './Stats';
 import Notifications from './Notifications';
@@ -75,6 +76,10 @@ class Room extends React.Component
 						})}
 					>
 						<Me />
+					</div>
+
+					<div className='chat-input-container'>
+						<ChatInput />
 					</div>
 
 					<div className='sidebar'>

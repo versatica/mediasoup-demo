@@ -751,6 +751,9 @@ class Room extends EventEmitter
 
 					for (const dataProducer of joinedPeer.data.dataProducers.values())
 					{
+						if (dataProducer.label === 'bot')
+							continue;
+
 						this._createDataConsumer(
 							{
 								dataConsumerPeer : peer,
@@ -1098,6 +1101,9 @@ class Room extends EventEmitter
 				// Create a server-side Consumer for each Peer.
 				for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
 				{
+					if (dataProducer.label === 'bot')
+						continue;
+
 					this._createDataConsumer(
 						{
 							dataConsumerPeer : otherPeer,
