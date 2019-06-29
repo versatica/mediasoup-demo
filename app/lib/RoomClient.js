@@ -446,9 +446,20 @@ export default class RoomClient
 						{
 							logger.debug('DataConsumer "message" event: %o', message);
 
+							const { peers } = store.getState();
+							const peersArray = Object.keys(peers)
+								.map((_peerId) => peers[_peerId]);
+							const sendingPeer = peersArray
+								.find((peer) => peer.dataConsumers.includes(dataConsumer.id));
+
+							// TODO: Don't check this for bot messages.
+							if (!sendingPeer)
+								logger.warn('DataConsumer "message" from unknown peer');
+
 							store.dispatch(requestActions.notify(
 								{
-									text : `DataConsumer message: ${message}`
+									text    : `${sendingPeer.displayName} says: ${message}`,
+									timeout : 5000
 								}));
 						});
 
