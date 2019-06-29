@@ -1538,7 +1538,7 @@ export default class RoomClient
 
 			this._dataProducer.on('bufferedamountlow', () =>
 			{
-				logger.warn('enableDataProducer() | "bufferedamountlow" event');
+				logger.debug('enableDataProducer() | "bufferedamountlow" event');
 			});
 		}
 		catch (error)
