@@ -465,7 +465,8 @@ export default class RoomClient
 
 							store.dispatch(requestActions.notify(
 								{
-									text    : `${sendingPeer.displayName} says: ${message}`,
+									title   : `${sendingPeer.displayName} says:`,
+									text    : message,
 									timeout : 5000
 								}));
 						});
