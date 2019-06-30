@@ -453,6 +453,13 @@ export default class RoomClient
 							// TODO: For debugging.
 							window.DC_MESSAGE = message;
 
+							if (typeof message !== 'string')
+							{
+								logger.warn('ignoring DataConsumer "message" (not a string)');
+
+								return;
+							}
+
 							const { peers } = store.getState();
 							const peersArray = Object.keys(peers)
 								.map((_peerId) => peers[_peerId]);
