@@ -812,6 +812,11 @@ class Room extends EventEmitter
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
 					webRtcTransportOptions);
 
+				transport.on('sctpstatechange', (sctpState) =>
+				{
+					logger.info('WebRtcTransport "sctpstatechange" event [sctpState:%s]', sctpState);
+				});
+
 				// Store the WebRtcTransport into the protoo Peer data Object.
 				peer.data.transports.set(transport.id, transport);
 

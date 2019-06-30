@@ -214,7 +214,7 @@ setInterval(() =>
 	if (window.CLIENT._sendTransport)
 	{
 		window.PC1 = window.CLIENT._sendTransport._handler._pc;
-		window.DP = window.CLIENT._dataProducer;
+		window.DP = window.CLIENT._chatDataProducer;
 	}
 	else
 	{
