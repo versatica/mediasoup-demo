@@ -32,7 +32,7 @@ class Bot
 		let sctpSocket;
 
 		// Connected UDP socket if Node >= 12.
-		if (process.version.slice(1, 3) >= '12')
+		if (parseInt(process.version.slice(1, 3)) >= 12)
 		{
 			await new Promise((resolve, reject) =>
 			{
