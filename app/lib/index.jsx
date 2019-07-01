@@ -76,6 +76,7 @@ async function run()
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
 	const svc = urlParser.query.svc;
+	const datachannel = urlParser.query.datachannel !== 'false';
 	const info = urlParser.query.info === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
@@ -115,6 +116,7 @@ async function run()
 			case 'forceH264':
 			case 'forceVP9':
 			case 'svc':
+			case 'datachannel':
 			case 'info':
 			case 'faceDetection':
 			case 'externalVideo':
@@ -168,6 +170,7 @@ async function run()
 			forceH264,
 			forceVP9,
 			svc,
+			datachannel,
 			externalVideo
 		});
 

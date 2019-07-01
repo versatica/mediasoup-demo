@@ -20,7 +20,8 @@
     "express": "^4.17.1",
     "mediasoup": "github:versatica/mediasoup#v3",
     "pidusage": "^2.0.17",
-    "protoo-server": "^4.0.3"
+    "protoo-server": "^4.0.3",
+    "sctp": "github:latysheff/node-sctp#master"
   },
   "devDependencies": {
     "gulp": "^4.0.2",

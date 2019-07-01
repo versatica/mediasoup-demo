@@ -3,6 +3,7 @@ const protoo = require('protoo-server');
 const throttle = require('@sitespeed.io/throttle');
 const Logger = require('./Logger');
 const config = require('../config');
+const Bot = require('./Bot');
 
 const logger = new Logger('Room');
 
@@ -110,43 +111,19 @@ class Room extends EventEmitter
 		// @type {mediasoup.AudioLevelObserver}
 		this._audioLevelObserver = audioLevelObserver;
 
+		// DataChannel bot.
+		// @type {Bot}
+		this._bot = null;
+
 		// Network throttled.
 		// @type {Boolean}
 		this._networkThrottled = false;
 
-		// Set audioLevelObserver events.
-		this._audioLevelObserver.on('volumes', (volumes) =>
-		{
-			const { producer, volume } = volumes[0];
+		// Handle audioLevelObserver.
+		this._handleAudioLevelObserver();
 
-			// logger.debug(
-			// 	'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
-			// 	producer.id, volume);
-
-			// Notify all Peers.
-			for (const peer of this._getJoinedPeers())
-			{
-				peer.notify(
-					'activeSpeaker',
-					{
-						peerId : producer.appData.peerId,
-						volume : volume
-					})
-					.catch(() => {});
-			}
-		});
-
-		this._audioLevelObserver.on('silence', () =>
-		{
-			// logger.debug('audioLevelObserver "silence" event');
-
-			// Notify all Peers.
-			for (const peer of this._getJoinedPeers())
-			{
-				peer.notify('activeSpeaker', { peerId: null })
-					.catch(() => {});
-			}
-		});
+		// Create and handle bot.
+		this._createAndHandleBot();
 
 		// For debugging.
 		global.audioLevelObserver = this._audioLevelObserver;
@@ -445,6 +422,7 @@ class Room extends EventEmitter
 	 *   autodetection.
 	 * @type {Boolean} [multiSource=false] - Just for PlainRtpTransport, allow RTP from any
 	 *   remote IP and port (no RTCP feedback will be sent to the remote).
+	 * @type {Object} [sctpCapabilities] - SCTP capabilities
 	 */
 	async createBroadcasterTransport(
 		{
@@ -453,7 +431,7 @@ class Room extends EventEmitter
 			rtcpMux = true,
 			comedia = true,
 			multiSource = false,
-			sctpCapabilities = {}
+			sctpCapabilities
 		})
 	{
 		const broadcaster = this._broadcasters.get(broadcasterId);
@@ -468,6 +446,7 @@ class Room extends EventEmitter
 				const webRtcTransportOptions =
 				{
 					...config.mediasoup.webRtcTransportOptions,
+					enableSctp     : Boolean(sctpCapabilities),
 					numSctpStreams : (sctpCapabilities || {}).numStreams
 				};
 
@@ -685,6 +664,64 @@ class Room extends EventEmitter
 		};
 	}
 
+	_handleAudioLevelObserver()
+	{
+		this._audioLevelObserver.on('volumes', (volumes) =>
+		{
+			const { producer, volume } = volumes[0];
+
+			// logger.debug(
+			// 	'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
+			// 	producer.id, volume);
+
+			// Notify all Peers.
+			for (const peer of this._getJoinedPeers())
+			{
+				peer.notify(
+					'activeSpeaker',
+					{
+						peerId : producer.appData.peerId,
+						volume : volume
+					})
+					.catch(() => {});
+			}
+		});
+
+		this._audioLevelObserver.on('silence', () =>
+		{
+			// logger.debug('audioLevelObserver "silence" event');
+
+			// Notify all Peers.
+			for (const peer of this._getJoinedPeers())
+			{
+				peer.notify('activeSpeaker', { peerId: null })
+					.catch(() => {});
+			}
+		});
+	}
+
+	async _createAndHandleBot()
+	{
+		// Create a PlainRtpTransport for connecting the bot.
+		const transport = await this._mediasoupRouter.createPlainRtpTransport(
+			{
+				listenIp           : { ip: '127.0.0.1' },
+				enableSctp         : true,
+				numSctpStreams     : 4096,
+				maxSctpMessageSize : 262144
+			});
+
+		transport.on('sctpstatechange', (sctpState) =>
+		{
+			logger.info('bot PlainRtpTransport "sctpstatechange" event [sctpState:%s]', sctpState);
+		});
+
+		this._bot = new Bot({ transport });
+
+		// For debugging.
+		global.bot = this._bot;
+	}
+
 	/**
 	 * Handle protoo requests from browsers.
 	 *
@@ -799,6 +836,7 @@ class Room extends EventEmitter
 				const webRtcTransportOptions =
 				{
 					...config.mediasoup.webRtcTransportOptions,
+					enableSctp     : Boolean(sctpCapabilities),
 					numSctpStreams : (sctpCapabilities || {}).numStreams,
 					appData        : { producing, consuming }
 				};

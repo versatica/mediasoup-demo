@@ -64,6 +64,7 @@ export default class RoomClient
 			forceH264,
 			forceVP9,
 			svc,
+			datachannel,
 			externalVideo
 		}
 	)
@@ -95,6 +96,10 @@ export default class RoomClient
 		// Whether we should consume.
 		// @type {Boolean}
 		this._consume = consume;
+
+		// Whether we want DataChannels.
+		// @type {Boolean}
+		this._useDataChannel = datachannel;
 
 		// External video.
 		// @type {HTMLVideoElement}
@@ -383,6 +388,13 @@ export default class RoomClient
 					if (!this._consume)
 					{
 						reject(403, 'I do not want to data consume');
+
+						return;
+					}
+
+					if (!this._useDataChannel)
+					{
+						reject(403, 'I do not want DataChannels');
 
 						return;
 					}
@@ -1493,6 +1505,9 @@ export default class RoomClient
 	{
 		logger.debug('enableChatDataProducer()');
 
+		if (!this._useDataChannel)
+			return;
+
 		if (this._chatDataProducer)
 			return;
 
@@ -1570,6 +1585,9 @@ export default class RoomClient
 	async enableBotDataProducer()
 	{
 		logger.debug('enableBotDataProducer()');
+
+		if (!this._useDataChannel)
+			return;
 
 		if (this._botDataProducer)
 			return;
@@ -1950,7 +1968,9 @@ export default class RoomClient
 						forceTcp         : this._forceTcp,
 						producing        : true,
 						consuming        : false,
-						sctpCapabilities : this._mediasoupDevice.sctpCapabilities
+						sctpCapabilities : this._useDataChannel
+							? this._mediasoupDevice.sctpCapabilities
+							: undefined
 					});
 
 				const {
@@ -2052,7 +2072,9 @@ export default class RoomClient
 						forceTcp         : this._forceTcp,
 						producing        : false,
 						consuming        : true,
-						sctpCapabilities : this._mediasoupDevice.sctpCapabilities
+						sctpCapabilities : this._useDataChannel
+							? this._mediasoupDevice.sctpCapabilities
+							: undefined
 					});
 
 				const {
@@ -2096,7 +2118,9 @@ export default class RoomClient
 					rtpCapabilities : this._consume
 						? this._mediasoupDevice.rtpCapabilities
 						: undefined,
-					sctpCapabilities : this._mediasoupDevice.sctpCapabilities
+					sctpCapabilities : this._useDataChannel
+						? this._mediasoupDevice.sctpCapabilities
+						: undefined
 				});
 
 			store.dispatch(
