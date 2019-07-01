@@ -7,7 +7,7 @@ const Bot = require('./Bot');
 
 const logger = new Logger('Room');
 
-const ENABLE_DATA_BOT = false;
+const ENABLE_DATA_BOT = true;
 
 /**
  * Room class.
