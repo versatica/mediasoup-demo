@@ -500,7 +500,7 @@ export default class RoomClient
 								{
 									store.dispatch(requestActions.notify(
 										{
-											title   : 'Bot says:',
+											title   : 'Message from Bot:',
 											text    : message,
 											timeout : 5000
 										}));
