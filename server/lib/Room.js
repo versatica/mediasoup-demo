@@ -7,6 +7,8 @@ const Bot = require('./Bot');
 
 const logger = new Logger('Room');
 
+const ENABLE_DATA_BOT = false;
+
 /**
  * Room class.
  *
@@ -71,10 +73,22 @@ class Room extends EventEmitter
 				interval   : 800
 			});
 
-		return new Room({ roomId, protooRoom, mediasoupRouter, audioLevelObserver });
+		let bot;
+
+		if (ENABLE_DATA_BOT)
+			bot = await Bot.create({ mediasoupRouter });
+
+		return new Room(
+			{
+				roomId,
+				protooRoom,
+				mediasoupRouter,
+				audioLevelObserver,
+				bot
+			});
 	}
 
-	constructor({ roomId, protooRoom, mediasoupRouter, audioLevelObserver })
+	constructor({ roomId, protooRoom, mediasoupRouter, audioLevelObserver, bot })
 	{
 		super();
 		this.setMaxListeners(Infinity);
@@ -113,7 +127,7 @@ class Room extends EventEmitter
 
 		// DataChannel bot.
 		// @type {Bot}
-		this._bot = null;
+		this._bot = bot;
 
 		// Network throttled.
 		// @type {Boolean}
@@ -122,11 +136,9 @@ class Room extends EventEmitter
 		// Handle audioLevelObserver.
 		this._handleAudioLevelObserver();
 
-		// Create and handle bot.
-		this._createAndHandleBot();
-
 		// For debugging.
 		global.audioLevelObserver = this._audioLevelObserver;
+		global.bot = this._bot;
 	}
 
 	/**
@@ -700,28 +712,6 @@ class Room extends EventEmitter
 		});
 	}
 
-	async _createAndHandleBot()
-	{
-		// Create a PlainRtpTransport for connecting the bot.
-		const transport = await this._mediasoupRouter.createPlainRtpTransport(
-			{
-				listenIp           : { ip: '127.0.0.1' },
-				enableSctp         : true,
-				numSctpStreams     : 4096,
-				maxSctpMessageSize : 262144
-			});
-
-		transport.on('sctpstatechange', (sctpState) =>
-		{
-			logger.info('bot PlainRtpTransport "sctpstatechange" event [sctpState:%s]', sctpState);
-		});
-
-		this._bot = new Bot({ transport });
-
-		// For debugging.
-		global.bot = this._bot;
-	}
-
 	/**
 	 * Handle protoo requests from browsers.
 	 *
@@ -776,6 +766,7 @@ class Room extends EventEmitter
 							device      : joinedPeer.data.device
 						});
 
+					// Create Consumers for existing Producers.
 					for (const producer of joinedPeer.data.producers.values())
 					{
 						this._createConsumer(
@@ -786,6 +777,7 @@ class Room extends EventEmitter
 							});
 					}
 
+					// Create DataConsumers for existing DataProducers.
 					for (const dataProducer of joinedPeer.data.dataProducers.values())
 					{
 						if (dataProducer.label === 'bot')
@@ -798,6 +790,17 @@ class Room extends EventEmitter
 								dataProducer
 							});
 					}
+				}
+
+				// Create DataConsumers for bot DataProducer.
+				if (ENABLE_DATA_BOT)
+				{
+					this._createDataConsumer(
+						{
+							dataConsumerPeer : peer,
+							dataProducerPeer : null,
+							dataProducer     : this._bot.dataProducer
+						});
 				}
 
 				accept({ peers: peerInfos });
@@ -1141,18 +1144,38 @@ class Room extends EventEmitter
 
 				accept({ id: dataProducer.id });
 
-				// Create a server-side Consumer for each Peer.
-				for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
+				switch (dataProducer.label)
 				{
-					if (dataProducer.label === 'bot')
-						continue;
-
-					this._createDataConsumer(
+					case 'chat':
+					{
+						// Create a server-side DataConsumer for each Peer.
+						for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
 						{
-							dataConsumerPeer : otherPeer,
-							dataProducerPeer : peer,
-							dataProducer
-						});
+							this._createDataConsumer(
+								{
+									dataConsumerPeer : otherPeer,
+									dataProducerPeer : peer,
+									dataProducer
+								});
+						}
+
+						break;
+					}
+
+					case 'bot':
+					{
+						// Pass it to the bot.
+						if (ENABLE_DATA_BOT)
+						{
+							this._bot.handleDataProducer(
+								{
+									dataProducerId : dataProducer.id,
+									peer
+								});
+						}
+
+						break;
+					}
 				}
 
 				break;
@@ -1504,7 +1527,12 @@ class Room extends EventEmitter
 	 *
 	 * @async
 	 */
-	async _createDataConsumer({ dataConsumerPeer, dataProducerPeer, dataProducer })
+	async _createDataConsumer(
+		{
+			dataConsumerPeer,
+			dataProducerPeer = null, // This is null for the bot DataProducer.
+			dataProducer
+		})
 	{
 		// NOTE: Don't create the DataConsumer if the remote Peer cannot consume it.
 		if (!dataConsumerPeer.data.sctpCapabilities)
@@ -1565,7 +1593,8 @@ class Room extends EventEmitter
 			await dataConsumerPeer.request(
 				'newDataConsumer',
 				{
-					peerId               : dataProducerPeer.id,
+					// This is null for bot DataProducer.
+					peerId               : dataProducerPeer ? dataProducerPeer.id : null,
 					dataProducerId       : dataProducer.id,
 					id                   : dataConsumer.id,
 					sctpStreamParameters : dataConsumer.sctpStreamParameters,

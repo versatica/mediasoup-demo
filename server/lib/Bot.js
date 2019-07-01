@@ -1,60 +1,42 @@
 const dgram = require('dgram');
-const EventEmitter = require('events').EventEmitter;
 const sctp = require('sctp');
 const Logger = require('./Logger');
 
 const logger = new Logger('Bot');
 
-class Bot extends EventEmitter
+class Bot
 {
-	constructor({ transport })
+	static async create({ mediasoupRouter })
 	{
-		super();
-		this.setMaxListeners(Infinity);
+		// Create a PlainRtpTransport for connecting the bot.
+		const transport = await mediasoupRouter.createPlainRtpTransport(
+			{
+				listenIp           : { ip: '127.0.0.1' },
+				enableSctp         : true,
+				numSctpStreams     : 4096,
+				maxSctpMessageSize : 262144
+			});
 
-		// Node UDP socket.
-		// @type {dgram.Socket}
-		this._udpSocket = null;
+		const udpSocket = dgram.createSocket({ type: 'udp4' });
 
-		// SCTP socket.
-		// @type {sctp.Socket}
-		this._sctpSocket = null;
+		await new Promise((resolve) => udpSocket.bind(0, '127.0.0.1', resolve));
 
-		// SCTP stream.
-		// @type {sctp.Stream}
-		this._sctpStream = null;
+		const localUdpPort = udpSocket.address().port;
 
-		// mediasoup PlainRtpTransport.
-		// @type {mediasoup.PlainRtpTransport}
-		this._transport = transport;
+		await transport.connect({ ip: '127.0.0.1', port: localUdpPort });
 
-		// mediasoup DataProducer.
-		// @type {mediasoup.DataProducer}
-		this._dataProducer = null;
+		const remoteUdpIp = transport.tuple.localIp;
+		const remoteUdpPort = transport.tuple.localPort;
+		const { numStreams } = transport.sctpParameters;
 
-		this._run();
-	}
-
-	async _run()
-	{
-		this._udpSocket = dgram.createSocket({ type: 'udp4' });
-
-		await new Promise((resolve) => this._udpSocket.bind(0, '127.0.0.1', resolve));
-
-		const localUdpPort = this._udpSocket.address().port;
-
-		await this._transport.connect({ ip: '127.0.0.1', port: localUdpPort });
-
-		const remoteUdpIp = this._transport.tuple.localIp;
-		const remoteUdpPort = this._transport.tuple.localPort;
-		const { numStreams } = this._transport.sctpParameters;
+		let sctpSocket;
 
 		// Connected UDP socket if Node >= 12.
 		if (process.version.slice(1, 3) >= '12')
 		{
 			await new Promise((resolve, reject) =>
 			{
-				this._udpSocket.connect(remoteUdpPort, remoteUdpIp, (error) =>
+				udpSocket.connect(remoteUdpPort, remoteUdpIp, (error) =>
 				{
 					if (error)
 					{
@@ -65,14 +47,13 @@ class Bot extends EventEmitter
 						return;
 					}
 
-					this._sctpSocket = sctp.connect(
+					sctpSocket = sctp.connect(
 						{
 							localPort    : 5000, // Required for SCTP over UDP in mediasoup.
 							port         : 5000, // Required for SCTP over UDP in mediasoup.
-							passive      : true,
 							MIS          : numStreams,
 							OS           : numStreams,
-							udpTransport : this._udpSocket
+							udpTransport : udpSocket
 						});
 
 					resolve();
@@ -82,14 +63,13 @@ class Bot extends EventEmitter
 		// Disconnected UDP socket if Node < 12.
 		else
 		{
-			this._sctpSocket = sctp.connect(
+			sctpSocket = sctp.connect(
 				{
 					localPort    : 5000, // Required for SCTP over UDP in mediasoup.
 					port         : 5000, // Required for SCTP over UDP in mediasoup.
-					passive      : true,
 					MIS          : numStreams,
 					OS           : numStreams,
-					udpTransport : this._udpSocket,
+					udpTransport : udpSocket,
 					udpPeer      :
 					{
 						address : remoteUdpIp,
@@ -98,43 +78,108 @@ class Bot extends EventEmitter
 				});
 		}
 
-		this._sctpSocket.on('error', (error) =>
+		const streamId = 666;
+		const sendStream = sctpSocket.createStream(streamId);
+
+		// Create DataProducer.
+		const dataProducer = await transport.produceData(
+			{
+				sctpStreamParameters :
+				{
+					streamId : streamId,
+					ordered  : true
+				},
+				label : 'bot'
+			});
+
+		const bot = new Bot({ transport, sctpSocket, sendStream, dataProducer });
+
+		return bot;
+	}
+
+	constructor({ sctpSocket, sendStream, transport, dataProducer })
+	{
+		// mediasoup PlainRtpTransport.
+		// @type {mediasoup.PlainRtpTransport}
+		this._transport = transport;
+
+		// mediasoup DataProducer.
+		// @type {mediasoup.DataProducer}
+		this._dataProducer = dataProducer;
+
+		// Map of peers indexed by SCTP streamId.
+		// @type{Map<Number, Object>}
+		this._mapStreamIdPeer = new Map();
+
+		transport.on('sctpstatechange', (sctpState) =>
 		{
-			logger.error('SCTP socket "error" event:%o', error);
+			logger.info(
+				'bot PlainRtpTransport "sctpstatechange" event [sctpState:%s]', sctpState);
 		});
 
-		this._sctpSocket.on('connect', () =>
+		sctpSocket.on('connect', () =>
 		{
 			logger.info('SCTP socket "connect" event');
 		});
 
-		this._sctpSocket.on('stream', (stream, id) =>
+		sctpSocket.on('error', (error) =>
 		{
-			logger.info('SCTP socket "stream" event [id:%o]', id);
+			logger.error('SCTP socket "error" event:%o', error);
 		});
 
-		this._sctpStream = this._sctpSocket.createStream(666);
+		sctpSocket.on('stream', (stream, streamId) =>
+		{
+			logger.info('SCTP socket "stream" event [streamId:%d]', streamId);
 
-		this._sctpStream.on('data', (data) =>
+			const peer = this._mapStreamIdPeer.get(streamId);
+
+			if (!peer)
+			{
+				logger.warn('no peer associated to streamId [streamId:%d]', streamId);
+
+				return;
+			}
+
+			stream.on('data', (data) =>
+			{
+				const text = data.toString('utf8');
+
+				// TODO: Remove info log.
+				logger.info(
+					'SCTP stream "data" event in SCTP inbound stream [streamId:%d, peerId:%s, text:%o]',
+					streamId, peer.id, text);
+
+				sendStream.write(`${peer.data.displayName} said me "${text}"`);
+			});
+		});
+
+		sendStream.on('data', (data) =>
 		{
 			logger.warn(
 				'SCTP stream "data" event in SCTP outgoing stream! [data:%o]', data);
-
-			// For testing purposes.
-			global.LAST_DATA = data;
 		});
+	}
 
-		// Create DataProducer.
-		this._dataProducer = await this._transport.produceData(
+	get dataProducer()
+	{
+		return this._dataProducer;
+	}
+
+	async handleDataProducer({ dataProducerId, peer })
+	{
+		const dataConsumer = await this._transport.consumeData(
 			{
-				sctpStreamParameters :
-				{
-					streamId          : 666,
-					ordered           : true,
-					maxPacketLifeTime : 5000
-				},
-				label : 'bot'
+				dataProducerId
 			});
+
+		const { streamId } = dataConsumer.sctpStreamParameters;
+
+		this._mapStreamIdPeer.set(streamId, peer);
+
+		dataConsumer.observer.on('close', () =>
+		{
+			this._mapStreamIdPeer.delete(streamId);
+		});
 	}
 }
 

@@ -436,7 +436,7 @@ export default class RoomClient
 
 						dataConsumer.on('close', () =>
 						{
-							logger.error('DataConsumer "close" event');
+							logger.warn('DataConsumer "close" event');
 
 							this._dataConsumers.delete(dataConsumer.id);
 
@@ -472,35 +472,58 @@ export default class RoomClient
 								return;
 							}
 
-							const { peers } = store.getState();
-							const peersArray = Object.keys(peers)
-								.map((_peerId) => peers[_peerId]);
-							const sendingPeer = peersArray
-								.find((peer) => peer.dataConsumers.includes(dataConsumer.id));
-
-							// TODO: Don't check this for bot messages.
-							if (!sendingPeer)
-								logger.warn('DataConsumer "message" from unknown peer');
-
-							store.dispatch(requestActions.notify(
+							switch (dataConsumer.label)
+							{
+								case 'chat':
 								{
-									title   : `${sendingPeer.displayName} says:`,
-									text    : message,
-									timeout : 5000
-								}));
+									const { peers } = store.getState();
+									const peersArray = Object.keys(peers)
+										.map((_peerId) => peers[_peerId]);
+									const sendingPeer = peersArray
+										.find((peer) => peer.dataConsumers.includes(dataConsumer.id));
+
+									// TODO: Don't check this for bot messages.
+									if (!sendingPeer)
+										logger.warn('DataConsumer "message" from unknown peer');
+
+									store.dispatch(requestActions.notify(
+										{
+											title   : `${sendingPeer.displayName} says:`,
+											text    : message,
+											timeout : 5000
+										}));
+
+									break;
+								}
+
+								case 'bot':
+								{
+									store.dispatch(requestActions.notify(
+										{
+											title   : 'Bot says:',
+											text    : message,
+											timeout : 5000
+										}));
+
+									break;
+								}
+							}
 						});
 
 						// TODO: REMOVE
 						window.DC = dataConsumer;
 
-						store.dispatch(stateActions.addDataConsumer(
-							{
-								id                   : dataConsumer.id,
-								sctpStreamParameters : dataConsumer.sctpStreamParameters,
-								label                : dataConsumer.label,
-								protocol             : dataConsumer.protocol
-							},
-							peerId));
+						if (dataConsumer.label === 'chat')
+						{
+							store.dispatch(stateActions.addDataConsumer(
+								{
+									id                   : dataConsumer.id,
+									sctpStreamParameters : dataConsumer.sctpStreamParameters,
+									label                : dataConsumer.label,
+									protocol             : dataConsumer.protocol
+								},
+								peerId));
+						}
 
 						// We are ready. Answer the protoo request.
 						accept();
