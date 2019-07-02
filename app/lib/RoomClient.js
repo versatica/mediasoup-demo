@@ -2209,8 +2209,14 @@ export default class RoomClient
 				if (!devicesCookie || devicesCookie.webcamEnabled || this._externalVideo)
 					this.enableWebcam();
 
-				this.enableChatDataProducer();
-				this.enableBotDataProducer();
+				this._sendTransport.on('connectionstatechange', (connectionState) =>
+				{
+					if (connectionState === 'connected')
+					{
+						this.enableChatDataProducer();
+						this.enableBotDataProducer();
+					}
+				});
 			}
 		}
 		catch (error)
