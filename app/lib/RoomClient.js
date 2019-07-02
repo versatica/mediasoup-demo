@@ -1701,7 +1701,20 @@ export default class RoomClient
 			return;
 		}
 
-		this._chatDataProducer.send(text);
+		try
+		{
+			this._chatDataProducer.send(text);
+		}
+		catch (error)
+		{
+			logger.error('chat DataProducer.send() failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `chat DataProducer.send() failed: ${error}`
+				}));
+		}
 	}
 
 	async sendBotMessage(text)
@@ -1719,7 +1732,20 @@ export default class RoomClient
 			return;
 		}
 
-		this._botDataProducer.send(text);
+		try
+		{
+			this._botDataProducer.send(text);
+		}
+		catch (error)
+		{
+			logger.error('bot DataProducer.send() failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `bot DataProducer.send() failed: ${error}`
+				}));
+		}
 	}
 
 	async changeDisplayName(displayName)
