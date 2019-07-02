@@ -78,6 +78,11 @@ class Bot
 				});
 		}
 
+		// TODO:
+		// Ugly API to set per Socket PPID that does *not* work anyway.
+		// https://github.com/latysheff/node-sctp/issues/5
+		sctpSocket.ppid = sctp.PPID.WEBRTC_STRING;
+
 		const streamId = 666;
 		const sendStream = sctpSocket.createStream(streamId);
 
@@ -110,6 +115,14 @@ class Bot
 		// Map of peers indexed by SCTP streamId.
 		// @type{Map<Number, Object>}
 		this._mapStreamIdPeer = new Map();
+
+		// SCTP socket.
+		// @type {sctp.Socket}
+		this._sctpSocket = sctpSocket;
+
+		// SCTP sending stream.
+		// @type {sctp.Stream}
+		this._sendStream = sendStream;
 
 		transport.on('sctpstatechange', (sctpState) =>
 		{
