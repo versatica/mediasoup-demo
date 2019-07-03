@@ -147,18 +147,17 @@ class Bot
 		{
 			logger.info('SCTP socket "stream" event [streamId:%d]', streamId);
 
-			const peer = this._mapStreamIdPeer.get(streamId);
-
-			if (!peer)
-			{
-				logger.warn('no peer associated to streamId [streamId:%d]', streamId);
-
-				return;
-			}
-
 			stream.on('data', (data) =>
 			{
 				const text = data.toString('utf8');
+				const peer = this._mapStreamIdPeer.get(streamId);
+
+				if (!peer)
+				{
+					logger.warn('no peer associated to streamId [streamId:%d]', streamId);
+
+					return;
+				}
 
 				// TODO: Remove info log.
 				logger.info(
