@@ -212,6 +212,39 @@ window.__recvSdps = function()
 		roomClient._recvTransport._handler._pc.localDescription.sdp);
 };
 
+let dataChannelTestInterval = null;
+
+window.__startDataChannelTest = function()
+{
+	let number = 0;
+
+	const buffer = new ArrayBuffer(32);
+	const view = new DataView(buffer);
+
+	dataChannelTestInterval = window.setInterval(() =>
+	{
+		if (window.DP)
+		{
+			view.setUint32(0, number++);
+			window.DP.send(buffer);
+		}
+	}, 100);
+};
+
+window.__stopDataChannelTest = function()
+{
+	window.clearInterval(dataChannelTestInterval);
+
+	const buffer = new ArrayBuffer(32);
+	const view = new DataView(buffer);
+
+	if (window.DP)
+	{
+		view.setUint32(0, Math.pow(2, 32) - 1);
+		window.DP.send(buffer);
+	}
+};
+
 setInterval(() =>
 {
 	if (window.CLIENT._sendTransport)

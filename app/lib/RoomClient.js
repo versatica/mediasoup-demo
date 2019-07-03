@@ -109,6 +109,10 @@ export default class RoomClient
 		// @type {MediaStream}
 		this._externalVideoStream = null;
 
+		// Next expected dataChannel test number.
+		// @type {Number}
+		this._nextDatachannelTestNumber = 0;
+
 		if (externalVideo)
 		{
 			this._externalVideo = document.createElement('video');
@@ -465,7 +469,27 @@ export default class RoomClient
 							// TODO: For debugging.
 							window.DC_MESSAGE = message;
 
-							if (typeof message !== 'string')
+							if (message instanceof ArrayBuffer)
+							{
+								const view = new DataView(message);
+								const number = view.getUint32();
+
+								if (number == Math.pow(2, 32) - 1)
+								{
+									logger.warn('dataChannelTest finished!');
+
+									return;
+								}
+
+								if (number > this._nextDatachannelTestNumber)
+									logger.warn('dataChannelTest: %s packets missing', number - this._nextDatachannelTestNumber);
+
+								this._nextDatachannelTestNumber = number + 1;
+
+								return;
+
+							}
+							else if (typeof message !== 'string')
 							{
 								logger.warn('ignoring DataConsumer "message" (not a string)');
 
