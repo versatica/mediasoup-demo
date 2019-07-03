@@ -4,6 +4,9 @@ const Logger = require('./Logger');
 
 const logger = new Logger('Bot');
 
+// Set node-sctp default PMTU to 1200.
+sctp.defaults({ PMTU: 1200 });
+
 class Bot
 {
 	static async create({ mediasoupRouter })
