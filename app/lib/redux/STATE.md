@@ -121,6 +121,12 @@
       sctpStreamParameters : {},
       label                : 'chat',
       protocol             : 'something'
+    },
+    '5552-qwer' :
+    {
+      id                   : '5552-qwer',
+      sctpStreamParameters : {},
+      label                : 'bot'
     }
   },
   notifications :

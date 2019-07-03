@@ -84,6 +84,11 @@ const peers = (state = initialState, action) =>
 		case 'ADD_DATA_CONSUMER':
 		{
 			const { dataConsumer, peerId } = action.payload;
+
+			// special case for bot DataConsumer.
+			if (!peerId)
+				return state;
+
 			const peer = state[peerId];
 
 			if (!peer)
@@ -98,6 +103,11 @@ const peers = (state = initialState, action) =>
 		case 'REMOVE_DATA_CONSUMER':
 		{
 			const { dataConsumerId, peerId } = action.payload;
+
+			// special case for bot DataConsumer.
+			if (!peerId)
+				return state;
+
 			const peer = state[peerId];
 
 			// NOTE: This means that the Peer was closed before, so it's ok.

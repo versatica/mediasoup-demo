@@ -404,7 +404,7 @@ export default class RoomClient
 					}
 
 					const {
-						peerId,
+						peerId, // NOTE: Null if bot.
 						dataProducerId,
 						id,
 						sctpStreamParameters,
@@ -540,17 +540,14 @@ export default class RoomClient
 						// TODO: REMOVE
 						window.DC = dataConsumer;
 
-						if (dataConsumer.label === 'chat')
-						{
-							store.dispatch(stateActions.addDataConsumer(
-								{
-									id                   : dataConsumer.id,
-									sctpStreamParameters : dataConsumer.sctpStreamParameters,
-									label                : dataConsumer.label,
-									protocol             : dataConsumer.protocol
-								},
-								peerId));
-						}
+						store.dispatch(stateActions.addDataConsumer(
+							{
+								id                   : dataConsumer.id,
+								sctpStreamParameters : dataConsumer.sctpStreamParameters,
+								label                : dataConsumer.label,
+								protocol             : dataConsumer.protocol
+							},
+							peerId));
 
 						// We are ready. Answer the protoo request.
 						accept();

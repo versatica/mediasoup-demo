@@ -28,7 +28,8 @@ class Stats extends React.Component
 			audioConsumerLocalStats     : null,
 			videoConsumerRemoteStats    : null,
 			videoConsumerLocalStats     : null,
-			chatDataConsumerRemoteStats : null
+			chatDataConsumerRemoteStats : null,
+			botDataConsumerRemoteStats  : null
 		};
 
 		this._delayTimer = null;
@@ -104,7 +105,7 @@ class Stats extends React.Component
 
 							<If condition={audioProducerRemoteStats || audioProducerLocalStats}>
 								<p>
-									{'audio stats: '}
+									{'audio producer stats: '}
 									<a href='#audio-producer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a href='#audio-producer-local-stats'>[local]</a>
@@ -113,7 +114,7 @@ class Stats extends React.Component
 
 							<If condition={videoProducerRemoteStats || videoProducerLocalStats}>
 								<p>
-									{'video stats: '}
+									{'video producer stats: '}
 									<a href='#video-producer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a href='#video-producer-local-stats'>[local]</a>
@@ -122,8 +123,8 @@ class Stats extends React.Component
 
 							<If condition={chatDataProducerRemoteStats}>
 								<p>
-									{'chat data stats: '}
-									<a href='#chat-data-producer-remote-stats'>[remote]</a>
+									{'chat dataproducer stats: '}
+									<a href='#chat-dataproducer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a className='disabled'>[local]</a>
 								</p>
@@ -131,8 +132,8 @@ class Stats extends React.Component
 
 							<If condition={botDataProducerRemoteStats}>
 								<p>
-									{'bot data stats: '}
-									<a href='#bot-data-producer-remote-stats'>[remote]</a>
+									{'bot dataproducer stats: '}
+									<a href='#bot-dataproducer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a className='disabled'>[local]</a>
 								</p>
@@ -140,7 +141,7 @@ class Stats extends React.Component
 
 							<If condition={audioConsumerRemoteStats || audioConsumerLocalStats}>
 								<p>
-									{'audio stats: '}
+									{'audio consumer stats: '}
 									<a href='#audio-consumer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a href='#audio-consumer-local-stats'>[local]</a>
@@ -149,7 +150,7 @@ class Stats extends React.Component
 
 							<If condition={videoConsumerRemoteStats || videoConsumerLocalStats}>
 								<p>
-									{'video stats: '}
+									{'video consumer stats: '}
 									<a href='#video-consumer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a href='#video-consumer-local-stats'>[local]</a>
@@ -158,8 +159,8 @@ class Stats extends React.Component
 
 							<If condition={chatDataConsumerRemoteStats}>
 								<p>
-									{'chat data stats: '}
-									<a href='#chat-data-consumer-remote-stats'>[remote]</a>
+									{'chat dataconsumer stats: '}
+									<a href='#chat-dataconsumer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a className='disabled'>[local]</a>
 								</p>
@@ -167,8 +168,8 @@ class Stats extends React.Component
 
 							<If condition={botDataConsumerRemoteStats}>
 								<p>
-									{'bot data stats: '}
-									<a href='#bot-data-consumer-remote-stats'>[remote]</a>
+									{'bot dataconsumer stats: '}
+									<a href='#bot-dataconsumer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a className='disabled'>[local]</a>
 								</p>
@@ -210,11 +211,11 @@ class Stats extends React.Component
 						</If>
 
 						<If condition={chatDataProducerRemoteStats}>
-							{this._printStats('chat data producer remote stats', chatDataProducerRemoteStats)}
+							{this._printStats('chat dataproducer remote stats', chatDataProducerRemoteStats)}
 						</If>
 
 						<If condition={botDataProducerRemoteStats}>
-							{this._printStats('bot data producer remote stats', botDataProducerRemoteStats)}
+							{this._printStats('bot dataproducer remote stats', botDataProducerRemoteStats)}
 						</If>
 
 						<If condition={audioConsumerRemoteStats}>
@@ -234,11 +235,11 @@ class Stats extends React.Component
 						</If>
 
 						<If condition={chatDataConsumerRemoteStats}>
-							{this._printStats('chat data consumer remote stats', chatDataConsumerRemoteStats)}
+							{this._printStats('chat dataconsumer remote stats', chatDataConsumerRemoteStats)}
 						</If>
 
 						<If condition={botDataConsumerRemoteStats}>
-							{this._printStats('bot data consumer remote stats', botDataConsumerRemoteStats)}
+							{this._printStats('bot dataconsumer remote stats', botDataConsumerRemoteStats)}
 						</If>
 					</div>
 				</div>
@@ -318,6 +319,10 @@ class Stats extends React.Component
 
 			botDataProducerRemoteStats = await roomClient.getBotDataProducerRemoteStats()
 				.catch(() => {});
+
+			botDataConsumerRemoteStats =
+				await roomClient.getDataConsumerRemoteStats(botDataConsumerId)
+					.catch(() => {});
 		}
 		else
 		{
@@ -341,10 +346,6 @@ class Stats extends React.Component
 
 			chatDataConsumerRemoteStats =
 				await roomClient.getDataConsumerRemoteStats(chatDataConsumerId)
-					.catch(() => {});
-
-			botDataConsumerRemoteStats =
-				await roomClient.getDataConsumerRemoteStats(botDataConsumerId)
 					.catch(() => {});
 		}
 
@@ -467,7 +468,17 @@ const mapStateToProps = (state) =>
 	let chatDataConsumerId;
 	let botDataConsumerId;
 
-	if (!isMe)
+	if (isMe)
+	{
+		for (const dataConsumerId of Object.keys(dataConsumers))
+		{
+			const dataConsumer = dataConsumers[dataConsumerId];
+
+			if (dataConsumer.label === 'bot')
+				botDataConsumerId = dataConsumer.id;
+		}
+	}
+	else
 	{
 		for (const consumerId of peer.consumers)
 		{
@@ -489,16 +500,8 @@ const mapStateToProps = (state) =>
 		{
 			const dataConsumer = dataConsumers[dataConsumerId];
 
-			switch (dataConsumer.label)
-			{
-				case 'chat':
-					chatDataConsumerId = dataConsumer.id;
-					break;
-
-				case 'bot':
-					botDataConsumerId = dataConsumer.id;
-					break;
-			}
+			if (dataConsumer.label === 'chat')
+				chatDataConsumerId = dataConsumer.id;
 		}
 	}
 
