@@ -1566,11 +1566,11 @@ export default class RoomClient
 			// Create chat DataProducer.
 			this._chatDataProducer = await this._sendTransport.produceData(
 				{
-					ordered           : false,
-					maxRetransmits    : 1,
-					label             : 'chat',
-					priority          : 'medium',
-					appData           : { info: 'my-chat-DataProducer' }
+					ordered        : false,
+					maxRetransmits : 1,
+					label          : 'chat',
+					priority       : 'medium',
+					appData        : { info: 'my-chat-DataProducer' }
 				});
 
 			store.dispatch(stateActions.addDataProducer(
