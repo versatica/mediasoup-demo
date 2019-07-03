@@ -482,12 +482,15 @@ export default class RoomClient
 								}
 
 								if (number > this._nextDatachannelTestNumber)
-									logger.warn('dataChannelTest: %s packets missing', number - this._nextDatachannelTestNumber);
+								{
+									logger.warn(
+										'dataChannelTest: %s packets missing',
+										number - this._nextDatachannelTestNumber);
+								}
 
 								this._nextDatachannelTestNumber = number + 1;
 
 								return;
-
 							}
 							else if (typeof message !== 'string')
 							{
