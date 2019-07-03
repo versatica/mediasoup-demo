@@ -1555,8 +1555,9 @@ export default class RoomClient
 		if (!this._useDataChannel)
 			return;
 
-		if (this._chatDataProducer)
-			return;
+		// TODO: Should enable this code.
+		// if (this._chatDataProducer)
+		// 	return;
 
 		try
 		{
@@ -1626,6 +1627,8 @@ export default class RoomClient
 					type : 'error',
 					text : `Error enabling chat DataProducer: ${error}`
 				}));
+
+			throw error;
 		}
 	}
 
@@ -1707,6 +1710,8 @@ export default class RoomClient
 					type : 'error',
 					text : `Error enabling bot DataProducer: ${error}`
 				}));
+
+			throw error;
 		}
 	}
 
