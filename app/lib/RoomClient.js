@@ -111,7 +111,7 @@ export default class RoomClient
 
 		// Next expected dataChannel test number.
 		// @type {Number}
-		this._nextDatachannelTestNumber = 0;
+		this._nextDataChannelTestNumber = 0;
 
 		if (externalVideo)
 		{
@@ -478,17 +478,19 @@ export default class RoomClient
 								{
 									logger.warn('dataChannelTest finished!');
 
+									this._nextDataChannelTestNumber = 0;
+
 									return;
 								}
 
-								if (number > this._nextDatachannelTestNumber)
+								if (number > this._nextDataChannelTestNumber)
 								{
 									logger.warn(
 										'dataChannelTest: %s packets missing',
-										number - this._nextDatachannelTestNumber);
+										number - this._nextDataChannelTestNumber);
 								}
 
-								this._nextDatachannelTestNumber = number + 1;
+								this._nextDataChannelTestNumber = number + 1;
 
 								return;
 							}
