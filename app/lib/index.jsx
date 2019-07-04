@@ -245,6 +245,41 @@ window.__stopDataChannelTest = function()
 	}
 };
 
+window.__testSctp = async function(timeout = 100)
+{
+	await window.CLIENT.enableChatDataProducer();
+
+	const dp = window.CLIENT._chatDataProducer;
+
+	logger.warn(
+		'<<< testSctp: chat DataProducer created [id:%d, readyState:%s]',
+		dp.sctpStreamParameters.streamId,
+		dp.readyState);
+
+	function send()
+	{
+		dp.send(`I am streamId ${dp.sctpStreamParameters.streamId}`);
+	}
+
+	if (dp.readyState === 'open')
+	{
+		send();
+	}
+	else
+	{
+		dp.on('open', () =>
+		{
+			logger.warn(
+				'<<< testSctp: chat DataChannel open [id:%d]',
+				dp.sctpStreamParameters.streamId);
+
+			send();
+		});
+	}
+
+	setTimeout(window.__testSctp, timeout);
+};
+
 setInterval(() =>
 {
 	if (window.CLIENT._sendTransport)

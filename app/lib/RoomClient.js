@@ -464,7 +464,9 @@ export default class RoomClient
 
 						dataConsumer.on('message', (message) =>
 						{
-							logger.debug('DataConsumer "message" event: %o', message);
+							logger.debug(
+								'DataConsumer "message" event [streamId:%d]: %o',
+								message, dataConsumer.sctpStreamParameters.streamId);
 
 							// TODO: For debugging.
 							window.DC_MESSAGE = message;
@@ -2198,7 +2200,7 @@ export default class RoomClient
 					rtpCapabilities : this._consume
 						? this._mediasoupDevice.rtpCapabilities
 						: undefined,
-					sctpCapabilities : this._useDataChannel
+					sctpCapabilities : this._useDataChannel && this._consume
 						? this._mediasoupDevice.sctpCapabilities
 						: undefined
 				});

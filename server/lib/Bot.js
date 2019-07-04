@@ -16,7 +16,7 @@ class Bot
 			{
 				listenIp           : { ip: '127.0.0.1' },
 				enableSctp         : true,
-				numSctpStreams     : 4096,
+				numSctpStreams     : { OS: 4096, MIS: 4096 },
 				maxSctpMessageSize : 262144
 			});
 
@@ -30,7 +30,7 @@ class Bot
 
 		const remoteUdpIp = transport.tuple.localIp;
 		const remoteUdpPort = transport.tuple.localPort;
-		const { numStreams } = transport.sctpParameters;
+		const { OS, MIS } = transport.sctpParameters;
 
 		let sctpSocket;
 
@@ -54,8 +54,8 @@ class Bot
 						{
 							localPort    : 5000, // Required for SCTP over UDP in mediasoup.
 							port         : 5000, // Required for SCTP over UDP in mediasoup.
-							MIS          : numStreams,
-							OS           : numStreams,
+							OS           : OS,
+							MIS          : MIS,
 							udpTransport : udpSocket
 						});
 
@@ -70,8 +70,8 @@ class Bot
 				{
 					localPort    : 5000, // Required for SCTP over UDP in mediasoup.
 					port         : 5000, // Required for SCTP over UDP in mediasoup.
-					MIS          : numStreams,
-					OS           : numStreams,
+					OS           : OS,
+					MIS          : MIS,
 					udpTransport : udpSocket,
 					udpPeer      :
 					{
