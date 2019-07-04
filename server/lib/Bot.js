@@ -81,11 +81,6 @@ class Bot
 				});
 		}
 
-		// TODO:
-		// Ugly API to set per Socket PPID that does *not* work anyway.
-		// https://github.com/latysheff/node-sctp/issues/5
-		sctpSocket.ppid = sctp.PPID.WEBRTC_STRING;
-
 		const streamId = 666;
 		const sendStream = sctpSocket.createStream(streamId);
 
@@ -149,6 +144,16 @@ class Bot
 
 			stream.on('data', (data) =>
 			{
+				const { ppid } = data;
+
+				if (ppid !== sctp.PPID.WEBRTC_STRING)
+				{
+					logger.warn(
+						'ignoring non string receivied data in SCTP inbound stream');
+
+					return;
+				}
+
 				const text = data.toString('utf8');
 				const peer = this._mapStreamIdPeer.get(streamId);
 
@@ -159,12 +164,15 @@ class Bot
 					return;
 				}
 
-				// TODO: Remove info log.
 				logger.info(
-					'SCTP stream "data" event in SCTP inbound stream [streamId:%d, peerId:%s, text:%o]',
-					streamId, peer.id, text);
+					'SCTP stream "data" event in SCTP inbound stream [streamId:%d, peerId:%s, text:%o, ppid:%o]',
+					streamId, peer.id, text, ppid);
 
-				sendStream.write(`${peer.data.displayName} said me "${text}"`);
+				const buffer = Buffer.from(`${peer.data.displayName} said me "${text}"`);
+
+				buffer.ppid = sctp.PPID.WEBRTC_STRING;
+
+				sendStream.write(buffer);
 			});
 		});
 
