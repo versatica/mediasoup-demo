@@ -85,8 +85,9 @@ class Bot
 				});
 		}
 
-		// Create a SCTP outgoing stream with id 666.
-		const streamId = 666;
+		// Create a SCTP outgoing stream with id 1 (since id 0 is already used
+		// by the implicit SCTP outgoing stream built-in the SCTP socket).
+		const streamId = 1;
 		const sendStream = sctpSocket.createStream(streamId);
 
 		// Create DataProducer with the corresponding SCTP stream id.
@@ -178,7 +179,7 @@ class Bot
 
 				// Create a buffer to send it back to mediasoup using our SCTP outgoing
 				// stream.
-				const buffer = Buffer.from(`${peer.data.displayName} said me "${text}"`);
+				const buffer = Buffer.from(`${peer.data.displayName} said me: "${text}"`);
 
 				// Set ppid of type WebRTC DataChannel string.
 				buffer.ppid = sctp.PPID.WEBRTC_STRING;
