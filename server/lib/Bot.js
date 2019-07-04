@@ -12,30 +12,34 @@ class Bot
 	static async create({ mediasoupRouter })
 	{
 		// Create a PlainRtpTransport for connecting the bot.
+		// Assume no more than 256 participants.
 		const transport = await mediasoupRouter.createPlainRtpTransport(
 			{
 				listenIp           : { ip: '127.0.0.1' },
 				enableSctp         : true,
-				numSctpStreams     : { OS: 4096, MIS: 4096 },
+				numSctpStreams     : { OS: 256, MIS: 256 },
 				maxSctpMessageSize : 262144
 			});
 
+		// Node UDP socket for SCTP.
 		const udpSocket = dgram.createSocket({ type: 'udp4' });
 
 		await new Promise((resolve) => udpSocket.bind(0, '127.0.0.1', resolve));
 
 		const localUdpPort = udpSocket.address().port;
 
+		// Connect the mediasoup PlainRtpTransport to the UDP socket port.
 		await transport.connect({ ip: '127.0.0.1', port: localUdpPort });
 
 		const remoteUdpIp = transport.tuple.localIp;
 		const remoteUdpPort = transport.tuple.localPort;
 		const { OS, MIS } = transport.sctpParameters;
 
+		// SCTP socket.
 		let sctpSocket;
 
-		// Connected UDP socket if Node >= 12.
-		if (parseInt(process.version.slice(1, 3)) >= 12)
+		// Use UDP connected socket if Node >= 12.
+		if (typeof udpSocket.connect === 'function')
 		{
 			await new Promise((resolve, reject) =>
 			{
@@ -63,7 +67,7 @@ class Bot
 				});
 			});
 		}
-		// Disconnected UDP socket if Node < 12.
+		// Use UDP disconnected socket if Node < 12.
 		else
 		{
 			sctpSocket = sctp.connect(
@@ -81,10 +85,11 @@ class Bot
 				});
 		}
 
+		// Create a SCTP outgoing stream with id 666.
 		const streamId = 666;
 		const sendStream = sctpSocket.createStream(streamId);
 
-		// Create DataProducer.
+		// Create DataProducer with the corresponding SCTP stream id.
 		const dataProducer = await transport.produceData(
 			{
 				sctpStreamParameters :
@@ -95,6 +100,7 @@ class Bot
 				label : 'bot'
 			});
 
+		// Create the Bot instance.
 		const bot = new Bot({ transport, sctpSocket, sendStream, dataProducer });
 
 		return bot;
@@ -138,6 +144,7 @@ class Bot
 			logger.error('SCTP socket "error" event:%o', error);
 		});
 
+		// New SCTP inbound stream. Handle it.
 		sctpSocket.on('stream', (stream, streamId) =>
 		{
 			logger.info('SCTP socket "stream" event [streamId:%d]', streamId);
@@ -146,6 +153,7 @@ class Bot
 			{
 				const { ppid } = data;
 
+				// Ensure it's a WebRTC DataChannel string.
 				if (ppid !== sctp.PPID.WEBRTC_STRING)
 				{
 					logger.warn(
@@ -168,10 +176,14 @@ class Bot
 					'SCTP stream "data" event in SCTP inbound stream [streamId:%d, peerId:%s, text:%o, ppid:%o]',
 					streamId, peer.id, text, ppid);
 
+				// Create a buffer to send it back to mediasoup using our SCTP outgoing
+				// stream.
 				const buffer = Buffer.from(`${peer.data.displayName} said me "${text}"`);
 
+				// Set ppid of type WebRTC DataChannel string.
 				buffer.ppid = sctp.PPID.WEBRTC_STRING;
 
+				// Send it.
 				sendStream.write(buffer);
 			});
 		});
