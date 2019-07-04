@@ -174,8 +174,8 @@ class Bot
 				}
 
 				logger.info(
-					'SCTP stream "data" event in SCTP inbound stream [streamId:%d, peerId:%s, text:%o, ppid:%o]',
-					streamId, peer.id, text, ppid);
+					'SCTP stream "data" event in SCTP inbound stream [streamId:%d, peerId:%s, size:%d, ppid:%o]',
+					streamId, peer.id, data.byteLength, ppid);
 
 				// Create a buffer to send it back to mediasoup using our SCTP outgoing
 				// stream.
