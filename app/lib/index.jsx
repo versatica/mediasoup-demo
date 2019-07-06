@@ -245,14 +245,26 @@ window.__stopDataChannelTest = function()
 	}
 };
 
-window.__testSctp = async function(timeout = 100)
+window.__testSctp = async function({ timeout = 100, bot = false } = {})
 {
-	await window.CLIENT.enableChatDataProducer();
+	let dp;
 
-	const dp = window.CLIENT._chatDataProducer;
+	if (!bot)
+	{
+		await window.CLIENT.enableChatDataProducer();
+
+		dp = window.CLIENT._chatDataProducer;
+	}
+	else
+	{
+		await window.CLIENT.enableBotDataProducer();
+
+		dp = window.CLIENT._botDataProducer;
+	}
 
 	logger.warn(
-		'<<< testSctp: chat DataProducer created [id:%d, readyState:%s]',
+		'<<< testSctp: DataProducer created [bot:%s, streamId:%d, readyState:%s]',
+		bot ? 'true' : 'false',
 		dp.sctpStreamParameters.streamId,
 		dp.readyState);
 
@@ -270,14 +282,14 @@ window.__testSctp = async function(timeout = 100)
 		dp.on('open', () =>
 		{
 			logger.warn(
-				'<<< testSctp: chat DataChannel open [id:%d]',
+				'<<< testSctp: DataChannel open [streamId:%d]',
 				dp.sctpStreamParameters.streamId);
 
 			send();
 		});
 	}
 
-	setTimeout(window.__testSctp, timeout);
+	setTimeout(() => window.__testSctp({ timeout, bot }), timeout);
 };
 
 setInterval(() =>

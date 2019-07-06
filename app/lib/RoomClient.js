@@ -465,8 +465,8 @@ export default class RoomClient
 						dataConsumer.on('message', (message) =>
 						{
 							logger.debug(
-								'DataConsumer "message" event [streamId:%d]: %o',
-								message, dataConsumer.sctpStreamParameters.streamId);
+								'DataConsumer "message" event [streamId:%d]',
+								dataConsumer.sctpStreamParameters.streamId);
 
 							// TODO: For debugging.
 							window.DC_MESSAGE = message;
@@ -1559,7 +1559,7 @@ export default class RoomClient
 		if (!this._useDataChannel)
 			return;
 
-		// TODO: Should enable this code.
+		// NOTE: Should enable this code but it's useful for testing.
 		// if (this._chatDataProducer)
 		// 	return;
 
@@ -1643,8 +1643,9 @@ export default class RoomClient
 		if (!this._useDataChannel)
 			return;
 
-		if (this._botDataProducer)
-			return;
+		// NOTE: Should enable this code but it's useful for testing.
+		// if (this._botDataProducer)
+		// 	return;
 
 		try
 		{
