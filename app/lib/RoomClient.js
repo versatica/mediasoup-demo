@@ -2109,7 +2109,7 @@ export default class RoomClient
 						}
 					});
 
-				this._sendTransport.on('produceData', async (
+				this._sendTransport.on('producedata', async (
 					{
 						sctpStreamParameters,
 						label,
@@ -2121,7 +2121,7 @@ export default class RoomClient
 				) =>
 				{
 					logger.debug(
-						'"produceData" event: [sctpStreamParameters:%o, appData:%o]',
+						'"producedata" event: [sctpStreamParameters:%o, appData:%o]',
 						sctpStreamParameters, appData);
 
 					try
