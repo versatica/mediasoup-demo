@@ -81,8 +81,57 @@ const peers = (state = initialState, action) =>
 			return { ...state, [newPeer.id]: newPeer };
 		}
 
+		case 'ADD_DATA_CONSUMER':
+		{
+			const { dataConsumer, peerId } = action.payload;
+
+			// special case for bot DataConsumer.
+			if (!peerId)
+				return state;
+
+			const peer = state[peerId];
+
+			if (!peer)
+				throw new Error('no Peer found for new DataConsumer');
+
+			const newDataConsumers = [ ...peer.dataConsumers, dataConsumer.id ];
+			const newPeer = { ...peer, dataConsumers: newDataConsumers };
+
+			return { ...state, [newPeer.id]: newPeer };
+		}
+
+		case 'REMOVE_DATA_CONSUMER':
+		{
+			const { dataConsumerId, peerId } = action.payload;
+
+			// special case for bot DataConsumer.
+			if (!peerId)
+				return state;
+
+			const peer = state[peerId];
+
+			// NOTE: This means that the Peer was closed before, so it's ok.
+			if (!peer)
+				return state;
+
+			const idx = peer.dataConsumers.indexOf(dataConsumerId);
+
+			if (idx === -1)
+				throw new Error('DataConsumer not found');
+
+			const newDataConsumers = peer.dataConsumers.slice();
+
+			newDataConsumers.splice(idx, 1);
+
+			const newPeer = { ...peer, dataConsumers: newDataConsumers };
+
+			return { ...state, [newPeer.id]: newPeer };
+		}
+
 		default:
+		{
 			return state;
+		}
 	}
 };
 

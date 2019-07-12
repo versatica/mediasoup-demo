@@ -199,7 +199,7 @@ gulp.task('browser', (done) =>
 		{
 			open      : 'external',
 			host      : config.domain,
-			startPath : '/?info=true&throttleSecret=foo',
+			startPath : '/?info=true',
 			server    :
 			{
 				baseDir : OUTPUT_DIR

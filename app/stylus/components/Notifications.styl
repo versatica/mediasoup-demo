@@ -28,8 +28,16 @@
 		border-radius: 4px;
 		display: flex;
 		flex-direction: row;
-		justify-content: center;
+		justify-content: flex-start;
 		align-items: center;
+
+		+desktop() {
+			min-width: 75%;
+		}
+
+		+mobile() {
+			width: 100%;
+		}
 
 		&.Appear-appear {
 			visibility: hidden;
@@ -64,17 +72,35 @@
 			background-repeat: no-repeat;
 		}
 
-		> .text {
-			font-size: 13px;
-			user-select: none;
-			cursor: default;
+		> .body {
+			> .title {
+				font-weight: 500;
+				user-select: none;
+				cursor: default;
+				line-height: 1.35em;
+				margin-bottom: 10px;
 
-			+desktop() {
-				font-size: 13px;
+				+desktop() {
+					font-size: 14px;
+				}
+
+				+mobile() {
+					font-size: 12px;
+				}
 			}
 
-			+mobile() {
-				font-size: 11px;
+			> .text {
+				user-select: none;
+				cursor: default;
+				line-height: 1.35em;
+
+				+desktop() {
+					font-size: 13px;
+				}
+
+				+mobile() {
+					font-size: 12px;
+				}
 			}
 		}
 

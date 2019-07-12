@@ -20,7 +20,14 @@ const Notifications = ({ notifications, onClick }) =>
 								onClick={() => onClick(notification.id)}
 							>
 								<div className='icon' />
-								<p className='text'>{notification.text}</p>
+
+								<div className='body'>
+									<If condition={notification.title}>
+										<p className='title'>{notification.title}</p>
+									</If>
+
+									<p className='text'>{notification.text}</p>
+								</div>
 							</div>
 						</Appear>
 					);

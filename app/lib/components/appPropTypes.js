@@ -41,6 +41,12 @@ export const Producer = PropTypes.shape(
 		codec         : PropTypes.string.isRequired
 	});
 
+export const DataProducer = PropTypes.shape(
+	{
+		id                   : PropTypes.string.isRequired,
+		sctpStreamParameters : PropTypes.object.isRequired
+	});
+
 export const Peer = PropTypes.shape(
 	{
 		id          : PropTypes.string.isRequired,
@@ -58,6 +64,12 @@ export const Consumer = PropTypes.shape(
 		preferredSpatialLayer : PropTypes.number,
 		track                 : PropTypes.any,
 		codec                 : PropTypes.string
+	});
+
+export const DataConsumer = PropTypes.shape(
+	{
+		id                   : PropTypes.string.isRequired,
+		sctpStreamParameters : PropTypes.object.isRequired
 	});
 
 export const Notification = PropTypes.shape(

@@ -2,7 +2,7 @@ import randomString from 'random-string';
 import * as stateActions from './stateActions';
 
 // This returns a redux-thunk action (a function).
-export const notify = ({ type = 'info', text, timeout }) =>
+export const notify = ({ type = 'info', text, title, timeout }) =>
 {
 	if (!timeout)
 	{
@@ -19,10 +19,11 @@ export const notify = ({ type = 'info', text, timeout }) =>
 
 	const notification =
 	{
-		id      : randomString({ length: 6 }).toLowerCase(),
-		type    : type,
-		text    : text,
-		timeout : timeout
+		id : randomString({ length: 6 }).toLowerCase(),
+		type,
+		title,
+		text,
+		timeout
 	};
 
 	return (dispatch) =>

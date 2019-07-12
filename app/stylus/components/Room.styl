@@ -152,13 +152,36 @@
 		+desktop() {
 			height: 250px;
 			width: 294px;
-			bottom: 20px;
+			bottom: 60px;
 			left: 20px;
 			border: 1px solid rgba(#fff, 0.15);
 		}
 
 		+mobile() {
 			height: 220px;
+			width: 200px;
+			bottom: 50px;
+			left: 10px;
+			border: 1px solid rgba(#fff, 0.25);
+		}
+	}
+
+	> .chat-input-container {
+		position: fixed;
+		z-index: 100;
+		overflow: hidden;
+		box-shadow: 0px 5px 12px 2px rgba(#111, 0.5);
+
+		+desktop() {
+			height: 30px;
+			width: 294px;
+			bottom: 20px;
+			left: 20px;
+			border: 1px solid rgba(#fff, 0.15);
+		}
+
+		+mobile() {
+			height: 30px;
 			width: 200px;
 			bottom: 10px;
 			left: 10px;

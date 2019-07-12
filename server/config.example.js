@@ -123,7 +123,6 @@ module.exports =
 			],
 			initialAvailableOutgoingBitrate : 1000000,
 			minimumAvailableOutgoingBitrate : 600000,
-			enableSctp                      : true,
 			maxSctpMessageSize              : 262144,
 			// Additional options that are not part of WebRtcTransportOptions.
 			maxIncomingBitrate              : 1500000
@@ -134,7 +133,6 @@ module.exports =
 		plainRtpTransportOptions :
 		{
 			listenIp           : { ip: '192.168.1.123', announcedIp: null },
-			enableSctp         : true,
 			maxSctpMessageSize : 262144
 		}
 	}

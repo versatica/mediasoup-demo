@@ -3,8 +3,11 @@ const protoo = require('protoo-server');
 const throttle = require('@sitespeed.io/throttle');
 const Logger = require('./Logger');
 const config = require('../config');
+const Bot = require('./Bot');
 
 const logger = new Logger('Room');
+
+const ENABLE_DATA_BOT = true;
 
 /**
  * Room class.
@@ -70,10 +73,22 @@ class Room extends EventEmitter
 				interval   : 800
 			});
 
-		return new Room({ roomId, protooRoom, mediasoupRouter, audioLevelObserver });
+		let bot;
+
+		if (ENABLE_DATA_BOT)
+			bot = await Bot.create({ mediasoupRouter });
+
+		return new Room(
+			{
+				roomId,
+				protooRoom,
+				mediasoupRouter,
+				audioLevelObserver,
+				bot
+			});
 	}
 
-	constructor({ roomId, protooRoom, mediasoupRouter, audioLevelObserver })
+	constructor({ roomId, protooRoom, mediasoupRouter, audioLevelObserver, bot })
 	{
 		super();
 		this.setMaxListeners(Infinity);
@@ -110,46 +125,20 @@ class Room extends EventEmitter
 		// @type {mediasoup.AudioLevelObserver}
 		this._audioLevelObserver = audioLevelObserver;
 
+		// DataChannel bot.
+		// @type {Bot}
+		this._bot = bot;
+
 		// Network throttled.
 		// @type {Boolean}
 		this._networkThrottled = false;
 
-		// Set audioLevelObserver events.
-		this._audioLevelObserver.on('volumes', (volumes) =>
-		{
-			const { producer, volume } = volumes[0];
-
-			// logger.debug(
-			// 	'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
-			// 	producer.id, volume);
-
-			// Notify all Peers.
-			for (const peer of this._getJoinedPeers())
-			{
-				peer.notify(
-					'activeSpeaker',
-					{
-						peerId : producer.appData.peerId,
-						volume : volume
-					})
-					.catch(() => {});
-			}
-		});
-
-		this._audioLevelObserver.on('silence', () =>
-		{
-			// logger.debug('audioLevelObserver "silence" event');
-
-			// Notify all Peers.
-			for (const peer of this._getJoinedPeers())
-			{
-				peer.notify('activeSpeaker', { peerId: null })
-					.catch(() => {});
-			}
-		});
+		// Handle audioLevelObserver.
+		this._handleAudioLevelObserver();
 
 		// For debugging.
 		global.audioLevelObserver = this._audioLevelObserver;
+		global.bot = this._bot;
 	}
 
 	/**
@@ -445,6 +434,7 @@ class Room extends EventEmitter
 	 *   autodetection.
 	 * @type {Boolean} [multiSource=false] - Just for PlainRtpTransport, allow RTP from any
 	 *   remote IP and port (no RTCP feedback will be sent to the remote).
+	 * @type {Object} [sctpCapabilities] - SCTP capabilities
 	 */
 	async createBroadcasterTransport(
 		{
@@ -453,7 +443,7 @@ class Room extends EventEmitter
 			rtcpMux = true,
 			comedia = true,
 			multiSource = false,
-			sctpCapabilities = {}
+			sctpCapabilities
 		})
 	{
 		const broadcaster = this._broadcasters.get(broadcasterId);
@@ -468,6 +458,7 @@ class Room extends EventEmitter
 				const webRtcTransportOptions =
 				{
 					...config.mediasoup.webRtcTransportOptions,
+					enableSctp     : Boolean(sctpCapabilities),
 					numSctpStreams : (sctpCapabilities || {}).numStreams
 				};
 
@@ -685,6 +676,42 @@ class Room extends EventEmitter
 		};
 	}
 
+	_handleAudioLevelObserver()
+	{
+		this._audioLevelObserver.on('volumes', (volumes) =>
+		{
+			const { producer, volume } = volumes[0];
+
+			// logger.debug(
+			// 	'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
+			// 	producer.id, volume);
+
+			// Notify all Peers.
+			for (const peer of this._getJoinedPeers())
+			{
+				peer.notify(
+					'activeSpeaker',
+					{
+						peerId : producer.appData.peerId,
+						volume : volume
+					})
+					.catch(() => {});
+			}
+		});
+
+		this._audioLevelObserver.on('silence', () =>
+		{
+			// logger.debug('audioLevelObserver "silence" event');
+
+			// Notify all Peers.
+			for (const peer of this._getJoinedPeers())
+			{
+				peer.notify('activeSpeaker', { peerId: null })
+					.catch(() => {});
+			}
+		});
+	}
+
 	/**
 	 * Handle protoo requests from browsers.
 	 *
@@ -739,6 +766,7 @@ class Room extends EventEmitter
 							device      : joinedPeer.data.device
 						});
 
+					// Create Consumers for existing Producers.
 					for (const producer of joinedPeer.data.producers.values())
 					{
 						this._createConsumer(
@@ -749,8 +777,12 @@ class Room extends EventEmitter
 							});
 					}
 
+					// Create DataConsumers for existing DataProducers.
 					for (const dataProducer of joinedPeer.data.dataProducers.values())
 					{
+						if (dataProducer.label === 'bot')
+							continue;
+
 						this._createDataConsumer(
 							{
 								dataConsumerPeer : peer,
@@ -758,6 +790,17 @@ class Room extends EventEmitter
 								dataProducer
 							});
 					}
+				}
+
+				// Create DataConsumers for bot DataProducer.
+				if (ENABLE_DATA_BOT)
+				{
+					this._createDataConsumer(
+						{
+							dataConsumerPeer : peer,
+							dataProducerPeer : null,
+							dataProducer     : this._bot.dataProducer
+						});
 				}
 
 				accept({ peers: peerInfos });
@@ -796,6 +839,7 @@ class Room extends EventEmitter
 				const webRtcTransportOptions =
 				{
 					...config.mediasoup.webRtcTransportOptions,
+					enableSctp     : Boolean(sctpCapabilities),
 					numSctpStreams : (sctpCapabilities || {}).numStreams,
 					appData        : { producing, consuming }
 				};
@@ -808,6 +852,11 @@ class Room extends EventEmitter
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
 					webRtcTransportOptions);
+
+				transport.on('sctpstatechange', (sctpState) =>
+				{
+					logger.info('WebRtcTransport "sctpstatechange" event [sctpState:%s]', sctpState);
+				});
 
 				// Store the WebRtcTransport into the protoo Peer data Object.
 				peer.data.transports.set(transport.id, transport);
@@ -1069,29 +1118,64 @@ class Room extends EventEmitter
 				if (!peer.data.joined)
 					throw new Error('Peer not yet joined');
 
-				const { transportId, sctpStreamParameters, appData } = request.data;
+				const {
+					transportId,
+					sctpStreamParameters,
+					label,
+					protocol,
+					appData
+				} = request.data;
+
 				const transport = peer.data.transports.get(transportId);
 
 				if (!transport)
 					throw new Error(`transport with id "${transportId}" not found`);
 
-				const dataProducer =
-					await transport.produceData({ sctpStreamParameters, appData });
+				const dataProducer = await transport.produceData(
+					{
+						sctpStreamParameters,
+						label,
+						protocol,
+						appData
+					});
 
 				// Store the Producer into the protoo Peer data Object.
 				peer.data.dataProducers.set(dataProducer.id, dataProducer);
 
 				accept({ id: dataProducer.id });
 
-				// Create a server-side Consumer for each Peer.
-				for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
+				switch (dataProducer.label)
 				{
-					this._createDataConsumer(
+					case 'chat':
+					{
+						// Create a server-side DataConsumer for each Peer.
+						for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
 						{
-							dataConsumerPeer : otherPeer,
-							dataProducerPeer : peer,
-							dataProducer
-						});
+							this._createDataConsumer(
+								{
+									dataConsumerPeer : otherPeer,
+									dataProducerPeer : peer,
+									dataProducer
+								});
+						}
+
+						break;
+					}
+
+					case 'bot':
+					{
+						// Pass it to the bot.
+						if (ENABLE_DATA_BOT)
+						{
+							this._bot.handleDataProducer(
+								{
+									dataProducerId : dataProducer.id,
+									peer
+								});
+						}
+
+						break;
+					}
 				}
 
 				break;
@@ -1167,6 +1251,36 @@ class Room extends EventEmitter
 					throw new Error(`consumer with id "${consumerId}" not found`);
 
 				const stats = await consumer.getStats();
+
+				accept(stats);
+
+				break;
+			}
+
+			case 'getDataProducerStats':
+			{
+				const { dataProducerId } = request.data;
+				const dataProducer = peer.data.dataProducers.get(dataProducerId);
+
+				if (!dataProducer)
+					throw new Error(`dataProducer with id "${dataProducerId}" not found`);
+
+				const stats = await dataProducer.getStats();
+
+				accept(stats);
+
+				break;
+			}
+
+			case 'getDataConsumerStats':
+			{
+				const { dataConsumerId } = request.data;
+				const dataConsumer = peer.data.dataConsumers.get(dataConsumerId);
+
+				if (!dataConsumer)
+					throw new Error(`dataConsumer with id "${dataConsumerId}" not found`);
+
+				const stats = await dataConsumer.getStats();
 
 				accept(stats);
 
@@ -1413,7 +1527,12 @@ class Room extends EventEmitter
 	 *
 	 * @async
 	 */
-	async _createDataConsumer({ dataConsumerPeer, dataProducerPeer, dataProducer })
+	async _createDataConsumer(
+		{
+			dataConsumerPeer,
+			dataProducerPeer = null, // This is null for the bot DataProducer.
+			dataProducer
+		})
 	{
 		// NOTE: Don't create the DataConsumer if the remote Peer cannot consume it.
 		if (!dataConsumerPeer.data.sctpCapabilities)
@@ -1474,10 +1593,13 @@ class Room extends EventEmitter
 			await dataConsumerPeer.request(
 				'newDataConsumer',
 				{
-					peerId               : dataProducerPeer.id,
+					// This is null for bot DataProducer.
+					peerId               : dataProducerPeer ? dataProducerPeer.id : null,
 					dataProducerId       : dataProducer.id,
 					id                   : dataConsumer.id,
 					sctpStreamParameters : dataConsumer.sctpStreamParameters,
+					label                : dataConsumer.label,
+					protocol             : dataConsumer.protocol,
 					appData              : dataProducer.appData
 				});
 		}

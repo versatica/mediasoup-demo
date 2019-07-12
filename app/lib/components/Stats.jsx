@@ -14,18 +14,22 @@ class Stats extends React.Component
 
 		this.state =
 		{
-			sendTransportRemoteStats : null,
-			sendTransportLocalStats  : null,
-			recvTransportRemoteStats : null,
-			recvTransportLocalStats  : null,
-			audioProducerRemoteStats : null,
-			audioProducerLocalStats  : null,
-			videoProducerRemoteStats : null,
-			videoProducerLocalStats  : null,
-			audioConsumerRemoteStats : null,
-			audioConsumerLocalStats  : null,
-			videoConsumerRemoteStats : null,
-			videoConsumerLocalStats  : null
+			sendTransportRemoteStats    : null,
+			sendTransportLocalStats     : null,
+			recvTransportRemoteStats    : null,
+			recvTransportLocalStats     : null,
+			audioProducerRemoteStats    : null,
+			audioProducerLocalStats     : null,
+			videoProducerRemoteStats    : null,
+			videoProducerLocalStats     : null,
+			chatDataProducerRemoteStats : null,
+			botDataProducerRemoteStats  : null,
+			audioConsumerRemoteStats    : null,
+			audioConsumerLocalStats     : null,
+			videoConsumerRemoteStats    : null,
+			videoConsumerLocalStats     : null,
+			chatDataConsumerRemoteStats : null,
+			botDataConsumerRemoteStats  : null
 		};
 
 		this._delayTimer = null;
@@ -49,10 +53,14 @@ class Stats extends React.Component
 			audioProducerLocalStats,
 			videoProducerRemoteStats,
 			videoProducerLocalStats,
+			chatDataProducerRemoteStats,
+			botDataProducerRemoteStats,
 			audioConsumerRemoteStats,
 			audioConsumerLocalStats,
 			videoConsumerRemoteStats,
-			videoConsumerLocalStats
+			videoConsumerLocalStats,
+			chatDataConsumerRemoteStats,
+			botDataConsumerRemoteStats
 		} = this.state;
 
 		return (
@@ -97,7 +105,7 @@ class Stats extends React.Component
 
 							<If condition={audioProducerRemoteStats || audioProducerLocalStats}>
 								<p>
-									{'audio stats: '}
+									{'audio producer stats: '}
 									<a href='#audio-producer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a href='#audio-producer-local-stats'>[local]</a>
@@ -106,16 +114,34 @@ class Stats extends React.Component
 
 							<If condition={videoProducerRemoteStats || videoProducerLocalStats}>
 								<p>
-									{'video stats: '}
+									{'video producer stats: '}
 									<a href='#video-producer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a href='#video-producer-local-stats'>[local]</a>
 								</p>
 							</If>
 
+							<If condition={chatDataProducerRemoteStats}>
+								<p>
+									{'chat dataproducer stats: '}
+									<a href='#chat-dataproducer-remote-stats'>[remote]</a>
+									<span>{' '}</span>
+									<a className='disabled'>[local]</a>
+								</p>
+							</If>
+
+							<If condition={botDataProducerRemoteStats}>
+								<p>
+									{'bot dataproducer stats: '}
+									<a href='#bot-dataproducer-remote-stats'>[remote]</a>
+									<span>{' '}</span>
+									<a className='disabled'>[local]</a>
+								</p>
+							</If>
+
 							<If condition={audioConsumerRemoteStats || audioConsumerLocalStats}>
 								<p>
-									{'audio stats: '}
+									{'audio consumer stats: '}
 									<a href='#audio-consumer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a href='#audio-consumer-local-stats'>[local]</a>
@@ -124,10 +150,28 @@ class Stats extends React.Component
 
 							<If condition={videoConsumerRemoteStats || videoConsumerLocalStats}>
 								<p>
-									{'video stats: '}
+									{'video consumer stats: '}
 									<a href='#video-consumer-remote-stats'>[remote]</a>
 									<span>{' '}</span>
 									<a href='#video-consumer-local-stats'>[local]</a>
+								</p>
+							</If>
+
+							<If condition={chatDataConsumerRemoteStats}>
+								<p>
+									{'chat dataconsumer stats: '}
+									<a href='#chat-dataconsumer-remote-stats'>[remote]</a>
+									<span>{' '}</span>
+									<a className='disabled'>[local]</a>
+								</p>
+							</If>
+
+							<If condition={botDataConsumerRemoteStats}>
+								<p>
+									{'bot dataconsumer stats: '}
+									<a href='#bot-dataconsumer-remote-stats'>[remote]</a>
+									<span>{' '}</span>
+									<a className='disabled'>[local]</a>
 								</p>
 							</If>
 						</div>
@@ -166,6 +210,14 @@ class Stats extends React.Component
 							{this._printStats('video producer local stats', videoProducerLocalStats)}
 						</If>
 
+						<If condition={chatDataProducerRemoteStats}>
+							{this._printStats('chat dataproducer remote stats', chatDataProducerRemoteStats)}
+						</If>
+
+						<If condition={botDataProducerRemoteStats}>
+							{this._printStats('bot dataproducer remote stats', botDataProducerRemoteStats)}
+						</If>
+
 						<If condition={audioConsumerRemoteStats}>
 							{this._printStats('audio consumer remote stats', audioConsumerRemoteStats)}
 						</If>
@@ -180,6 +232,14 @@ class Stats extends React.Component
 
 						<If condition={videoConsumerLocalStats}>
 							{this._printStats('video consumer local stats', videoConsumerLocalStats)}
+						</If>
+
+						<If condition={chatDataConsumerRemoteStats}>
+							{this._printStats('chat dataconsumer remote stats', chatDataConsumerRemoteStats)}
+						</If>
+
+						<If condition={botDataConsumerRemoteStats}>
+							{this._printStats('bot dataconsumer remote stats', botDataConsumerRemoteStats)}
 						</If>
 					</div>
 				</div>
@@ -212,7 +272,9 @@ class Stats extends React.Component
 			roomClient,
 			isMe,
 			audioConsumerId,
-			videoConsumerId
+			videoConsumerId,
+			chatDataConsumerId,
+			botDataConsumerId
 		} = this.props;
 
 		let sendTransportRemoteStats = null;
@@ -223,10 +285,14 @@ class Stats extends React.Component
 		let audioProducerLocalStats = null;
 		let videoProducerRemoteStats = null;
 		let videoProducerLocalStats = null;
+		let chatDataProducerRemoteStats = null;
+		let botDataProducerRemoteStats = null;
 		let audioConsumerRemoteStats = null;
 		let audioConsumerLocalStats = null;
 		let videoConsumerRemoteStats = null;
 		let videoConsumerLocalStats = null;
+		let chatDataConsumerRemoteStats = null;
+		let botDataConsumerRemoteStats = null;
 
 		if (isMe)
 		{
@@ -247,6 +313,16 @@ class Stats extends React.Component
 
 			videoProducerLocalStats = await roomClient.getVideoLocalStats()
 				.catch(() => {});
+
+			chatDataProducerRemoteStats = await roomClient.getChatDataProducerRemoteStats()
+				.catch(() => {});
+
+			botDataProducerRemoteStats = await roomClient.getBotDataProducerRemoteStats()
+				.catch(() => {});
+
+			botDataConsumerRemoteStats =
+				await roomClient.getDataConsumerRemoteStats(botDataConsumerId)
+					.catch(() => {});
 		}
 		else
 		{
@@ -267,6 +343,10 @@ class Stats extends React.Component
 
 			videoConsumerLocalStats = await roomClient.getConsumerLocalStats(videoConsumerId)
 				.catch(() => {});
+
+			chatDataConsumerRemoteStats =
+				await roomClient.getDataConsumerRemoteStats(chatDataConsumerId)
+					.catch(() => {});
 		}
 
 		this.setState(
@@ -279,10 +359,14 @@ class Stats extends React.Component
 				audioProducerLocalStats,
 				videoProducerRemoteStats,
 				videoProducerLocalStats,
+				chatDataProducerRemoteStats,
+				botDataProducerRemoteStats,
 				audioConsumerRemoteStats,
 				audioConsumerLocalStats,
 				videoConsumerRemoteStats,
-				videoConsumerLocalStats
+				videoConsumerLocalStats,
+				chatDataConsumerRemoteStats,
+				botDataConsumerRemoteStats
 			});
 
 		this._delayTimer = setTimeout(() => this._start(), 2500);
@@ -294,18 +378,22 @@ class Stats extends React.Component
 
 		this.setState(
 			{
-				sendTransportRemoteStats : null,
-				sendTransportLocalStats  : null,
-				recvTransportRemoteStats : null,
-				recvTransportLocalStats  : null,
-				audioProducerRemoteStats : null,
-				audioProducerLocalStats  : null,
-				videoProducerRemoteStats : null,
-				videoProducerLocalStats  : null,
-				audioConsumerRemoteStats : null,
-				audioConsumerLocalStats  : null,
-				videoConsumerRemoteStats : null,
-				videoConsumerLocalStats  : null
+				sendTransportRemoteStats    : null,
+				sendTransportLocalStats     : null,
+				recvTransportRemoteStats    : null,
+				recvTransportLocalStats     : null,
+				audioProducerRemoteStats    : null,
+				audioProducerLocalStats     : null,
+				videoProducerRemoteStats    : null,
+				videoProducerLocalStats     : null,
+				chatDataProducerRemoteStats : null,
+				botDataProducerRemoteStats  : null,
+				audioConsumerRemoteStats    : null,
+				audioConsumerLocalStats     : null,
+				videoConsumerRemoteStats    : null,
+				videoConsumerLocalStats     : null,
+				chatDataConsumerRemoteStats : null,
+				botDataConsumerRemoteStats  : null
 			});
 	}
 
@@ -354,18 +442,20 @@ class Stats extends React.Component
 
 Stats.propTypes =
 {
-	roomClient      : PropTypes.any.isRequired,
-	peerId          : PropTypes.string,
-	peerDisplayName : PropTypes.string,
-	isMe            : PropTypes.bool,
-	audioConsumerId : PropTypes.string,
-	videoConsumerId : PropTypes.string,
-	onClose         : PropTypes.func.isRequired
+	roomClient         : PropTypes.any.isRequired,
+	peerId             : PropTypes.string,
+	peerDisplayName    : PropTypes.string,
+	isMe               : PropTypes.bool,
+	audioConsumerId    : PropTypes.string,
+	videoConsumerId    : PropTypes.string,
+	chatDataConsumerId : PropTypes.string,
+	botDataConsumerId  : PropTypes.string,
+	onClose            : PropTypes.func.isRequired
 };
 
 const mapStateToProps = (state) =>
 {
-	const { room, me, peers, consumers } = state;
+	const { room, me, peers, consumers, dataConsumers } = state;
 	const { statsPeerId } = room;
 
 	if (!statsPeerId)
@@ -375,8 +465,20 @@ const mapStateToProps = (state) =>
 	const peer = isMe ? me : peers[statsPeerId];
 	let audioConsumerId;
 	let videoConsumerId;
+	let chatDataConsumerId;
+	let botDataConsumerId;
 
-	if (!isMe)
+	if (isMe)
+	{
+		for (const dataConsumerId of Object.keys(dataConsumers))
+		{
+			const dataConsumer = dataConsumers[dataConsumerId];
+
+			if (dataConsumer.label === 'bot')
+				botDataConsumerId = dataConsumer.id;
+		}
+	}
+	else
 	{
 		for (const consumerId of peer.consumers)
 		{
@@ -393,6 +495,14 @@ const mapStateToProps = (state) =>
 					break;
 			}
 		}
+
+		for (const dataConsumerId of peer.dataConsumers)
+		{
+			const dataConsumer = dataConsumers[dataConsumerId];
+
+			if (dataConsumer.label === 'chat')
+				chatDataConsumerId = dataConsumer.id;
+		}
 	}
 
 	return {
@@ -400,7 +510,9 @@ const mapStateToProps = (state) =>
 		peerDisplayName : peer.displayName,
 		isMe,
 		audioConsumerId,
-		videoConsumerId
+		videoConsumerId,
+		chatDataConsumerId,
+		botDataConsumerId
 	};
 };
 

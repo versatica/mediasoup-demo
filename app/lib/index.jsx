@@ -76,10 +76,10 @@ async function run()
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
 	const svc = urlParser.query.svc;
+	const datachannel = urlParser.query.datachannel !== 'false';
 	const info = urlParser.query.info === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
-	const datachannel = urlParser.query.datachannel === 'true';
 	const throttleSecret = urlParser.query.throttleSecret;
 
 	// Enable face detection on demand.
@@ -116,10 +116,10 @@ async function run()
 			case 'forceH264':
 			case 'forceVP9':
 			case 'svc':
+			case 'datachannel':
 			case 'info':
 			case 'faceDetection':
 			case 'externalVideo':
-			case 'datachannel':
 				break;
 			default:
 				delete roomUrlParser.query[key];
@@ -170,8 +170,8 @@ async function run()
 			forceH264,
 			forceVP9,
 			svc,
-			externalVideo,
-			datachannel
+			datachannel,
+			externalVideo
 		});
 
 	// NOTE: For debugging.
@@ -212,12 +212,92 @@ window.__recvSdps = function()
 		roomClient._recvTransport._handler._pc.localDescription.sdp);
 };
 
+let dataChannelTestInterval = null;
+
+window.__startDataChannelTest = function()
+{
+	let number = 0;
+
+	const buffer = new ArrayBuffer(32);
+	const view = new DataView(buffer);
+
+	dataChannelTestInterval = window.setInterval(() =>
+	{
+		if (window.DP)
+		{
+			view.setUint32(0, number++);
+			window.DP.send(buffer);
+		}
+	}, 100);
+};
+
+window.__stopDataChannelTest = function()
+{
+	window.clearInterval(dataChannelTestInterval);
+
+	const buffer = new ArrayBuffer(32);
+	const view = new DataView(buffer);
+
+	if (window.DP)
+	{
+		view.setUint32(0, Math.pow(2, 32) - 1);
+		window.DP.send(buffer);
+	}
+};
+
+window.__testSctp = async function({ timeout = 100, bot = false } = {})
+{
+	let dp;
+
+	if (!bot)
+	{
+		await window.CLIENT.enableChatDataProducer();
+
+		dp = window.CLIENT._chatDataProducer;
+	}
+	else
+	{
+		await window.CLIENT.enableBotDataProducer();
+
+		dp = window.CLIENT._botDataProducer;
+	}
+
+	logger.warn(
+		'<<< testSctp: DataProducer created [bot:%s, streamId:%d, readyState:%s]',
+		bot ? 'true' : 'false',
+		dp.sctpStreamParameters.streamId,
+		dp.readyState);
+
+	function send()
+	{
+		dp.send(`I am streamId ${dp.sctpStreamParameters.streamId}`);
+	}
+
+	if (dp.readyState === 'open')
+	{
+		send();
+	}
+	else
+	{
+		dp.on('open', () =>
+		{
+			logger.warn(
+				'<<< testSctp: DataChannel open [streamId:%d]',
+				dp.sctpStreamParameters.streamId);
+
+			send();
+		});
+	}
+
+	setTimeout(() => window.__testSctp({ timeout, bot }), timeout);
+};
+
 setInterval(() =>
 {
 	if (window.CLIENT._sendTransport)
 	{
 		window.PC1 = window.CLIENT._sendTransport._handler._pc;
-		window.DP = window.CLIENT._dataProducer;
+		window.DP = window.CLIENT._chatDataProducer;
 	}
 	else
 	{
