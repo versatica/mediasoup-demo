@@ -623,7 +623,7 @@ export default class PeerView extends React.Component
 	{
 		const { videoElem, canvas } = this.refs;
 
-		const step = () =>
+		const step = async () =>
 		{
 			// NOTE: Somehow this is critical. Otherwise the Promise returned by
 			// faceapi.detectSingleFace() never resolves or rejects.
@@ -634,32 +634,32 @@ export default class PeerView extends React.Component
 				return;
 			}
 
-			faceapi.detectSingleFace(videoElem, tinyFaceDetectorOptions)
-				.then((detection) =>
-				{
-					if (detection)
-					{
-						const width = videoElem.offsetWidth;
-						const height = videoElem.offsetHeight;
+			const detection =
+				await faceapi.detectSingleFace(videoElem, tinyFaceDetectorOptions);
 
-						canvas.width = width;
-						canvas.height = height;
+			if (detection)
+			{
+				const width = videoElem.offsetWidth;
+				const height = videoElem.offsetHeight;
 
-						const resizedDetection = detection.forSize(width, height);
+				canvas.width = width;
+				canvas.height = height;
 
-						faceapi.drawDetection(
-							canvas, [ resizedDetection ], { withScore: false });
-					}
-					else
-					{
-						// Trick to hide the canvas rectangle.
-						canvas.width = 0;
-						canvas.height = 0;
-					}
+				// const resizedDetection = detection.forSize(width, height);
+				const resizedDetections =
+					faceapi.resizeResults(detection, { width, height });
 
-					this._faceDetectionRequestAnimationFrame =
-						requestAnimationFrame(() => setTimeout(step, 100));
-				});
+				faceapi.draw.drawDetections(canvas, resizedDetections);
+			}
+			else
+			{
+				// Trick to hide the canvas rectangle.
+				canvas.width = 0;
+				canvas.height = 0;
+			}
+
+			this._faceDetectionRequestAnimationFrame =
+				requestAnimationFrame(() => setTimeout(step, 100));
 		};
 
 		step();
