@@ -131,13 +131,13 @@ class Bot
 
 		transport.on('sctpstatechange', (sctpState) =>
 		{
-			logger.info(
+			logger.debug(
 				'bot PlainRtpTransport "sctpstatechange" event [sctpState:%s]', sctpState);
 		});
 
 		sctpSocket.on('connect', () =>
 		{
-			logger.info('SCTP socket "connect" event');
+			logger.debug('SCTP socket "connect" event');
 		});
 
 		sctpSocket.on('error', (error) =>
@@ -148,7 +148,7 @@ class Bot
 		// New SCTP inbound stream. Handle it.
 		sctpSocket.on('stream', (stream, streamId) =>
 		{
-			logger.info('SCTP socket "stream" event [streamId:%d]', streamId);
+			logger.debug('SCTP socket "stream" event [streamId:%d]', streamId);
 
 			stream.on('data', (data) =>
 			{
@@ -173,7 +173,7 @@ class Bot
 					return;
 				}
 
-				logger.info(
+				logger.debug(
 					'SCTP stream "data" event in SCTP inbound stream [streamId:%d, peerId:%s, size:%d, ppid:%o]',
 					streamId, peer.id, data.byteLength, ppid);
 
