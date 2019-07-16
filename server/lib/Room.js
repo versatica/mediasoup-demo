@@ -855,7 +855,7 @@ class Room extends EventEmitter
 
 				transport.on('sctpstatechange', (sctpState) =>
 				{
-					logger.info('WebRtcTransport "sctpstatechange" event [sctpState:%s]', sctpState);
+					logger.debug('WebRtcTransport "sctpstatechange" event [sctpState:%s]', sctpState);
 				});
 
 				// Store the WebRtcTransport into the protoo Peer data Object.
