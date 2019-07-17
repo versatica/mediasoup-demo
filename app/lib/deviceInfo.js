@@ -1,6 +1,7 @@
 import bowser from 'bowser';
 
-window.BB = bowser;
+// TODO: For testing.
+window.BOWSER = bowser;
 
 export default function()
 {
