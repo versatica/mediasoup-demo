@@ -102,12 +102,13 @@ class Bot
 			});
 
 		// Create the Bot instance.
-		const bot = new Bot({ transport, sctpSocket, sendStream, dataProducer });
+		const bot =
+			new Bot({ udpSocket, transport, sctpSocket, sendStream, dataProducer });
 
 		return bot;
 	}
 
-	constructor({ sctpSocket, sendStream, transport, dataProducer })
+	constructor({ udpSocket, sctpSocket, sendStream, transport, dataProducer })
 	{
 		// mediasoup PlainRtpTransport.
 		// @type {mediasoup.PlainRtpTransport}
@@ -120,6 +121,10 @@ class Bot
 		// Map of peers indexed by SCTP streamId.
 		// @type{Map<Number, Object>}
 		this._mapStreamIdPeer = new Map();
+
+		// UDP socket.
+		// @type {UDP.Socket}
+		this._udpSocket = udpSocket;
 
 		// SCTP socket.
 		// @type {sctp.Socket}
@@ -199,6 +204,11 @@ class Bot
 	get dataProducer()
 	{
 		return this._dataProducer;
+	}
+
+	close()
+	{
+		this._udpSocket.close();
 	}
 
 	async handleDataProducer({ dataProducerId, peer })

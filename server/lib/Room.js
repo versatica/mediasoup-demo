@@ -156,6 +156,10 @@ class Room extends EventEmitter
 		// Close the mediasoup Router.
 		this._mediasoupRouter.close();
 
+		// Close the Bot.
+		if (ENABLE_DATA_BOT)
+			this._bot.close();
+
 		// Emit 'close' event.
 		this.emit('close');
 
