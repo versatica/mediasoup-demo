@@ -7,8 +7,6 @@ const Bot = require('./Bot');
 
 const logger = new Logger('Room');
 
-const ENABLE_DATA_BOT = true;
-
 /**
  * Room class.
  *
@@ -73,10 +71,7 @@ class Room extends EventEmitter
 				interval   : 800
 			});
 
-		let bot;
-
-		if (ENABLE_DATA_BOT)
-			bot = await Bot.create({ mediasoupRouter });
+		const bot = await Bot.create({ mediasoupRouter });
 
 		return new Room(
 			{
@@ -157,8 +152,7 @@ class Room extends EventEmitter
 		this._mediasoupRouter.close();
 
 		// Close the Bot.
-		if (ENABLE_DATA_BOT)
-			this._bot.close();
+		this._bot.close();
 
 		// Emit 'close' event.
 		this.emit('close');
@@ -797,15 +791,12 @@ class Room extends EventEmitter
 				}
 
 				// Create DataConsumers for bot DataProducer.
-				if (ENABLE_DATA_BOT)
-				{
-					this._createDataConsumer(
-						{
-							dataConsumerPeer : peer,
-							dataProducerPeer : null,
-							dataProducer     : this._bot.dataProducer
-						});
-				}
+				this._createDataConsumer(
+					{
+						dataConsumerPeer : peer,
+						dataProducerPeer : null,
+						dataProducer     : this._bot.dataProducer
+					});
 
 				accept({ peers: peerInfos });
 
@@ -1169,14 +1160,11 @@ class Room extends EventEmitter
 					case 'bot':
 					{
 						// Pass it to the bot.
-						if (ENABLE_DATA_BOT)
-						{
-							this._bot.handleDataProducer(
-								{
-									dataProducerId : dataProducer.id,
-									peer
-								});
-						}
+						this._bot.handleDataProducer(
+							{
+								dataProducerId : dataProducer.id,
+								peer
+							});
 
 						break;
 					}

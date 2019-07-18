@@ -209,13 +209,7 @@ class Bot
 	close()
 	{
 		this._udpSocket.close();
-
-		try
-		{
-			this._sctpSocket.end();
-		}
-		catch (error)
-		{}
+		this._sctpSocket.end();
 	}
 
 	async handleDataProducer({ dataProducerId, peer })
