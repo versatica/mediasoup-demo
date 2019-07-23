@@ -2252,6 +2252,15 @@ export default class RoomClient
 					}
 				});
 			}
+
+			// NOTE: For testing.
+			if (window.SHOW_INFO)
+			{
+				const { me } = store.getState();
+
+				store.dispatch(
+					stateActions.setRoomStatsPeerId(me.id));
+			}
 		}
 		catch (error)
 		{
