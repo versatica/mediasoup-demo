@@ -21,10 +21,10 @@
     "mediasoup": "github:versatica/mediasoup#v3",
     "pidusage": "^2.0.17",
     "protoo-server": "^4.0.3",
-    "sctp": "github:latysheff/node-sctp#master"
+    "sctp": "^0.0.18"
   },
   "devDependencies": {
-    "eslint": "^6.0.1",
+    "eslint": "^6.1.0",
     "gulp": "^4.0.2",
     "gulp-eslint": "^6.0.0",
     "gulp-plumber": "^1.2.1"
