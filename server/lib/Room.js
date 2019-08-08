@@ -1497,7 +1497,7 @@ class Room extends EventEmitter
 
 			// Now that we got the positive response from the remote Peer and, if
 			// video, resume the Consumer to ask for an efficient key frame.
-			if (producer.kind === 'video')
+			if (consumer.kind === 'video')
 				await consumer.resume();
 
 			consumerPeer.notify(
