@@ -5,6 +5,8 @@ const fs = require('fs');
 const mediasoup = require('mediasoup');
 const colors = require('colors/safe');
 const pidusage = require('pidusage');
+const os = require('os');
+const path = require('path');
 
 // Maps to store all mediasoup objects.
 const workers = new Map();
@@ -15,7 +17,9 @@ const consumers = new Map();
 const dataProducers = new Map();
 const dataConsumers = new Map();
 
-const SOCKET_PATH = '/tmp/mediasoup-demo.sock';
+const SOCKET_PATH_UIX = '/tmp/mediasoup-demo.sock';
+const SOCKET_PATH_WIN = path.join('\\\\?\\pipe', process.cwd(), 'mediasoup-demo');
+const SOCKET_PATH = os.platform() === 'win32'? SOCKET_PATH_WIN : SOCKET_PATH_UIX
 
 class Interactive
 {
