@@ -232,6 +232,6 @@ module.exports =
 			assignment: false,
 			return: true
 		}],
-		"linebreak-style": 0
+		'linebreak-style': 0
 	}
 };
