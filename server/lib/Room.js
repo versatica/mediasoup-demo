@@ -109,6 +109,8 @@ class Room extends EventEmitter
 		//   - {Map<String, mediasoup.Transport>} transports
 		//   - {Map<String, mediasoup.Producer>} producers
 		//   - {Map<String, mediasoup.Consumers>} consumers
+		//   - {Map<String, mediasoup.DataProducer>} dataProducers
+		//   - {Map<String, mediasoup.DataConsumers>} dataConsumers
 		// @type {Map<String, Object>}
 		this._broadcasters = new Map();
 
@@ -325,9 +327,11 @@ class Room extends EventEmitter
 					version : device.version
 				},
 				rtpCapabilities,
-				transports : new Map(),
-				producers  : new Map(),
-				consumers  : new Map()
+				transports    : new Map(),
+				producers     : new Map(),
+				consumers     : new Map(),
+				dataProducers : new Map(),
+				dataConsumers : new Map()
 			}
 		};
 
