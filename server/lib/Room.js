@@ -851,6 +851,12 @@ class Room extends EventEmitter
 					logger.debug('WebRtcTransport "sctpstatechange" event [sctpState:%s]', sctpState);
 				});
 
+				transport.on('dtlsstatechange', (dtlsState) =>
+				{
+					if (dtlsState === 'failed' || dtlsState === 'closed')
+						logger.warn('WebRtcTransport "dtlsstatechange" event [dtlsState:%s]', dtlsState);
+				});
+
 				// Store the WebRtcTransport into the protoo Peer data Object.
 				peer.data.transports.set(transport.id, transport);
 
