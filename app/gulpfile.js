@@ -14,6 +14,9 @@
  *   to 'production'), opens two browsers and watches for changes in the source
  *   code.
  *
+ * gulp devel:tcp
+ *   Same as gulp devel, but forcing media over TCP.
+ *
  * gulp devel:vp9
  *   Generates the browser app in development mode (unless NODE_ENV is set
  *   to 'production'), opens two browsers forcing VP9 and watches for changes in
@@ -295,6 +298,52 @@ gulp.task('devel', gulp.series(
 					open      : 'external',
 					host      : config.domain,
 					startPath : '/?roomId=devel&info=true&throttleSecret=foo&produce=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		done();
+	}
+));
+
+gulp.task('devel:tcp', gulp.series(
+	'browser:base',
+	async (done) =>
+	{
+		const config = require('../server/config');
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('producer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:tcp&info=true&forceTcp=true&consume=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('consumer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:tcp&info=true&forceTcp=true&&produce=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
