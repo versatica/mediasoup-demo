@@ -4,7 +4,10 @@
 ## ENV Variables
 
 * [DEBUG](#debug)
+* [DOMAIN](#domain)
 * [PROTOO_LISTEN_PORT](#protoo_listen_port)
+* [MEDIASOUP_LISTEN_IP](#mediasoup-listen-ip)
+* [MEDIASOUP_ANNOUNCED_IP](#mediasoup-announced-ip)
 * [MEDIASOUP_MIN_PORT](#mediasoup_min_port)
 * [MEDIASOUP_MAX_PORT](#mediasoup_max_port)
 * [MEDIASOUP_USE_VALGRIND](#mediasoup_use_valgrind)
@@ -21,32 +24,55 @@ Example: "mediasoup:INFO* *WARN* *ERROR*"
 * Valid values: Check `debug` module manual
 * Default: ""
 
+### `DOMAIN`
+
+The service domain.
+
+Example: "local.me.dev"
+
+* Optional
+* Valid values: Domain
+* Default: ""
+
 ### `PROTOO_LISTEN_PORT`
 
 The listening port for protoo WebSocket server.
 
-**Important:** Make sure this value corresponds with that provided in [config.js](config.example.js)
-
-* Mandatory
+* Optional
 * Valid values: port
+* Default: 4443
+
+### `MEDIASOUP_LISTEN_IP`
+
+The listening IP for audio/video in mediasoup.
+
+* Optional
+* Valid values: IPv4 or IPv6
+* Default: "127.0.0.1"
+
+### `MEDIASOUP_ANNOUNCED_IP`
+
+The announced IP for audio/video in mediasoup.
+
+* Optional
+* Valid values: IPv4 or IPv6
+* Default: ""
 
 ### `MEDIASOUP_MIN_PORT`
 
 The min port for audio/video in mediasoup.
 
-**Important:** Make sure this value corresponds with that provided in [config.js](config.example.js)
-
-* Mandatory
+* Optional
 * Valid values: port
+* Default: 2000
 
 ### `MEDIASOUP_MAX_PORT`
 
 The max port for audio/video in mediasoup.
 
-**Important:** Make sure this value corresponds with that provided in [config.js](config.example.js)
-
-* Mandatory
+* Optional
 * Valid values: port
+* Default: 2020
 
 ### `MEDIASOUP_USE_VALGRIND`
 

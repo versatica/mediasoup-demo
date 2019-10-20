@@ -6,14 +6,8 @@ process.env.DEBUG = process.env.DEBUG || '*INFO* *WARN* *ERROR*';
 const config = require('./config');
 
 /* eslint-disable no-console */
-console.log('- config.mediasoup.numWorkers:', config.mediasoup.numWorkers);
-console.log('- process.env.DEBUG:', process.env.DEBUG);
-console.log(
-	'- config.mediasoup.workerSettings.logLevel:',
-	config.mediasoup.workerSettings.logLevel);
-console.log(
-	'- config.mediasoup.workerSettings.logTags:',
-	config.mediasoup.workerSettings.logTags);
+console.log('process.env.DEBUG:', process.env.DEBUG);
+console.log('config.js:\n%s', JSON.stringify(config, null, '  '));
 /* eslint-enable no-console */
 
 const fs = require('fs');
@@ -107,8 +101,8 @@ async function runMediasoupWorkers()
 			{
 				logLevel   : config.mediasoup.workerSettings.logLevel,
 				logTags    : config.mediasoup.workerSettings.logTags,
-				rtcMinPort : config.mediasoup.workerSettings.rtcMinPort,
-				rtcMaxPort : config.mediasoup.workerSettings.rtcMaxPort
+				rtcMinPort : Number(config.mediasoup.workerSettings.rtcMinPort),
+				rtcMaxPort : Number(config.mediasoup.workerSettings.rtcMaxPort)
 			});
 
 		worker.on('died', () =>
@@ -374,7 +368,8 @@ async function runHttpsServer()
 
 	await new Promise((resolve) =>
 	{
-		httpsServer.listen(config.https.listenPort, config.https.listenIp, resolve);
+		httpsServer.listen(
+			Number(config.https.listenPort), config.https.listenIp, resolve);
 	});
 }
 

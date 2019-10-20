@@ -4,8 +4,7 @@ FROM node:10 AS stage-one
 RUN \
 	set -x \
 	&& apt-get update \
-	&& apt-get install -y build-essential \
-	&& apt-get install -y valgrind
+	&& apt-get install -y net-tools build-essential valgrind
 
 WORKDIR /service
 
