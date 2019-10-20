@@ -95,6 +95,24 @@ $ DEBUG="*mediasoup* *ERROR* *WARN*" node server.js
 $ npm run connect
 ```
 
+## Run mediasoup server with Docker
+
+* Required environment variables: [server/DOCKER.md](server/DOCKER.md).
+* Build the Docker image: [server/docker/build.sh](server/docker/build.sh).
+* Run the Docker image: [server/docker/run.sh](server/docker/run.sh).
+
+```
+$ cd server
+$ docker/build.sh
+$ MEDIASOUP_MIN_PORT=40000 MEDIASOUP_MAX_PORT=40032 PROTOO_LISTEN_PORT=4443 ./docker/run.sh
+```
+
+### Considerations for (config.js)[server/config.example.js]
+
+* Make sure [https.listenIp](server/config.example.js#L20) is set to `0.0.0.0`.
+* Make sure [TLS certificates](server/config.example.js#L24) reside in `server/certs` directory.
+* Make sure there is an entry in [webRtcTransportOptions.listenIps ](server/config.example.js#L120) with `ip` value of `0.0.0.0` and `announcedIp` value set to the host IP addres where the clients are accessing via HTTPS.
+
 
 ## Author
 
