@@ -4,4 +4,4 @@ node_modules/
 !/server/config.example.js
 /server/public/
 /server/certs/
-!/server/certs/mediasoup-demo.localhost.*
+/server/mediasoup_valgrind_*
