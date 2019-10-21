@@ -109,6 +109,8 @@ class Room extends EventEmitter
 		//   - {Map<String, mediasoup.Transport>} transports
 		//   - {Map<String, mediasoup.Producer>} producers
 		//   - {Map<String, mediasoup.Consumers>} consumers
+		//   - {Map<String, mediasoup.DataProducer>} dataProducers
+		//   - {Map<String, mediasoup.DataConsumers>} dataConsumers
 		// @type {Map<String, Object>}
 		this._broadcasters = new Map();
 
@@ -268,17 +270,11 @@ class Room extends EventEmitter
 			// If this is the latest Peer in the room, close the room.
 			if (this._protooRoom.peers.length === 0)
 			{
-				if (this._closed)
-					return;
+				logger.info(
+					'last Peer in the room left, closing the room [roomId:%s]',
+					this._roomId);
 
-				if (this._protooRoom.peers.length === 0)
-				{
-					logger.info(
-						'last Peer in the room left, closing the room [roomId:%s]',
-						this._roomId);
-
-					this.close();
-				}
+				this.close();
 			}
 		});
 	}
@@ -325,9 +321,11 @@ class Room extends EventEmitter
 					version : device.version
 				},
 				rtpCapabilities,
-				transports : new Map(),
-				producers  : new Map(),
-				consumers  : new Map()
+				transports    : new Map(),
+				producers     : new Map(),
+				consumers     : new Map(),
+				dataProducers : new Map(),
+				dataConsumers : new Map()
 			}
 		};
 
@@ -853,6 +851,12 @@ class Room extends EventEmitter
 					logger.debug('WebRtcTransport "sctpstatechange" event [sctpState:%s]', sctpState);
 				});
 
+				transport.on('dtlsstatechange', (dtlsState) =>
+				{
+					if (dtlsState === 'failed' || dtlsState === 'closed')
+						logger.warn('WebRtcTransport "dtlsstatechange" event [dtlsState:%s]', dtlsState);
+				});
+
 				// Store the WebRtcTransport into the protoo Peer data Object.
 				peer.data.transports.set(transport.id, transport);
 
@@ -1376,11 +1380,16 @@ class Room extends EventEmitter
 	async _createConsumer({ consumerPeer, producerPeer, producer })
 	{
 		// Optimization:
-		// - Create the server-side Consumer. If video, do it paused.
+		// - Create the server-side Consumer in paused mode.
 		// - Tell its Peer about it and wait for its response.
 		// - Upon receipt of the response, resume the server-side Consumer.
 		// - If video, this will mean a single key frame requested by the
 		//   server-side Consumer (when resuming it).
+		// - If audio (or video), it will avoid that RTP packets are received by the
+		//   remote endpoint *before* the Consumer is locally created in the endpoint
+		//   (and before the local SDP O/A procedure ends). If that happens (RTP
+		//   packets are received before the SDP O/A is done) the PeerConnection may
+		//   fail to associate the RTP stream.
 
 		// NOTE: Don't create the Consumer if the remote Peer cannot consume it.
 		if (
@@ -1416,7 +1425,7 @@ class Room extends EventEmitter
 				{
 					producerId      : producer.id,
 					rtpCapabilities : consumerPeer.data.rtpCapabilities,
-					paused          : producer.kind === 'video'
+					paused          : true
 				});
 		}
 		catch (error)
@@ -1495,10 +1504,11 @@ class Room extends EventEmitter
 					producerPaused : consumer.producerPaused
 				});
 
-			// Now that we got the positive response from the remote Peer and, if
-			// video, resume the Consumer to ask for an efficient key frame.
-			if (consumer.kind === 'video')
-				await consumer.resume();
+			// Now that we got the positive response from the remote endpoint, resume
+			// the Consumer so the remote endpoint will receive the a first RTP packet
+			// of this new stream once its PeerConnection is already ready to process
+			// and associate it.
+			await consumer.resume();
 
 			consumerPeer.notify(
 				'consumerScore',

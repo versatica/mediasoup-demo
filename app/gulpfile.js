@@ -14,11 +14,19 @@
  *   to 'production'), opens two browsers and watches for changes in the source
  *   code.
  *
+ * gulp devel:tcp
+ *   Same as gulp devel, but forcing media over TCP.
+ *
  * gulp devel:vp9
  *   Generates the browser app in development mode (unless NODE_ENV is set
  *   to 'production'), opens two browsers forcing VP9 and watches for changes in
  *   the source code.
  *
+ * gulp devel:h264
+ *   Generates the browser app in development mode (unless NODE_ENV is set
+ *   to 'production'), opens two browsers forcing H264 and watches for changes in
+ *   the source code.
+
  * gulp
  *   Alias for `gulp dist`.
  */
@@ -191,112 +199,14 @@ gulp.task('bundle:watch', () =>
 	return bundle({ watch: true });
 });
 
-gulp.task('browser', (done) =>
-{
-	const config = require('../server/config');
-
-	browserSync(
-		{
-			open      : 'external',
-			host      : config.domain,
-			startPath : '/?info=true',
-			server    :
-			{
-				baseDir : OUTPUT_DIR
-			},
-			https     : config.https.tls,
-			ghostMode : false,
-			files     : path.join(OUTPUT_DIR, '**', '*')
-		});
-
-	done();
-});
-
-gulp.task('browser:default', async (done) =>
-{
-	const config = require('../server/config');
-
-	await new Promise((resolve) =>
-	{
-		browserSync.create('producer1').init(
-			{
-				open      : 'external',
-				host      : config.domain,
-				startPath : '/?roomId=devel:default&info=true&throttleSecret=foo&consume=false',
-				server    :
-				{
-					baseDir : OUTPUT_DIR
-				},
-				https     : config.https.tls,
-				ghostMode : false,
-				files     : path.join(OUTPUT_DIR, '**', '*')
-			},
-			resolve);
-	});
-
-	await new Promise((resolve) =>
-	{
-		browserSync.create('consumer1').init(
-			{
-				open      : 'external',
-				host      : config.domain,
-				startPath : '/?roomId=devel:default&info=true&throttleSecret=foo&produce=false',
-				server    :
-				{
-					baseDir : OUTPUT_DIR
-				},
-				https     : config.https.tls,
-				ghostMode : false,
-				files     : path.join(OUTPUT_DIR, '**', '*')
-			},
-			resolve);
-	});
-
-	done();
-});
-
-gulp.task('browser:vp9', async (done) =>
-{
-	const config = require('../server/config');
-
-	await new Promise((resolve) =>
-	{
-		browserSync.create('producer1').init(
-			{
-				open      : 'external',
-				host      : config.domain,
-				startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&consume=false&forceVP9=true&svc=L3T3&sharingSimulcast=true',
-				server    :
-				{
-					baseDir : OUTPUT_DIR
-				},
-				https     : config.https.tls,
-				ghostMode : false,
-				files     : path.join(OUTPUT_DIR, '**', '*')
-			},
-			resolve);
-	});
-
-	await new Promise((resolve) =>
-	{
-		browserSync.create('consumer1').init(
-			{
-				open      : 'external',
-				host      : config.domain,
-				startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&produce=false&forceVP9=true&svc=L3T3&sharingSimulcast=true',
-				server    :
-				{
-					baseDir : OUTPUT_DIR
-				},
-				https     : config.https.tls,
-				ghostMode : false,
-				files     : path.join(OUTPUT_DIR, '**', '*')
-			},
-			resolve);
-	});
-
-	done();
-});
+gulp.task('dist', gulp.series(
+	'clean',
+	'lint',
+	'bundle',
+	'html',
+	'css',
+	'resources'
+));
 
 gulp.task('watch', (done) =>
 {
@@ -323,27 +233,7 @@ gulp.task('watch', (done) =>
 	done();
 });
 
-gulp.task('dist', gulp.series(
-	'clean',
-	'lint',
-	'bundle',
-	'html',
-	'css',
-	'resources'
-));
-
-gulp.task('live', gulp.series(
-	'clean',
-	'lint',
-	'bundle:watch',
-	'html',
-	'css',
-	'resources',
-	'watch',
-	'browser'
-));
-
-gulp.task('devel:base', gulp.series(
+gulp.task('browser:base', gulp.series(
 	'clean',
 	'lint',
 	'bundle:watch',
@@ -353,14 +243,212 @@ gulp.task('devel:base', gulp.series(
 	'watch'
 ));
 
+gulp.task('live', gulp.series(
+	'browser:base',
+	(done) =>
+	{
+		const config = require('../server/config');
+
+		browserSync(
+			{
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?info=true',
+				server    :
+				{
+					baseDir : OUTPUT_DIR
+				},
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			});
+
+		done();
+	}
+));
+
 gulp.task('devel', gulp.series(
-	'devel:base',
-	'browser:default'
+	'browser:base',
+	async (done) =>
+	{
+		const config = require('../server/config');
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('producer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel&info=true&throttleSecret=foo&consume=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('consumer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel&info=true&throttleSecret=foo&produce=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		done();
+	}
+));
+
+gulp.task('devel:tcp', gulp.series(
+	'browser:base',
+	async (done) =>
+	{
+		const config = require('../server/config');
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('producer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:tcp&info=true&forceTcp=true&consume=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('consumer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:tcp&info=true&forceTcp=true&produce=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		done();
+	}
 ));
 
 gulp.task('devel:vp9', gulp.series(
-	'devel:base',
-	'browser:vp9'
+	'browser:base',
+	async (done) =>
+	{
+		const config = require('../server/config');
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('producer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&forceVP9=true&svc=L3T3&consume=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('consumer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:vp9&info=true&throttleSecret=foo&forceVP9=true&svc=L3T3&produce=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		done();
+	}
+));
+
+gulp.task('devel:h264', gulp.series(
+	'browser:base',
+	async (done) =>
+	{
+		const config = require('../server/config');
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('producer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:h264&info=true&throttleSecret=foo&forceH264=true&consume=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		await new Promise((resolve) =>
+		{
+			browserSync.create('consumer1').init(
+				{
+					open      : 'external',
+					host      : config.domain,
+					startPath : '/?roomId=devel:h264&info=true&throttleSecret=foo&forceH264=true&produce=false',
+					server    :
+					{
+						baseDir : OUTPUT_DIR
+					},
+					https     : config.https.tls,
+					ghostMode : false,
+					files     : path.join(OUTPUT_DIR, '**', '*')
+				},
+				resolve);
+		});
+
+		done();
+	}
 ));
 
 gulp.task('default', gulp.series('dist'));

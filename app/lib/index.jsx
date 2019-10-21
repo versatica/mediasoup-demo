@@ -87,10 +87,16 @@ async function run()
 		await faceapi.loadTinyFaceDetectorModel('/resources/face-detector-models');
 
 	if (info)
+	{
+		// eslint-disable-next-line require-atomic-updates
 		window.SHOW_INFO = true;
+	}
 
 	if (throttleSecret)
+	{
+		// eslint-disable-next-line require-atomic-updates
 		window.NETWORK_THROTTLE_SECRET = throttleSecret;
+	}
 
 	if (!roomId)
 	{
@@ -115,6 +121,7 @@ async function run()
 			case 'consume':
 			case 'forceH264':
 			case 'forceVP9':
+			case 'forceTcp':
 			case 'svc':
 			case 'datachannel':
 			case 'info':
@@ -175,8 +182,8 @@ async function run()
 		});
 
 	// NOTE: For debugging.
-	window.CLIENT = roomClient;
-	window.CC = roomClient;
+	window.CLIENT = roomClient; // eslint-disable-line require-atomic-updates
+	window.CC = roomClient; // eslint-disable-line require-atomic-updates
 
 	render(
 		<Provider store={store}>

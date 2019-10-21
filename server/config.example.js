@@ -13,25 +13,25 @@ const os = require('os');
 module.exports =
 {
 	// Listening hostname (just for `gulp live` task).
-	domain : 'localhost',
+	domain : process.env.DOMAIN || 'localhost',
 	// Signaling settings (protoo WebSocket server and HTTP API server).
 	https  :
 	{
 		listenIp   : '0.0.0.0',
 		// NOTE: Don't change listenPort (client app assumes 4443).
-		listenPort : 4443,
+		listenPort : process.env.PROTOO_LISTEN_PORT || 4443,
 		// NOTE: Set your own valid certificate files.
 		tls        :
 		{
-			cert : `${__dirname}/certs/mediasoup-demo.localhost.cert.pem`,
-			key  : `${__dirname}/certs/mediasoup-demo.localhost.key.pem`
+			cert : process.env.HTTPS_CERT_FULLCHAIN `${__dirname}/certs/fullchain.pem`,
+			key  : process.env.HTTPS_CERT_PRIVKEY `${__dirname}/certs/privkey.pem`
 		}
 	},
 	// mediasoup settings.
 	mediasoup :
 	{
 		// Number of mediasoup workers to launch.
-		numWorkers     : Object.keys(os.cpus()).length,
+		numWorkers : Object.keys(os.cpus()).length,
 		// mediasoup WorkerSettings.
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WorkerSettings
 		workerSettings :
@@ -52,8 +52,8 @@ module.exports =
 				'svc',
 				'sctp'
 			],
-			rtcMinPort : 40000,
-			rtcMaxPort : 49999
+			rtcMinPort : process.env.MEDIASOUP_MIN_PORT || 40000,
+			rtcMaxPort : process.env.MEDIASOUP_MAX_PORT || 49999
 		},
 		// mediasoup Router options.
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#RouterOptions
@@ -119,7 +119,10 @@ module.exports =
 		{
 			listenIps :
 			[
-				{ ip: '1.2.3.4', announcedIp: null }
+				{
+					ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
+					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP
+				}
 			],
 			initialAvailableOutgoingBitrate : 1000000,
 			minimumAvailableOutgoingBitrate : 600000,
@@ -132,7 +135,11 @@ module.exports =
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#PlainRtpTransportOptions
 		plainRtpTransportOptions :
 		{
-			listenIp           : { ip: '192.168.1.123', announcedIp: null },
+			listenIp :
+			{
+				ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
+				announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP
+			},
 			maxSctpMessageSize : 262144
 		}
 	}
