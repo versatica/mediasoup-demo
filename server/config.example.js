@@ -23,8 +23,8 @@ module.exports =
 		// NOTE: Set your own valid certificate files.
 		tls        :
 		{
-			cert : process.env.HTTPS_CERT_FULLCHAIN `${__dirname}/certs/fullchain.pem`,
-			key  : process.env.HTTPS_CERT_PRIVKEY `${__dirname}/certs/privkey.pem`
+			cert : process.env.HTTPS_CERT_FULLCHAIN || `${__dirname}/certs/fullchain.pem`,
+			key  : process.env.HTTPS_CERT_PRIVKEY || `${__dirname}/certs/privkey.pem`
 		}
 	},
 	// mediasoup settings.
