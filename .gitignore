@@ -5,3 +5,5 @@ node_modules/
 /server/public/
 /server/certs/
 /server/mediasoup_valgrind_*
+
+/.vscode/
