@@ -13,6 +13,11 @@ const VIDEO_CONSTRAINS =
 	hd   : { width: { ideal: 1280 }, height: { ideal: 720 } }
 };
 
+const PC_PROPRIETARY_CONSTRAINTS =
+{
+	optional: [ { googDscp: true } ]
+};
+
 const VIDEO_SIMULCAST_ENCODINGS =
 [
 	{ maxBitrate: 180000, scaleResolutionDownBy: 4 },
@@ -2070,7 +2075,8 @@ export default class RoomClient
 						iceParameters,
 						iceCandidates,
 						dtlsParameters,
-						sctpParameters
+						sctpParameters,
+						proprietaryConstraints : PC_PROPRIETARY_CONSTRAINTS
 					});
 
 				this._sendTransport.on(
