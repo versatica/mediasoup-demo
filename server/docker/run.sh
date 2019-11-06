@@ -14,7 +14,7 @@ export MEDIASOUP_USE_VALGRIND=${MEDIASOUP_USE_VALGRIND:="false"}
 export MEDIASOUP_VALGRIND_OPTIONS=${MEDIASOUP_VALGRIND_OPTIONS:="\
 --leak-check=full|\
 --track-fds=yes|\
---log-file=/storage/mediasoup_valgrind_`date +%s`.log\
+--log-file=/storage/mediasoup_valgrind_%p.log\
 "}
 
 docker run \
