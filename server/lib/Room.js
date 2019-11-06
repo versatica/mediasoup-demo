@@ -963,6 +963,7 @@ class Room extends EventEmitter
 				});
 
 				// NOTE: For testing.
+				// await producer.enablePacketEvent([ 'rtp', 'nack', 'pli', 'fir' ]);
 				// await producer.enablePacketEvent([ 'pli', 'fir' ]);
 
 				producer.on('packet', (packet) =>
@@ -1509,6 +1510,7 @@ class Room extends EventEmitter
 		});
 
 		// NOTE: For testing.
+		// await consumer.enablePacketEvent([ 'rtp', 'nack', 'pli', 'fir' ]);
 		// await consumer.enablePacketEvent([ 'pli', 'fir' ]);
 
 		consumer.on('packet', (packet) =>
