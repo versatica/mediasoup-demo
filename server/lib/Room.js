@@ -858,7 +858,7 @@ class Room extends EventEmitter
 				});
 
 				// NOTE: For testing.
-				await transport.enablePacketEvent([ 'probation' ]);
+				// await transport.enablePacketEvent([ 'probation' ]);
 
 				transport.on('packet', (packet) =>
 				{
