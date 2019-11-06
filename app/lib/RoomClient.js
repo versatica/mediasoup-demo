@@ -15,7 +15,7 @@ const VIDEO_CONSTRAINS =
 
 const PC_PROPRIETARY_CONSTRAINTS =
 {
-	optional: [ { googDscp: true } ]
+	optional : [ { googDscp: true } ]
 };
 
 const VIDEO_SIMULCAST_ENCODINGS =

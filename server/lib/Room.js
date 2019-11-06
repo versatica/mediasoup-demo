@@ -857,6 +857,16 @@ class Room extends EventEmitter
 						logger.warn('WebRtcTransport "dtlsstatechange" event [dtlsState:%s]', dtlsState);
 				});
 
+				// NOTE: For testing.
+				await transport.enablePacketEvent([ 'probation' ]);
+
+				transport.on('packet', (packet) =>
+				{
+					logger.info(
+						'transport "packet" event [producerId:%s, packet:%o]',
+						transport.id, packet);
+				});
+
 				// Store the WebRtcTransport into the protoo Peer data Object.
 				peer.data.transports.set(transport.id, transport);
 
@@ -950,6 +960,16 @@ class Room extends EventEmitter
 					logger.debug(
 						'producer "videoorientationchange" event [producerId:%s, videoOrientation:%o]',
 						producer.id, videoOrientation);
+				});
+
+				// NOTE: For testing.
+				// await producer.enablePacketEvent([ 'pli', 'fir' ]);
+
+				producer.on('packet', (packet) =>
+				{
+					logger.info(
+						'producer "packet" event [producerId:%s, packet:%o]',
+						producer.id, packet);
 				});
 
 				accept({ id: producer.id });
@@ -1486,6 +1506,16 @@ class Room extends EventEmitter
 					temporalLayer : layers ? layers.temporalLayer : null
 				})
 				.catch(() => {});
+		});
+
+		// NOTE: For testing.
+		// await consumer.enablePacketEvent([ 'pli', 'fir' ]);
+
+		consumer.on('packet', (packet) =>
+		{
+			logger.info(
+				'consumer "packet" event [producerId:%s, packet:%o]',
+				consumer.id, packet);
 		});
 
 		// Send a protoo request to the remote Peer with Consumer parameters.
