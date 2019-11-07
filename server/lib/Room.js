@@ -738,6 +738,7 @@ class Room extends EventEmitter
 				} = request.data;
 
 				// Store client data into the protoo Peer data object.
+				peer.data.joined = true;
 				peer.data.displayName = displayName;
 				peer.data.device = device;
 				peer.data.rtpCapabilities = rtpCapabilities;
@@ -752,6 +753,12 @@ class Room extends EventEmitter
 					...this._getJoinedPeers(),
 					...Array.from(this._broadcasters.values())
 				];
+
+				// Reply now the request with the list of joined peers (all but the new one).
+				accept({ peers: peerInfos });
+
+				// Mark the new Peer as joined.
+				peer.data.joined = true;
 
 				for (const joinedPeer of joinedPeers)
 				{
@@ -795,11 +802,6 @@ class Room extends EventEmitter
 						dataProducerPeer : null,
 						dataProducer     : this._bot.dataProducer
 					});
-
-				accept({ peers: peerInfos });
-
-				// Mark the new Peer as joined.
-				peer.data.joined = true;
 
 				// Notify the new Peer to all other Peers.
 				for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
