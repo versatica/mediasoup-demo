@@ -11,11 +11,7 @@ export MEDIASOUP_MAX_PORT=${MEDIASOUP_MAX_PORT:="2020"}
 
 # Valgrind related options.
 export MEDIASOUP_USE_VALGRIND=${MEDIASOUP_USE_VALGRIND:="false"}
-export MEDIASOUP_VALGRIND_OPTIONS=${MEDIASOUP_VALGRIND_OPTIONS:="\
---leak-check=full|\
---track-fds=yes|\
---log-file=/storage/mediasoup_valgrind_%p.log\
-"}
+export MEDIASOUP_VALGRIND_OPTIONS=${MEDIASOUP_VALGRIND_OPTIONS:="--leak-check=full --track-fds=yes --log-file=/storage/mediasoup_valgrind_%p.log"}
 
 docker run \
 	--name=mediasoup-demo \
