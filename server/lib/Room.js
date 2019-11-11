@@ -751,7 +751,7 @@ class Room extends EventEmitter
 				const joinedPeers =
 				[
 					...this._getJoinedPeers(),
-					...Array.from(this._broadcasters.values())
+					...this._broadcasters.values()
 				];
 
 				// Reply now the request with the list of joined peers (all but the new one).
