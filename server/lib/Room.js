@@ -747,7 +747,6 @@ class Room extends EventEmitter
 				// Tell the new Peer about already joined Peers.
 				// And also create Consumers for existing Producers.
 
-				const peerInfos = [];
 				const joinedPeers =
 				[
 					...this._getJoinedPeers(),
@@ -755,6 +754,13 @@ class Room extends EventEmitter
 				];
 
 				// Reply now the request with the list of joined peers (all but the new one).
+				const peerInfos = joinedPeers
+					.filter((joinedPeer) => joinedPeer.id !== peer.id)
+					.map((joinedPeer) => ({
+						id          : joinedPeer.id,
+						displayName : joinedPeer.data.displayName,
+						device      : joinedPeer.data.device
+					}));
 				accept({ peers: peerInfos });
 
 				// Mark the new Peer as joined.
@@ -762,13 +768,6 @@ class Room extends EventEmitter
 
 				for (const joinedPeer of joinedPeers)
 				{
-					peerInfos.push(
-						{
-							id          : joinedPeer.id,
-							displayName : joinedPeer.data.displayName,
-							device      : joinedPeer.data.device
-						});
-
 					// Create Consumers for existing Producers.
 					for (const producer of joinedPeer.data.producers.values())
 					{
