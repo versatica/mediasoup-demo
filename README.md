@@ -21,7 +21,9 @@ $ cd mediasoup-demo
 $ git checkout v3
 ```
 
-* Set up the server:
+* Ensure you have installed the [dependencies](https://mediasoup.org/documentation/v3/mediasoup/installation/#requirements) required by mediasoup to build.
+
+* Set up the mediasoup-demo server:
 
 ```bash
 $ cd server
@@ -36,7 +38,7 @@ $ cp config.example.js config.js
 
 **NOTE:** To be perfectly clear, "customize it for your scenario" is not something "optional". If you don't set proper values in `config.js` the application **won't work**.
 
-* Set up the browser app:
+* Set up the mediasoup-demo browser app:
 
 ```bash
 $ cd app
