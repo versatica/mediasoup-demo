@@ -336,7 +336,7 @@ export default class PeerView extends React.Component
 
 							<If condition={!isMe && videoCodec && consumerPriority > 0}>
 								<p>
-									{`current priority: ${consumerPriority}`}
+									{`priority: ${consumerPriority}`}
 									<span>{' '}</span>
 									<span
 										className={classnames({
