@@ -966,12 +966,13 @@ class Room extends EventEmitter
 				// NOTE: For testing.
 				// await producer.enablePacketEvent([ 'rtp', 'nack', 'pli', 'fir' ]);
 				// await producer.enablePacketEvent([ 'pli', 'fir' ]);
+				await producer.enablePacketEvent([ 'keyframe' ]);
 
 				producer.on('packet', (packet) =>
 				{
 					logger.info(
-						'producer "packet" event [producerId:%s, packet:%o]',
-						producer.id, packet);
+						'producer "packet" event [producerId:%s, packet.type:%s, packet:%o]',
+						producer.id, packet.type, packet);
 				});
 
 				accept({ id: producer.id });
@@ -1513,12 +1514,13 @@ class Room extends EventEmitter
 		// NOTE: For testing.
 		// await consumer.enablePacketEvent([ 'rtp', 'nack', 'pli', 'fir' ]);
 		// await consumer.enablePacketEvent([ 'pli', 'fir' ]);
+		await consumer.enablePacketEvent([ 'keyframe' ]);
 
 		consumer.on('packet', (packet) =>
 		{
 			logger.info(
-				'consumer "packet" event [producerId:%s, packet:%o]',
-				consumer.id, packet);
+				'consumer "packet" event [producerId:%s, packet.type:%s, packet:%o]',
+				consumer.id, packet.type, packet);
 		});
 
 		// Send a protoo request to the remote Peer with Consumer parameters.
