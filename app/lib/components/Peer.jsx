@@ -62,6 +62,7 @@ const Peer = (props) =>
 				consumerPreferredTemporalLayer={
 					videoConsumer ? videoConsumer.preferredTemporalLayer : null
 				}
+				consumerPriority={videoConsumer ? videoConsumer.priority : null}
 				audioTrack={audioConsumer ? audioConsumer.track : null}
 				videoTrack={videoConsumer ? videoConsumer.track : null}
 				audioMuted={audioMuted}
@@ -76,6 +77,10 @@ const Peer = (props) =>
 				{
 					roomClient.setConsumerPreferredLayers(
 						videoConsumer.id, spatialLayer, temporalLayer);
+				}}
+				onChangeVideoPriority={(priority) =>
+				{
+					roomClient.setConsumerPriority(videoConsumer.id, priority);
 				}}
 				onRequestKeyFrame={() =>
 				{

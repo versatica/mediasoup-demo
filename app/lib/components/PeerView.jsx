@@ -70,6 +70,7 @@ export default class PeerView extends React.Component
 			consumerCurrentTemporalLayer,
 			consumerPreferredSpatialLayer,
 			consumerPreferredTemporalLayer,
+			consumerPriority,
 			audioMuted,
 			videoVisible,
 			videoMultiLayer,
@@ -80,6 +81,7 @@ export default class PeerView extends React.Component
 			onChangeDisplayName,
 			onChangeMaxSendingSpatialLayer,
 			onChangeVideoPreferredLayers,
+			onChangeVideoPriority,
 			onRequestKeyFrame,
 			onStatsClick
 		} = this.props;
@@ -325,6 +327,40 @@ export default class PeerView extends React.Component
 
 											onChangeVideoPreferredLayers(
 												newPreferredSpatialLayer, newPreferredTemporalLayer);
+										}}
+									>
+										{'[ up ]'}
+									</span>
+								</p>
+							</If>
+
+							<If condition={!isMe && videoCodec && consumerPriority > 0}>
+								<p>
+									{`current priority: ${consumerPriority}`}
+									<span>{' '}</span>
+									<span
+										className={classnames({
+											clickable : consumerPriority > 1
+										})}
+										onClick={(event) =>
+										{
+											event.stopPropagation();
+
+											onChangeVideoPriority(consumerPriority - 1);
+										}}
+									>
+										{'[ down ]'}
+									</span>
+									<span>{' '}</span>
+									<span
+										className={classnames({
+											clickable : consumerPriority < 255
+										})}
+										onClick={(event) =>
+										{
+											event.stopPropagation();
+
+											onChangeVideoPriority(consumerPriority + 1);
 										}}
 									>
 										{'[ up ]'}
@@ -737,6 +773,7 @@ PeerView.propTypes =
 	consumerCurrentTemporalLayer   : PropTypes.number,
 	consumerPreferredSpatialLayer  : PropTypes.number,
 	consumerPreferredTemporalLayer : PropTypes.number,
+	consumerPriority               : PropTypes.number,
 	audioTrack                     : PropTypes.any,
 	videoTrack                     : PropTypes.any,
 	audioMuted                     : PropTypes.bool,
@@ -750,6 +787,7 @@ PeerView.propTypes =
 	onChangeDisplayName            : PropTypes.func,
 	onChangeMaxSendingSpatialLayer : PropTypes.func,
 	onChangeVideoPreferredLayers   : PropTypes.func,
+	onChangeVideoPriority          : PropTypes.func,
 	onRequestKeyFrame              : PropTypes.func,
 	onStatsClick                   : PropTypes.func.isRequired
 };

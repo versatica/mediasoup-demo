@@ -761,6 +761,7 @@ class Room extends EventEmitter
 						displayName : joinedPeer.data.displayName,
 						device      : joinedPeer.data.device
 					}));
+
 				accept({ peers: peerInfos });
 
 				// Mark the new Peer as joined.
@@ -1096,7 +1097,7 @@ class Room extends EventEmitter
 				break;
 			}
 
-			case 'setConsumerPreferedLayers':
+			case 'setConsumerPreferredLayers':
 			{
 				// Ensure the Peer is joined.
 				if (!peer.data.joined)
@@ -1109,6 +1110,25 @@ class Room extends EventEmitter
 					throw new Error(`consumer with id "${consumerId}" not found`);
 
 				await consumer.setPreferredLayers({ spatialLayer, temporalLayer });
+
+				accept();
+
+				break;
+			}
+
+			case 'setConsumerPriority':
+			{
+				// Ensure the Peer is joined.
+				if (!peer.data.joined)
+					throw new Error('Peer not yet joined');
+
+				const { consumerId, priority } = request.data;
+				const consumer = peer.data.consumers.get(consumerId);
+
+				if (!consumer)
+					throw new Error(`consumer with id "${consumerId}" not found`);
+
+				await consumer.setPriority(priority);
 
 				accept();
 

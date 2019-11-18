@@ -365,6 +365,7 @@ export default class RoomClient
 								temporalLayers         : temporalLayers,
 								preferredSpatialLayer  : spatialLayers - 1,
 								preferredTemporalLayer : temporalLayers - 1,
+								priority               : 1,
 								codec                  : consumer.rtpParameters.codecs[0].mimeType.split('/')[1],
 								track                  : consumer.track
 							},
@@ -1515,7 +1516,7 @@ export default class RoomClient
 		try
 		{
 			await this._protoo.request(
-				'setConsumerPreferedLayers', { consumerId, spatialLayer, temporalLayer });
+				'setConsumerPreferredLayers', { consumerId, spatialLayer, temporalLayer });
 
 			store.dispatch(stateActions.setConsumerPreferredLayers(
 				consumerId, spatialLayer, temporalLayer));
@@ -1528,6 +1529,30 @@ export default class RoomClient
 				{
 					type : 'error',
 					text : `Error setting Consumer preferred layers: ${error}`
+				}));
+		}
+	}
+
+	async setConsumerPriority(consumerId, priority)
+	{
+		logger.debug(
+			'setConsumerPriority() [consumerId:%s, priority:%d]',
+			consumerId, priority);
+
+		try
+		{
+			await this._protoo.request('setConsumerPriority', { consumerId, priority });
+
+			store.dispatch(stateActions.setConsumerPriority(consumerId, priority));
+		}
+		catch (error)
+		{
+			logger.error('setConsumerPriority() | failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `Error setting Consumer priority: ${error}`
 				}));
 		}
 	}

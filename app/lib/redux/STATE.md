@@ -92,6 +92,7 @@
       currentTemporalLayer   : undefined,
       preferredSpatialLayer  : undefined,
       preferredTemporalLayer : undefined,
+      priority               : 1,
       track                  : MediaStreamTrack,
       score                  : [ { ssrc: 3331, score: 10 } ]
     },
@@ -109,6 +110,7 @@
       currentTemporalLayer   : 1,
       preferredSpatialLayer  : 2,
       preferredTemporalLayer : 2,
+      priority               : 2,
       track                  : MediaStreamTrack,
       score                  : [ { ssrc: 4441, score: 9 }, { ssrc: 4444, score: 8 } ]
     }
