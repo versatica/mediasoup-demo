@@ -325,7 +325,7 @@ gulp.task('devel:tcp', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:tcp&info=true&forceTcp=true&consume=false',
+					startPath : '/?roomId=devel:tcp&info=true&throttleSecret=foo&forceTcp=true&consume=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -343,7 +343,7 @@ gulp.task('devel:tcp', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:tcp&info=true&forceTcp=true&produce=false',
+					startPath : '/?roomId=devel:tcp&info=true&throttleSecret=foo&forceTcp=true&produce=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
