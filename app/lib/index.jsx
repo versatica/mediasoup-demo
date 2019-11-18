@@ -127,6 +127,7 @@ async function run()
 			case 'info':
 			case 'faceDetection':
 			case 'externalVideo':
+			case 'throttleSecret':
 				break;
 			default:
 				delete roomUrlParser.query[key];
