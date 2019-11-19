@@ -860,7 +860,7 @@ class Room extends EventEmitter
 				});
 
 				// NOTE: For testing.
-				// await transport.enableTraceEvent([ 'probation' ]);
+				// await transport.enableTraceEvent([ 'probation', 'bwe' ]);
 				// await transport.enableTraceEvent([ 'bwe' ]);
 
 				transport.on('trace', (trace) =>
@@ -966,7 +966,7 @@ class Room extends EventEmitter
 				});
 
 				// NOTE: For testing.
-				// await producer.enableTraceEvent([ 'rtp', 'nack', 'pli', 'fir' ]);
+				// await producer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
 				// await producer.enableTraceEvent([ 'pli', 'fir' ]);
 				// await producer.enableTraceEvent([ 'keyframe' ]);
 
@@ -1533,7 +1533,7 @@ class Room extends EventEmitter
 		});
 
 		// NOTE: For testing.
-		// await consumer.enableTraceEvent([ 'rtp', 'nack', 'pli', 'fir' ]);
+		// await consumer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
 		// await consumer.enableTraceEvent([ 'pli', 'fir' ]);
 		// await consumer.enableTraceEvent([ 'keyframe' ]);
 
