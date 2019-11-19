@@ -863,11 +863,11 @@ class Room extends EventEmitter
 				// await transport.enableTraceEvent([ 'probation' ]);
 				// await transport.enableTraceEvent([ 'bwe' ]);
 
-				transport.on('packet', (packet) =>
+				transport.on('trace', (trace) =>
 				{
 					logger.info(
-						'transport "packet" event [transportId:%s, packet.type:%s, packet:%o]',
-						transport.id, packet.type, packet);
+						'transport "trace" event [transportId:%s, trace.type:%s, trace:%o]',
+						transport.id, trace.type, trace);
 				});
 
 				// Store the WebRtcTransport into the protoo Peer data Object.
@@ -970,11 +970,11 @@ class Room extends EventEmitter
 				// await producer.enableTraceEvent([ 'pli', 'fir' ]);
 				// await producer.enableTraceEvent([ 'keyframe' ]);
 
-				producer.on('packet', (packet) =>
+				producer.on('trace', (trace) =>
 				{
 					logger.info(
-						'producer "packet" event [producerId:%s, packet.type:%s, packet:%o]',
-						producer.id, packet.type, packet);
+						'producer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
+						producer.id, trace.type, trace);
 				});
 
 				accept({ id: producer.id });
@@ -1537,11 +1537,11 @@ class Room extends EventEmitter
 		// await consumer.enableTraceEvent([ 'pli', 'fir' ]);
 		// await consumer.enableTraceEvent([ 'keyframe' ]);
 
-		consumer.on('packet', (packet) =>
+		consumer.on('trace', (trace) =>
 		{
 			logger.info(
-				'consumer "packet" event [producerId:%s, packet.type:%s, packet:%o]',
-				consumer.id, packet.type, packet);
+				'consumer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
+				consumer.id, trace.type, trace);
 		});
 
 		// Send a protoo request to the remote Peer with Consumer parameters.
