@@ -861,7 +861,7 @@ class Room extends EventEmitter
 
 				// NOTE: For testing.
 				// await transport.enableTraceEvent([ 'probation' ]);
-				await transport.enableTraceEvent([ 'bwe' ]);
+				// await transport.enableTraceEvent([ 'bwe' ]);
 
 				transport.on('packet', (packet) =>
 				{
