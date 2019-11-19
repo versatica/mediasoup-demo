@@ -861,12 +861,13 @@ class Room extends EventEmitter
 
 				// NOTE: For testing.
 				// await transport.enablePacketEvent([ 'probation' ]);
+				// await transport.enablePacketEvent([ 'bwe' ]);
 
 				transport.on('packet', (packet) =>
 				{
 					logger.info(
-						'transport "packet" event [producerId:%s, packet:%o]',
-						transport.id, packet);
+						'transport "packet" event [transportId:%s, packet.type:%s, packet:%o]',
+						transport.id, packet.type, packet);
 				});
 
 				// Store the WebRtcTransport into the protoo Peer data Object.
