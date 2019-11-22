@@ -163,7 +163,7 @@ class Bot
 				if (ppid !== sctp.PPID.WEBRTC_STRING)
 				{
 					logger.warn(
-						'ignoring non string receivied data in SCTP inbound stream');
+						'ignoring non string received data in SCTP inbound stream');
 
 					return;
 				}
