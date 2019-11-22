@@ -76,7 +76,7 @@ async function run()
 	// Run a protoo WebSocketServer.
 	await runProtooWebSocketServer();
 
-	// Log rooms status every 30 seconds.
+	// Log rooms status every 120 seconds.
 	setInterval(() =>
 	{
 		for (const room of rooms.values())
