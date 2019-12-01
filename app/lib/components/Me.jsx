@@ -187,9 +187,9 @@ class Me extends React.Component
 		this._mounted = false;
 	}
 
-	componentWillReceiveProps(nextProps)
+	componentDidUpdate(prevProps)
 	{
-		if (nextProps.me.displayNameSet)
+		if (!prevProps.me.displayNameSet && this.props.me.displayNameSet)
 			ReactTooltip.hide(this._rootNode);
 	}
 }
