@@ -76,7 +76,7 @@ async function run()
 	// Run a protoo WebSocketServer.
 	await runProtooWebSocketServer();
 
-	// Log rooms status every 120 seconds.
+	// Log rooms status every X seconds.
 	setInterval(() =>
 	{
 		for (const room of rooms.values())
@@ -114,6 +114,16 @@ async function runMediasoupWorkers()
 		});
 
 		mediasoupWorkers.push(worker);
+
+		// Log worker resource usage every X seconds.
+		setInterval(async () =>
+		{
+			const usage = await worker.getResourceUsage();
+
+			logger.info('mediasoup Worker resource usage [pid:%d]', worker.pid);
+			logger.info(usage);
+
+		}, 120000);
 	}
 }
 
