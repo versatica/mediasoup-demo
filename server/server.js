@@ -121,7 +121,7 @@ async function runMediasoupWorkers()
 			const usage = await worker.getResourceUsage();
 
 			logger.info('mediasoup Worker resource usage [pid:%d]: %o', worker.pid, usage);
-		}, 1000);
+		}, 120000);
 	}
 }
 
