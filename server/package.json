@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@sitespeed.io/throttle": "^0.5.4",
-    "awaitqueue": "^1.0.1",
+    "awaitqueue": "^2.0.0",
     "body-parser": "^1.19.0",
     "colors": "^1.4.0",
     "debug": "^4.1.1",
@@ -21,7 +21,7 @@
     "mediasoup": "github:versatica/mediasoup#v3",
     "pidusage": "^2.0.17",
     "protoo-server": "^4.0.3",
-    "sctp": "^0.0.18"
+    "sctp": "^0.0.19"
   },
   "devDependencies": {
     "eslint": "^6.7.2",
