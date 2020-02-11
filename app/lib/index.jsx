@@ -169,7 +169,7 @@ async function run()
 			peerId,
 			displayName,
 			device,
-			handler,
+			handlerName : handler,
 			useSimulcast,
 			useSharingSimulcast,
 			forceTcp,
