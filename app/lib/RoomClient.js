@@ -2053,9 +2053,7 @@ export default class RoomClient
 		{
 			this._mediasoupDevice = new mediasoupClient.Device(
 				{
-					handlerName : this._handlerName,
-					// TODO: remove when new mediasoup-client released.
-					Handler     : this._handlerName
+					handlerName : this._handlerName
 				});
 
 			const routerRtpCapabilities =
