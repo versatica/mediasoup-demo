@@ -115,6 +115,7 @@ async function run()
 		switch (key)
 		{
 			case 'roomId':
+			case 'handler':
 			case 'simulcast':
 			case 'sharingSimulcast':
 			case 'produce':
