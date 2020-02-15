@@ -1,0 +1,42 @@
+{
+  "name": "mediasoup-demo-aiortc",
+  "version": "3.0.0",
+  "private": true,
+  "description": "mediasoup demo aiortc app",
+  "contributors": [
+    "Iñaki Baz Castillo <ibc@aliax.net> (https://inakibaz.me)",
+    "José Luis Millán <jmillan@aliax.net> (https://github.com/jmillan)"
+  ],
+  "license": "All Rights Reserved",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "engines": {
+    "node": ">=8.6.0"
+  },
+  "scripts": {
+    "start": "node ./lib/index",
+    "typescript:build": "node npm-scripts.js typescript:build",
+    "typescript:watch": "node npm-scripts.js typescript:watch",
+    "lint": "node npm-scripts.js lint",
+    "lint:fix": "node npm-scripts.js lint:fix"
+  },
+  "dependencies": {
+    "debug": "^4.1.1",
+    "fake-mediastreamtrack": "^1.0.0",
+    "mediasoup-client-aiortc": "github:versatica/mediasoup-client-aiortc",
+    "protoo-client": "^4.0.3",
+    "redux": "^4.0.5",
+    "redux-logger": "^3.0.6",
+    "redux-thunk": "^2.3.0",
+    "repl": "^0.1.3",
+    "tsc-watch": "^4.1.0",
+    "typescript": "~3.6.4",
+    "url-parse": "^1.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^13.7.1",
+    "@typescript-eslint/eslint-plugin": "^2.18.0",
+    "@typescript-eslint/parser": "^2.18.0",
+    "eslint": "^6.8.0"
+  }
+}

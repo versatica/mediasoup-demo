@@ -1,0 +1,72 @@
+import * as repl from 'repl';
+import {
+	applyMiddleware as applyReduxMiddleware,
+	createStore as createReduxStore
+} from 'redux';
+import thunk from 'redux-thunk';
+import { Logger } from 'mediasoup-client/lib/Logger';
+import { RoomClient } from './RoomClient';
+import reducers from './redux/reducers';
+
+const reduxMiddlewares = [ thunk ];
+
+const logger = new Logger('RoomClient');
+
+const store = createReduxStore(
+	reducers,
+	undefined,
+	applyReduxMiddleware(...reduxMiddlewares)
+);
+
+RoomClient.init({ store });
+
+const roomId = process.env.ROOM_ID || 'testRoomId';
+const peerId = process.env.PEER_ID || 'testPeerId';
+const displayName = process.env.DISPLAY_NAME || 'testdisplayName';
+const forceTcp = process.env.FORCE_TCP === 'true' ? true : false;
+const produce = process.env.PRODUCE === 'false' ? false : true;
+const consume = process.env.CONSUME === 'false' ? false : true;
+const forceH264 = process.env.FORCE_H264 === 'true' ? true : false;
+const forceVP8 = process.env.FORCE_VP8 === 'true' ? true : false;
+const datachannel = process.env.DATACHANNEL === 'true' ? true : false;
+
+// TODO.
+const externalVideo = process.env.EXTERNAL_VIDEO || false;
+
+const options =
+{
+	roomId,
+	peerId,
+	displayName,
+	useSimulcast        : false,
+	useSharingSimulcast : false,
+	forceTcp,
+	produce,
+	consume,
+	forceH264,
+	forceVP8,
+	datachannel,
+	externalVideo
+};
+
+logger.debug(`starting mediasoup-demo-aiortc: ${JSON.stringify(options, undefined, 2)}`);
+
+const roomClient = new RoomClient(options);
+
+// For the interactive terminal.
+(global as any).store = store;
+(global as any).roomClient = roomClient;
+
+// Run an interactive terminal.
+const terminal = repl.start({
+	terminal        : true,
+	prompt          : 'terminal> ',
+	useColors       : true,
+	useGlobal       : true,
+	ignoreUndefined : false
+});
+
+terminal.on('exit', () => process.exit(0));
+
+// Join!!
+roomClient.join();
