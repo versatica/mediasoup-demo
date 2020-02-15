@@ -396,10 +396,6 @@ export class RoomClient
 								'DataConsumer "message" event [streamId:%d]',
 								dataConsumer.sctpStreamParameters.streamId);
 
-							// For the interactive terminal.
-							// eslint-disable-next-line @typescript-eslint/camelcase
-							(global as any).dc_message = message; // eslint-disable-line camelcase
-
 							if (message instanceof ArrayBuffer)
 							{
 								const view = new DataView(message);

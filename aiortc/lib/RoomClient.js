@@ -247,9 +247,6 @@ class RoomClient {
                                 });
                                 dataConsumer.on('message', (message) => {
                                     logger.debug('DataConsumer "message" event [streamId:%d]', dataConsumer.sctpStreamParameters.streamId);
-                                    // For the interactive terminal.
-                                    // eslint-disable-next-line @typescript-eslint/camelcase
-                                    global.dc_message = message; // eslint-disable-line camelcase
                                     if (message instanceof ArrayBuffer) {
                                         const view = new DataView(message);
                                         const number = view.getUint32(0);
