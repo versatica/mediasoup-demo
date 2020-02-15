@@ -528,7 +528,6 @@ class RoomClient {
                 }
                 else {
                     // TODO.
-                    // eslint-disable-line camelcase
                 }
                 if (this._useSimulcast) {
                     this._webcamProducer = yield this._sendTransport.produce({

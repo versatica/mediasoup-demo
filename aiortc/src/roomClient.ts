@@ -823,7 +823,6 @@ export class RoomClient
 			else
 			{
 				// TODO.
-				// eslint-disable-line camelcase
 			}
 
 			if (this._useSimulcast)
