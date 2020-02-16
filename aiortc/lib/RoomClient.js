@@ -32,7 +32,7 @@ const PC_PROPRIETARY_CONSTRAINTS = {
 };
 // TODO.
 // const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
-const logLevel = process.env.MEDIASOUP_CLIENT_LOGLEVEL || 'none';
+const logLevel = process.env.LOGLEVEL || 'none';
 const logger = new Logger_1.Logger('RoomClient');
 let store;
 class RoomClient {
