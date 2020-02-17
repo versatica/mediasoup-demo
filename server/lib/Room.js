@@ -941,8 +941,13 @@ class Room extends EventEmitter
 				// the 'loudest' event of the audioLevelObserver.
 				appData = { ...appData, peerId: peer.id };
 
-				const producer =
-					await transport.produce({ kind, rtpParameters, appData });
+				const producer = await transport.produce(
+					{
+						kind,
+						rtpParameters,
+						appData
+						// keyFrameRequestDelay: 5000
+					});
 
 				// Store the Producer into the protoo Peer data Object.
 				peer.data.producers.set(producer.id, producer);
@@ -968,7 +973,7 @@ class Room extends EventEmitter
 				// NOTE: For testing.
 				// await producer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
 				// await producer.enableTraceEvent([ 'pli', 'fir' ]);
-				// await producer.enableTraceEvent([ 'keyframe' ]);
+				await producer.enableTraceEvent([ 'keyframe' ]);
 
 				producer.on('trace', (trace) =>
 				{
