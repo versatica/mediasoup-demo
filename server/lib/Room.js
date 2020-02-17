@@ -973,7 +973,7 @@ class Room extends EventEmitter
 				// NOTE: For testing.
 				// await producer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
 				// await producer.enableTraceEvent([ 'pli', 'fir' ]);
-				await producer.enableTraceEvent([ 'keyframe' ]);
+				// await producer.enableTraceEvent([ 'keyframe' ]);
 
 				producer.on('trace', (trace) =>
 				{
