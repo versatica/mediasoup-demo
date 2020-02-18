@@ -30,13 +30,11 @@ const stateActions = __importStar(require("./redux/stateActions"));
 const PC_PROPRIETARY_CONSTRAINTS = {
     optional: [{ googDscp: true }]
 };
-// TODO.
-// const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
 const logLevel = process.env.LOGLEVEL || 'none';
 const logger = new Logger_1.Logger('RoomClient');
 let store;
 class RoomClient {
-    constructor({ roomId, peerId, displayName, useSimulcast, useSharingSimulcast, forceTcp, produce, consume, forceH264, forceVP8, datachannel, externalVideo }) {
+    constructor({ roomId, peerId, displayName, useSimulcast, useSharingSimulcast, forceTcp, produce, consume, forceH264, forceVP8, datachannel, externalAudio, externalVideo }) {
         // Closed flag.
         this._closed = false;
         // Device info.
@@ -53,11 +51,10 @@ class RoomClient {
         this._consume = true;
         // Whether we want DataChannels.
         this._useDataChannel = true;
+        // External audio.
+        this._externalAudio = "";
         // External video.
-        this._externalVideo = false;
-        // MediaStream of the external video.
-        // @type {MediaStream}
-        // _externalVideoStream = null;
+        this._externalVideo = "";
         // Next expected dataChannel test number.
         this._nextDataChannelTestNumber = 0;
         // Whether simulcast should be used.
@@ -98,8 +95,8 @@ class RoomClient {
         this._produce = produce;
         this._consume = consume;
         this._useDataChannel = datachannel;
+        this._externalAudio = externalAudio;
         this._externalVideo = externalVideo;
-        // this._externalVideoStream = null;
         this._useSimulcast = useSimulcast;
         this._useSharingSimulcast = useSharingSimulcast;
         this._protooUrl = urlFactory_1.getProtooUrl({ roomId, peerId, forceH264, forceVP8 });
@@ -418,7 +415,7 @@ class RoomClient {
             }
             let track;
             try {
-                if (!this._externalVideo) {
+                if (!this._externalAudio) {
                     track = new fake_mediastreamtrack_1.FakeMediaStreamTrack({
                         kind: 'audio',
                         data: {
@@ -427,7 +424,13 @@ class RoomClient {
                     });
                 }
                 else {
-                    // TODO.
+                    track = new fake_mediastreamtrack_1.FakeMediaStreamTrack({
+                        kind: 'audio',
+                        data: {
+                            sourceType: this._externalAudio.startsWith('http') ? 'url' : 'file',
+                            sourceValue: this._externalAudio
+                        }
+                    });
                 }
                 this._micProducer = yield this._sendTransport.produce({
                     track,
@@ -522,12 +525,18 @@ class RoomClient {
                     track = new fake_mediastreamtrack_1.FakeMediaStreamTrack({
                         kind: 'video',
                         data: {
-                            sourceType: 'device'
+                            sourceType: 'device',
                         }
                     });
                 }
                 else {
-                    // TODO.
+                    track = new fake_mediastreamtrack_1.FakeMediaStreamTrack({
+                        kind: 'video',
+                        data: {
+                            sourceType: this._externalVideo.startsWith('http') ? 'url' : 'file',
+                            sourceValue: this._externalVideo
+                        }
+                    });
                 }
                 if (this._useSimulcast) {
                     this._webcamProducer = yield this._sendTransport.produce({

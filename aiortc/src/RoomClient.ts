@@ -13,9 +13,6 @@ const PC_PROPRIETARY_CONSTRAINTS =
 	optional : [ { googDscp: true } ]
 };
 
-// TODO.
-// const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
-
 const logLevel = process.env.LOGLEVEL || 'none';
 
 const logger = new Logger('RoomClient');
@@ -49,12 +46,11 @@ export class RoomClient
 	// Whether we want DataChannels.
 	_useDataChannel = true;
 
-	// External video.
-	_externalVideo = false;
+	// External audio.
+	_externalAudio = "";
 
-	// MediaStream of the external video.
-	// @type {MediaStream}
-	// _externalVideoStream = null;
+	// External video.
+	_externalVideo = "";
 
 	// Next expected dataChannel test number.
 	_nextDataChannelTestNumber = 0;
@@ -133,6 +129,7 @@ export class RoomClient
 			forceH264,
 			forceVP8,
 			datachannel,
+			externalAudio,
 			externalVideo
 		}:
 		{
@@ -147,7 +144,8 @@ export class RoomClient
 			forceH264: boolean;
 			forceVP8: boolean;
 			datachannel: boolean;
-			externalVideo: any;
+			externalAudio: string;
+			externalVideo: string;
 		}
 	)
 	{
@@ -160,8 +158,8 @@ export class RoomClient
 		this._produce = produce;
 		this._consume = consume;
 		this._useDataChannel = datachannel;
+		this._externalAudio = externalAudio;
 		this._externalVideo = externalVideo;
-		// this._externalVideoStream = null;
 
 		this._useSimulcast = useSimulcast;
 		this._useSharingSimulcast = useSharingSimulcast;
@@ -668,7 +666,7 @@ export class RoomClient
 
 		try
 		{
-			if (!this._externalVideo)
+			if (!this._externalAudio)
 			{
 				track = new FakeMediaStreamTrack({
 					kind : 'audio',
@@ -679,7 +677,13 @@ export class RoomClient
 			}
 			else
 			{
-				// TODO.
+				track = new FakeMediaStreamTrack({
+					kind : 'audio',
+					data : {
+						sourceType : this._externalAudio.startsWith('http') ? 'url' : 'file',
+						sourceValue: this._externalAudio
+					}
+				});
 			}
 
 			this._micProducer = await this._sendTransport.produce(
@@ -820,13 +824,19 @@ export class RoomClient
 				track = new FakeMediaStreamTrack({
 					kind : 'video',
 					data : {
-						sourceType : 'device'
+						sourceType : 'device',
 					}
 				});
 			}
 			else
 			{
-				// TODO.
+				track = new FakeMediaStreamTrack({
+					kind : 'video',
+					data : {
+						sourceType : this._externalVideo.startsWith('http') ? 'url' : 'file',
+						sourceValue : this._externalVideo
+					}
+				});
 			}
 
 			if (this._useSimulcast)

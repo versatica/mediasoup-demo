@@ -7,7 +7,8 @@ export declare class RoomClient {
     _produce: boolean;
     _consume: boolean;
     _useDataChannel: boolean;
-    _externalVideo: boolean;
+    _externalAudio: string;
+    _externalVideo: string;
     _nextDataChannelTestNumber: number;
     _useSimulcast: boolean;
     _useSharingSimulcast: boolean;
@@ -30,7 +31,7 @@ export declare class RoomClient {
      * @param  {Object} data.store - The Redux store.
      */
     static init(data: any): void;
-    constructor({ roomId, peerId, displayName, useSimulcast, useSharingSimulcast, forceTcp, produce, consume, forceH264, forceVP8, datachannel, externalVideo }: {
+    constructor({ roomId, peerId, displayName, useSimulcast, useSharingSimulcast, forceTcp, produce, consume, forceH264, forceVP8, datachannel, externalAudio, externalVideo }: {
         roomId: string;
         peerId: string;
         displayName: string;
@@ -42,7 +43,8 @@ export declare class RoomClient {
         forceH264: boolean;
         forceVP8: boolean;
         datachannel: boolean;
-        externalVideo: any;
+        externalAudio: string;
+        externalVideo: string;
     });
     close(): void;
     join(): Promise<void>;

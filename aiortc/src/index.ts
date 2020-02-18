@@ -29,9 +29,8 @@ const consume = process.env.CONSUME === 'false' ? false : true;
 const forceH264 = process.env.FORCE_H264 === 'true' ? true : false;
 const forceVP8 = process.env.FORCE_VP8 === 'true' ? true : false;
 const datachannel = process.env.DATACHANNEL === 'false' ? false : true;
-
-// TODO.
-const externalVideo = process.env.EXTERNAL_VIDEO || false;
+const externalAudio = process.env.EXTERNAL_AUDIO || "";
+const externalVideo = process.env.EXTERNAL_VIDEO || "";
 
 const options =
 {
@@ -46,6 +45,7 @@ const options =
 	forceH264,
 	forceVP8,
 	datachannel,
+	externalAudio,
 	externalVideo
 };
 
