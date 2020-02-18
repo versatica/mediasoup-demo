@@ -1494,6 +1494,7 @@ export class RoomClient
 						iceCandidates,
 						dtlsParameters,
 						sctpParameters,
+						iceServers             : [],
 						proprietaryConstraints : PC_PROPRIETARY_CONSTRAINTS
 					});
 
@@ -1598,7 +1599,8 @@ export class RoomClient
 						iceParameters,
 						iceCandidates,
 						dtlsParameters,
-						sctpParameters
+						sctpParameters,
+						iceServers : []
 					});
 
 				this._recvTransport.on(
