@@ -47,10 +47,10 @@ export class RoomClient
 	_useDataChannel = true;
 
 	// External audio.
-	_externalAudio = "";
+	_externalAudio = '';
 
 	// External video.
-	_externalVideo = "";
+	_externalVideo = '';
 
 	// Next expected dataChannel test number.
 	_nextDataChannelTestNumber = 0;
@@ -680,8 +680,8 @@ export class RoomClient
 				track = new FakeMediaStreamTrack({
 					kind : 'audio',
 					data : {
-						sourceType : this._externalAudio.startsWith('http') ? 'url' : 'file',
-						sourceValue: this._externalAudio
+						sourceType  : this._externalAudio.startsWith('http') ? 'url' : 'file',
+						sourceValue : this._externalAudio
 					}
 				});
 			}
@@ -823,8 +823,9 @@ export class RoomClient
 			{
 				track = new FakeMediaStreamTrack({
 					kind : 'video',
-					data : {
-						sourceType : 'device',
+					data :
+					{
+						sourceType : 'device'
 					}
 				});
 			}
@@ -832,8 +833,9 @@ export class RoomClient
 			{
 				track = new FakeMediaStreamTrack({
 					kind : 'video',
-					data : {
-						sourceType : this._externalVideo.startsWith('http') ? 'url' : 'file',
+					data :
+					{
+						sourceType  : this._externalVideo.startsWith('http') ? 'url' : 'file',
 						sourceValue : this._externalVideo
 					}
 				});
