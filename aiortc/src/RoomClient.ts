@@ -257,7 +257,7 @@ export class RoomClient
 					{
 						reject(403, 'I do not want to consume');
 
-						return;
+						break;
 					}
 
 					const {
@@ -322,6 +322,8 @@ export class RoomClient
 					catch (error)
 					{
 						logger.error('"newConsumer" request failed:%o', error);
+
+						throw error;
 					}
 
 					break;
@@ -333,14 +335,14 @@ export class RoomClient
 					{
 						reject(403, 'I do not want to data consume');
 
-						return;
+						break;
 					}
 
 					if (!this._useDataChannel)
 					{
 						reject(403, 'I do not want DataChannels');
 
-						return;
+						break;
 					}
 
 					const {
@@ -473,6 +475,8 @@ export class RoomClient
 					catch (error)
 					{
 						logger.error('"newDataConsumer" request failed:%o', error);
+
+						throw error;
 					}
 
 					break;

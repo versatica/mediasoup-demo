@@ -166,7 +166,7 @@ class RoomClient {
                         {
                             if (!this._consume) {
                                 reject(403, 'I do not want to consume');
-                                return;
+                                break;
                             }
                             const { peerId, producerId, id, kind, rtpParameters, type, appData, producerPaused } = request.data;
                             try {
@@ -206,6 +206,7 @@ class RoomClient {
                             }
                             catch (error) {
                                 logger.error('"newConsumer" request failed:%o', error);
+                                throw error;
                             }
                             break;
                         }
@@ -213,11 +214,11 @@ class RoomClient {
                         {
                             if (!this._consume) {
                                 reject(403, 'I do not want to data consume');
-                                return;
+                                break;
                             }
                             if (!this._useDataChannel) {
                                 reject(403, 'I do not want DataChannels');
-                                return;
+                                break;
                             }
                             const { peerId, // NOTE: Null if bot.
                             dataProducerId, id, sctpStreamParameters, label, protocol, appData } = request.data;
@@ -299,6 +300,7 @@ class RoomClient {
                             }
                             catch (error) {
                                 logger.error('"newDataConsumer" request failed:%o', error);
+                                throw error;
                             }
                             break;
                         }

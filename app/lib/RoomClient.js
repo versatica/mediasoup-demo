@@ -306,7 +306,7 @@ export default class RoomClient
 					{
 						reject(403, 'I do not want to consume');
 
-						return;
+						break;
 					}
 
 					const {
@@ -388,6 +388,8 @@ export default class RoomClient
 								type : 'error',
 								text : `Error creating a Consumer: ${error}`
 							}));
+
+						throw error;
 					}
 
 					break;
@@ -399,14 +401,14 @@ export default class RoomClient
 					{
 						reject(403, 'I do not want to data consume');
 
-						return;
+						break;
 					}
 
 					if (!this._useDataChannel)
 					{
 						reject(403, 'I do not want DataChannels');
 
-						return;
+						break;
 					}
 
 					const {
@@ -571,6 +573,8 @@ export default class RoomClient
 								type : 'error',
 								text : `Error creating a DataConsumer: ${error}`
 							}));
+
+						throw error;
 					}
 
 					break;
