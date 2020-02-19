@@ -22,7 +22,7 @@ RoomClient.init({ store });
 
 const roomId = process.env.ROOM_ID || 'testRoomId';
 const peerId = process.env.PEER_ID || 'testPeerId';
-const displayName = process.env.DISPLAY_NAME || 'testdisplayName';
+const displayName = process.env.DISPLAY_NAME || 'mediasoup-client-aiortc';
 const forceTcp = process.env.FORCE_TCP === 'true' ? true : false;
 const produce = process.env.PRODUCE === 'false' ? false : true;
 const consume = process.env.CONSUME === 'false' ? false : true;
