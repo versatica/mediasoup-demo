@@ -52,9 +52,9 @@ class RoomClient {
         // Whether we want DataChannels.
         this._useDataChannel = true;
         // External audio.
-        this._externalAudio = "";
+        this._externalAudio = '';
         // External video.
-        this._externalVideo = "";
+        this._externalVideo = '';
         // Next expected dataChannel test number.
         this._nextDataChannelTestNumber = 0;
         // Whether simulcast should be used.
@@ -525,7 +525,7 @@ class RoomClient {
                     track = new fake_mediastreamtrack_1.FakeMediaStreamTrack({
                         kind: 'video',
                         data: {
-                            sourceType: 'device',
+                            sourceType: 'device'
                         }
                     });
                 }
