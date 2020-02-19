@@ -235,7 +235,7 @@ window.__startDataChannelTest = function()
 		if (window.DP)
 		{
 			view.setUint32(0, number++);
-			window.DP.send(buffer);
+			roomClient.sendChatMessage(buffer);
 		}
 	}, 100);
 };
