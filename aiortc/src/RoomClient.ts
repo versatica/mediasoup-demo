@@ -4,7 +4,8 @@ import * as mediasoupClient from 'mediasoup-client';
 import { FakeMediaStreamTrack } from 'fake-mediastreamtrack';
 import { createFactory, WorkerLogLevel, version } from 'mediasoup-client-aiortc';
 import { types as mediasoupClientTypes } from 'mediasoup-client';
-import { Logger } from 'mediasoup-client/lib/Logger';
+// @ts-ignore
+import Logger from '../../app/lib/Logger';
 import { getProtooUrl } from './urlFactory';
 import * as stateActions from './redux/stateActions';
 
