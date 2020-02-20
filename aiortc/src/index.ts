@@ -4,13 +4,13 @@ import {
 	createStore as createReduxStore
 } from 'redux';
 import thunk from 'redux-thunk';
-import { Logger } from 'mediasoup-client/lib/Logger';
+import { Logger } from './Logger';
 import { RoomClient } from './RoomClient';
 import reducers from './redux/reducers';
 
 const reduxMiddlewares = [ thunk ];
 
-const logger = new Logger('RoomClient');
+const logger = new Logger();
 
 const store = createReduxStore(
 	reducers,

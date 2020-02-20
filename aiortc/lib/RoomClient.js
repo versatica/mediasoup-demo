@@ -24,15 +24,14 @@ const protoo_client_1 = __importDefault(require("protoo-client"));
 const mediasoupClient = __importStar(require("mediasoup-client"));
 const fake_mediastreamtrack_1 = require("fake-mediastreamtrack");
 const mediasoup_client_aiortc_1 = require("mediasoup-client-aiortc");
-// @ts-ignore
-const Logger_1 = __importDefault(require("../../app/lib/Logger"));
+const Logger_1 = require("./Logger");
 const urlFactory_1 = require("./urlFactory");
 const stateActions = __importStar(require("./redux/stateActions"));
 const PC_PROPRIETARY_CONSTRAINTS = {
     optional: [{ googDscp: true }]
 };
 const logLevel = process.env.LOGLEVEL || 'none';
-const logger = new Logger_1.default('RoomClient');
+const logger = new Logger_1.Logger('RoomClient');
 let store;
 class RoomClient {
     constructor({ roomId, peerId, displayName, useSimulcast, useSharingSimulcast, forceTcp, produce, consume, forceH264, forceVP8, datachannel, externalAudio, externalVideo }) {
