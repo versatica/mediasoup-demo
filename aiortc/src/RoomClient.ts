@@ -679,14 +679,14 @@ export class RoomClient
 		{
 			if (!this._externalAudio)
 			{
-				stream = await this._worker.getAppMedia(
+				stream = await this._worker.getUserMedia(
 					{
 						audio : { source: 'device' }
 					});
 			}
 			else
 			{
-				stream = await this._worker.getAppMedia(
+				stream = await this._worker.getUserMedia(
 					{
 						audio :
 						{
@@ -830,14 +830,14 @@ export class RoomClient
 		{
 			if (!this._externalVideo)
 			{
-				stream = await this._worker.getAppMedia(
+				stream = await this._worker.getUserMedia(
 					{
 						video : { source: 'device' }
 					});
 			}
 			else
 			{
-				stream = await this._worker.getAppMedia(
+				stream = await this._worker.getUserMedia(
 					{
 						video :
 						{

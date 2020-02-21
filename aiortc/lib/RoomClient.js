@@ -418,12 +418,12 @@ class RoomClient {
             let track;
             try {
                 if (!this._externalAudio) {
-                    stream = yield this._worker.getAppMedia({
+                    stream = yield this._worker.getUserMedia({
                         audio: { source: 'device' }
                     });
                 }
                 else {
-                    stream = yield this._worker.getAppMedia({
+                    stream = yield this._worker.getUserMedia({
                         audio: {
                             source: this._externalAudio.startsWith('http') ? 'url' : 'file',
                             file: this._externalAudio,
@@ -519,12 +519,12 @@ class RoomClient {
             let track;
             try {
                 if (!this._externalVideo) {
-                    stream = yield this._worker.getAppMedia({
+                    stream = yield this._worker.getUserMedia({
                         video: { source: 'device' }
                     });
                 }
                 else {
-                    stream = yield this._worker.getAppMedia({
+                    stream = yield this._worker.getUserMedia({
                         video: {
                             source: this._externalVideo.startsWith('http') ? 'url' : 'file',
                             file: this._externalVideo,
