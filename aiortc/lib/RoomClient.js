@@ -431,6 +431,8 @@ class RoomClient {
                         }
                     });
                 }
+                // TODO: For testing.
+                global.audioStream = stream;
                 track = stream.getAudioTracks()[0];
                 this._micProducer = yield this._sendTransport.produce({
                     track,
@@ -532,6 +534,8 @@ class RoomClient {
                         }
                     });
                 }
+                // TODO: For testing.
+                global.videoStream = stream;
                 track = stream.getVideoTracks()[0];
                 if (this._useSimulcast) {
                     this._webcamProducer = yield this._sendTransport.produce({

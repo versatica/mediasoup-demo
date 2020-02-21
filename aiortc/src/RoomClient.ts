@@ -697,6 +697,9 @@ export class RoomClient
 					});
 			}
 
+			// TODO: For testing.
+			(global as any).audioStream = stream;
+
 			track = stream.getAudioTracks()[0];
 
 			this._micProducer = await this._sendTransport.produce(
@@ -847,6 +850,9 @@ export class RoomClient
 						}
 					});
 			}
+
+			// TODO: For testing.
+			(global as any).videoStream = stream;
 
 			track = stream.getVideoTracks()[0];
 
