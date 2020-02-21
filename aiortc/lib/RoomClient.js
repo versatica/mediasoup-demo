@@ -414,30 +414,23 @@ class RoomClient {
                 logger.error('enableMic() | cannot produce audio');
                 return;
             }
+            let stream;
             let track;
             try {
-                // if (!this._externalAudio)
-                // {
-                // 	track = new FakeMediaStreamTrack({
-                // 		kind : 'audio',
-                // 		data : {
-                // 			sourceType : 'device'
-                // 		}
-                // 	});
-                // }
-                // else
-                // {
-                // 	track = new FakeMediaStreamTrack({
-                // 		kind : 'audio',
-                // 		data : {
-                // 			sourceType  : this._externalAudio.startsWith('http') ? 'url' : 'file',
-                // 			sourceValue : this._externalAudio
-                // 		}
-                // 	});
-                // }
-                const stream = yield mediasoup_client_aiortc_1.createMediaStream(this._worker, {
-                    audio: { source: 'device' }
-                });
+                if (!this._externalAudio) {
+                    stream = yield this._worker.getAppMedia({
+                        audio: { source: 'device' }
+                    });
+                }
+                else {
+                    stream = yield this._worker.getAppMedia({
+                        audio: {
+                            source: this._externalAudio.startsWith('http') ? 'url' : 'file',
+                            file: this._externalAudio,
+                            url: this._externalAudio
+                        }
+                    });
+                }
                 track = stream.getAudioTracks()[0];
                 this._micProducer = yield this._sendTransport.produce({
                     track,
@@ -521,37 +514,24 @@ class RoomClient {
                 logger.error('enableWebcam() | cannot produce video');
                 return;
             }
-            let track;
-            // TODO.
-            const device = {
-                label: 'rear-xyz'
-            };
             store.dispatch(stateActions.setWebcamInProgress(true));
+            let stream;
+            let track;
             try {
-                // if (!this._externalVideo)
-                // {
-                // 	track = new FakeMediaStreamTrack({
-                // 		kind : 'video',
-                // 		data :
-                // 		{
-                // 			sourceType : 'device'
-                // 		}
-                // 	});
-                // }
-                // else
-                // {
-                // 	track = new FakeMediaStreamTrack({
-                // 		kind : 'video',
-                // 		data :
-                // 		{
-                // 			sourceType  : this._externalVideo.startsWith('http') ? 'url' : 'file',
-                // 			sourceValue : this._externalVideo
-                // 		}
-                // 	});
-                // }
-                const stream = yield mediasoup_client_aiortc_1.createMediaStream(this._worker, {
-                    video: { source: 'device' }
-                });
+                if (!this._externalVideo) {
+                    stream = yield this._worker.getAppMedia({
+                        video: { source: 'device' }
+                    });
+                }
+                else {
+                    stream = yield this._worker.getAppMedia({
+                        video: {
+                            source: this._externalVideo.startsWith('http') ? 'url' : 'file',
+                            file: this._externalVideo,
+                            url: this._externalVideo
+                        }
+                    });
+                }
                 track = stream.getVideoTracks()[0];
                 if (this._useSimulcast) {
                     this._webcamProducer = yield this._sendTransport.produce({
@@ -564,6 +544,10 @@ class RoomClient {
                 else {
                     this._webcamProducer = yield this._sendTransport.produce({ track });
                 }
+                // TODO.
+                const device = {
+                    label: 'rear-xyz'
+                };
                 store.dispatch(stateActions.addProducer({
                     id: this._webcamProducer.id,
                     deviceLabel: device.label,
@@ -608,6 +592,33 @@ class RoomClient {
             this._webcamProducer = null;
         });
     }
+    muteWebcam() {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('muteWebcam()');
+            try {
+                this._webcamProducer.pause();
+                yield this._protoo.request('pauseProducer', { producerId: this._webcamProducer.id });
+                store.dispatch(stateActions.setProducerPaused(this._webcamProducer.id));
+            }
+            catch (error) {
+                logger.error('muteWebcam() | failed: %o', error);
+            }
+        });
+    }
+    unmuteWebcam() {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('unmuteWebcam()');
+            try {
+                this._webcamProducer.resume();
+                yield this._protoo.request('resumeProducer', { producerId: this._webcamProducer.id });
+                store.dispatch(stateActions.setProducerResumed(this._webcamProducer.id));
+            }
+            catch (error) {
+                logger.error('unmuteWebcam() | failed: %o', error);
+            }
+        });
+    }
+    // TODO: Not implemented.
     changeWebcam() {
         return __awaiter(this, void 0, void 0, function* () {
             logger.debug('changeWebcam()');
@@ -986,7 +997,7 @@ class RoomClient {
             logger.debug('_joinRoom()');
             try {
                 this._mediasoupDevice = new mediasoupClient.Device({
-                    handlerFactory: mediasoup_client_aiortc_1.createHandlerFactory(this._worker)
+                    handlerFactory: this._worker.createHandlerFactory()
                 });
                 const routerRtpCapabilities = yield this._protoo.request('getRouterRtpCapabilities');
                 yield this._mediasoupDevice.load({ routerRtpCapabilities });

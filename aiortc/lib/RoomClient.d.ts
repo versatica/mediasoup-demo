@@ -1,4 +1,4 @@
-import { Worker, FakeMediaStream } from 'mediasoup-client-aiortc';
+import { Worker } from 'mediasoup-client-aiortc';
 import { types as mediasoupClientTypes } from 'mediasoup-client';
 export declare class RoomClient {
     _closed: boolean;
@@ -28,7 +28,6 @@ export declare class RoomClient {
     _webcam: any;
     _webcams: Map<string, any>;
     _worker: Worker;
-    _fakeMediaStream: FakeMediaStream;
     /**
      * @param  {Object} data
      * @param  {Object} data.store - The Redux store.
@@ -57,6 +56,8 @@ export declare class RoomClient {
     unmuteMic(): Promise<void>;
     enableWebcam(): Promise<void>;
     disableWebcam(): Promise<void>;
+    muteWebcam(): Promise<void>;
+    unmuteWebcam(): Promise<void>;
     changeWebcam(): Promise<void>;
     enableAudioOnly(): Promise<void>;
     disableAudioOnly(): Promise<void>;

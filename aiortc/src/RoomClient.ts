@@ -5,10 +5,7 @@ import {
 	version,
 	createWorker,
 	Worker,
-	WorkerLogLevel,
-	createHandlerFactory,
-	createMediaStream,
-	FakeMediaStream
+	WorkerLogLevel
 } from 'mediasoup-client-aiortc';
 import { types as mediasoupClientTypes } from 'mediasoup-client';
 import { Logger } from './Logger';
@@ -116,9 +113,6 @@ export class RoomClient
 
 	// Worker instance.
 	_worker: Worker;
-
-	// FakeMediaStream instance.
-	_fakeMediaStream: FakeMediaStream;
 
 	/**
 	 * @param  {Object} data
@@ -678,35 +672,30 @@ export class RoomClient
 			return;
 		}
 
+		let stream;
 		let track;
 
 		try
 		{
-			// if (!this._externalAudio)
-			// {
-			// 	track = new FakeMediaStreamTrack({
-			// 		kind : 'audio',
-			// 		data : {
-			// 			sourceType : 'device'
-			// 		}
-			// 	});
-			// }
-			// else
-			// {
-			// 	track = new FakeMediaStreamTrack({
-			// 		kind : 'audio',
-			// 		data : {
-			// 			sourceType  : this._externalAudio.startsWith('http') ? 'url' : 'file',
-			// 			sourceValue : this._externalAudio
-			// 		}
-			// 	});
-			// }
-
-			const stream = await createMediaStream(
-				this._worker,
-				{
-					audio : { source: 'device' }
-				});
+			if (!this._externalAudio)
+			{
+				stream = await this._worker.getAppMedia(
+					{
+						audio : { source: 'device' }
+					});
+			}
+			else
+			{
+				stream = await this._worker.getAppMedia(
+					{
+						audio :
+						{
+							source : this._externalAudio.startsWith('http') ? 'url' : 'file',
+							file   : this._externalAudio,
+							url    : this._externalAudio
+						}
+					});
+			}
 
 			track = stream.getAudioTracks()[0];
 
@@ -831,45 +820,33 @@ export class RoomClient
 			return;
 		}
 
-		let track;
-
-		// TODO.
-		const device = {
-			label : 'rear-xyz'
-		};
-
 		store.dispatch(
 			stateActions.setWebcamInProgress(true));
 
+		let stream;
+		let track;
+
 		try
 		{
-			// if (!this._externalVideo)
-			// {
-			// 	track = new FakeMediaStreamTrack({
-			// 		kind : 'video',
-			// 		data :
-			// 		{
-			// 			sourceType : 'device'
-			// 		}
-			// 	});
-			// }
-			// else
-			// {
-			// 	track = new FakeMediaStreamTrack({
-			// 		kind : 'video',
-			// 		data :
-			// 		{
-			// 			sourceType  : this._externalVideo.startsWith('http') ? 'url' : 'file',
-			// 			sourceValue : this._externalVideo
-			// 		}
-			// 	});
-			// }
-
-			const stream = await createMediaStream(
-				this._worker,
-				{
-					video : { source: 'device' }
-				});
+			if (!this._externalVideo)
+			{
+				stream = await this._worker.getAppMedia(
+					{
+						video : { source: 'device' }
+					});
+			}
+			else
+			{
+				stream = await this._worker.getAppMedia(
+					{
+						video :
+						{
+							source : this._externalVideo.startsWith('http') ? 'url' : 'file',
+							file   : this._externalVideo,
+							url    : this._externalVideo
+						}
+					});
+			}
 
 			track = stream.getVideoTracks()[0];
 
@@ -888,6 +865,11 @@ export class RoomClient
 			{
 				this._webcamProducer = await this._sendTransport.produce({ track });
 			}
+
+			// TODO.
+			const device = {
+				label : 'rear-xyz'
+			};
 
 			store.dispatch(stateActions.addProducer(
 				{
@@ -953,6 +935,47 @@ export class RoomClient
 		this._webcamProducer = null;
 	}
 
+	async muteWebcam(): Promise<void>
+	{
+		logger.debug('muteWebcam()');
+
+		try
+		{
+			this._webcamProducer.pause();
+
+			await this._protoo.request(
+				'pauseProducer', { producerId: this._webcamProducer.id });
+
+			store.dispatch(
+				stateActions.setProducerPaused(this._webcamProducer.id));
+		}
+		catch (error)
+		{
+			logger.error('muteWebcam() | failed: %o', error);
+		}
+	}
+
+	async unmuteWebcam(): Promise<void>
+	{
+		logger.debug('unmuteWebcam()');
+
+		try
+		{
+			this._webcamProducer.resume();
+
+			await this._protoo.request(
+				'resumeProducer', { producerId: this._webcamProducer.id });
+
+			store.dispatch(
+				stateActions.setProducerResumed(this._webcamProducer.id));
+		}
+		catch (error)
+		{
+			logger.error('unmuteWebcam() | failed: %o', error);
+		}
+	}
+
+	// TODO: Not implemented.
 	async changeWebcam(): Promise<void>
 	{
 		logger.debug('changeWebcam()');
@@ -1509,7 +1532,7 @@ export class RoomClient
 		{
 			this._mediasoupDevice = new mediasoupClient.Device(
 				{
-					handlerFactory : createHandlerFactory(this._worker)
+					handlerFactory : this._worker.createHandlerFactory()
 				});
 
 			const routerRtpCapabilities =
