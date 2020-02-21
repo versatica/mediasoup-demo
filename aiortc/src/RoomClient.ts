@@ -1,8 +1,15 @@
 // @ts-ignore
 import protooClient from 'protoo-client';
 import * as mediasoupClient from 'mediasoup-client';
-import { FakeMediaStreamTrack } from 'fake-mediastreamtrack';
-import { createFactory, WorkerLogLevel, version } from 'mediasoup-client-aiortc';
+import {
+	version,
+	createWorker,
+	Worker,
+	WorkerLogLevel,
+	createHandlerFactory,
+	createMediaStream,
+	FakeMediaStream
+} from 'mediasoup-client-aiortc';
 import { types as mediasoupClientTypes } from 'mediasoup-client';
 import { Logger } from './Logger';
 import { getProtooUrl } from './urlFactory';
@@ -107,6 +114,12 @@ export class RoomClient
 	// TODO.
 	_webcams: Map<string, any> = new Map();
 
+	// Worker instance.
+	_worker: Worker;
+
+	// FakeMediaStream instance.
+	_fakeMediaStream: FakeMediaStream;
+
 	/**
 	 * @param  {Object} data
 	 * @param  {Object} data.store - The Redux store.
@@ -197,6 +210,9 @@ export class RoomClient
 
 	async join(): Promise<void>
 	{
+		this._worker =
+			await createWorker({ logLevel: logLevel as WorkerLogLevel });
+
 		const protooTransport = new protooClient.WebSocketTransport(this._protooUrl);
 
 		this._protoo = new protooClient.Peer(protooTransport);
@@ -666,25 +682,33 @@ export class RoomClient
 
 		try
 		{
-			if (!this._externalAudio)
-			{
-				track = new FakeMediaStreamTrack({
-					kind : 'audio',
-					data : {
-						sourceType : 'device'
-					}
+			// if (!this._externalAudio)
+			// {
+			// 	track = new FakeMediaStreamTrack({
+			// 		kind : 'audio',
+			// 		data : {
+			// 			sourceType : 'device'
+			// 		}
+			// 	});
+			// }
+			// else
+			// {
+			// 	track = new FakeMediaStreamTrack({
+			// 		kind : 'audio',
+			// 		data : {
+			// 			sourceType  : this._externalAudio.startsWith('http') ? 'url' : 'file',
+			// 			sourceValue : this._externalAudio
+			// 		}
+			// 	});
+			// }
+
+			const stream = await createMediaStream(
+				this._worker,
+				{
+					audio : { source: 'device' }
 				});
-			}
-			else
-			{
-				track = new FakeMediaStreamTrack({
-					kind : 'audio',
-					data : {
-						sourceType  : this._externalAudio.startsWith('http') ? 'url' : 'file',
-						sourceValue : this._externalAudio
-					}
-				});
-			}
+
+			track = stream.getAudioTracks()[0];
 
 			this._micProducer = await this._sendTransport.produce(
 				{
@@ -819,27 +843,35 @@ export class RoomClient
 
 		try
 		{
-			if (!this._externalVideo)
-			{
-				track = new FakeMediaStreamTrack({
-					kind : 'video',
-					data :
-					{
-						sourceType : 'device'
-					}
+			// if (!this._externalVideo)
+			// {
+			// 	track = new FakeMediaStreamTrack({
+			// 		kind : 'video',
+			// 		data :
+			// 		{
+			// 			sourceType : 'device'
+			// 		}
+			// 	});
+			// }
+			// else
+			// {
+			// 	track = new FakeMediaStreamTrack({
+			// 		kind : 'video',
+			// 		data :
+			// 		{
+			// 			sourceType  : this._externalVideo.startsWith('http') ? 'url' : 'file',
+			// 			sourceValue : this._externalVideo
+			// 		}
+			// 	});
+			// }
+
+			const stream = await createMediaStream(
+				this._worker,
+				{
+					video : { source: 'device' }
 				});
-			}
-			else
-			{
-				track = new FakeMediaStreamTrack({
-					kind : 'video',
-					data :
-					{
-						sourceType  : this._externalVideo.startsWith('http') ? 'url' : 'file',
-						sourceValue : this._externalVideo
-					}
-				});
-			}
+
+			track = stream.getVideoTracks()[0];
 
 			if (this._useSimulcast)
 			{
@@ -1477,7 +1509,7 @@ export class RoomClient
 		{
 			this._mediasoupDevice = new mediasoupClient.Device(
 				{
-					handlerFactory : createFactory(logLevel as WorkerLogLevel)
+					handlerFactory : createHandlerFactory(this._worker)
 				});
 
 			const routerRtpCapabilities =

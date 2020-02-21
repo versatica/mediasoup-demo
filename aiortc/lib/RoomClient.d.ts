@@ -1,3 +1,4 @@
+import { Worker, FakeMediaStream } from 'mediasoup-client-aiortc';
 import { types as mediasoupClientTypes } from 'mediasoup-client';
 export declare class RoomClient {
     _closed: boolean;
@@ -26,6 +27,8 @@ export declare class RoomClient {
     _dataConsumers: Map<string, mediasoupClientTypes.DataConsumer>;
     _webcam: any;
     _webcams: Map<string, any>;
+    _worker: Worker;
+    _fakeMediaStream: FakeMediaStream;
     /**
      * @param  {Object} data
      * @param  {Object} data.store - The Redux store.

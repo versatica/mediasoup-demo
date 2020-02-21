@@ -22,7 +22,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // @ts-ignore
 const protoo_client_1 = __importDefault(require("protoo-client"));
 const mediasoupClient = __importStar(require("mediasoup-client"));
-const fake_mediastreamtrack_1 = require("fake-mediastreamtrack");
 const mediasoup_client_aiortc_1 = require("mediasoup-client-aiortc");
 const Logger_1 = require("./Logger");
 const urlFactory_1 = require("./urlFactory");
@@ -130,6 +129,8 @@ class RoomClient {
     }
     join() {
         return __awaiter(this, void 0, void 0, function* () {
+            this._worker =
+                yield mediasoup_client_aiortc_1.createWorker({ logLevel: logLevel });
             const protooTransport = new protoo_client_1.default.WebSocketTransport(this._protooUrl);
             this._protoo = new protoo_client_1.default.Peer(protooTransport);
             store.dispatch(stateActions.setRoomState('connecting'));
@@ -415,23 +416,29 @@ class RoomClient {
             }
             let track;
             try {
-                if (!this._externalAudio) {
-                    track = new fake_mediastreamtrack_1.FakeMediaStreamTrack({
-                        kind: 'audio',
-                        data: {
-                            sourceType: 'device'
-                        }
-                    });
-                }
-                else {
-                    track = new fake_mediastreamtrack_1.FakeMediaStreamTrack({
-                        kind: 'audio',
-                        data: {
-                            sourceType: this._externalAudio.startsWith('http') ? 'url' : 'file',
-                            sourceValue: this._externalAudio
-                        }
-                    });
-                }
+                // if (!this._externalAudio)
+                // {
+                // 	track = new FakeMediaStreamTrack({
+                // 		kind : 'audio',
+                // 		data : {
+                // 			sourceType : 'device'
+                // 		}
+                // 	});
+                // }
+                // else
+                // {
+                // 	track = new FakeMediaStreamTrack({
+                // 		kind : 'audio',
+                // 		data : {
+                // 			sourceType  : this._externalAudio.startsWith('http') ? 'url' : 'file',
+                // 			sourceValue : this._externalAudio
+                // 		}
+                // 	});
+                // }
+                const stream = yield mediasoup_client_aiortc_1.createMediaStream(this._worker, {
+                    audio: { source: 'device' }
+                });
+                track = stream.getAudioTracks()[0];
                 this._micProducer = yield this._sendTransport.produce({
                     track,
                     codecOptions: {
@@ -521,23 +528,31 @@ class RoomClient {
             };
             store.dispatch(stateActions.setWebcamInProgress(true));
             try {
-                if (!this._externalVideo) {
-                    track = new fake_mediastreamtrack_1.FakeMediaStreamTrack({
-                        kind: 'video',
-                        data: {
-                            sourceType: 'device'
-                        }
-                    });
-                }
-                else {
-                    track = new fake_mediastreamtrack_1.FakeMediaStreamTrack({
-                        kind: 'video',
-                        data: {
-                            sourceType: this._externalVideo.startsWith('http') ? 'url' : 'file',
-                            sourceValue: this._externalVideo
-                        }
-                    });
-                }
+                // if (!this._externalVideo)
+                // {
+                // 	track = new FakeMediaStreamTrack({
+                // 		kind : 'video',
+                // 		data :
+                // 		{
+                // 			sourceType : 'device'
+                // 		}
+                // 	});
+                // }
+                // else
+                // {
+                // 	track = new FakeMediaStreamTrack({
+                // 		kind : 'video',
+                // 		data :
+                // 		{
+                // 			sourceType  : this._externalVideo.startsWith('http') ? 'url' : 'file',
+                // 			sourceValue : this._externalVideo
+                // 		}
+                // 	});
+                // }
+                const stream = yield mediasoup_client_aiortc_1.createMediaStream(this._worker, {
+                    video: { source: 'device' }
+                });
+                track = stream.getVideoTracks()[0];
                 if (this._useSimulcast) {
                     this._webcamProducer = yield this._sendTransport.produce({
                         track,
@@ -971,7 +986,7 @@ class RoomClient {
             logger.debug('_joinRoom()');
             try {
                 this._mediasoupDevice = new mediasoupClient.Device({
-                    handlerFactory: mediasoup_client_aiortc_1.createFactory(logLevel)
+                    handlerFactory: mediasoup_client_aiortc_1.createHandlerFactory(this._worker)
                 });
                 const routerRtpCapabilities = yield this._protoo.request('getRouterRtpCapabilities');
                 yield this._mediasoupDevice.load({ routerRtpCapabilities });
