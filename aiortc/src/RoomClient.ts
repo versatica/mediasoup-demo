@@ -17,8 +17,6 @@ const PC_PROPRIETARY_CONSTRAINTS =
 	optional : [ { googDscp: true } ]
 };
 
-const logLevel = process.env.LOGLEVEL || 'none';
-
 const logger = new Logger('RoomClient');
 
 let store: any;
@@ -204,8 +202,10 @@ export class RoomClient
 
 	async join(): Promise<void>
 	{
-		this._worker =
-			await createWorker({ logLevel: logLevel as WorkerLogLevel });
+		this._worker = await createWorker(
+			{
+				logLevel : process.env.LOGLEVEL || 'warn' as WorkerLogLevel
+			});
 
 		const protooTransport = new protooClient.WebSocketTransport(this._protooUrl);
 
