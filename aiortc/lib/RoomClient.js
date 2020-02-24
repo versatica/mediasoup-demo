@@ -26,10 +26,10 @@ const mediasoup_client_aiortc_1 = require("mediasoup-client-aiortc");
 const Logger_1 = require("./Logger");
 const urlFactory_1 = require("./urlFactory");
 const stateActions = __importStar(require("./redux/stateActions"));
+global.createWorker = mediasoup_client_aiortc_1.createWorker;
 const PC_PROPRIETARY_CONSTRAINTS = {
     optional: [{ googDscp: true }]
 };
-const logLevel = process.env.LOGLEVEL || 'none';
 const logger = new Logger_1.Logger('RoomClient');
 let store;
 class RoomClient {
@@ -129,8 +129,9 @@ class RoomClient {
     }
     join() {
         return __awaiter(this, void 0, void 0, function* () {
-            this._worker =
-                yield mediasoup_client_aiortc_1.createWorker({ logLevel: logLevel });
+            this._worker = yield mediasoup_client_aiortc_1.createWorker({
+                logLevel: process.env.LOGLEVEL || 'warn'
+            });
             const protooTransport = new protoo_client_1.default.WebSocketTransport(this._protooUrl);
             this._protoo = new protoo_client_1.default.Peer(protooTransport);
             store.dispatch(stateActions.setRoomState('connecting'));

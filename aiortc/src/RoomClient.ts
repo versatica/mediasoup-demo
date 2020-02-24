@@ -12,6 +12,8 @@ import { Logger } from './Logger';
 import { getProtooUrl } from './urlFactory';
 import * as stateActions from './redux/stateActions';
 
+(global as any).createWorker = createWorker;
+
 const PC_PROPRIETARY_CONSTRAINTS =
 {
 	optional : [ { googDscp: true } ]
@@ -204,7 +206,7 @@ export class RoomClient
 	{
 		this._worker = await createWorker(
 			{
-				logLevel : process.env.LOGLEVEL || 'warn' as WorkerLogLevel
+				logLevel : process.env.LOGLEVEL as WorkerLogLevel || 'warn'
 			});
 
 		const protooTransport = new protooClient.WebSocketTransport(this._protooUrl);
