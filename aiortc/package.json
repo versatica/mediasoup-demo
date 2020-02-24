@@ -14,11 +14,12 @@
     "node": ">=8.6.0"
   },
   "scripts": {
-    "start": "DEBUG=\"${DEBUG:='*WARN* *ERROR* *aiortc*'}\" node ./lib/index.js",
     "typescript:build": "node npm-scripts.js typescript:build",
     "typescript:watch": "node npm-scripts.js typescript:watch",
     "lint": "node npm-scripts.js lint",
-    "lint:fix": "node npm-scripts.js lint:fix"
+    "lint:fix": "node npm-scripts.js lint:fix",
+    "dev": "PYTHON_LOG_TO_STDOUT=true DEBUG='*' node ./lib/index.js",
+    "start": "DEBUG=\"${DEBUG:='*WARN* *ERROR* *aiortc*'}\" node ./lib/index.js"
   },
   "dependencies": {
     "debug": "^4.1.1",
