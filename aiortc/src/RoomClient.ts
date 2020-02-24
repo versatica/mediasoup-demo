@@ -59,9 +59,6 @@ export class RoomClient
 	// Next expected dataChannel test number.
 	_nextDataChannelTestNumber = 0;
 
-	// Whether simulcast should be used.
-	_useSimulcast = false;
-
 	// Whether simulcast should be used in desktop sharing.
 	_useSharingSimulcast = false;
 
@@ -104,13 +101,6 @@ export class RoomClient
 	// @type {Map<String, mediasoupClient.DataConsumer>}
 	_dataConsumers: Map<string, mediasoupClientTypes.DataConsumer> = new Map();
 
-	// Webcam currently being used.
-	_webcam: any;
-
-	// Map of webcam MediaDeviceInfos indexed by deviceId.
-	// TODO.
-	_webcams: Map<string, any> = new Map();
-
 	// Worker instance.
 	_worker: Worker;
 
@@ -128,7 +118,7 @@ export class RoomClient
 			roomId,
 			peerId,
 			displayName,
-			useSimulcast,
+			// useSimulcast,
 			useSharingSimulcast,
 			forceTcp,
 			produce,
@@ -168,15 +158,9 @@ export class RoomClient
 		this._externalAudio = externalAudio;
 		this._externalVideo = externalVideo;
 
-		this._useSimulcast = useSimulcast;
 		this._useSharingSimulcast = useSharingSimulcast;
 		this._protooUrl = getProtooUrl({ roomId, peerId, forceH264, forceVP8 });
 		this._protoo = null;
-		this._webcam =
-		{
-			device     : null,
-			resolution : 'hd'
-		};
 	}
 
 	close(): void
@@ -858,21 +842,7 @@ export class RoomClient
 
 			track = stream.getVideoTracks()[0];
 
-			if (this._useSimulcast)
-			{
-				this._webcamProducer = await this._sendTransport.produce(
-					{
-						track,
-						codecOptions :
-						{
-							videoGoogleStartBitrate : 1000
-						}
-					});
-			}
-			else
-			{
-				this._webcamProducer = await this._sendTransport.produce({ track });
-			}
+			this._webcamProducer = await this._sendTransport.produce({ track });
 
 			// TODO.
 			const device = {
@@ -983,61 +953,78 @@ export class RoomClient
 		}
 	}
 
-	// TODO: Not implemented.
 	async changeWebcam(): Promise<void>
 	{
 		logger.debug('changeWebcam()');
 
+		if (!this._webcamProducer)
+			throw new Error('webcam not enabled');
+
 		store.dispatch(
 			stateActions.setWebcamInProgress(true));
 
+		let stream;
+		let track;
+
 		try
 		{
-			await this._updateWebcams();
-
-			const array = Array.from(this._webcams.keys());
-			const len = array.length;
-			const deviceId =
-				this._webcam.device ? this._webcam.device.deviceId : undefined;
-			let idx = array.indexOf(deviceId);
-
-			if (idx < len - 1)
-				idx++;
+			if (!this._externalVideo)
+			{
+				stream = await this._worker.getUserMedia(
+					{
+						video : { source: 'device' }
+					});
+			}
 			else
-				idx = 0;
+			{
+				stream = await this._worker.getUserMedia(
+					{
+						video :
+						{
+							source : this._externalVideo.startsWith('http') ? 'url' : 'file',
+							file   : this._externalVideo,
+							url    : this._externalVideo
+						}
+					});
+			}
 
-			this._webcam.device = this._webcams.get(array[idx]);
+			// TODO: For testing.
+			(global as any).videoStream = stream;
 
-			logger.debug(
-				'changeWebcam() | new selected webcam [device:%o]',
-				this._webcam.device);
+			track = stream.getVideoTracks()[0];
 
-			// Reset video resolution to HD.
-			this._webcam.resolution = 'hd';
+			await this._webcamProducer.replaceTrack({ track });
 
-			if (!this._webcam.device)
-				throw new Error('no webcam devices');
+			store.dispatch(stateActions.setProducerTrack(
+				this._webcamProducer.id, track));
 
-			// Closing the current video track before asking for a new one (mobiles do not like
-			// having both front/back cameras open at the same time).
-			this._webcamProducer.track.stop();
+			this._webcamProducer.on('transportclose', () =>
+			{
+				this._webcamProducer = null;
+			});
 
-			logger.debug('changeWebcam() | calling getUserMedia()');
+			this._webcamProducer.on('trackended', () =>
+			{
+				logger.error('Webcam disconnected!');
 
-			// TODO: Retrieve another webcam if provided.
-			// await this._webcamProducer.replaceTrack({ track });
-			let track: any;
-
-			store.dispatch(
-				stateActions.setProducerTrack(this._webcamProducer.id, track));
+				this.disableWebcam()
+					// eslint-disable-next-line @typescript-eslint/no-empty-function
+					.catch(() => {});
+			});
 		}
 		catch (error)
 		{
-			logger.error('changeWebcam() | failed: %o', error);
+			logger.error('changeWebcam() | failed:%o', error);
+
+			logger.error('enabling Webcam!');
+
+			if (track)
+				track.stop();
 		}
 
 		store.dispatch(
 			stateActions.setWebcamInProgress(false));
+
 	}
 
 	async enableAudioOnly(): Promise<void>
@@ -1760,42 +1747,6 @@ export class RoomClient
 
 			this.close();
 		}
-	}
-
-	async _updateWebcams(): Promise<void>
-	{
-		logger.debug('_updateWebcams()');
-
-		// Reset the list.
-		this._webcams = new Map();
-
-		logger.debug('_updateWebcams() | calling enumerateDevices()');
-
-		// TODO.
-		const devices: any = [];
-
-		for (const device of devices)
-		{
-			if (device.kind !== 'videoinput')
-				continue;
-
-			this._webcams.set(device.deviceId, device);
-		}
-
-		const array = Array.from(this._webcams.values());
-		const len = array.length;
-		const currentWebcamId =
-			this._webcam.device ? this._webcam.device.deviceId : undefined;
-
-		logger.debug('_updateWebcams() [webcams:%o]', array);
-
-		if (len === 0)
-			this._webcam.device = null;
-		else if (!this._webcams.has(currentWebcamId))
-			this._webcam.device = array[0];
-
-		store.dispatch(
-			stateActions.setCanChangeWebcam(this._webcams.size > 1));
 	}
 
 	_getWebcamType(device: any): string

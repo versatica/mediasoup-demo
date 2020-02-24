@@ -11,7 +11,6 @@ export declare class RoomClient {
     _externalAudio: string;
     _externalVideo: string;
     _nextDataChannelTestNumber: number;
-    _useSimulcast: boolean;
     _useSharingSimulcast: boolean;
     _protooUrl: string;
     _protoo: any;
@@ -25,15 +24,13 @@ export declare class RoomClient {
     _botDataProducer: mediasoupClientTypes.DataProducer;
     _consumers: Map<string, mediasoupClientTypes.Consumer>;
     _dataConsumers: Map<string, mediasoupClientTypes.DataConsumer>;
-    _webcam: any;
-    _webcams: Map<string, any>;
     _worker: Worker;
     /**
      * @param  {Object} data
      * @param  {Object} data.store - The Redux store.
      */
     static init(data: any): void;
-    constructor({ roomId, peerId, displayName, useSimulcast, useSharingSimulcast, forceTcp, produce, consume, forceH264, forceVP8, datachannel, externalAudio, externalVideo }: {
+    constructor({ roomId, peerId, displayName, useSharingSimulcast, forceTcp, produce, consume, forceH264, forceVP8, datachannel, externalAudio, externalVideo }: {
         roomId: string;
         peerId: string;
         displayName: string;
@@ -85,7 +82,6 @@ export declare class RoomClient {
     getVideoLocalStats(): Promise<any>;
     getConsumerLocalStats(consumerId: string): Promise<any>;
     _joinRoom(): Promise<void>;
-    _updateWebcams(): Promise<void>;
     _getWebcamType(device: any): string;
     _pauseConsumer(consumer: mediasoupClientTypes.Consumer): Promise<void>;
     _resumeConsumer(consumer: mediasoupClientTypes.Consumer): Promise<void>;
