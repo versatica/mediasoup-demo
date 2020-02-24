@@ -14,7 +14,7 @@
     "node": ">=8.6.0"
   },
   "scripts": {
-    "start": "node ./lib/index",
+    "start": "DEBUG=\"${DEBUG:='*WARN* *ERROR* api-media*'}\" node ./lib/index.js",
     "typescript:build": "node npm-scripts.js typescript:build",
     "typescript:watch": "node npm-scripts.js typescript:watch",
     "lint": "node npm-scripts.js lint",
