@@ -13,18 +13,18 @@
   },
   "dependencies": {
     "@sitespeed.io/throttle": "^0.5.4",
-    "awaitqueue": "^2.0.0",
+    "awaitqueue": "^2.1.1",
     "body-parser": "^1.19.0",
     "colors": "^1.4.0",
     "debug": "^4.1.1",
     "express": "^4.17.1",
     "mediasoup": "github:versatica/mediasoup#v3",
-    "pidusage": "^2.0.17",
+    "pidusage": "^2.0.18",
     "protoo-server": "^4.0.3",
     "sctp": "^0.0.19"
   },
   "devDependencies": {
-    "eslint": "^6.7.2",
+    "eslint": "^6.8.0",
     "gulp": "^4.0.2",
     "gulp-eslint": "^6.0.0",
     "gulp-plumber": "^1.2.1"

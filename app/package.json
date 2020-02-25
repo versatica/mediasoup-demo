@@ -29,7 +29,7 @@
     "react-dom": "^16.12.0",
     "react-draggable": "^3.3.2",
     "react-dropzone": "^10.2.1",
-    "react-redux": "^7.1.3",
+    "react-redux": "^7.2.0",
     "react-spinner": "^0.2.7",
     "react-tooltip": "^3.11.1",
     "react-transition-group": "^4.3.0",
