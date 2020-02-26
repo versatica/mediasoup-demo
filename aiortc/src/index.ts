@@ -70,3 +70,20 @@ terminal.on('exit', () => process.exit(0));
 
 // Join!!
 roomClient.join();
+
+// NOTE: Debugging stuff.
+
+(global as any).__sendSdps = function(): void
+{
+	// eslint-disable-next-line no-console
+	console.warn('>>> send transport local SDP offer:');
+	// @ts-ignore
+	roomClient._sendTransport._handler._channel.request(
+		'handler.getLocalDescription',
+		// @ts-ignore
+		roomClient._sendTransport._handler._internal)
+		.then((desc: any) =>
+		{
+			logger.warn(desc.sdp);
+		});
+};
