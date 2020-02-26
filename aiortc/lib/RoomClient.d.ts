@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { Worker } from 'mediasoup-client-aiortc';
 import { types as mediasoupClientTypes } from 'mediasoup-client';
 export declare class RoomClient {
@@ -25,6 +26,7 @@ export declare class RoomClient {
     _consumers: Map<string, mediasoupClientTypes.Consumer>;
     _dataConsumers: Map<string, mediasoupClientTypes.DataConsumer>;
     _worker: Worker;
+    _localStatsPeriodicTimer: NodeJS.Timer;
     /**
      * @param  {Object} data
      * @param  {Object} data.store - The Redux store.
@@ -81,6 +83,8 @@ export declare class RoomClient {
     getAudioLocalStats(): Promise<any>;
     getVideoLocalStats(): Promise<any>;
     getConsumerLocalStats(consumerId: string): Promise<any>;
+    showLocalStats(): Promise<void>;
+    hideLocalStats(): Promise<void>;
     _joinRoom(): Promise<void>;
     _getWebcamType(device: any): string;
     _pauseConsumer(consumer: mediasoupClientTypes.Consumer): Promise<void>;

@@ -104,6 +104,9 @@ export class RoomClient
 	// Worker instance.
 	_worker: Worker;
 
+	// Periodic timer to show local stats.
+	_localStatsPeriodicTimer: NodeJS.Timer;
+
 	/**
 	 * @param  {Object} data
 	 * @param  {Object} data.store - The Redux store.
@@ -181,6 +184,9 @@ export class RoomClient
 
 		if (this._recvTransport)
 			this._recvTransport.close();
+
+		// Stop the local stats periodic timer.
+		clearInterval(this._localStatsPeriodicTimer);
 
 		store.dispatch(
 			stateActions.setRoomState('closed'));
@@ -1517,6 +1523,47 @@ export class RoomClient
 			return;
 
 		return consumer.getStats();
+	}
+
+	async showLocalStats(): Promise<void>
+	{
+		logger.debug('showLocalStats()');
+
+		const sendTransportStats = await this.getSendTransportLocalStats();
+		const recvTransportStats = await this.getRecvTransportLocalStats();
+		const audioStats = await this.getAudioLocalStats();
+		const videoStats = await this.getVideoLocalStats();
+
+		const stats =
+		{
+			sendTransport : sendTransportStats
+				? Array.from(sendTransportStats.values())
+				: undefined,
+			recvTransport : recvTransportStats
+				? Array.from(recvTransportStats.values())
+				: undefined,
+			audio : audioStats
+				? Array.from(audioStats.values())
+				: undefined,
+			video : videoStats
+				? Array.from(videoStats.values())
+				: undefined
+		};
+
+		clearInterval(this._localStatsPeriodicTimer);
+
+		this._localStatsPeriodicTimer = setInterval(() =>
+		{
+			logger.debug('local stats:');
+			logger.debug(JSON.stringify(stats, null, '  '));
+		}, 2500);
+	}
+
+	async hideLocalStats(): Promise<void>
+	{
+		logger.debug('hideLocalStats()');
+
+		clearInterval(this._localStatsPeriodicTimer);
 	}
 
 	async _joinRoom(): Promise<void>

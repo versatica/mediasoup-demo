@@ -116,6 +116,8 @@ class RoomClient {
             this._sendTransport.close();
         if (this._recvTransport)
             this._recvTransport.close();
+        // Stop the local stats periodic timer.
+        clearInterval(this._localStatsPeriodicTimer);
         store.dispatch(stateActions.setRoomState('closed'));
     }
     join() {
@@ -987,6 +989,40 @@ class RoomClient {
             if (!consumer)
                 return;
             return consumer.getStats();
+        });
+    }
+    showLocalStats() {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('showLocalStats()');
+            const sendTransportStats = yield this.getSendTransportLocalStats();
+            const recvTransportStats = yield this.getRecvTransportLocalStats();
+            const audioStats = yield this.getAudioLocalStats();
+            const videoStats = yield this.getVideoLocalStats();
+            const stats = {
+                sendTransport: sendTransportStats
+                    ? Array.from(sendTransportStats.values())
+                    : undefined,
+                recvTransport: recvTransportStats
+                    ? Array.from(recvTransportStats.values())
+                    : undefined,
+                audio: audioStats
+                    ? Array.from(audioStats.values())
+                    : undefined,
+                video: videoStats
+                    ? Array.from(videoStats.values())
+                    : undefined
+            };
+            clearInterval(this._localStatsPeriodicTimer);
+            this._localStatsPeriodicTimer = setInterval(() => {
+                logger.debug('local stats:');
+                logger.debug(JSON.stringify(stats, null, '  '));
+            }, 2500);
+        });
+    }
+    hideLocalStats() {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('hideLocalStats()');
+            clearInterval(this._localStatsPeriodicTimer);
         });
     }
     _joinRoom() {
