@@ -84,7 +84,7 @@ class Room extends EventEmitter
 			});
 
 		// TODO
-		const bot = await Bot.create({ mediasoupRouter: mediasoupRouter1 });
+		// const bot = await Bot.create({ mediasoupRouter: mediasoupRouter1 });
 
 		return new Room(
 			{
@@ -93,7 +93,7 @@ class Room extends EventEmitter
 				mediasoupRouter1,
 				mediasoupRouter2,
 				audioLevelObserver,
-				bot
+				// bot
 			});
 	}
 
@@ -104,7 +104,7 @@ class Room extends EventEmitter
 			mediasoupRouter1,
 			mediasoupRouter2,
 			audioLevelObserver,
-			bot
+			// bot
 		})
 	{
 		super();
@@ -150,7 +150,7 @@ class Room extends EventEmitter
 
 		// DataChannel bot.
 		// @type {Bot}
-		this._bot = bot;
+		// this._bot = bot;
 
 		// Network throttled.
 		// @type {Boolean}
@@ -181,7 +181,7 @@ class Room extends EventEmitter
 		this._mediasoupRouter2.close();
 
 		// Close the Bot.
-		this._bot.close();
+		// this._bot.close();
 
 		// Emit 'close' event.
 		this.emit('close');
@@ -830,7 +830,7 @@ class Room extends EventEmitter
 					{
 						dataConsumerPeer : peer,
 						dataProducerPeer : null,
-						dataProducer     : this._bot.dataProducer
+						// dataProducer     : this._bot.dataProducer
 					});
 
 				// Notify the new Peer to all other Peers.
