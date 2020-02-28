@@ -21,15 +21,24 @@ class Room extends EventEmitter
 	 *
 	 * @async
 	 *
-	 * @param {mediasoup.Worker} mediasoupWorker - The mediasoup Worker in which a new
-	 *   mediasoup Router must be created.
+	 * @param {mediasoup.Worker} mediasoupWorker1 - The mediasoup Worker in which a new
+	 *   mediasoup Router must be created (for producing).
+	 * @param {mediasoup.Worker} mediasoupWorker2 - The mediasoup Worker in which a new
+	 *   mediasoup Router must be created (for consuming).
 	 * @param {String} roomId - Id of the Room instance.
 	 * @param {Boolean} [forceH264=false] - Whether just H264 must be used in the
 	 *   mediasoup Router video codecs.
 	 * @param {Boolean} [forceVP9=false] - Whether just VP9 must be used in the
 	 *   mediasoup Router video codecs.
 	 */
-	static async create({ mediasoupWorker, roomId, forceH264 = false, forceVP9 = false })
+	static async create(
+		{
+			mediasoupWorker1,
+			mediasoupWorker2,
+			roomId,
+			forceH264 = false,
+			forceVP9 = false
+		})
 	{
 		logger.info(
 			'create() [roomId:%s, forceH264:%s, forceVP9:%s]',
@@ -60,30 +69,43 @@ class Room extends EventEmitter
 				));
 		}
 
-		// Create a mediasoup Router.
-		const mediasoupRouter = await mediasoupWorker.createRouter({ mediaCodecs });
+		// Create a mediasoup Router for producing.
+		const mediasoupRouter1 = await mediasoupWorker1.createRouter({ mediaCodecs });
+
+		// Create a mediasoup Router for consuming.
+		const mediasoupRouter2 = await mediasoupWorker2.createRouter({ mediaCodecs });
 
 		// Create a mediasoup AudioLevelObserver.
-		const audioLevelObserver = await mediasoupRouter.createAudioLevelObserver(
+		const audioLevelObserver = await mediasoupRouter1.createAudioLevelObserver(
 			{
 				maxEntries : 1,
 				threshold  : -80,
 				interval   : 800
 			});
 
-		const bot = await Bot.create({ mediasoupRouter });
+		// TODO
+		const bot = await Bot.create({ mediasoupRouter: mediasoupRouter1 });
 
 		return new Room(
 			{
 				roomId,
 				protooRoom,
-				mediasoupRouter,
+				mediasoupRouter1,
+				mediasoupRouter2,
 				audioLevelObserver,
 				bot
 			});
 	}
 
-	constructor({ roomId, protooRoom, mediasoupRouter, audioLevelObserver, bot })
+	constructor(
+		{
+			roomId,
+			protooRoom,
+			mediasoupRouter1,
+			mediasoupRouter2,
+			audioLevelObserver,
+			bot
+		})
 	{
 		super();
 		this.setMaxListeners(Infinity);
@@ -114,9 +136,13 @@ class Room extends EventEmitter
 		// @type {Map<String, Object>}
 		this._broadcasters = new Map();
 
-		// mediasoup Router instance.
+		// mediasoup Router instance (for producing).
 		// @type {mediasoup.Router}
-		this._mediasoupRouter = mediasoupRouter;
+		this._mediasoupRouter1 = mediasoupRouter1;
+
+		// mediasoup Router instance (for consuming).
+		// @type {mediasoup.Router}
+		this._mediasoupRouter2 = mediasoupRouter2;
 
 		// mediasoup AudioLevelObserver.
 		// @type {mediasoup.AudioLevelObserver}
@@ -150,8 +176,9 @@ class Room extends EventEmitter
 		// Close the protoo Room.
 		this._protooRoom.close();
 
-		// Close the mediasoup Router.
-		this._mediasoupRouter.close();
+		// Close the mediasoup Routers.
+		this._mediasoupRouter1.close();
+		this._mediasoupRouter2.close();
 
 		// Close the Bot.
 		this._bot.close();
@@ -170,10 +197,11 @@ class Room extends EventEmitter
 	logStatus()
 	{
 		logger.info(
-			'logStatus() [roomId:%s, protoo Peers:%s, mediasoup Transports:%s]',
+			'logStatus() [roomId:%s, protoo Peers:%s, mediasoup sending Transports:%s, mediasoup receiving Transports:%s]',
 			this._roomId,
 			this._protooRoom.peers.length,
-			this._mediasoupRouter._transports.size); // NOTE: Private API.
+			this._mediasoupRouter1._transports.size,
+			this._mediasoupRouter2._transports.size); // NOTE: Private API.
 	}
 
 	/**
@@ -281,7 +309,7 @@ class Room extends EventEmitter
 
 	getRouterRtpCapabilities()
 	{
-		return this._mediasoupRouter.rtpCapabilities;
+		return this._mediasoupRouter1.rtpCapabilities;
 	}
 
 	/**
@@ -366,7 +394,7 @@ class Room extends EventEmitter
 				{
 					// Ignore Producers that the Broadcaster cannot consume.
 					if (
-						!this._mediasoupRouter.canConsume(
+						!this._mediasoupRouter2.canConsume(
 							{
 								producerId : producer.id,
 								rtpCapabilities
@@ -458,6 +486,7 @@ class Room extends EventEmitter
 					numSctpStreams : (sctpCapabilities || {}).numStreams
 				};
 
+				// TODO
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
 					webRtcTransportOptions);
 
@@ -483,6 +512,7 @@ class Room extends EventEmitter
 					multiSource : Boolean(multiSource)
 				};
 
+				// TODO
 				const transport = await this._mediasoupRouter.createPlainRtpTransport(
 					plainRtpTransportOptions);
 
@@ -719,7 +749,7 @@ class Room extends EventEmitter
 		{
 			case 'getRouterRtpCapabilities':
 			{
-				accept(this._mediasoupRouter.rtpCapabilities);
+				accept(this._mediasoupRouter1.rtpCapabilities);
 
 				break;
 			}
@@ -845,8 +875,18 @@ class Room extends EventEmitter
 					webRtcTransportOptions.enableTcp = true;
 				}
 
-				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					webRtcTransportOptions);
+				let transport;
+
+				if (producing)
+				{
+					transport = await this._mediasoupRouter1.createWebRtcTransport(
+						webRtcTransportOptions);
+				}
+				else
+				{
+					transport = await this._mediasoupRouter2.createWebRtcTransport(
+						webRtcTransportOptions);
+				}
 
 				transport.on('sctpstatechange', (sctpState) =>
 				{
@@ -981,6 +1021,13 @@ class Room extends EventEmitter
 						'producer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
 						producer.id, trace.type, trace);
 				});
+
+				// Pipe to second router.
+				await this._mediasoupRouter1.pipeToRouter(
+					{
+						producerId : producer.id,
+						router     : this._mediasoupRouter2
+					});
 
 				accept({ id: producer.id });
 
@@ -1443,7 +1490,7 @@ class Room extends EventEmitter
 		// NOTE: Don't create the Consumer if the remote Peer cannot consume it.
 		if (
 			!consumerPeer.data.rtpCapabilities ||
-			!this._mediasoupRouter.canConsume(
+			!this._mediasoupRouter2.canConsume(
 				{
 					producerId      : producer.id,
 					rtpCapabilities : consumerPeer.data.rtpCapabilities
