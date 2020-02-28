@@ -464,9 +464,17 @@ async function getOrCreateRoom({ roomId, forceH264 = false, forceVP9 = false })
 	{
 		logger.info('creating a new Room [roomId:%s]', roomId);
 
-		const mediasoupWorker = getMediasoupWorker();
+		const mediasoupWorker1 = getMediasoupWorker();
+		const mediasoupWorker2 = getMediasoupWorker();
 
-		room = await Room.create({ mediasoupWorker, roomId, forceH264, forceVP9 });
+		room = await Room.create(
+			{
+				mediasoupWorker1,
+				mediasoupWorker2,
+				roomId,
+				forceH264,
+				forceVP9
+			});
 
 		rooms.set(roomId, room);
 		room.on('close', () => rooms.delete(roomId));
