@@ -1026,7 +1026,9 @@ class Room extends EventEmitter
 				await this._mediasoupRouter1.pipeToRouter(
 					{
 						producerId : producer.id,
-						router     : this._mediasoupRouter2
+						router     : this._mediasoupRouter2,
+						enableRtx  : true,
+						enableSrtp : true
 					});
 
 				accept({ id: producer.id });
