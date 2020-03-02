@@ -215,9 +215,9 @@ async function createExpressApp()
 
 	/**
 	 * POST API to create a mediasoup Transport associated to a Broadcaster.
-	 * It can be a PLainRtpTransport or a WebRtcTransport depending on the
+	 * It can be a PlainTransport or a WebRtcTransport depending on the
 	 * type parameters in the body. There are also additional parameters for
-	 * PLainRtpTransport.
+	 * PlainTransport.
 	 */
 	expressApp.post(
 		'/rooms/:roomId/broadcasters/:broadcasterId/transports',
@@ -247,7 +247,7 @@ async function createExpressApp()
 
 	/**
 	 * POST API to connect a Transport belonging to a Broadcaster. Not needed
-	 * for PlainRtpTransport if it was created with comedia or multiSource options
+	 * for PlainTransport if it was created with comedia or multiSource options
 	 * set to true.
 	 */
 	expressApp.post(

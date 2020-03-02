@@ -11,9 +11,9 @@ class Bot
 {
 	static async create({ mediasoupRouter })
 	{
-		// Create a PlainRtpTransport for connecting the bot.
+		// Create a PlainTransport for connecting the bot.
 		// Assume no more than 256 participants.
-		const transport = await mediasoupRouter.createPlainRtpTransport(
+		const transport = await mediasoupRouter.createPlainTransport(
 			{
 				listenIp           : { ip: '127.0.0.1' },
 				enableSctp         : true,
@@ -28,7 +28,7 @@ class Bot
 
 		const localUdpPort = udpSocket.address().port;
 
-		// Connect the mediasoup PlainRtpTransport to the UDP socket port.
+		// Connect the mediasoup PlainTransport to the UDP socket port.
 		await transport.connect({ ip: '127.0.0.1', port: localUdpPort });
 
 		const remoteUdpIp = transport.tuple.localIp;
@@ -110,8 +110,8 @@ class Bot
 
 	constructor({ udpSocket, sctpSocket, sendStream, transport, dataProducer })
 	{
-		// mediasoup PlainRtpTransport.
-		// @type {mediasoup.PlainRtpTransport}
+		// mediasoup PlainTransport.
+		// @type {mediasoup.PlainTransport}
 		this._transport = transport;
 
 		// mediasoup DataProducer.
@@ -137,7 +137,7 @@ class Bot
 		transport.on('sctpstatechange', (sctpState) =>
 		{
 			logger.debug(
-				'bot PlainRtpTransport "sctpstatechange" event [sctpState:%s]', sctpState);
+				'bot PlainTransport "sctpstatechange" event [sctpState:%s]', sctpState);
 		});
 
 		sctpSocket.on('connect', () =>

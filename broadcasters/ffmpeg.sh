@@ -100,12 +100,12 @@ ${HTTPIE_COMMAND} \
 trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID} > /dev/null' EXIT
 
 #
-# Create a PlainRtpTransport in the mediasoup to send our audio and video tracks
+# Create a PlainTransport in the mediasoup to send our audio and video tracks
 # using plain RTP over UDP. Do it via HTTP post specifying type:"plain" and
 # multiSource:true to tell the server to accept RTP from any IP:port (we can do
 # this because we know that ffmpeg does not expect to receive RTCP).
 #
-echo ">>> creating mediasoup PlainRtpTransport for producing audio and video..."
+echo ">>> creating mediasoup PlainTransport for producing audio and video..."
 
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports \
@@ -114,7 +114,7 @@ res=$(${HTTPIE_COMMAND} \
 	2> /dev/null)
 
 #
-# Parse JSON response into Shell variables and extract the PlainRtpTransport id,
+# Parse JSON response into Shell variables and extract the PlainTransport id,
 # IP and port.
 #
 eval "$(echo ${res} | jq -r '@sh "transportId=\(.id) transportIp=\(.ip) transportPort=\(.port)"')"
@@ -147,7 +147,7 @@ ${HTTPIE_COMMAND} -v \
 # Run ffmpeg command and make it send audio and video RTP with codec payload and
 # SSRC values matching those that we have previously signaled in the Producers
 # creation above. Also, tell ffmpeg to send the RTP to the mediasoup
-# PlainRtpTransport ip and port.
+# PlainTransport ip and port.
 #
 echo ">>> running ffmpeg..."
 

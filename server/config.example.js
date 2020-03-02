@@ -130,10 +130,10 @@ module.exports =
 			// Additional options that are not part of WebRtcTransportOptions.
 			maxIncomingBitrate              : 1500000
 		},
-		// mediasoup PlainRtpTransport options for legacy RTP endpoints (FFmpeg,
+		// mediasoup PlainTransport options for legacy RTP endpoints (FFmpeg,
 		// GStreamer).
-		// See https://mediasoup.org/documentation/v3/mediasoup/api/#PlainRtpTransportOptions
-		plainRtpTransportOptions :
+		// See https://mediasoup.org/documentation/v3/mediasoup/api/#PlainTransportOptions
+		plainTransportOptions :
 		{
 			listenIp :
 			{
