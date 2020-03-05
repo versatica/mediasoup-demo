@@ -18,8 +18,7 @@
     "typescript:watch": "node npm-scripts.js typescript:watch",
     "lint": "node npm-scripts.js lint",
     "lint:fix": "node npm-scripts.js lint:fix",
-    "dev": "PYTHON_LOG_TO_STDOUT=true DEBUG='*' node ./lib/index.js",
-    "start": "DEBUG=\"${DEBUG:='*WARN* *ERROR* *aiortc*'}\" node ./lib/index.js"
+    "dev": "cross-env DEBUG=\"${DEBUG:='*'}\" PYTHON_LOG_TO_STDOUT=true ROOM_ID=devel node ./lib/index.js"
   },
   "dependencies": {
     "debug": "^4.1.1",
@@ -39,6 +38,7 @@
     "@types/node": "^13.7.5",
     "@typescript-eslint/eslint-plugin": "^2.21.0",
     "@typescript-eslint/parser": "^2.21.0",
+    "cross-env": "^7.0.1",
     "eslint": "^6.8.0"
   }
 }
