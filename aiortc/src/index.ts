@@ -20,8 +20,8 @@ const store = createReduxStore(
 
 RoomClient.init({ store });
 
-const roomId = process.env.ROOM_ID || 'testRoomId';
-const peerId = process.env.PEER_ID || 'testPeerId';
+const roomId = process.env.ROOM_ID || 'test';
+const peerId = process.env.PEER_ID || 'mediasoup-client-aiortc-id';
 const displayName = process.env.DISPLAY_NAME || 'mediasoup-client-aiortc';
 const forceTcp = process.env.FORCE_TCP === 'true' ? true : false;
 const produce = process.env.PRODUCE === 'false' ? false : true;
