@@ -224,7 +224,7 @@ async function createExpressApp()
 		async (req, res, next) =>
 		{
 			const { broadcasterId } = req.params;
-			const { type, rtcpMux, comedia, multiSource } = req.body;
+			const { type, rtcpMux, comedia } = req.body;
 
 			try
 			{
@@ -233,8 +233,7 @@ async function createExpressApp()
 						broadcasterId,
 						type,
 						rtcpMux,
-						comedia,
-						multiSource
+						comedia
 					});
 
 				res.status(200).json(data);
@@ -247,8 +246,7 @@ async function createExpressApp()
 
 	/**
 	 * POST API to connect a Transport belonging to a Broadcaster. Not needed
-	 * for PlainTransport if it was created with comedia or multiSource options
-	 * set to true.
+	 * for PlainTransport if it was created with comedia option set to true.
 	 */
 	expressApp.post(
 		'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/connect',
