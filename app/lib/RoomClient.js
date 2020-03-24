@@ -1242,7 +1242,7 @@ export default class RoomClient
 						cursor         : true,
 						width          : { max: 1920 },
 						height         : { max: 1080 },
-						frame          : { max: 30 }
+						frameRate      : { max: 30 }
 					}
 				});
 
