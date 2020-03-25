@@ -794,6 +794,9 @@ export default class RoomClient
 						opusStereo : 1,
 						opusDtx    : 1
 					}
+					// NOTE: for testing codec selection.
+					// codec : this._mediasoupDevice.rtpCapabilities.codecs
+					// 	.find((codec) => codec.mimeType.toLowerCase() === 'audio/pcma')
 				});
 
 			store.dispatch(stateActions.addProducer(
@@ -997,6 +1000,9 @@ export default class RoomClient
 						{
 							videoGoogleStartBitrate : 1000
 						}
+						// NOTE: for testing codec selection.
+						// codec : this._mediasoupDevice.rtpCapabilities.codecs
+						// 	.find((codec) => codec.mimeType.toLowerCase() === 'video/h264')
 					});
 			}
 			else
