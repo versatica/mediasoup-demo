@@ -1791,6 +1791,14 @@ export default class RoomClient
 					text : `chat DataProducer.send() failed: ${error}`
 				}));
 		}
+
+    // echo to chat
+    store.dispatch(requestActions.chat(
+      {
+        peer: 'me',
+        text
+      }
+    ));
 	}
 
 	async sendBotMessage(text)
