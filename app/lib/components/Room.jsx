@@ -33,6 +33,8 @@ class Room extends React.Component
 				<div data-component='Room'>
 					<Notifications />
 
+          <Chat />
+
 					<div className='state'>
 						<div className={classnames('icon', room.state)} />
 						<p className={classnames('text', room.state)}>{room.state}</p>
@@ -78,10 +80,6 @@ class Room extends React.Component
 					>
 						<Me />
 					</div>
-
-          <div className='chat-container'>
-            <Chat />
-          </div>
 
 					<div className='chat-input-container'>
 						<ChatInput />

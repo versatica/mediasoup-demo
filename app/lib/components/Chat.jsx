@@ -8,7 +8,7 @@ import { withRoomContext } from '../RoomContext';
 const Chat = ({ messages }) =>
 {
 	return (
-		<div data-component='Messages'>
+		<div data-component='Chat'>
 			{
 				messages.map((message) =>
           <div key={message.id}>
@@ -28,7 +28,8 @@ Chat.propTypes =
 
 const mapStateToProps = (state) =>
 {
-	const messages = state.messages || [];
+	const messages = state.messages;
+  console.log(messages)
 	return { messages };
 }
 
