@@ -320,16 +320,6 @@ export default class RoomClient
 						producerPaused
 					} = request.data;
 
-					let codecOptions;
-
-					if (kind === 'audio')
-					{
-						codecOptions =
-						{
-							opusStereo : 1
-						};
-					}
-
 					try
 					{
 						const consumer = await this._recvTransport.consume(
@@ -338,7 +328,6 @@ export default class RoomClient
 								producerId,
 								kind,
 								rtpParameters,
-								codecOptions,
 								appData : { ...appData, peerId } // Trick.
 							});
 
