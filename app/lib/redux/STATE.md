@@ -143,6 +143,13 @@
       type   : 'error'
       text   : 'Could not add webcam'
     }
+  ],
+  messages : [
+    {
+      id : 'qwrqw',
+      peer: 'Blitzel',
+      text: 'Amazing, it works!'
+    }
   ]
 }
 ```

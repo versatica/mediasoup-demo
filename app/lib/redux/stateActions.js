@@ -294,6 +294,14 @@ export const removeDataConsumer = (dataConsumerId, peerId) =>
 	};
 };
 
+export const addMessage = (message) =>
+{
+	return {
+		type    : 'ADD_MESSAGE',
+		payload : { message }
+	};
+};
+
 export const addNotification = (notification) =>
 {
 	return {

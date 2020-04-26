@@ -36,3 +36,17 @@ export const notify = ({ type = 'info', text, title, timeout }) =>
 		}, timeout);
 	};
 };
+
+export const chat = ({ peer, text }) => 
+{
+  const message = {
+		id : randomString({ length: 6 }).toLowerCase(),
+    peer,
+    text
+  };
+
+  return (dispatch) =>
+  {
+		dispatch(stateActions.addMessage(message))
+  };
+};
