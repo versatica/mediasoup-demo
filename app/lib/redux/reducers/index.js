@@ -6,6 +6,7 @@ import dataProducers from './dataProducers';
 import peers from './peers';
 import consumers from './consumers';
 import dataConsumers from './dataConsumers';
+import messages from './messages';
 import notifications from './notifications';
 
 const reducers = combineReducers(
@@ -17,6 +18,7 @@ const reducers = combineReducers(
 		peers,
 		consumers,
 		dataConsumers,
+    messages,
 		notifications
 	});
 
