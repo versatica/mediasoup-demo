@@ -12,6 +12,7 @@ const messages = (state = initialState, action) =>
 			return [ ...state, message ];
 		}
 	}
+  return state
 };
 
 export default messages;
