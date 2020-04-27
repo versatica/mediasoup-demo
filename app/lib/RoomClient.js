@@ -950,7 +950,7 @@ export default class RoomClient
 					{
 						video :
 						{
-							deviceId : { exact: device.deviceId },
+							deviceId : { ideal: device.deviceId },
 							...VIDEO_CONSTRAINS[resolution]
 						}
 					});
