@@ -402,8 +402,6 @@ async function runProtooWebSocketServer()
 		const u = url.parse(info.request.url, true);
 		const roomId = u.query['roomId'];
 		const peerId = u.query['peerId'];
-		const forceH264 = u.query['forceH264'] === 'true';
-		const forceVP9 = u.query['forceVP9'] === 'true';
 
 		if (!roomId || !peerId)
 		{
@@ -421,7 +419,7 @@ async function runProtooWebSocketServer()
 		// roomId.
 		queue.push(async () =>
 		{
-			const room = await getOrCreateRoom({ roomId, forceH264, forceVP9 });
+			const room = await getOrCreateRoom({ roomId });
 
 			// Accept the protoo WebSocket connection.
 			const protooWebSocketTransport = accept();
@@ -453,7 +451,7 @@ function getMediasoupWorker()
 /**
  * Get a Room instance (or create one if it does not exist).
  */
-async function getOrCreateRoom({ roomId, forceH264 = false, forceVP9 = false })
+async function getOrCreateRoom({ roomId })
 {
 	let room = rooms.get(roomId);
 
@@ -464,7 +462,7 @@ async function getOrCreateRoom({ roomId, forceH264 = false, forceVP9 = false })
 
 		const mediasoupWorker = getMediasoupWorker();
 
-		room = await Room.create({ mediasoupWorker, roomId, forceH264, forceVP9 });
+		room = await Room.create({ mediasoupWorker, roomId });
 
 		rooms.set(roomId, room);
 		room.on('close', () => rooms.delete(roomId));
