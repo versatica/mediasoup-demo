@@ -832,13 +832,25 @@ class Room extends EventEmitter
 
 				// NOTE: For testing.
 				// await transport.enableTraceEvent([ 'probation', 'bwe' ]);
-				// await transport.enableTraceEvent([ 'bwe' ]);
+				await transport.enableTraceEvent([ 'bwe' ]);
 
 				transport.on('trace', (trace) =>
 				{
-					logger.info(
+					logger.debug(
 						'transport "trace" event [transportId:%s, trace.type:%s, trace:%o]',
 						transport.id, trace.type, trace);
+
+					if (trace.type === 'bwe' && trace.direction === 'out')
+					{
+						peer.notify(
+							'downlinkBwe',
+							{
+								desiredBitrate          : trace.info.desiredBitrate,
+								effectiveDesiredBitrate : trace.info.effectiveDesiredBitrate,
+								availableBitrate        : trace.info.availableBitrate
+							})
+							.catch(() => {});
+					}
 				});
 
 				// Store the WebRtcTransport into the protoo Peer data Object.
@@ -948,7 +960,7 @@ class Room extends EventEmitter
 
 				producer.on('trace', (trace) =>
 				{
-					logger.info(
+					logger.debug(
 						'producer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
 						producer.id, trace.type, trace);
 				});
@@ -1515,7 +1527,7 @@ class Room extends EventEmitter
 
 		consumer.on('trace', (trace) =>
 		{
-			logger.info(
+			logger.debug(
 				'consumer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
 				consumer.id, trace.type, trace);
 		});

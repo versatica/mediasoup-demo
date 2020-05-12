@@ -639,6 +639,13 @@ export default class RoomClient
 					break;
 				}
 
+				case 'downlinkBwe':
+				{
+					logger.debug('\'downlinkBwe\' event:%o', notification.data);
+
+					break;
+				}
+
 				case 'consumerClosed':
 				{
 					const { consumerId } = notification.data;
