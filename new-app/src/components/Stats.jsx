@@ -492,6 +492,9 @@ const mapStateToProps = (state) => {
         case 'video':
           videoConsumerId = consumer.id
           break
+
+        default:
+          throw new Error(`Unrecognized track kind: "${consumer.track.kind}"`)
       }
     }
 
