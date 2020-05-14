@@ -110,9 +110,9 @@ class Room extends React.Component {
 
           <Stats />
 
-          <If condition={window.NETWORK_THROTTLE_SECRET}>
+          {Boolean(window.NETWORK_THROTTLE_SECRET) && (
             <NetworkThrottle secret={window.NETWORK_THROTTLE_SECRET} />
-          </If>
+          )}
 
           <ReactTooltip
             type="light"

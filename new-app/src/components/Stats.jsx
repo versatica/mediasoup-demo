@@ -60,235 +60,202 @@ class Stats extends React.Component {
           <div className="header">
             <div className="info">
               <div className="close-icon" onClick={onClose} />
-
-              <Choose>
-                <When condition={isMe}>
-                  <h1>Your Stats</h1>
-                </When>
-
-                <Otherwise>
-                  <h1>Stats of {peerDisplayName}</h1>
-                </Otherwise>
-              </Choose>
+              {Boolean(isMe) ? (
+                <h1>Your Stats</h1>
+              ) : (
+                <h1>Stats of {peerDisplayName}</h1>
+              )}
             </div>
 
             <div className="list">
-              <If
-                condition={sendTransportRemoteStats || sendTransportLocalStats}
-              >
+              {Boolean(sendTransportRemoteStats || sendTransportLocalStats) && (
                 <p>
                   {'send transport stats: '}
                   <a href="#send-transport-remote-stats">[remote]</a>
                   <span> </span>
                   <a href="#send-transport-local-stats">[local]</a>
                 </p>
-              </If>
+              )}
 
-              <If
-                condition={recvTransportRemoteStats || recvTransportLocalStats}
-              >
+              {Boolean(recvTransportRemoteStats || recvTransportLocalStats) && (
                 <p>
                   {'recv transport stats: '}
                   <a href="#recv-transport-remote-stats">[remote]</a>
                   <span> </span>
                   <a href="#recv-transport-local-stats">[local]</a>
                 </p>
-              </If>
+              )}
 
-              <If
-                condition={audioProducerRemoteStats || audioProducerLocalStats}
-              >
+              {Boolean(audioProducerRemoteStats || audioProducerLocalStats) && (
                 <p>
                   {'audio producer stats: '}
                   <a href="#audio-producer-remote-stats">[remote]</a>
                   <span> </span>
                   <a href="#audio-producer-local-stats">[local]</a>
                 </p>
-              </If>
+              )}
 
-              <If
-                condition={videoProducerRemoteStats || videoProducerLocalStats}
-              >
+              {Boolean(videoProducerRemoteStats || videoProducerLocalStats) && (
                 <p>
                   {'video producer stats: '}
                   <a href="#video-producer-remote-stats">[remote]</a>
                   <span> </span>
                   <a href="#video-producer-local-stats">[local]</a>
                 </p>
-              </If>
+              )}
 
-              <If condition={chatDataProducerRemoteStats}>
+              {Boolean(chatDataProducerRemoteStats) && (
                 <p>
                   {'chat dataproducer stats: '}
                   <a href="#chat-dataproducer-remote-stats">[remote]</a>
                   <span> </span>
                   <a className="disabled">[local]</a>
                 </p>
-              </If>
+              )}
 
-              <If condition={botDataProducerRemoteStats}>
+              {Boolean(botDataProducerRemoteStats) && (
                 <p>
                   {'bot dataproducer stats: '}
                   <a href="#bot-dataproducer-remote-stats">[remote]</a>
                   <span> </span>
                   <a className="disabled">[local]</a>
                 </p>
-              </If>
+              )}
 
-              <If
-                condition={audioConsumerRemoteStats || audioConsumerLocalStats}
-              >
+              {Boolean(audioConsumerRemoteStats || audioConsumerLocalStats) && (
                 <p>
                   {'audio consumer stats: '}
                   <a href="#audio-consumer-remote-stats">[remote]</a>
                   <span> </span>
                   <a href="#audio-consumer-local-stats">[local]</a>
                 </p>
-              </If>
+              )}
 
-              <If
-                condition={videoConsumerRemoteStats || videoConsumerLocalStats}
-              >
+              {Boolean(videoConsumerRemoteStats || videoConsumerLocalStats) && (
                 <p>
                   {'video consumer stats: '}
                   <a href="#video-consumer-remote-stats">[remote]</a>
                   <span> </span>
                   <a href="#video-consumer-local-stats">[local]</a>
                 </p>
-              </If>
+              )}
 
-              <If condition={chatDataConsumerRemoteStats}>
+              {Boolean(chatDataConsumerRemoteStats) && (
                 <p>
                   {'chat dataconsumer stats: '}
                   <a href="#chat-dataconsumer-remote-stats">[remote]</a>
                   <span> </span>
                   <a className="disabled">[local]</a>
                 </p>
-              </If>
+              )}
 
-              <If condition={botDataConsumerRemoteStats}>
+              {Boolean(botDataConsumerRemoteStats) && (
                 <p>
                   {'bot dataconsumer stats: '}
                   <a href="#bot-dataconsumer-remote-stats">[remote]</a>
                   <span> </span>
                   <a className="disabled">[local]</a>
                 </p>
-              </If>
+              )}
             </div>
           </div>
 
           <div className="stats">
-            <If condition={sendTransportRemoteStats}>
-              {this._printStats(
+            {Boolean(sendTransportRemoteStats) &&
+              this._printStats(
                 'send transport remote stats',
                 sendTransportRemoteStats,
               )}
-            </If>
 
-            <If condition={sendTransportLocalStats}>
-              {this._printStats(
+            {Boolean(sendTransportLocalStats) &&
+              this._printStats(
                 'send transport local stats',
                 sendTransportLocalStats,
               )}
-            </If>
 
-            <If condition={recvTransportRemoteStats}>
-              {this._printStats(
+            {Boolean(recvTransportRemoteStats) &&
+              this._printStats(
                 'recv transport remote stats',
                 recvTransportRemoteStats,
               )}
-            </If>
 
-            <If condition={recvTransportLocalStats}>
-              {this._printStats(
+            {Boolean(recvTransportLocalStats) &&
+              this._printStats(
                 'recv transport local stats',
                 recvTransportLocalStats,
               )}
-            </If>
 
-            <If condition={audioProducerRemoteStats}>
-              {this._printStats(
+            {Boolean(audioProducerRemoteStats) &&
+              this._printStats(
                 'audio producer remote stats',
                 audioProducerRemoteStats,
               )}
-            </If>
 
-            <If condition={audioProducerLocalStats}>
-              {this._printStats(
+            {Boolean(audioProducerLocalStats) &&
+              this._printStats(
                 'audio producer local stats',
                 audioProducerLocalStats,
               )}
-            </If>
 
-            <If condition={videoProducerRemoteStats}>
-              {this._printStats(
+            {Boolean(videoProducerRemoteStats) &&
+              this._printStats(
                 'video producer remote stats',
                 videoProducerRemoteStats,
               )}
-            </If>
 
-            <If condition={videoProducerLocalStats}>
-              {this._printStats(
+            {Boolean(videoProducerLocalStats) &&
+              this._printStats(
                 'video producer local stats',
                 videoProducerLocalStats,
               )}
-            </If>
 
-            <If condition={chatDataProducerRemoteStats}>
-              {this._printStats(
+            {Boolean(chatDataProducerRemoteStats) &&
+              this._printStats(
                 'chat dataproducer remote stats',
                 chatDataProducerRemoteStats,
               )}
-            </If>
 
-            <If condition={botDataProducerRemoteStats}>
-              {this._printStats(
+            {Boolean(botDataProducerRemoteStats) &&
+              this._printStats(
                 'bot dataproducer remote stats',
                 botDataProducerRemoteStats,
               )}
-            </If>
 
-            <If condition={audioConsumerRemoteStats}>
-              {this._printStats(
+            {Boolean(audioConsumerRemoteStats) &&
+              this._printStats(
                 'audio consumer remote stats',
                 audioConsumerRemoteStats,
               )}
-            </If>
 
-            <If condition={audioConsumerLocalStats}>
-              {this._printStats(
+            {Boolean(audioConsumerLocalStats) &&
+              this._printStats(
                 'audio consumer local stats',
                 audioConsumerLocalStats,
               )}
-            </If>
 
-            <If condition={videoConsumerRemoteStats}>
-              {this._printStats(
+            {Boolean(videoConsumerRemoteStats) &&
+              this._printStats(
                 'video consumer remote stats',
                 videoConsumerRemoteStats,
               )}
-            </If>
 
-            <If condition={videoConsumerLocalStats}>
-              {this._printStats(
+            {Boolean(videoConsumerLocalStats) &&
+              this._printStats(
                 'video consumer local stats',
                 videoConsumerLocalStats,
               )}
-            </If>
 
-            <If condition={chatDataConsumerRemoteStats}>
-              {this._printStats(
+            {Boolean(chatDataConsumerRemoteStats) &&
+              this._printStats(
                 'chat dataconsumer remote stats',
                 chatDataConsumerRemoteStats,
               )}
-            </If>
 
-            <If condition={botDataConsumerRemoteStats}>
-              {this._printStats(
+            {Boolean(botDataConsumerRemoteStats) &&
+              this._printStats(
                 'bot dataconsumer remote stats',
                 botDataConsumerRemoteStats,
               )}
-            </If>
           </div>
         </div>
       </div>
@@ -462,19 +429,15 @@ class Stats extends React.Component {
                 <div className="line" key={key}>
                   <p className="key">{key}</p>
                   <div className="value">
-                    <Choose>
-                      <When condition={typeof item[key] === 'number'}>
-                        {JSON.stringify(
-                          Math.round(item[key] * 100) / 100,
-                          null,
-                          '  ',
-                        )}
-                      </When>
-
-                      <Otherwise>
-                        <pre>{JSON.stringify(item[key], null, '  ')}</pre>
-                      </Otherwise>
-                    </Choose>
+                    {Boolean(typeof item[key] === 'number') ? (
+                      JSON.stringify(
+                        Math.round(item[key] * 100) / 100,
+                        null,
+                        '  ',
+                      )
+                    ) : (
+                      <pre>{JSON.stringify(item[key], null, '  ')}</pre>
+                    )}
                   </div>
                 </div>
               ))}

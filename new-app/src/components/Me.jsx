@@ -70,7 +70,7 @@ class Me extends React.Component {
         data-tip={tip}
         data-tip-disable={!tip}
       >
-        <If condition={connected}>
+        {Boolean(connected) && (
           <div className="controls">
             <div
               className={classnames('button', 'mic', micState)}
@@ -118,7 +118,7 @@ class Me extends React.Component {
               }}
             />
           </div>
-        </If>
+        )}
 
         <PeerView
           isMe

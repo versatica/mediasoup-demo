@@ -107,320 +107,320 @@ export default class PeerView extends React.Component {
           </div>
 
           <div className={classnames('box', { visible: showInfo })}>
-            <If condition={audioProducerId || audioConsumerId}>
-              <h1>audio</h1>
+            {Boolean(audioProducerId || audioConsumerId) && (
+              <>
+                <h1>audio</h1>
 
-              <If condition={audioProducerId}>
-                <p>
-                  {'id: '}
-                  <span
-                    className="copiable"
-                    data-tip="Copy audio producer id to clipboard"
-                    onClick={() => clipboardCopy(`"${audioProducerId}"`)}
-                  >
-                    {audioProducerId}
-                  </span>
-                </p>
+                {Boolean(audioProducerId) && (
+                  <>
+                    <p>
+                      {'id: '}
+                      <span
+                        className="copiable"
+                        data-tip="Copy audio producer id to clipboard"
+                        onClick={() => clipboardCopy(`"${audioProducerId}"`)}
+                      >
+                        {audioProducerId}
+                      </span>
+                    </p>
 
-                <ReactTooltip
-                  type="light"
-                  effect="solid"
-                  delayShow={1500}
-                  delayHide={50}
-                />
-              </If>
+                    <ReactTooltip
+                      type="light"
+                      effect="solid"
+                      delayShow={1500}
+                      delayHide={50}
+                    />
+                  </>
+                )}
 
-              <If condition={audioConsumerId}>
-                <p>
-                  {'id: '}
-                  <span
-                    className="copiable"
-                    data-tip="Copy video producer id to clipboard"
-                    onClick={() => clipboardCopy(`"${audioConsumerId}"`)}
-                  >
-                    {audioConsumerId}
-                  </span>
-                </p>
+                {Boolean(audioConsumerId) && (
+                  <>
+                    <p>
+                      {'id: '}
+                      <span
+                        className="copiable"
+                        data-tip="Copy video producer id to clipboard"
+                        onClick={() => clipboardCopy(`"${audioConsumerId}"`)}
+                      >
+                        {audioConsumerId}
+                      </span>
+                    </p>
 
-                <ReactTooltip
-                  type="light"
-                  effect="solid"
-                  delayShow={1500}
-                  delayHide={50}
-                />
-              </If>
+                    <ReactTooltip
+                      type="light"
+                      effect="solid"
+                      delayShow={1500}
+                      delayHide={50}
+                    />
+                  </>
+                )}
 
-              <If condition={audioCodec}>
-                <p>codec: {audioCodec}</p>
-              </If>
+                {Boolean(audioCodec) && <p>codec: {audioCodec}</p>}
 
-              <If condition={audioProducerId && audioScore}>
-                {this._printProducerScore(audioProducerId, audioScore)}
-              </If>
+                {Boolean(audioProducerId && audioScore) &&
+                  this._printProducerScore(audioProducerId, audioScore)}
 
-              <If condition={audioConsumerId && audioScore}>
-                {this._printConsumerScore(audioConsumerId, audioScore)}
-              </If>
-            </If>
+                {Boolean(audioConsumerId && audioScore) &&
+                  this._printConsumerScore(audioConsumerId, audioScore)}
+              </>
+            )}
 
-            <If condition={videoProducerId || videoConsumerId}>
-              <h1>video</h1>
+            {Boolean(videoProducerId || videoConsumerId) && (
+              <>
+                <h1>video</h1>
 
-              <If condition={videoProducerId}>
-                <p>
-                  {'id: '}
-                  <span
-                    className="copiable"
-                    data-tip="Copy audio consumer id to clipboard"
-                    onClick={() => clipboardCopy(`"${videoProducerId}"`)}
-                  >
-                    {videoProducerId}
-                  </span>
-                </p>
+                {Boolean(videoProducerId) && (
+                  <>
+                    <p>
+                      {'id: '}
+                      <span
+                        className="copiable"
+                        data-tip="Copy audio consumer id to clipboard"
+                        onClick={() => clipboardCopy(`"${videoProducerId}"`)}
+                      >
+                        {videoProducerId}
+                      </span>
+                    </p>
 
-                <ReactTooltip
-                  type="light"
-                  effect="solid"
-                  delayShow={1500}
-                  delayHide={50}
-                />
-              </If>
+                    <ReactTooltip
+                      type="light"
+                      effect="solid"
+                      delayShow={1500}
+                      delayHide={50}
+                    />
+                  </>
+                )}
 
-              <If condition={videoConsumerId}>
-                <p>
-                  {'id: '}
-                  <span
-                    className="copiable"
-                    data-tip="Copy video consumer id to clipboard"
-                    onClick={() => clipboardCopy(`"${videoConsumerId}"`)}
-                  >
-                    {videoConsumerId}
-                  </span>
-                </p>
+                {Boolean(videoConsumerId) && (
+                  <>
+                    <p>
+                      {'id: '}
+                      <span
+                        className="copiable"
+                        data-tip="Copy video consumer id to clipboard"
+                        onClick={() => clipboardCopy(`"${videoConsumerId}"`)}
+                      >
+                        {videoConsumerId}
+                      </span>
+                    </p>
 
-                <ReactTooltip
-                  type="light"
-                  effect="solid"
-                  delayShow={1500}
-                  delayHide={50}
-                />
-              </If>
+                    <ReactTooltip
+                      type="light"
+                      effect="solid"
+                      delayShow={1500}
+                      delayHide={50}
+                    />
+                  </>
+                )}
 
-              <If condition={videoCodec}>
-                <p>codec: {videoCodec}</p>
-              </If>
+                {Boolean(videoCodec) && <p>codec: {videoCodec}</p>}
 
-              <If condition={videoVisible && videoResolutionWidth !== null}>
-                <p>
-                  resolution: {videoResolutionWidth}x{videoResolutionHeight}
-                </p>
-              </If>
+                {Boolean(videoVisible && videoResolutionWidth !== null) && (
+                  <p>
+                    resolution: {videoResolutionWidth}x{videoResolutionHeight}
+                  </p>
+                )}
 
-              <If
-                condition={
+                {Boolean(
                   videoVisible &&
-                  videoProducerId &&
-                  videoRtpParameters.encodings.length > 1
-                }
-              >
-                <p>
-                  max spatial layer:{' '}
-                  {maxSpatialLayer > -1 ? maxSpatialLayer : 'none'}
-                  <span> </span>
-                  <span
-                    className={classnames({
-                      clickable: maxSpatialLayer > -1,
-                    })}
-                    onClick={(event) => {
-                      event.stopPropagation()
+                    videoProducerId &&
+                    videoRtpParameters.encodings.length > 1,
+                ) && (
+                  <p>
+                    max spatial layer:{' '}
+                    {maxSpatialLayer > -1 ? maxSpatialLayer : 'none'}
+                    <span> </span>
+                    <span
+                      className={classnames({
+                        clickable: maxSpatialLayer > -1,
+                      })}
+                      onClick={(event) => {
+                        event.stopPropagation()
 
-                      const newMaxSpatialLayer = maxSpatialLayer - 1
+                        const newMaxSpatialLayer = maxSpatialLayer - 1
 
-                      onChangeMaxSendingSpatialLayer(newMaxSpatialLayer)
-                      this.setState({ maxSpatialLayer: newMaxSpatialLayer })
-                    }}
-                  >
-                    {'[ down ]'}
-                  </span>
-                  <span> </span>
-                  <span
-                    className={classnames({
-                      clickable:
-                        maxSpatialLayer <
-                        videoRtpParameters.encodings.length - 1,
-                    })}
-                    onClick={(event) => {
-                      event.stopPropagation()
+                        onChangeMaxSendingSpatialLayer(newMaxSpatialLayer)
+                        this.setState({ maxSpatialLayer: newMaxSpatialLayer })
+                      }}
+                    >
+                      {'[ down ]'}
+                    </span>
+                    <span> </span>
+                    <span
+                      className={classnames({
+                        clickable:
+                          maxSpatialLayer <
+                          videoRtpParameters.encodings.length - 1,
+                      })}
+                      onClick={(event) => {
+                        event.stopPropagation()
 
-                      const newMaxSpatialLayer = maxSpatialLayer + 1
+                        const newMaxSpatialLayer = maxSpatialLayer + 1
 
-                      onChangeMaxSendingSpatialLayer(newMaxSpatialLayer)
-                      this.setState({ maxSpatialLayer: newMaxSpatialLayer })
-                    }}
-                  >
-                    {'[ up ]'}
-                  </span>
-                </p>
-              </If>
+                        onChangeMaxSendingSpatialLayer(newMaxSpatialLayer)
+                        this.setState({ maxSpatialLayer: newMaxSpatialLayer })
+                      }}
+                    >
+                      {'[ up ]'}
+                    </span>
+                  </p>
+                )}
 
-              <If condition={!isMe && videoMultiLayer}>
-                <p>
-                  {`current spatial-temporal layers: ${consumerCurrentSpatialLayer} ${consumerCurrentTemporalLayer}`}
-                </p>
-                <p>
-                  {`preferred spatial-temporal layers: ${consumerPreferredSpatialLayer} ${consumerPreferredTemporalLayer}`}
-                  <span> </span>
-                  <span
-                    className="clickable"
-                    onClick={(event) => {
-                      event.stopPropagation()
+                {Boolean(!isMe && videoMultiLayer) && (
+                  <>
+                    <p>
+                      {`current spatial-temporal layers: ${consumerCurrentSpatialLayer} ${consumerCurrentTemporalLayer}`}
+                    </p>
+                    <p>
+                      {`preferred spatial-temporal layers: ${consumerPreferredSpatialLayer} ${consumerPreferredTemporalLayer}`}
+                      <span> </span>
+                      <span
+                        className="clickable"
+                        onClick={(event) => {
+                          event.stopPropagation()
 
-                      let newPreferredSpatialLayer = consumerPreferredSpatialLayer
-                      let newPreferredTemporalLayer
+                          let newPreferredSpatialLayer = consumerPreferredSpatialLayer
+                          let newPreferredTemporalLayer
 
-                      if (consumerPreferredTemporalLayer > 0) {
-                        newPreferredTemporalLayer =
-                          consumerPreferredTemporalLayer - 1
-                      } else {
-                        if (consumerPreferredSpatialLayer > 0)
-                          newPreferredSpatialLayer =
-                            consumerPreferredSpatialLayer - 1
-                        else
-                          newPreferredSpatialLayer = consumerSpatialLayers - 1
+                          if (consumerPreferredTemporalLayer > 0) {
+                            newPreferredTemporalLayer =
+                              consumerPreferredTemporalLayer - 1
+                          } else {
+                            if (consumerPreferredSpatialLayer > 0)
+                              newPreferredSpatialLayer =
+                                consumerPreferredSpatialLayer - 1
+                            else
+                              newPreferredSpatialLayer =
+                                consumerSpatialLayers - 1
 
-                        newPreferredTemporalLayer = consumerTemporalLayers - 1
-                      }
+                            newPreferredTemporalLayer =
+                              consumerTemporalLayers - 1
+                          }
 
-                      onChangeVideoPreferredLayers(
-                        newPreferredSpatialLayer,
-                        newPreferredTemporalLayer,
-                      )
-                    }}
-                  >
-                    {'[ down ]'}
-                  </span>
-                  <span> </span>
-                  <span
-                    className="clickable"
-                    onClick={(event) => {
-                      event.stopPropagation()
+                          onChangeVideoPreferredLayers(
+                            newPreferredSpatialLayer,
+                            newPreferredTemporalLayer,
+                          )
+                        }}
+                      >
+                        {'[ down ]'}
+                      </span>
+                      <span> </span>
+                      <span
+                        className="clickable"
+                        onClick={(event) => {
+                          event.stopPropagation()
 
-                      let newPreferredSpatialLayer = consumerPreferredSpatialLayer
-                      let newPreferredTemporalLayer
+                          let newPreferredSpatialLayer = consumerPreferredSpatialLayer
+                          let newPreferredTemporalLayer
 
-                      if (
-                        consumerPreferredTemporalLayer <
-                        consumerTemporalLayers - 1
-                      ) {
-                        newPreferredTemporalLayer =
-                          consumerPreferredTemporalLayer + 1
-                      } else {
-                        if (
-                          consumerPreferredSpatialLayer <
-                          consumerSpatialLayers - 1
-                        )
-                          newPreferredSpatialLayer =
-                            consumerPreferredSpatialLayer + 1
-                        else newPreferredSpatialLayer = 0
+                          if (
+                            consumerPreferredTemporalLayer <
+                            consumerTemporalLayers - 1
+                          ) {
+                            newPreferredTemporalLayer =
+                              consumerPreferredTemporalLayer + 1
+                          } else {
+                            if (
+                              consumerPreferredSpatialLayer <
+                              consumerSpatialLayers - 1
+                            )
+                              newPreferredSpatialLayer =
+                                consumerPreferredSpatialLayer + 1
+                            else newPreferredSpatialLayer = 0
 
-                        newPreferredTemporalLayer = 0
-                      }
+                            newPreferredTemporalLayer = 0
+                          }
 
-                      onChangeVideoPreferredLayers(
-                        newPreferredSpatialLayer,
-                        newPreferredTemporalLayer,
-                      )
-                    }}
-                  >
-                    {'[ up ]'}
-                  </span>
-                </p>
-              </If>
+                          onChangeVideoPreferredLayers(
+                            newPreferredSpatialLayer,
+                            newPreferredTemporalLayer,
+                          )
+                        }}
+                      >
+                        {'[ up ]'}
+                      </span>
+                    </p>
+                  </>
+                )}
 
-              <If condition={!isMe && videoCodec && consumerPriority > 0}>
-                <p>
-                  {`priority: ${consumerPriority}`}
-                  <span> </span>
-                  <span
-                    className={classnames({
-                      clickable: consumerPriority > 1,
-                    })}
-                    onClick={(event) => {
-                      event.stopPropagation()
+                {Boolean(!isMe && videoCodec && consumerPriority > 0) && (
+                  <p>
+                    {`priority: ${consumerPriority}`}
+                    <span> </span>
+                    <span
+                      className={classnames({
+                        clickable: consumerPriority > 1,
+                      })}
+                      onClick={(event) => {
+                        event.stopPropagation()
 
-                      onChangeVideoPriority(consumerPriority - 1)
-                    }}
-                  >
-                    {'[ down ]'}
-                  </span>
-                  <span> </span>
-                  <span
-                    className={classnames({
-                      clickable: consumerPriority < 255,
-                    })}
-                    onClick={(event) => {
-                      event.stopPropagation()
+                        onChangeVideoPriority(consumerPriority - 1)
+                      }}
+                    >
+                      {'[ down ]'}
+                    </span>
+                    <span> </span>
+                    <span
+                      className={classnames({
+                        clickable: consumerPriority < 255,
+                      })}
+                      onClick={(event) => {
+                        event.stopPropagation()
 
-                      onChangeVideoPriority(consumerPriority + 1)
-                    }}
-                  >
-                    {'[ up ]'}
-                  </span>
-                </p>
-              </If>
+                        onChangeVideoPriority(consumerPriority + 1)
+                      }}
+                    >
+                      {'[ up ]'}
+                    </span>
+                  </p>
+                )}
 
-              <If condition={!isMe && videoCodec}>
-                <p>
-                  <span
-                    className="clickable"
-                    onClick={(event) => {
-                      event.stopPropagation()
+                {Boolean(!isMe && videoCodec) && (
+                  <p>
+                    <span
+                      className="clickable"
+                      onClick={(event) => {
+                        event.stopPropagation()
 
-                      if (!onRequestKeyFrame) return
+                        if (!onRequestKeyFrame) return
 
-                      onRequestKeyFrame()
-                    }}
-                  >
-                    {'[ request keyframe ]'}
-                  </span>
-                </p>
-              </If>
+                        onRequestKeyFrame()
+                      }}
+                    >
+                      {'[ request keyframe ]'}
+                    </span>
+                  </p>
+                )}
 
-              <If condition={videoProducerId && videoScore}>
-                {this._printProducerScore(videoProducerId, videoScore)}
-              </If>
+                {Boolean(videoProducerId && videoScore) &&
+                  this._printProducerScore(videoProducerId, videoScore)}
 
-              <If condition={videoConsumerId && videoScore}>
-                {this._printConsumerScore(videoConsumerId, videoScore)}
-              </If>
-            </If>
+                {Boolean(videoConsumerId && videoScore) &&
+                  this._printConsumerScore(videoConsumerId, videoScore)}
+              </>
+            )}
           </div>
 
           <div className={classnames('peer', { 'is-me': isMe })}>
-            <Choose>
-              <When condition={isMe}>
-                <EditableInput
-                  value={peer.displayName}
-                  propName="displayName"
-                  className="display-name editable"
-                  classLoading="loading"
-                  classInvalid="invalid"
-                  shouldBlockWhileLoading
-                  editProps={{
-                    maxLength: 20,
-                    autoCorrect: 'false',
-                    spellCheck: 'false',
-                  }}
-                  onChange={({ displayName }) =>
-                    onChangeDisplayName(displayName)
-                  }
-                />
-              </When>
-
-              <Otherwise>
-                <span className="display-name">{peer.displayName}</span>
-              </Otherwise>
-            </Choose>
+            {Boolean(isMe) ? (
+              <EditableInput
+                value={peer.displayName}
+                propName="displayName"
+                className="display-name editable"
+                classLoading="loading"
+                classInvalid="invalid"
+                shouldBlockWhileLoading
+                editProps={{
+                  maxLength: 20,
+                  autoCorrect: 'false',
+                  spellCheck: 'false',
+                }}
+                onChange={({ displayName }) => onChangeDisplayName(displayName)}
+              />
+            ) : (
+              <span className="display-name">{peer.displayName}</span>
+            )}
 
             <div className="row">
               <span className={classnames('device-icon', peer.device.flag)} />
@@ -464,15 +464,13 @@ export default class PeerView extends React.Component {
           <div className={classnames('bar', `level${audioVolume}`)} />
         </div>
 
-        <If condition={videoVisible && videoScore < 5}>
+        {Boolean(videoVisible && videoScore < 5) && (
           <div className="spinner-container">
             <Spinner />
           </div>
-        </If>
+        )}
 
-        <If condition={videoElemPaused}>
-          <div className="video-elem-paused" />
-        </If>
+        {videoElemPaused && <div className="video-elem-paused" />}
       </div>
     )
   }
@@ -694,13 +692,9 @@ export default class PeerView extends React.Component {
             idx, // eslint-disable-line no-shadow
           ) => (
             <p key={idx} className="indent">
-              <Choose>
-                <When condition={rid !== undefined}>
-                  {`rid:${rid}, ssrc:${ssrc}, score:${score}`}
-                </When>
-
-                <Otherwise>{`ssrc:${ssrc}, score:${score}`}</Otherwise>
-              </Choose>
+              {Boolean(rid !== undefined)
+                ? `rid:${rid}, ssrc:${ssrc}, score:${score}`
+                : `ssrc:${ssrc}, score:${score}`}
             </p>
           ))}
       </React.Fragment>

@@ -19,9 +19,9 @@ const Notifications = ({ notifications, onClick }) => {
               <div className="icon" />
 
               <div className="body">
-                <If condition={notification.title}>
+                {Boolean(notification.title) && (
                   <p className="title">{notification.title}</p>
-                </If>
+                )}
 
                 <p className="text">{notification.text}</p>
               </div>

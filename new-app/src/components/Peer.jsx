@@ -30,13 +30,9 @@ const Peer = (props) => {
   return (
     <div data-component="Peer">
       <div className="indicators">
-        <If condition={!audioEnabled}>
-          <div className="icon mic-off" />
-        </If>
+        {Boolean(!audioEnabled) && <div className="icon mic-off" />}
 
-        <If condition={!videoConsumer}>
-          <div className="icon webcam-off" />
-        </If>
+        {Boolean(!videoConsumer) && <div className="icon webcam-off" />}
       </div>
 
       <PeerView
