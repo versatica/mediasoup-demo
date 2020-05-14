@@ -21,6 +21,10 @@ export default class PeerView extends React.Component {
   constructor(props) {
     super(props)
 
+    this.refVideo = React.createRef()
+    this.refAudio = React.createRef()
+    this.refCanvas = React.createRef()
+
     this.state = {
       audioVolume: 0, // Integer from 0 to 10.,
       showInfo: window.SHOW_INFO || false,
@@ -432,7 +436,7 @@ export default class PeerView extends React.Component {
         </div>
 
         <video
-          ref="videoElem"
+          ref={this.refVideo}
           className={classnames({
             'is-me': isMe,
             hidden: !videoVisible || !videoCanPlay,
@@ -448,7 +452,7 @@ export default class PeerView extends React.Component {
         />
 
         <audio
-          ref="audioElem"
+          ref={this.refAudio}
           autoPlay
           playsInline
           muted={isMe || audioMuted}
@@ -456,7 +460,7 @@ export default class PeerView extends React.Component {
         />
 
         <canvas
-          ref="canvas"
+          ref={this.refCanvas}
           className={classnames('face-detection', { 'is-me': isMe })}
         />
 
@@ -487,7 +491,7 @@ export default class PeerView extends React.Component {
     clearInterval(this._videoResolutionPeriodicTimer)
     cancelAnimationFrame(this._faceDetectionRequestAnimationFrame)
 
-    const { videoElem } = this.refs
+    const videoElem = this.refVideo.current
 
     if (videoElem) {
       videoElem.oncanplay = null
@@ -527,7 +531,8 @@ export default class PeerView extends React.Component {
 
     if (faceDetection) this._stopFaceDetection()
 
-    const { audioElem, videoElem } = this.refs
+    const audioElem = this.refAudio.current
+    const videoElem = this.refVideo.current
 
     if (audioTrack) {
       const stream = new MediaStream()
@@ -598,7 +603,7 @@ export default class PeerView extends React.Component {
   _startVideoResolution() {
     this._videoResolutionPeriodicTimer = setInterval(() => {
       const { videoResolutionWidth, videoResolutionHeight } = this.state
-      const { videoElem } = this.refs
+      const videoElem = this.refVideo.current
 
       if (
         videoElem.videoWidth !== videoResolutionWidth ||
@@ -622,7 +627,8 @@ export default class PeerView extends React.Component {
   }
 
   _startFaceDetection() {
-    const { videoElem, canvas } = this.refs
+    const videoElem = this.refVideo.current
+    const canvas = this.refCanvas.current
 
     const step = async () => {
       // NOTE: Somehow this is critical. Otherwise the Promise returned by
@@ -669,7 +675,7 @@ export default class PeerView extends React.Component {
   _stopFaceDetection() {
     cancelAnimationFrame(this._faceDetectionRequestAnimationFrame)
 
-    const { canvas } = this.refs
+    const canvas = this.refCanvas.current
 
     canvas.width = 0
     canvas.height = 0

@@ -15,122 +15,116 @@ import Stats from './Stats'
 import Notifications from './Notifications'
 import NetworkThrottle from './NetworkThrottle'
 
-class Room extends React.Component {
-  render() {
-    const { roomClient, room, me, amActiveSpeaker, onRoomLinkCopy } = this.props
+function Room(props) {
+  const { roomClient, room, me, amActiveSpeaker, onRoomLinkCopy } = props
+  React.useEffect(() => {
+    console.log('join')
+    roomClient.join()
+  }, [roomClient])
+  const nodeRef = React.useRef(null)
+  return (
+    <Appear duration={300} nodeRef={nodeRef}>
+      <div data-component="Room" ref={nodeRef}>
+        <Notifications />
 
-    return (
-      <Appear duration={300}>
-        <div data-component="Room">
-          <Notifications />
+        <div className="state">
+          <div className={classnames('icon', room.state)} />
+          <p className={classnames('text', room.state)}>{room.state}</p>
+        </div>
 
-          <div className="state">
-            <div className={classnames('icon', room.state)} />
-            <p className={classnames('text', room.state)}>{room.state}</p>
+        <div className="room-link-wrapper">
+          <div className="room-link">
+            <a
+              className="link"
+              href={room.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => {
+                // If this is a 'Open in new window/tab' don't prevent
+                // click default action.
+                if (
+                  event.ctrlKey ||
+                  event.shiftKey ||
+                  event.metaKey ||
+                  // Middle click (IE > 9 and everyone else).
+                  (event.button && event.button === 1)
+                ) {
+                  return
+                }
+
+                event.preventDefault()
+
+                clipboardCopy(room.url).then(onRoomLinkCopy)
+              }}
+            >
+              invitation link
+            </a>
           </div>
+        </div>
 
-          <div className="room-link-wrapper">
-            <div className="room-link">
-              <a
-                className="link"
-                href={room.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(event) => {
-                  // If this is a 'Open in new window/tab' don't prevent
-                  // click default action.
-                  if (
-                    event.ctrlKey ||
-                    event.shiftKey ||
-                    event.metaKey ||
-                    // Middle click (IE > 9 and everyone else).
-                    (event.button && event.button === 1)
-                  ) {
-                    return
-                  }
+        <Peers />
 
-                  event.preventDefault()
+        <div
+          className={classnames('me-container', {
+            'active-speaker': amActiveSpeaker,
+          })}
+        >
+          <Me />
+        </div>
 
-                  clipboardCopy(room.url).then(onRoomLinkCopy)
-                }}
-              >
-                invitation link
-              </a>
-            </div>
-          </div>
+        <div className="chat-input-container">
+          <ChatInput />
+        </div>
 
-          <Peers />
+        <div className="sidebar">
+          <div
+            className={classnames('button', 'hide-videos', {
+              on: me.audioOnly,
+              disabled: me.audioOnlyInProgress,
+            })}
+            data-tip={"Show/hide participants' video"}
+            onClick={() => {
+              me.audioOnly
+                ? roomClient.disableAudioOnly()
+                : roomClient.enableAudioOnly()
+            }}
+          />
 
           <div
-            className={classnames('me-container', {
-              'active-speaker': amActiveSpeaker,
+            className={classnames('button', 'mute-audio', {
+              on: me.audioMuted,
             })}
-          >
-            <Me />
-          </div>
+            data-tip={"Mute/unmute participants' audio"}
+            onClick={() => {
+              me.audioMuted ? roomClient.unmuteAudio() : roomClient.muteAudio()
+            }}
+          />
 
-          <div className="chat-input-container">
-            <ChatInput />
-          </div>
-
-          <div className="sidebar">
-            <div
-              className={classnames('button', 'hide-videos', {
-                on: me.audioOnly,
-                disabled: me.audioOnlyInProgress,
-              })}
-              data-tip={"Show/hide participants' video"}
-              onClick={() => {
-                me.audioOnly
-                  ? roomClient.disableAudioOnly()
-                  : roomClient.enableAudioOnly()
-              }}
-            />
-
-            <div
-              className={classnames('button', 'mute-audio', {
-                on: me.audioMuted,
-              })}
-              data-tip={"Mute/unmute participants' audio"}
-              onClick={() => {
-                me.audioMuted
-                  ? roomClient.unmuteAudio()
-                  : roomClient.muteAudio()
-              }}
-            />
-
-            <div
-              className={classnames('button', 'restart-ice', {
-                disabled: me.restartIceInProgress,
-              })}
-              data-tip="Restart ICE"
-              onClick={() => roomClient.restartIce()}
-            />
-          </div>
-
-          <Stats />
-
-          {Boolean(window.NETWORK_THROTTLE_SECRET) && (
-            <NetworkThrottle secret={window.NETWORK_THROTTLE_SECRET} />
-          )}
-
-          <ReactTooltip
-            type="light"
-            effect="solid"
-            delayShow={100}
-            delayHide={100}
-            delayUpdate={50}
+          <div
+            className={classnames('button', 'restart-ice', {
+              disabled: me.restartIceInProgress,
+            })}
+            data-tip="Restart ICE"
+            onClick={() => roomClient.restartIce()}
           />
         </div>
-      </Appear>
-    )
-  }
 
-  componentDidMount() {
-    const { roomClient } = this.props
+        <Stats />
 
-    roomClient.join()
-  }
+        {Boolean(window.NETWORK_THROTTLE_SECRET) && (
+          <NetworkThrottle secret={window.NETWORK_THROTTLE_SECRET} />
+        )}
+
+        <ReactTooltip
+          type="light"
+          effect="solid"
+          delayShow={100}
+          delayHide={100}
+          delayUpdate={50}
+        />
+      </div>
+    </Appear>
+  )
 }
 
 Room.propTypes = {

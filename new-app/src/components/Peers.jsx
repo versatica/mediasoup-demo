@@ -7,15 +7,17 @@ import { Appear } from './transitions'
 import Peer from './Peer'
 
 const Peers = ({ peers, activeSpeakerId }) => {
+  const nodeRef = React.useRef(null)
   return (
     <div data-component="Peers">
       {peers.map((peer) => {
         return (
-          <Appear key={peer.id} duration={1000}>
+          <Appear key={peer.id} duration={1000} nodeRef={nodeRef}>
             <div
               className={classnames('peer-container', {
                 'active-speaker': peer.id === activeSpeakerId,
               })}
+              ref={nodeRef}
             >
               <Peer id={peer.id} />
             </div>

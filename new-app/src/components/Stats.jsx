@@ -10,6 +10,8 @@ class Stats extends React.Component {
   constructor(props) {
     super(props)
 
+    this.refAnimatedNode = React.createRef()
+
     this.state = {
       sendTransportRemoteStats: null,
       sendTransportLocalStats: null,
@@ -419,8 +421,8 @@ class Stats extends React.Component {
     if (typeof stats.values === 'function') stats = Array.from(stats.values())
 
     return (
-      <Appear duration={150}>
-        <div className="items">
+      <Appear duration={150} nodeRef={this.refAnimatedNode}>
+        <div className="items" ref={this.refAnimatedNode}>
           <h2 id={anchor}>{title}</h2>
 
           {stats.map((item, idx) => (

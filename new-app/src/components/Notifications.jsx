@@ -7,14 +7,16 @@ import * as stateActions from '../redux/stateActions'
 import { Appear } from './transitions'
 
 const Notifications = ({ notifications, onClick }) => {
+  const nodeRef = React.useRef(null)
   return (
     <div data-component="Notifications">
       {notifications.map((notification) => {
         return (
-          <Appear key={notification.id} duration={250}>
+          <Appear key={notification.id} duration={250} nodeRef={nodeRef}>
             <div
               className={classnames('notification', notification.type)}
               onClick={() => onClick(notification.id)}
+              ref={nodeRef}
             >
               <div className="icon" />
 
