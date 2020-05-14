@@ -3,11 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="mediasoup demo - Cutting Edge WebRTC Video Conferencing"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
@@ -24,7 +27,24 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+    <title>mediasoup demo</title>
+    <script src="/resources/js/antiglobal.js"></script>
+    <script>
+      window.localStorage.setItem(
+        'debug',
+        '* -engine* -socket* -RIE* *WARN* *ERROR*',
+      )
+
+      if (window.antiglobal) {
+        window.antiglobal(
+          '___browserSync___oldSocketIo',
+          'io',
+          '___browserSync___',
+          '__core-js_shared__',
+        )
+        setInterval(window.antiglobal, 180000)
+      }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
