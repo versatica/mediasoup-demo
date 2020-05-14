@@ -1,0 +1,69 @@
+@import 'nib';
+
+global-reset();
+
+@import './variables';
+@import './mixins';
+@import './fonts';
+@import './reset';
+
+html {
+	height: 100%;
+	box-sizing: border-box;
+	// background-image: url('/resources/images/body-bg-2.jpg');
+	// background-attachment: fixed;
+	// background-position: center;
+	// background-size: cover;
+	// background-repeat: no-repeat;
+	background: #141E30;
+	background: linear-gradient(to top, #243B55, #141E30);
+	font-family: 'Roboto';
+	font-weight: 300;
+
+	+desktop() {
+		font-size: 16px;
+	}
+
+	+mobile() {
+		font-size: 12px;
+	}
+}
+
+body {
+	height: 100%;
+}
+
+#mediasoup-demo-app-container {
+	height: 100%;
+	width: 100%;
+
+	// Components
+	@import './components/Room';
+	@import './components/Me';
+	@import './components/ChatInput';
+	@import './components/Peers';
+	@import './components/Peer';
+	@import './components/PeerView';
+	@import './components/Stats';
+	@import './components/Notifications';
+	@import './components/NetworkThrottle';
+}
+
+// Hack to detect in JS the current media query
+#mediasoup-demo-app-media-query-detector {
+	position: relative;
+	z-index: -1000;
+	bottom: 0;
+	left: 0;
+	height: 1px;
+	width: 1px;
+
+	// In desktop let it "visible" so elem.offsetParent returns the parent element
+	+desktop() {}
+
+	// In mobile ensure it's not displayed so elem.offsetParent returns null
+	+mobile() {
+		display: none;
+		position: fixed; // Required for old IE
+	}
+}
