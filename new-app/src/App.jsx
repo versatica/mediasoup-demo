@@ -44,11 +44,6 @@ window.STORE = store
 
 RoomClient.init({ store })
 
-domready(async () => {
-  logger.debug('DOM ready')
-  run()
-})
-
 logger.debug('run() [environment:%s]', process.env.NODE_ENV)
 
 const urlParser = new UrlParse(window.location.href, true)
@@ -70,10 +65,6 @@ const info = urlParser.query.info === 'true'
 const faceDetection = urlParser.query.faceDetection === 'true'
 const externalVideo = urlParser.query.externalVideo === 'true'
 const throttleSecret = urlParser.query.throttleSecret
-
-// Enable face detection on demand.
-if (faceDetection)
-  await faceapi.loadTinyFaceDetectorModel('/resources/face-detector-models')
 
 if (info) {
   // eslint-disable-next-line require-atomic-updates
@@ -168,6 +159,20 @@ window.CLIENT = roomClient // eslint-disable-line require-atomic-updates
 window.CC = roomClient // eslint-disable-line require-atomic-updates
 
 export default function App() {
+  const [faceDetectionLoaded, setFaceDetectionLoaded] = React.useState(false)
+
+  React.useEffect(() => {
+    async function loadModel() {
+      await faceapi.loadTinyFaceDetectorModel('/resources/face-detector-models')
+      setFaceDetectionLoaded(true)
+    }
+  }, [])
+
+  // Enable face detection on demand.
+  if (faceDetection && !faceDetectionLoaded) {
+    return 'Loading face detection model.'
+  }
+
   return (
     <Provider store={store}>
       <RoomContext.Provider value={roomClient}>
