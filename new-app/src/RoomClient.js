@@ -449,7 +449,7 @@ export default class RoomClient {
                 const view = new DataView(message)
                 const number = view.getUint32()
 
-                if (number == Math.pow(2, 32) - 1) {
+                if (number === Math.pow(2, 32) - 1) {
                   logger.warn('dataChannelTest finished!')
 
                   this._nextDataChannelTestNumber = 0
@@ -511,6 +511,12 @@ export default class RoomClient {
 
                   break
                 }
+
+                default: {
+                  throw new Error(
+                    `Unrecognized dataConsumer label: "${dataConsumer.label}"`,
+                  )
+                }
               }
             })
 
@@ -545,6 +551,10 @@ export default class RoomClient {
           }
 
           break
+        }
+
+        default: {
+          throw new Error(`Unrecognized request method: "${request.method}"`)
         }
       }
     })

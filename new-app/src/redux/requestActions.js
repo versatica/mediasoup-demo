@@ -11,6 +11,8 @@ export const notify = ({ type = 'info', text, title, timeout }) => {
       case 'error':
         timeout = 5000
         break
+      default:
+        throw new Error(`Unrecognized type: "${type}"`)
     }
   }
 
