@@ -28,7 +28,7 @@ const VIDEO_KSVC_ENCODINGS = [{ scalabilityMode: 'S3T3_KEY' }]
 // Used for VP9 desktop sharing.
 const VIDEO_SVC_ENCODINGS = [{ scalabilityMode: 'S3T3', dtx: true }]
 
-const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4'
+const EXTERNAL_VIDEO_SRC = '/videos/video-audio-stereo.mp4'
 
 const logger = new Logger('RoomClient')
 
