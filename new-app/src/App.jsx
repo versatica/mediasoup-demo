@@ -162,7 +162,7 @@ export default function App() {
   React.useEffect(() => {
     let mounted = true
     async function loadModel() {
-      await faceapi.loadTinyFaceDetectorModel('/face-detector-models')
+      await faceapi.loadTinyFaceDetectorModel('/resources/face-detector-models')
       if (mounted) {
         setFaceDetectionLoaded(true)
       }
