@@ -10,7 +10,7 @@
     "eject": "react-scripts eject",
     "prettier:check": "prettier . --ignore-path .gitignore --check",
     "prettier:fix": "prettier . --ignore-path .gitignore --write",
-    "start": "react-scripts start",
+    "start": "cross-env HTTPS=true HOST=0.0.0.0 react-scripts start",
     "test": "react-scripts test"
   },
   "browserslist": {
@@ -46,6 +46,7 @@
     "bowser": "^2.9.0",
     "classnames": "^2.2.6",
     "clipboard-copy": "^3.1.0",
+    "cross-env": "^7.0.2",
     "debug": "^4.1.1",
     "domready": "^1.0.8",
     "face-api.js": "^0.22.2",
