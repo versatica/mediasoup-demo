@@ -48,6 +48,7 @@
     "hark": "^1.2.3",
     "js-cookie": "^2.2.1",
     "mediasoup-client": "github:versatica/mediasoup-client#v3",
+    "node-sass": "^4.14.1",
     "pokemon": "^2.0.2",
     "prettier": "^2.0.5",
     "prop-types": "^15.7.2",
