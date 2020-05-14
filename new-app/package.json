@@ -1,7 +1,10 @@
 {
-  "name": "app",
-  "version": "0.1.0",
+  "name": "mediasoup-demo-app",
+  "version": "3.0.0",
   "private": true,
+  "description": "mediasoup demo app",
+  "license": "All Rights Reserved",
+  "author": "Iñaki Baz Castillo <ibc@aliax.net>",
   "scripts": {
     "build": "react-scripts build",
     "eject": "react-scripts eject",
