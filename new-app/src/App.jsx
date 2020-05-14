@@ -170,7 +170,7 @@ export default function App() {
 
   // Enable face detection on demand.
   if (faceDetection && !faceDetectionLoaded) {
-    return 'Loading face detection model.'
+    return <span>Loading face detection model.</span>
   }
 
   return (
