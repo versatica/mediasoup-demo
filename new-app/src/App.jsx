@@ -160,10 +160,15 @@ export default function App() {
   const [faceDetectionLoaded, setFaceDetectionLoaded] = React.useState(false)
 
   React.useEffect(() => {
+    let mounted = true
     async function loadModel() {
       await faceapi.loadTinyFaceDetectorModel('/resources/face-detector-models')
-      setFaceDetectionLoaded(true)
+      if (mounted) {
+        setFaceDetectionLoaded(true)
+      }
     }
+    loadModel()
+    return () => (mounted = false)
   }, [])
 
   // Enable face detection on demand.
