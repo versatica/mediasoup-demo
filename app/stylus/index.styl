@@ -48,22 +48,3 @@ body {
 	@import './components/Notifications';
 	@import './components/NetworkThrottle';
 }
-
-// Hack to detect in JS the current media query
-#mediasoup-demo-app-media-query-detector {
-	position: relative;
-	z-index: -1000;
-	bottom: 0;
-	left: 0;
-	height: 1px;
-	width: 1px;
-
-	// In desktop let it "visible" so elem.offsetParent returns the parent element
-	+desktop() {}
-
-	// In mobile ensure it's not displayed so elem.offsetParent returns null
-	+mobile() {
-		display: none;
-		position: fixed; // Required for old IE
-	}
-}

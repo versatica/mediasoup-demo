@@ -12,7 +12,6 @@ import thunk from 'redux-thunk';
 import randomString from 'random-string';
 import * as faceapi from 'face-api.js';
 import Logger from './Logger';
-import * as utils from './utils';
 import randomName from './randomName';
 import deviceInfo from './deviceInfo';
 import RoomClient from './RoomClient';
@@ -52,8 +51,6 @@ RoomClient.init({ store });
 domready(async () =>
 {
 	logger.debug('DOM ready');
-
-	await utils.initialize();
 
 	run();
 });
