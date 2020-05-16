@@ -21,13 +21,11 @@
     "dev": "cross-env DEBUG=\"${DEBUG:='*'}\" PYTHON_LOG_TO_STDOUT=true ROOM_ID=devel node ./lib/index.js"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^1.3.6",
     "debug": "^4.1.1",
     "fake-mediastreamtrack": "^1.1.3",
     "mediasoup-client-aiortc": "github:versatica/mediasoup-client-aiortc#v3",
     "protoo-client": "^4.0.3",
-    "redux": "^4.0.5",
-    "redux-logger": "^3.0.6",
-    "redux-thunk": "^2.3.0",
     "repl": "^0.1.3",
     "tsc-watch": "^4.1.0",
     "typescript": "^3.6.5",

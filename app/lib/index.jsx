@@ -3,14 +3,9 @@ import UrlParse from 'url-parse';
 import React from 'react';
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
-import {
-	applyMiddleware as applyReduxMiddleware,
-	createStore as createReduxStore
-} from 'redux';
-import thunk from 'redux-thunk';
-// import { createLogger as createReduxLogger } from 'redux-logger';
 import randomString from 'random-string';
 import * as faceapi from 'face-api.js';
+import { configureStore } from '@reduxjs/toolkit';
 import Logger from './Logger';
 import * as utils from './utils';
 import randomName from './randomName';
@@ -19,31 +14,32 @@ import RoomClient from './RoomClient';
 import RoomContext from './RoomContext';
 import * as cookiesManager from './cookiesManager';
 import * as stateActions from './redux/stateActions';
-import reducers from './redux/reducers';
+import room from './redux/reducers/room';
+import me from './redux/reducers/me';
+import producers from './redux/reducers/producers';
+import dataProducers from './redux/reducers/dataProducers';
+import peers from './redux/reducers/peers';
+import consumers from './redux/reducers/consumers';
+import dataConsumers from './redux/reducers/dataConsumers';
+import notifications from './redux/reducers/notifications';
 import Room from './components/Room';
 
 const logger = new Logger();
-const reduxMiddlewares = [ thunk ];
-
-// if (process.env.NODE_ENV === 'development')
-// {
-// 	const reduxLogger = createReduxLogger(
-// 		{
-// 			duration  : true,
-// 			timestamp : false,
-// 			level     : 'log',
-// 			logErrors : true
-// 		});
-
-// 	reduxMiddlewares.push(reduxLogger);
-// }
 
 let roomClient;
-const store = createReduxStore(
-	reducers,
-	undefined,
-	applyReduxMiddleware(...reduxMiddlewares)
-);
+
+const store = configureStore({
+	reducer : {
+		room,
+		me,
+		producers,
+		dataProducers,
+		peers,
+		consumers,
+		dataConsumers,
+		notifications
+	}
+});
 
 window.STORE = store;
 
