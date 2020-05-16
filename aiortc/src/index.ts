@@ -1,5 +1,5 @@
 import * as repl from 'repl';
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import { Logger } from './Logger';
 import { RoomClient } from './RoomClient';
 import room from './redux/reducers/room';
@@ -21,7 +21,10 @@ const store = configureStore({
 		peers,
 		consumers,
 		dataConsumers
-	}
+	},
+	middleware : getDefaultMiddleware({
+		serializableCheck : false
+	})
 });
 
 RoomClient.init({ store });

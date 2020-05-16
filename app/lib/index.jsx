@@ -5,7 +5,7 @@ import { render } from 'react-dom';
 import { Provider } from 'react-redux';
 import randomString from 'random-string';
 import * as faceapi from 'face-api.js';
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import Logger from './Logger';
 import * as utils from './utils';
 import randomName from './randomName';
@@ -38,7 +38,10 @@ const store = configureStore({
 		consumers,
 		dataConsumers,
 		notifications
-	}
+	},
+	middleware : getDefaultMiddleware({
+		serializableCheck : false
+	})
 });
 
 window.STORE = store;
