@@ -3,11 +3,11 @@
 export DEBUG=${DEBUG:="mediasoup:INFO* *WARN* *ERROR*"}
 export INTERACTIVE=${INTERACTIVE:="true"}
 export PROTOO_LISTEN_PORT=${PROTOO_LISTEN_PORT:="4443"}
-export HTTPS_CERT_FULLCHAIN=${HTTPS_CERT_FULLCHAIN:="/service/certs/fullchain.pem"}
-export HTTPS_CERT_PRIVKEY=${HTTPS_CERT_PRIVKEY:="/service/certs/privkey.pem"}
+export HTTPS_CERT_FULLCHAIN=${HTTPS_CERT_FULLCHAIN:="/service/certs/localhost.crt"}
+export HTTPS_CERT_PRIVKEY=${HTTPS_CERT_PRIVKEY:="/service/certs/localhost.key"}
 export MEDIASOUP_LISTEN_IP=${MEDIASOUP_LISTEN_IP:="0.0.0.0"}
-export MEDIASOUP_MIN_PORT=${MEDIASOUP_MIN_PORT:="2000"}
-export MEDIASOUP_MAX_PORT=${MEDIASOUP_MAX_PORT:="2020"}
+export MEDIASOUP_MIN_PORT=${MEDIASOUP_MIN_PORT:="40000"}
+export MEDIASOUP_MAX_PORT=${MEDIASOUP_MAX_PORT:="49999"}
 
 # Valgrind related options.
 export MEDIASOUP_USE_VALGRIND=${MEDIASOUP_USE_VALGRIND:="false"}
@@ -36,4 +36,5 @@ docker run \
 	-e MEDIASOUP_WORKER_BIN \
 	-it \
 	--rm \
+  -d \
 	mediasoup-demo:latest

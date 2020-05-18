@@ -134,8 +134,19 @@ async function createExpressApp()
 
 	expressApp = express();
 
-	expressApp.use(bodyParser.json());
-
+  expressApp.use(bodyParser.json());
+  
+  /**
+	 * For every API request, verify that the roomId in the path matches and
+	 * existing room.
+	 */
+	expressApp.get(
+  '/health', (req, res, next) =>
+  {
+    res.send('OK!');
+    next();
+  });
+  
 	/**
 	 * For every API request, verify that the roomId in the path matches and
 	 * existing room.
