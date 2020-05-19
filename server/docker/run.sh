@@ -27,6 +27,7 @@ export MEDIASOUP_VALGRIND_OPTIONS=${MEDIASOUP_VALGRIND_OPTIONS:="--leak-check=fu
 
 docker run \
 	--name=mediasoup-demo \
+  -p 443:4443
 	-p ${PROTOO_LISTEN_PORT}:${PROTOO_LISTEN_PORT}/tcp \
 	-p ${MEDIASOUP_MIN_PORT}-${MEDIASOUP_MAX_PORT}:${MEDIASOUP_MIN_PORT}-${MEDIASOUP_MAX_PORT}/udp \
 	-p ${MEDIASOUP_MIN_PORT}-${MEDIASOUP_MAX_PORT}:${MEDIASOUP_MIN_PORT}-${MEDIASOUP_MAX_PORT}/tcp \
@@ -49,4 +50,5 @@ docker run \
 	-it \
 	--rm \
   -d \
+  --net=host \
 	mediasoup-demo:latest
