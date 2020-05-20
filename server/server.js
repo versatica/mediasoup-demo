@@ -58,14 +58,14 @@ run();
 async function run()
 {
 	// Open the interactive server.
-	// await interactiveServer();
+	await interactiveServer();
 
 	// Open the interactive client.
-	// if (process.env.INTERACTIVE === 'true' || process.env.INTERACTIVE === '1')
-	// 	await interactiveClient();
+	if (process.env.INTERACTIVE === 'true' || process.env.INTERACTIVE === '1')
+	 	await interactiveClient();
 
 	// Run a mediasoup Worker.
-	// await runMediasoupWorkers();
+	 await runMediasoupWorkers();
 
 	// Create Express app.
 	await createExpressApp();
@@ -74,7 +74,7 @@ async function run()
 	await runHttpsServer();
 
 	// Run a protoo WebSocketServer.
-	// await runProtooWebSocketServer();
+	 await runProtooWebSocketServer();
 
 	// Log rooms status every X seconds.
 	setInterval(() =>

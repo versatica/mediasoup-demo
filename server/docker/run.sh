@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export DEBUG=${DEBUG:="mediasoup:INFO* *WARN* *ERROR*"}
+export DEBUG=${DEBUG:="*INFO* *WARN* *ERROR*"}
 export INTERACTIVE=${INTERACTIVE:="true"}
 export PROTOO_LISTEN_PORT=${PROTOO_LISTEN_PORT:="4443"}
 # export HTTPS_CERT_FULLCHAIN=${HTTPS_CERT_FULLCHAIN:="/service/certs/localhost.crt"}
@@ -9,7 +9,8 @@ export HTTPS_CERT_FULLCHAIN=${HTTPS_CERT_FULLCHAIN:="/service/certs/fullchain.pe
 export HTTPS_CERT_PRIVKEY=${HTTPS_CERT_PRIVKEY:="/service/certs/privkey.pem"}
 export MEDIASOUP_LISTEN_IP=${MEDIASOUP_LISTEN_IP:="0.0.0.0"}
 export MEDIASOUP_MIN_PORT=${MEDIASOUP_MIN_PORT:="2000"}
-export MEDIASOUP_MAX_PORT=${MEDIASOUP_MAX_PORT:="2020"}
+export MEDIASOUP_MAX_PORT=${MEDIASOUP_MAX_PORT:="2999"}
+export MEDIASOUP_ANNOUNCED_IP=${MEDIASOUP_ANNOUNCED_IP:="52.215.152.47"}
 
 echo "DEBUG: $DEBUG"
 echo "INTERACTIVE: $INTERACTIVE"
@@ -49,6 +50,5 @@ docker run \
 	-e MEDIASOUP_WORKER_BIN \
 	-it \
 	--rm \
-  -d \
   --net=host \
 	mediasoup-demo:latest
