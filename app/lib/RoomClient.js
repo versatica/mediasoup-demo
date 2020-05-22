@@ -672,7 +672,7 @@ export default class RoomClient
 
 					if (!consumer)
 						break;
-					
+
 					consumer.pause();
 
 					store.dispatch(
@@ -688,7 +688,7 @@ export default class RoomClient
 
 					if (!consumer)
 						break;
-					
+
 					consumer.resume();
 
 					store.dispatch(
