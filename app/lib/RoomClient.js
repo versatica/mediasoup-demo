@@ -672,6 +672,8 @@ export default class RoomClient
 
 					if (!consumer)
 						break;
+					
+					consumer.pause();
 
 					store.dispatch(
 						stateActions.setConsumerPaused(consumerId, 'remote'));
@@ -686,6 +688,8 @@ export default class RoomClient
 
 					if (!consumer)
 						break;
+					
+					consumer.resume();
 
 					store.dispatch(
 						stateActions.setConsumerResumed(consumerId, 'remote'));
