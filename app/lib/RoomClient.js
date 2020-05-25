@@ -18,7 +18,8 @@ const PC_PROPRIETARY_CONSTRAINTS =
 	optional : [ { googDscp: true } ]
 };
 
-const VIDEO_SIMULCAST_ENCODINGS =
+// Used for simulcast webcam video.
+const WEBCAM_SIMULCAST_ENCODINGS =
 [
 	{ scaleResolutionDownBy: 4, maxBitrate: 500000 },
 	{ scaleResolutionDownBy: 2, maxBitrate: 1000000 },
@@ -26,13 +27,20 @@ const VIDEO_SIMULCAST_ENCODINGS =
 ];
 
 // Used for VP9 webcam video.
-const VIDEO_KSVC_ENCODINGS =
+const WEBCAM_KSVC_ENCODINGS =
 [
 	{ scalabilityMode: 'S3T3_KEY' }
 ];
 
-// Used for VP9 desktop sharing.
-const VIDEO_SVC_ENCODINGS =
+// Used for simulcast screen sharing.
+const SCREEN_SHARING_SIMULCAST_ENCODINGS =
+[
+	{ scaleResolutionDownBy: 1, dtx: true, maxBitrate: 1500000 },
+	{ scaleResolutionDownBy: 1, dtx: true, maxBitrate: 6000000 }
+];
+
+// Used for VP9 screen sharing.
+const SCREEN_SHARING_SVC_ENCODINGS =
 [
 	{ scalabilityMode: 'S3T3', dtx: true }
 ];
@@ -216,8 +224,8 @@ export default class RoomClient
 		// Set custom SVC scalability mode.
 		if (svc)
 		{
-			VIDEO_SVC_ENCODINGS[0].scalabilityMode = svc;
-			VIDEO_KSVC_ENCODINGS[0].scalabilityMode = `${svc}_KEY`;
+			WEBCAM_KSVC_ENCODINGS[0].scalabilityMode = `${svc}_KEY`;
+			SCREEN_SHARING_SVC_ENCODINGS[0].scalabilityMode = svc;
 		}
 	}
 
@@ -1024,11 +1032,11 @@ export default class RoomClient
 					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
 				)
 				{
-					encodings = VIDEO_KSVC_ENCODINGS;
+					encodings = WEBCAM_KSVC_ENCODINGS;
 				}
 				else
 				{
-					encodings = VIDEO_SIMULCAST_ENCODINGS;
+					encodings = WEBCAM_SIMULCAST_ENCODINGS;
 				}
 			}
 
@@ -1334,11 +1342,11 @@ export default class RoomClient
 					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
 				)
 				{
-					encodings = VIDEO_SVC_ENCODINGS;
+					encodings = SCREEN_SHARING_SVC_ENCODINGS;
 				}
 				else
 				{
-					encodings = VIDEO_SIMULCAST_ENCODINGS
+					encodings = SCREEN_SHARING_SIMULCAST_ENCODINGS
 						.map((encoding) => ({ ...encoding, dtx: true }));
 				}
 			}
