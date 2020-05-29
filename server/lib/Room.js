@@ -1196,7 +1196,7 @@ class Room extends EventEmitter
 					case 'bot':
 					{
 						// Pass it to the bot.
-						this._bot.handleDataProducer(
+						this._bot.handlePeerDataProducer(
 							{
 								dataProducerId : dataProducer.id,
 								peer
