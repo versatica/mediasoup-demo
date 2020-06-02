@@ -668,6 +668,128 @@ class Room extends EventEmitter
 		};
 	}
 
+	/**
+	 * Create a mediasoup DataConsumer associated to a Broadcaster.
+	 *
+	 * @async
+	 *
+	 * @type {String} broadcasterId
+	 * @type {String} transportId
+	 * @type {String} dataProducerId
+	 */
+	async createBroadcasterDataConsumer(
+		{
+			broadcasterId,
+			transportId,
+			dataProducerId
+		}
+	)
+	{
+		const broadcaster = this._broadcasters.get(broadcasterId);
+
+		if (!broadcaster)
+			throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
+
+		if (!broadcaster.data.rtpCapabilities)
+			throw new Error('broadcaster does not have rtpCapabilities');
+
+		const transport = broadcaster.data.transports.get(transportId);
+
+		if (!transport)
+			throw new Error(`transport with id "${transportId}" does not exist`);
+
+		const dataConsumer = await transport.consumeData(
+			{
+				dataProducerId
+			});
+
+		// Store it.
+		broadcaster.data.dataConsumers.set(consumer.id, consumer);
+
+		// Set Consumer events.
+		dataConsumer.on('transportclose', () =>
+		{
+			// Remove from its map.
+			broadcaster.data.dataConsumers.delete(consumer.id);
+		});
+
+		dataConsumer.on('dataproducerclose', () =>
+		{
+			// Remove from its map.
+			broadcaster.data.dataConsumers.delete(consumer.id);
+		});
+
+		return {
+			id            : dataConsumer.id
+		};
+	}
+
+	/**
+	 * Create a mediasoup DataProducer associated to a Broadcaster.
+	 *
+	 * @async
+	 *
+	 * @type {String} broadcasterId
+	 * @type {String} transportId
+	 */
+	async createBroadcasterDataProducer(
+		{
+			broadcasterId,
+			transportId,
+			label,
+			protocol,
+			sctpStreamParameters,
+			appData
+		}
+	)
+	{
+		const broadcaster = this._broadcasters.get(broadcasterId);
+
+		if (!broadcaster)
+			throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
+
+		// if (!broadcaster.data.sctpCapabilities)
+		// 	throw new Error('broadcaster does not have sctpCapabilities');
+
+		const transport = broadcaster.data.transports.get(transportId);
+
+		if (!transport)
+			throw new Error(`transport with id "${transportId}" does not exist`);
+
+		const dataProducer = await transport.produceData(
+			{
+				sctpStreamParameters,
+				label,
+				protocol,
+				appData
+			});
+
+		// Store it.
+		broadcaster.data.dataProducers.set(consumer.id, consumer);
+
+		// Set Consumer events.
+		dataProducer.on('transportclose', () =>
+		{
+			// Remove from its map.
+			broadcaster.data.dataProducers.delete(consumer.id);
+		});
+
+		// // Optimization: Create a server-side Consumer for each Peer.
+		// for (const peer of this._getJoinedPeers())
+		// {
+		// 	this._createDataConsumer(
+		// 		{
+		// 			dataConsumerPeer : peer,
+		// 			dataProducerPeer : broadcaster,
+		// 			dataProducer: dataProducer
+		// 		});
+		// }
+
+		return {
+			id            : dataProducer.id
+		};
+	}
+
 	_handleAudioLevelObserver()
 	{
 		this._audioLevelObserver.on('volumes', (volumes) =>
