@@ -752,7 +752,7 @@ export default class PeerView extends React.Component
 	{
 		return (
 			<p key={id}>
-				{`score:${score.score}, producerScore:${score.producerScore}`}
+				{`score:${score.score}, producerScore:${score.producerScore}, producerScores:[${score.producerScores}]`}
 			</p>
 		);
 	}
