@@ -1209,6 +1209,21 @@ class Room extends EventEmitter
 				break;
 			}
 
+      case 'broadcastDataToPeers':
+			{
+				// Ensure the Peer is joined.
+				const { consumerId } = request.data;
+				for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
+				{
+					otherPeer.notify('newBroadcastData', request.data)
+						.catch(() => {});
+				}
+
+        accept(); 
+
+        break;
+      }
+
 			case 'changeDisplayName':
 			{
 				// Ensure the Peer is joined.
