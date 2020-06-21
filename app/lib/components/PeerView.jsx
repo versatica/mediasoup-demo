@@ -444,6 +444,7 @@ export default class PeerView extends React.Component
 						)
 					})}
 					autoPlay
+					playsInline
 					muted
 					controls={false}
 				/>
@@ -451,6 +452,7 @@ export default class PeerView extends React.Component
 				<audio
 					ref='audioElem'
 					autoPlay
+					playsInline
 					muted={isMe || audioMuted}
 					controls={false}
 				/>
@@ -750,7 +752,7 @@ export default class PeerView extends React.Component
 	{
 		return (
 			<p key={id}>
-				{`score:${score.score}, producerScore:${score.producerScore}`}
+				{`score:${score.score}, producerScore:${score.producerScore}, producerScores:[${score.producerScores}]`}
 			</p>
 		);
 	}
