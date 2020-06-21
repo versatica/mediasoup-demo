@@ -253,7 +253,7 @@ gulp.task('live', gulp.series(
 			{
 				open      : 'external',
 				host      : config.domain,
-				startPath : '/?info=true',
+				startPath : '/?serverUrl=soulstream.live&roomId=dev&forceVP9=true',
 				server    :
 				{
 					baseDir : OUTPUT_DIR

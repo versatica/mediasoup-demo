@@ -63,7 +63,9 @@ async function run()
 	logger.debug('run() [environment:%s]', process.env.NODE_ENV);
 
 	const urlParser = new UrlParse(window.location.href, true);
-	const peerId = randomString({ length: 8 }).toLowerCase();
+
+  const serverUrl = urlParser.query.serverUrl || window.location.hostname;
+  const peerId = randomString({ length: 8 }).toLowerCase();
 	let roomId = urlParser.query.roomId;
 	let displayName =
 		urlParser.query.displayName || (cookiesManager.getUser() || {}).displayName;
@@ -114,6 +116,7 @@ async function run()
 		// Don't keep some custom params.
 		switch (key)
 		{
+      case 'serverUrl':
 			case 'roomId':
 			case 'handler':
 			case 'simulcast':
@@ -166,6 +169,7 @@ async function run()
 
 	roomClient = new RoomClient(
 		{
+      serverUrl,
 			roomId,
 			peerId,
 			displayName,

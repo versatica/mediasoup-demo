@@ -6,4 +6,4 @@ node_modules/
 /server/certs/
 /server/mediasoup_valgrind_*
 
-/.vscode/
+**/.vscode/

@@ -64,7 +64,8 @@ export default class RoomClient
 
 	constructor(
 		{
-			roomId,
+      serverUrl,
+      roomId,
 			peerId,
 			displayName,
 			device,
@@ -161,7 +162,7 @@ export default class RoomClient
 
 		// Protoo URL.
 		// @type {String}
-		this._protooUrl = getProtooUrl({ roomId, peerId });
+		this._protooUrl = getProtooUrl({ roomId, peerId, serverUrl });
 
 		// protoo-client Peer instance.
 		// @type {protooClient.Peer}
