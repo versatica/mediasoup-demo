@@ -443,7 +443,7 @@ async function runHttpsServer()
 
 /**
  * Create a protoo WebSocketServer to allow WebSocket connections from browsers.
- */ 
+ */
 async function runProtooWebSocketServer()
 {
 	logger.info('running protoo WebSocketServer...');
