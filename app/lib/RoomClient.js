@@ -35,8 +35,8 @@ const WEBCAM_KSVC_ENCODINGS =
 // Used for simulcast screen sharing.
 const SCREEN_SHARING_SIMULCAST_ENCODINGS =
 [
-	{ scaleResolutionDownBy: 1, dtx: true, maxBitrate: 1500000 },
-	{ scaleResolutionDownBy: 1, dtx: true, maxBitrate: 6000000 }
+	{ dtx: true, maxBitrate: 1500000 },
+	{ dtx: true, maxBitrate: 6000000 }
 ];
 
 // Used for VP9 screen sharing.
