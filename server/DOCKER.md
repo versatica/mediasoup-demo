@@ -40,7 +40,7 @@ The listening port for protoo WebSocket server.
 
 * Optional
 * Valid values: port
-* Default: 4443
+* Default: "4443"
 
 ### `MEDIASOUP_LISTEN_IP`
 
@@ -64,7 +64,7 @@ The min port for audio/video in mediasoup.
 
 * Optional
 * Valid values: port
-* Default: 2000
+* Default: "2000"
 
 ### `MEDIASOUP_MAX_PORT`
 
@@ -72,7 +72,7 @@ The max port for audio/video in mediasoup.
 
 * Optional
 * Valid values: port
-* Default: 2020
+* Default: "2020"
 
 ### `MEDIASOUP_USE_VALGRIND`
 
@@ -80,16 +80,16 @@ Flag to indicate whether valgrind is to be used.
 
 * Optional
 * Valid values: bool
-* Default: false
+* Default: "false"
 
 ### `MEDIASOUP_VALGRIND_OPTIONS`
 
-Valgrind options separated by '|' symbol.
+Valgrind command line options.
 
 Example:
 
-`"--leak-check=full|--track-fds=yes|--log-file=/storage/mediasoup_valgrind_`date +%s`.log"`
+`"--leak-check=full --track-fds=yes --log-file=/storage/mediasoup_valgrind_%p.log"`
 
 * Optional
 * Valid values: Check `valgrind` manual
-* Default: Check docker/run.sh
+* Default: Check `docker/run.sh` file
