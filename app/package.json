@@ -23,7 +23,7 @@
     "mediasoup-client": "github:versatica/mediasoup-client#v3",
     "pokemon": "^2.0.2",
     "prop-types": "^15.7.2",
-    "protoo-client": "^4.0.3",
+    "protoo-client": "^4.0.4",
     "random-string": "^0.2.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",

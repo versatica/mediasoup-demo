@@ -18,21 +18,29 @@ const PC_PROPRIETARY_CONSTRAINTS =
 	optional : [ { googDscp: true } ]
 };
 
-const VIDEO_SIMULCAST_ENCODINGS =
+// Used for simulcast webcam video.
+const WEBCAM_SIMULCAST_ENCODINGS =
 [
-	{ maxBitrate: 180000, scaleResolutionDownBy: 4 },
-	{ maxBitrate: 360000, scaleResolutionDownBy: 2 },
-	{ maxBitrate: 1500000, scaleResolutionDownBy: 1 }
+	{ scaleResolutionDownBy: 4, maxBitrate: 500000 },
+	{ scaleResolutionDownBy: 2, maxBitrate: 1000000 },
+	{ scaleResolutionDownBy: 1, maxBitrate: 5000000 }
 ];
 
 // Used for VP9 webcam video.
-const VIDEO_KSVC_ENCODINGS =
+const WEBCAM_KSVC_ENCODINGS =
 [
 	{ scalabilityMode: 'S3T3_KEY' }
 ];
 
-// Used for VP9 desktop sharing.
-const VIDEO_SVC_ENCODINGS =
+// Used for simulcast screen sharing.
+const SCREEN_SHARING_SIMULCAST_ENCODINGS =
+[
+	{ dtx: true, maxBitrate: 1500000 },
+	{ dtx: true, maxBitrate: 6000000 }
+];
+
+// Used for VP9 screen sharing.
+const SCREEN_SHARING_SVC_ENCODINGS =
 [
 	{ scalabilityMode: 'S3T3', dtx: true }
 ];
@@ -106,6 +114,12 @@ export default class RoomClient
 		// @type {Boolean}
 		this._useDataChannel = datachannel;
 
+		// Force H264 codec for sending.
+		this._forceH264 = Boolean(forceH264);
+
+		// Force VP9 codec for sending.
+		this._forceVP9 = Boolean(forceVP9);
+
 		// External video.
 		// @type {HTMLVideoElement}
 		this._externalVideo = null;
@@ -147,7 +161,7 @@ export default class RoomClient
 
 		// Protoo URL.
 		// @type {String}
-		this._protooUrl = getProtooUrl({ roomId, peerId, forceH264, forceVP9 });
+		this._protooUrl = getProtooUrl({ roomId, peerId });
 
 		// protoo-client Peer instance.
 		// @type {protooClient.Peer}
@@ -210,8 +224,8 @@ export default class RoomClient
 		// Set custom SVC scalability mode.
 		if (svc)
 		{
-			VIDEO_SVC_ENCODINGS[0].scalabilityMode = svc;
-			VIDEO_KSVC_ENCODINGS[0].scalabilityMode = `${svc}_KEY`;
+			WEBCAM_KSVC_ENCODINGS[0].scalabilityMode = `${svc}_KEY`;
+			SCREEN_SHARING_SVC_ENCODINGS[0].scalabilityMode = svc;
 		}
 	}
 
@@ -320,16 +334,6 @@ export default class RoomClient
 						producerPaused
 					} = request.data;
 
-					let codecOptions;
-
-					if (kind === 'audio')
-					{
-						codecOptions =
-						{
-							opusStereo : 1
-						};
-					}
-
 					try
 					{
 						const consumer = await this._recvTransport.consume(
@@ -338,7 +342,6 @@ export default class RoomClient
 								producerId,
 								kind,
 								rtpParameters,
-								codecOptions,
 								appData : { ...appData, peerId } // Trick.
 							});
 
@@ -644,6 +647,13 @@ export default class RoomClient
 					break;
 				}
 
+				case 'downlinkBwe':
+				{
+					logger.debug('\'downlinkBwe\' event:%o', notification.data);
+
+					break;
+				}
+
 				case 'consumerClosed':
 				{
 					const { consumerId } = notification.data;
@@ -671,6 +681,8 @@ export default class RoomClient
 					if (!consumer)
 						break;
 
+					consumer.pause();
+
 					store.dispatch(
 						stateActions.setConsumerPaused(consumerId, 'remote'));
 
@@ -684,6 +696,8 @@ export default class RoomClient
 
 					if (!consumer)
 						break;
+
+					consumer.resume();
 
 					store.dispatch(
 						stateActions.setConsumerResumed(consumerId, 'remote'));
@@ -794,6 +808,9 @@ export default class RoomClient
 						opusStereo : 1,
 						opusDtx    : 1
 					}
+					// NOTE: for testing codec selection.
+					// codec : this._mediasoupDevice.rtpCapabilities.codecs
+					// 	.find((codec) => codec.mimeType.toLowerCase() === 'audio/pcma')
 				});
 
 			store.dispatch(stateActions.addProducer(
@@ -958,7 +975,7 @@ export default class RoomClient
 					{
 						video :
 						{
-							deviceId : { exact: device.deviceId },
+							deviceId : { ideal: device.deviceId },
 							...VIDEO_CONSTRAINS[resolution]
 						}
 					});
@@ -974,6 +991,34 @@ export default class RoomClient
 				track = stream.getVideoTracks()[0].clone();
 			}
 
+			let encodings;
+			let codec;
+			const codecOptions =
+			{
+				videoGoogleStartBitrate : 1000
+			};
+
+			if (this._forceH264)
+			{
+				codec = this._mediasoupDevice.rtpCapabilities.codecs
+					.find((c) => c.mimeType.toLowerCase() === 'video/h264');
+
+				if (!codec)
+				{
+					throw new Error('desired H264 codec+configuration is not supported');
+				}
+			}
+			else if (this._forceVP9)
+			{
+				codec = this._mediasoupDevice.rtpCapabilities.codecs
+					.find((c) => c.mimeType.toLowerCase() === 'video/vp9');
+
+				if (!codec)
+				{
+					throw new Error('desired VP9 codec+configuration is not supported');
+				}
+			}
+
 			if (this._useSimulcast)
 			{
 				// If VP9 is the only available video codec then use SVC.
@@ -982,27 +1027,26 @@ export default class RoomClient
 					.codecs
 					.find((c) => c.kind === 'video');
 
-				let encodings;
-
-				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
-					encodings = VIDEO_KSVC_ENCODINGS;
+				if (
+					(this._forceVP9 && codec) ||
+					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
+				)
+				{
+					encodings = WEBCAM_KSVC_ENCODINGS;
+				}
 				else
-					encodings = VIDEO_SIMULCAST_ENCODINGS;
+				{
+					encodings = WEBCAM_SIMULCAST_ENCODINGS;
+				}
+			}
 
-				this._webcamProducer = await this._sendTransport.produce(
-					{
-						track,
-						encodings,
-						codecOptions :
-						{
-							videoGoogleStartBitrate : 1000
-						}
-					});
-			}
-			else
-			{
-				this._webcamProducer = await this._sendTransport.produce({ track });
-			}
+			this._webcamProducer = await this._sendTransport.produce(
+				{
+					track,
+					encodings,
+					codecOptions,
+					codec
+				});
 
 			store.dispatch(stateActions.addProducer(
 				{
@@ -1242,7 +1286,7 @@ export default class RoomClient
 						cursor         : true,
 						width          : { max: 1920 },
 						height         : { max: 1080 },
-						frame          : { max: 30 }
+						frameRate      : { max: 30 }
 					}
 				});
 
@@ -1257,6 +1301,34 @@ export default class RoomClient
 
 			track = stream.getVideoTracks()[0];
 
+			let encodings;
+			let codec;
+			const codecOptions =
+			{
+				videoGoogleStartBitrate : 1000
+			};
+
+			if (this._forceH264)
+			{
+				codec = this._mediasoupDevice.rtpCapabilities.codecs
+					.find((c) => c.mimeType.toLowerCase() === 'video/h264');
+
+				if (!codec)
+				{
+					throw new Error('desired H264 codec+configuration is not supported');
+				}
+			}
+			else if (this._forceVP9)
+			{
+				codec = this._mediasoupDevice.rtpCapabilities.codecs
+					.find((c) => c.mimeType.toLowerCase() === 'video/vp9');
+
+				if (!codec)
+				{
+					throw new Error('desired VP9 codec+configuration is not supported');
+				}
+			}
+
 			if (this._useSharingSimulcast)
 			{
 				// If VP9 is the only available video codec then use SVC.
@@ -1265,36 +1337,31 @@ export default class RoomClient
 					.codecs
 					.find((c) => c.kind === 'video');
 
-				let encodings;
-
-				if (firstVideoCodec.mimeType.toLowerCase() === 'video/vp9')
+				if (
+					(this._forceVP9 && codec) ||
+					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
+				)
 				{
-					encodings = VIDEO_SVC_ENCODINGS;
+					encodings = SCREEN_SHARING_SVC_ENCODINGS;
 				}
 				else
 				{
-					encodings = VIDEO_SIMULCAST_ENCODINGS
+					encodings = SCREEN_SHARING_SIMULCAST_ENCODINGS
 						.map((encoding) => ({ ...encoding, dtx: true }));
 				}
+			}
 
-				this._shareProducer = await this._sendTransport.produce(
+			this._shareProducer = await this._sendTransport.produce(
+				{
+					track,
+					encodings,
+					codecOptions,
+					codec,
+					appData :
 					{
-						track,
-						encodings,
-						codecOptions :
-						{
-							videoGoogleStartBitrate : 1000
-						},
-						appData :
-						{
-							share : true
-						}
-					});
-			}
-			else
-			{
-				this._shareProducer = await this._sendTransport.produce({ track });
-			}
+						share : true
+					}
+				});
 
 			store.dispatch(stateActions.addProducer(
 				{

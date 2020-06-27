@@ -3,7 +3,7 @@ const protoo = require('protoo-server');
 const throttle = require('@sitespeed.io/throttle');
 const Logger = require('./Logger');
 const config = require('../config');
-const Bot = require('./Bot');
+// const Bot = require('./Bot');
 
 const logger = new Logger('Room');
 
@@ -26,48 +26,16 @@ class Room extends EventEmitter
 	 * @param {mediasoup.Worker} mediasoupWorker2 - The mediasoup Worker in which a new
 	 *   mediasoup Router must be created (for consuming).
 	 * @param {String} roomId - Id of the Room instance.
-	 * @param {Boolean} [forceH264=false] - Whether just H264 must be used in the
-	 *   mediasoup Router video codecs.
-	 * @param {Boolean} [forceVP9=false] - Whether just VP9 must be used in the
-	 *   mediasoup Router video codecs.
 	 */
-	static async create(
-		{
-			mediasoupWorker1,
-			mediasoupWorker2,
-			roomId,
-			forceH264 = false,
-			forceVP9 = false
-		})
+	static async create({ mediasoupWorker1, mediasoupWorker2, roomId })
 	{
-		logger.info(
-			'create() [roomId:%s, forceH264:%s, forceVP9:%s]',
-			roomId, forceH264, forceVP9);
+		logger.info('create() [roomId:%s]', roomId);
 
 		// Create a protoo Room instance.
 		const protooRoom = new protoo.Room();
 
 		// Router media codecs.
-		let { mediaCodecs } = config.mediasoup.routerOptions;
-
-		// If forceH264 is given, remove all video codecs but H264.
-		if (forceH264)
-		{
-			mediaCodecs = mediaCodecs
-				.filter((codec) => (
-					codec.kind === 'audio' ||
-					codec.mimeType.toLowerCase() === 'video/h264'
-				));
-		}
-		// If forceVP9 is given, remove all video codecs but VP9.
-		if (forceVP9)
-		{
-			mediaCodecs = mediaCodecs
-				.filter((codec) => (
-					codec.kind === 'audio' ||
-					codec.mimeType.toLowerCase() === 'video/vp9'
-				));
-		}
+		const { mediaCodecs } = config.mediasoup.routerOptions;
 
 		// Create a mediasoup Router for producing.
 		const mediasoupRouter1 = await mediasoupWorker1.createRouter({ mediaCodecs });
@@ -92,7 +60,7 @@ class Room extends EventEmitter
 				protooRoom,
 				mediasoupRouter1,
 				mediasoupRouter2,
-				audioLevelObserver,
+				audioLevelObserver
 				// bot
 			});
 	}
@@ -103,7 +71,7 @@ class Room extends EventEmitter
 			protooRoom,
 			mediasoupRouter1,
 			mediasoupRouter2,
-			audioLevelObserver,
+			audioLevelObserver
 			// bot
 		})
 	{
@@ -446,27 +414,24 @@ class Room extends EventEmitter
 
 	/**
 	 * Create a mediasoup Transport associated to a Broadcaster. It can be a
-	 * PlainRtpTransport or a WebRtcTransport.
+	 * PlainTransport or a WebRtcTransport.
 	 *
 	 * @async
 	 *
 	 * @type {String} broadcasterId
-	 * @type {String} type - Can be 'plain' (PlainRtpTransport) or 'webrtc'
+	 * @type {String} type - Can be 'plain' (PlainTransport) or 'webrtc'
 	 *   (WebRtcTransport).
-	 * @type {Boolean} [rtcpMux=true] - Just for PlainRtpTransport, use RTCP mux.
-	 * @type {Boolean} [comedia=true] - Just for PlainRtpTransport, enable remote IP:port
+	 * @type {Boolean} [rtcpMux=false] - Just for PlainTransport, use RTCP mux.
+	 * @type {Boolean} [comedia=true] - Just for PlainTransport, enable remote IP:port
 	 *   autodetection.
-	 * @type {Boolean} [multiSource=false] - Just for PlainRtpTransport, allow RTP from any
-	 *   remote IP and port (no RTCP feedback will be sent to the remote).
 	 * @type {Object} [sctpCapabilities] - SCTP capabilities
 	 */
 	async createBroadcasterTransport(
 		{
 			broadcasterId,
 			type,
-			rtcpMux = true,
+			rtcpMux = false,
 			comedia = true,
-			multiSource = false,
 			sctpCapabilities
 		})
 	{
@@ -504,17 +469,15 @@ class Room extends EventEmitter
 
 			case 'plain':
 			{
-				const plainRtpTransportOptions =
+				const plainTransportOptions =
 				{
-					...config.mediasoup.plainRtpTransportOptions,
-					rtcpMux     : Boolean(rtcpMux),
-					comedia     : Boolean(comedia),
-					multiSource : Boolean(multiSource)
+					...config.mediasoup.plainTransportOptions,
+					rtcpMux : rtcpMux,
+					comedia : comedia
 				};
 
-				// TODO
-				const transport = await this._mediasoupRouter.createPlainRtpTransport(
-					plainRtpTransportOptions);
+				const transport = await this._mediasoupRouter.createPlainTransport(
+					plainTransportOptions);
 
 				// Store it.
 				broadcaster.data.transports.set(transport.id, transport);
@@ -829,7 +792,7 @@ class Room extends EventEmitter
 				this._createDataConsumer(
 					{
 						dataConsumerPeer : peer,
-						dataProducerPeer : null,
+						dataProducerPeer : null
 						// dataProducer     : this._bot.dataProducer
 					});
 
@@ -901,13 +864,25 @@ class Room extends EventEmitter
 
 				// NOTE: For testing.
 				// await transport.enableTraceEvent([ 'probation', 'bwe' ]);
-				// await transport.enableTraceEvent([ 'bwe' ]);
+				await transport.enableTraceEvent([ 'bwe' ]);
 
 				transport.on('trace', (trace) =>
 				{
-					logger.info(
+					logger.debug(
 						'transport "trace" event [transportId:%s, trace.type:%s, trace:%o]',
 						transport.id, trace.type, trace);
+
+					if (trace.type === 'bwe' && trace.direction === 'out')
+					{
+						peer.notify(
+							'downlinkBwe',
+							{
+								desiredBitrate          : trace.info.desiredBitrate,
+								effectiveDesiredBitrate : trace.info.effectiveDesiredBitrate,
+								availableBitrate        : trace.info.availableBitrate
+							})
+							.catch(() => {});
+					}
 				});
 
 				// Store the WebRtcTransport into the protoo Peer data Object.
@@ -1017,7 +992,7 @@ class Room extends EventEmitter
 
 				producer.on('trace', (trace) =>
 				{
-					logger.info(
+					logger.debug(
 						'producer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
 						producer.id, trace.type, trace);
 				});
@@ -1262,7 +1237,7 @@ class Room extends EventEmitter
 					case 'bot':
 					{
 						// Pass it to the bot.
-						this._bot.handleDataProducer(
+						this._bot.handlePeerDataProducer(
 							{
 								dataProducerId : dataProducer.id,
 								peer
@@ -1593,7 +1568,7 @@ class Room extends EventEmitter
 
 		consumer.on('trace', (trace) =>
 		{
-			logger.info(
+			logger.debug(
 				'consumer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
 				consumer.id, trace.type, trace);
 		});
