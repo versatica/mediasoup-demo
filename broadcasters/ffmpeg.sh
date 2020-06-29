@@ -157,10 +157,18 @@ ${HTTPIE_COMMAND} -v \
 #
 echo ">>> creating mediasoup video Producer..."
 
+# TODO: Uncomment.
+# ${HTTPIE_COMMAND} -v \
+# 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${videoTransportId}/producers \
+# 	kind="video" \
+# 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/vp8\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000 }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
+# 	> /dev/null
+
+# TODO: For testing. Remove.
 ${HTTPIE_COMMAND} -v \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${videoTransportId}/producers \
 	kind="video" \
-	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/vp8\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000 }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
+	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/vp8\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000, \"rtcpFeedback\": [{ \"type\":\"goog-remb\" }] }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
 	> /dev/null
 
 #

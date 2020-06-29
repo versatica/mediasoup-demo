@@ -452,7 +452,7 @@ class Room extends EventEmitter
 				};
 
 				// TODO
-				const transport = await this._mediasoupRouter.createWebRtcTransport(
+				const transport = await this._mediasoupRouter1.createWebRtcTransport(
 					webRtcTransportOptions);
 
 				// Store it.
@@ -476,7 +476,7 @@ class Room extends EventEmitter
 					comedia : comedia
 				};
 
-				const transport = await this._mediasoupRouter.createPlainTransport(
+				const transport = await this._mediasoupRouter1.createPlainTransport(
 					plainTransportOptions);
 
 				// Store it.
@@ -583,12 +583,21 @@ class Room extends EventEmitter
 				producer.id, videoOrientation);
 		});
 
+		// Pipe to second router.
+		await this._mediasoupRouter1.pipeToRouter(
+			{
+				producerId : producer.id,
+				router     : this._mediasoupRouter2
+				// enableRtx  : true,
+				// enableSrtp : true
+			});
+
 		// Optimization: Create a server-side Consumer for each Peer.
-		for (const peer of this._getJoinedPeers())
+		for (const otherPeer of this._getJoinedPeers())
 		{
 			this._createConsumer(
 				{
-					consumerPeer : peer,
+					consumerPeer : otherPeer,
 					producerPeer : broadcaster,
 					producer
 				});
