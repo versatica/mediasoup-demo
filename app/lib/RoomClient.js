@@ -2147,7 +2147,6 @@ export default class RoomClient
 
 				setTimeout(() => audioTrack.stop(), 120000);
 			}
-
 			// Create mediasoup Transport for sending (unless we don't want to produce).
 			if (this._produce)
 			{
