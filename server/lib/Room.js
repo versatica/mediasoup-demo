@@ -1,9 +1,12 @@
 const EventEmitter = require('events').EventEmitter;
 const protoo = require('protoo-server');
 const throttle = require('@sitespeed.io/throttle');
+const rtpjs = require('rtp.js');
 const Logger = require('./Logger');
 const config = require('../config');
 const Bot = require('./Bot');
+
+const TEST_DIRECT_TRANSPORT_RTP = true;
 
 const logger = new Logger('Room');
 
@@ -104,6 +107,9 @@ class Room extends EventEmitter
 		// Network throttled.
 		// @type {Boolean}
 		this._networkThrottled = false;
+
+		// DirectTransport for RTP testing.
+		this._directTransport = undefined;
 
 		// Handle audioLevelObserver.
 		this._handleAudioLevelObserver();
@@ -935,6 +941,41 @@ class Room extends EventEmitter
 				// Store the Producer into the protoo Peer data Object.
 				peer.data.producers.set(producer.id, producer);
 
+				if (TEST_DIRECT_TRANSPORT_RTP)
+				{
+					if (!this._directTransport)
+					{
+						this._directTransport =
+							await this._mediasoupRouter.createDirectTransport();
+					}
+
+					const directConsumer = await this._directTransport.consume(
+						{
+							producerId      : producer.id,
+							rtpCapabilities : this._mediasoupRouter.rtpCapabilities
+						});
+
+					directConsumer.on('rtppacket', (buffer) =>
+					{
+						if (typeof global.KK1 !== 'number') {
+							global.KK1 = 0;
+						}
+						global.KK1++;
+						console.warn('----------- KK1:', global.KK1);
+
+						if (!rtpjs.isRtp(buffer))
+						{
+							console.warn('-------- IT IS NOT A RTP PACKET!!!');
+							return;
+						}
+
+						const packet = rtpjs.parseRtp(buffer);
+
+						console.warn(packet);
+						global.PACKET = packet;
+					});
+				}
+
 				// Set Producer events.
 				producer.on('score', (score) =>
 				{
@@ -954,13 +995,20 @@ class Room extends EventEmitter
 				});
 
 				// NOTE: For testing.
+				await producer.enableTraceEvent([ 'rtp' ]);
 				// await producer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
 				// await producer.enableTraceEvent([ 'pli', 'fir' ]);
 				// await producer.enableTraceEvent([ 'keyframe' ]);
 
 				producer.on('trace', (trace) =>
 				{
-					logger.debug(
+					if (typeof global.KK2 !== 'number') {
+						global.KK2 = 0;
+					}
+					global.KK2++;
+					console.warn('----------- KK2:', global.KK2);
+
+					logger.info(
 						'producer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
 						producer.id, trace.type, trace);
 				});
