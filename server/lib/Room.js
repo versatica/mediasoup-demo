@@ -955,7 +955,7 @@ class Room extends EventEmitter
 							rtpCapabilities : this._mediasoupRouter.rtpCapabilities
 						});
 
-					directConsumer.on('rtppacket', (buffer) =>
+					directConsumer.on('rtp', (buffer) =>
 					{
 						if (typeof global.KK1 !== 'number') {
 							global.KK1 = 0;
@@ -969,7 +969,7 @@ class Room extends EventEmitter
 							return;
 						}
 
-						const packet = rtpjs.parseRtp(buffer);
+						const packet = new rtpjs.RtpPacket(buffer);
 
 						console.warn(packet);
 						global.PACKET = packet;
