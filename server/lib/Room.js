@@ -679,23 +679,23 @@ class Room extends EventEmitter
 			});
 
 		// Store it.
-		broadcaster.data.dataConsumers.set(consumer.id, consumer);
+		broadcaster.data.dataConsumers.set(dataConsumer.id, dataConsumer);
 
 		// Set Consumer events.
 		dataConsumer.on('transportclose', () =>
 		{
 			// Remove from its map.
-			broadcaster.data.dataConsumers.delete(consumer.id);
+			broadcaster.data.dataConsumers.delete(dataConsumer.id);
 		});
 
 		dataConsumer.on('dataproducerclose', () =>
 		{
 			// Remove from its map.
-			broadcaster.data.dataConsumers.delete(consumer.id);
+			broadcaster.data.dataConsumers.delete(dataConsumer.id);
 		});
 
 		return {
-			id            : dataConsumer.id
+			id : dataConsumer.id
 		};
 	}
 
@@ -740,13 +740,13 @@ class Room extends EventEmitter
 			});
 
 		// Store it.
-		broadcaster.data.dataProducers.set(consumer.id, consumer);
+		broadcaster.data.dataProducers.set(dataProducer.id, dataProducer);
 
 		// Set Consumer events.
 		dataProducer.on('transportclose', () =>
 		{
 			// Remove from its map.
-			broadcaster.data.dataProducers.delete(consumer.id);
+			broadcaster.data.dataProducers.delete(dataProducer.id);
 		});
 
 		// // Optimization: Create a server-side Consumer for each Peer.
@@ -761,7 +761,7 @@ class Room extends EventEmitter
 		// }
 
 		return {
-			id            : dataProducer.id
+			id : dataProducer.id
 		};
 	}
 
