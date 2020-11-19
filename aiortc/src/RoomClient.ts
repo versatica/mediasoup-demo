@@ -162,7 +162,7 @@ export class RoomClient
 		this._externalVideo = externalVideo;
 
 		this._useSharingSimulcast = useSharingSimulcast;
-		this._protooUrl = getProtooUrl({ roomId, peerId, forceH264, forceVP8 });
+		this._protooUrl = getProtooUrl({ roomId, peerId });
 		this._protoo = null;
 	}
 

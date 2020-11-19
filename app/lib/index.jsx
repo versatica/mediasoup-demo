@@ -184,8 +184,10 @@ async function run()
 		});
 
 	// NOTE: For debugging.
-	window.CLIENT = roomClient; // eslint-disable-line require-atomic-updates
-	window.CC = roomClient; // eslint-disable-line require-atomic-updates
+	// eslint-disable-next-line require-atomic-updates
+	window.CLIENT = roomClient;
+	// eslint-disable-next-line require-atomic-updates
+	window.CC = roomClient;
 
 	render(
 		<Provider store={store}>
@@ -305,6 +307,7 @@ setInterval(() =>
 {
 	if (window.CLIENT._sendTransport)
 	{
+		window.H1 = window.CLIENT._sendTransport._handler;
 		window.PC1 = window.CLIENT._sendTransport._handler._pc;
 		window.DP = window.CLIENT._chatDataProducer;
 	}
@@ -315,7 +318,12 @@ setInterval(() =>
 	}
 
 	if (window.CLIENT._recvTransport)
+	{
+		window.H2 = window.CLIENT._recvTransport._handler;
 		window.PC2 = window.CLIENT._recvTransport._handler._pc;
+	}
 	else
+	{
 		delete window.PC2;
+	}
 }, 2000);
