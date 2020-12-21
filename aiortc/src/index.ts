@@ -1,22 +1,31 @@
 import * as repl from 'repl';
-import {
-	applyMiddleware as applyReduxMiddleware,
-	createStore as createReduxStore
-} from 'redux';
-import thunk from 'redux-thunk';
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import { Logger } from './Logger';
 import { RoomClient } from './RoomClient';
-import reducers from './redux/reducers';
-
-const reduxMiddlewares = [ thunk ];
+import room from './redux/reducers/room';
+import me from './redux/reducers/me';
+import producers from './redux/reducers/producers';
+import dataProducers from './redux/reducers/dataProducers';
+import peers from './redux/reducers/peers';
+import consumers from './redux/reducers/consumers';
+import dataConsumers from './redux/reducers/dataConsumers';
 
 const logger = new Logger();
 
-const store = createReduxStore(
-	reducers,
-	undefined,
-	applyReduxMiddleware(...reduxMiddlewares)
-);
+const store = configureStore({
+	reducer: {
+		room,
+		me,
+		producers,
+		dataProducers,
+		peers,
+		consumers,
+		dataConsumers
+	},
+	middleware : getDefaultMiddleware({
+		serializableCheck : false
+	})
+});
 
 RoomClient.init({ store });
 
