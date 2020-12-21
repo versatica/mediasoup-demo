@@ -2253,7 +2253,7 @@ export default class RoomClient
 				});
 			}
 
-			// Create mediasoup Transport for sending (unless we don't want to consume).
+			// Create mediasoup Transport for receiving (unless we don't want to consume).
 			if (this._consume)
 			{
 				const transportInfo = await this._protoo.request(
