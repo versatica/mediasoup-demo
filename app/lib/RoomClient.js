@@ -285,7 +285,7 @@ export default class RoomClient
 			worker.postMessage({
 				operation        : 'setCryptoKey',
 				currentCryptoKey : this._e2eKey,
-				useCryptoOffset  : false
+				useCryptoOffset  : true
 			});
 		}
  
