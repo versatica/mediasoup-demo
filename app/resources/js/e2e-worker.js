@@ -98,7 +98,9 @@ function decodeFunction(encodedFrame, controller) {
 
     const newData = new ArrayBuffer(encodedFrame.data.byteLength - 5);
     const newView = new DataView(newData);
-    const cryptoOffset = useCryptoOffset? frameTypeToCryptoOffset[encodedFrame.type] : 0;
+    const cryptoOffset = useCryptoOffset? 
+        Math.min(newView.byteLength, frameTypeToCryptoOffset[encodedFrame.type])
+        : 0;
 
     for (let i = 0; i < cryptoOffset; ++i) {
       newView.setInt8(i, view.getInt8(i));
