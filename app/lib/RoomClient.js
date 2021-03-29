@@ -5,6 +5,7 @@ import { getProtooUrl } from './urlFactory';
 import * as cookiesManager from './cookiesManager';
 import * as requestActions from './redux/requestActions';
 import * as stateActions from './redux/stateActions';
+import * as e2e from './e2e';
 
 const VIDEO_CONSTRAINS =
 {
@@ -50,54 +51,6 @@ const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
 const logger = new Logger('RoomClient');
 
 let store;
-
-// insertable streams
-// https://github.com/webrtc/samples/blob/gh-pages/src/content/insertable-streams/endtoend-encryption/js/main.js
-let e2eSupported = Boolean(RTCRtpSender.prototype.createEncodedStreams);
-
-try
-{
-	const stream = new ReadableStream();
-
-	window.postMessage(stream, '*', [ stream ]);
-}
-catch (e)
-{
-	logger.error('Transferable streams are not supported.');
-	e2eSupported = false;
-}
-
-const worker = new Worker('/resources/js/e2e-worker.js', { name: 'e2e worker' });
- 
-function setupSenderTransform(sender)
-{
-	logger.debug('e2e setupSenderTransform', sender);
-
-	const senderStreams = sender.createEncodedStreams();
-	const readableStream = senderStreams.readable || senderStreams.readableStream;
-	const writableStream = senderStreams.writable || senderStreams.writableStream;
-
-	worker.postMessage({
-		operation : 'encode',
-		readableStream,
-		writableStream
-	}, [ readableStream, writableStream ]);
-}
-
-function setupReceiverTransform(receiver)
-{
-	logger.debug('e2e setupReceiverTransform', receiver);
-
-	const receiverStreams = receiver.createEncodedStreams();
-	const readableStream = receiverStreams.readable || receiverStreams.readableStream;
-	const writableStream = receiverStreams.writable || receiverStreams.writableStream;
-
-	worker.postMessage({
-		operation : 'decode',
-		readableStream,
-		writableStream
-	}, [ readableStream, writableStream ]);
-}
 
 export default class RoomClient
 {
@@ -280,15 +233,10 @@ export default class RoomClient
 			SCREEN_SHARING_SVC_ENCODINGS[0].scalabilityMode = svc;
 		}
 
-		if (this._e2eKey && e2eSupported)
+		if (this._e2eKey && e2e.isSupported())
 		{
-			worker.postMessage({
-				operation        : 'setCryptoKey',
-				currentCryptoKey : this._e2eKey,
-				useCryptoOffset  : true
-			});
+			e2e.setCryptoKey('setCryptoKey', this._e2eKey, true);
 		}
- 
 	}
 
 	close()
@@ -407,8 +355,10 @@ export default class RoomClient
 								appData : { ...appData, peerId } // Trick.
 							});
 
-						if (this._e2eKey && e2eSupported)
-							setupReceiverTransform(consumer.rtpReceiver);
+						if (this._e2eKey && e2e.isSupported())
+						{
+							e2e.setupReceiverTransform(consumer.rtpReceiver);
+						}
 
 						// Store in the map.
 						this._consumers.set(consumer.id, consumer);
@@ -878,8 +828,10 @@ export default class RoomClient
 					// 	.find((codec) => codec.mimeType.toLowerCase() === 'audio/pcma')
 				});
 
-			if (this._e2eKey && e2eSupported)
-				setupSenderTransform(this._micProducer.rtpSender);
+			if (this._e2eKey && e2e.isSupported())
+			{
+				e2e.setupSenderTransform(this._micProducer.rtpSender);
+			}
 
 			store.dispatch(stateActions.addProducer(
 				{
@@ -1116,8 +1068,10 @@ export default class RoomClient
 					codec
 				});
 
-			if (this._e2eKey && e2eSupported)
-				setupSenderTransform(this._webcamProducer.rtpSender);
+			if (this._e2eKey && e2e.isSupported())
+			{
+				e2e.setupSenderTransform(this._webcamProducer.rtpSender);
+			}
 
 			store.dispatch(stateActions.addProducer(
 				{
@@ -1433,6 +1387,11 @@ export default class RoomClient
 						share : true
 					}
 				});
+
+			if (this._e2eKey && e2e.isSupported())
+			{
+				e2e.setupSenderTransform(this._shareProducer.rtpSender);
+			}
 
 			store.dispatch(stateActions.addProducer(
 				{
@@ -2250,7 +2209,7 @@ export default class RoomClient
 						iceServers             : [],
 						proprietaryConstraints : PC_PROPRIETARY_CONSTRAINTS,
 						additionalSettings 	   :
-							{ encodedInsertableStreams: this._e2eKey && e2eSupported }
+							{ encodedInsertableStreams: this._e2eKey && e2e.isSupported() }
 					});
 
 				this._sendTransport.on(
@@ -2357,7 +2316,7 @@ export default class RoomClient
 						sctpParameters,
 						iceServers 	       : [],
 						additionalSettings :
-							{ encodedInsertableStreams: this._e2eKey && e2eSupported }
+							{ encodedInsertableStreams: this._e2eKey && e2e.isSupported() }
 					});
 
 				this._recvTransport.on(
