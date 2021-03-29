@@ -22,7 +22,6 @@ export function isSupported()
 				const stream = new ReadableStream();
 
 				window.postMessage(stream, '*', [ stream ]);
-
 				worker = new Worker('/resources/js/e2e-worker.js', { name: 'e2e worker' });
 
 				logger.debug('isSupported() | supported');
