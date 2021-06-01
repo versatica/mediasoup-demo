@@ -541,7 +541,8 @@ class Interactive
 				prompt          : 'terminal> ',
 				useColors       : true,
 				useGlobal       : true,
-				ignoreUndefined : false
+				ignoreUndefined : false,
+				preview         : false,
 			});
 
 		this._isTerminalOpen = true;
