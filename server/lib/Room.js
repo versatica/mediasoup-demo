@@ -695,7 +695,8 @@ class Room extends EventEmitter
 		});
 
 		return {
-			id : dataConsumer.id
+			id       : dataConsumer.id,
+			streamId : dataConsumer.sctpStreamParameters.streamId
 		};
 	}
 
