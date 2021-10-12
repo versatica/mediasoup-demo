@@ -145,10 +145,9 @@ class Room extends EventEmitter
 	logStatus()
 	{
 		logger.info(
-			'logStatus() [roomId:%s, protoo Peers:%s, mediasoup Transports:%s]',
+			'logStatus() [roomId:%s, protoo Peers:%s]',
 			this._roomId,
-			this._protooRoom.peers.length,
-			this._mediasoupRouter._transports.size); // NOTE: Private API.
+			this._protooRoom.peers.length);
 	}
 
 	/**
