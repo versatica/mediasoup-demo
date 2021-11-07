@@ -259,6 +259,16 @@ class Room extends EventEmitter
 	}
 
 	/**
+	 * Get a Broadcaster.
+	 *
+	 * @type {String} broadcasterId - Broadcaster id.
+	 */
+	getBroadcaster({ broadcasterId })
+	{
+		return this._broadcasters.get(broadcasterId);
+	}
+
+	/**
 	 * Create a Broadcaster. This is for HTTP API requests (see server.js).
 	 *
 	 * @async

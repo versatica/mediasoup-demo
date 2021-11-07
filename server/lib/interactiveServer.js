@@ -542,7 +542,7 @@ class Interactive
 				useColors       : true,
 				useGlobal       : true,
 				ignoreUndefined : false,
-				preview         : false,
+				preview         : false
 			});
 
 		this._isTerminalOpen = true;
