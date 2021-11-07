@@ -441,8 +441,8 @@ async function createExpressApp()
 				{
 					await req.room.createBroadcaster({
 						id          : broadcasterId,
-						displayName : 'test',
-						device      : { name: 'device' },
+						displayName : 'WHIP broadcaster',
+						device      : { name: 'WHIP device' },
 						rtpCapabilities
 					});
 				}
