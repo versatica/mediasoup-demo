@@ -2204,7 +2204,14 @@ export default class RoomClient
 						id,
 						iceParameters,
 						iceCandidates,
-						dtlsParameters,
+						dtlsParameters :
+						{
+							...dtlsParameters,
+							// Remote DTLS role. We know it's always 'auto' by default so, if
+							// we want, we can force local WebRTC transport to be 'client' by
+							// indicating 'server' here and vice-versa.
+							role : 'auto'
+						},
 						sctpParameters,
 						iceServers             : [],
 						proprietaryConstraints : PC_PROPRIETARY_CONSTRAINTS,
@@ -2312,7 +2319,14 @@ export default class RoomClient
 						id,
 						iceParameters,
 						iceCandidates,
-						dtlsParameters,
+						dtlsParameters :
+						{
+							...dtlsParameters,
+							// Remote DTLS role. We know it's always 'auto' by default so, if
+							// we want, we can force local WebRTC transport to be 'client' by
+							// indicating 'server' here and vice-versa.
+							role : 'auto'
+						},
 						sctpParameters,
 						iceServers 	       : [],
 						additionalSettings :
