@@ -521,6 +521,40 @@ class Room extends EventEmitter
 	}
 
 	/**
+	 * Restart ICE for a Broadcaster mediasoup WebRtcTransport.
+	 *
+	 * @async
+	 *
+	 * @type {String} broadcasterId
+	 * @type {String} transportId
+	 */
+	async restartBroadcasterTransportICE(
+		{
+			broadcasterId,
+			transportId
+		}
+	)
+	{
+		const broadcaster = this._broadcasters.get(broadcasterId);
+
+		if (!broadcaster)
+			throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
+
+		const transport = broadcaster.data.transports.get(transportId);
+
+		if (!transport)
+			throw new Error(`transport with id "${transportId}" does not exist`);
+
+		if (transport.constructor.name !== 'WebRtcTransport')
+		{
+			throw new Error(
+				`transport with id "${transportId}" is not a WebRtcTransport`);
+		}
+
+		return await transport.restartIce();
+	}
+
+	/**
 	 * Create a mediasoup Producer associated to a Broadcaster.
 	 *
 	 * @async
