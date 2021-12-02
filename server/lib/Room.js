@@ -111,6 +111,8 @@ class Room extends EventEmitter
 		// For debugging.
 		global.audioLevelObserver = this._audioLevelObserver;
 		global.bot = this._bot;
+
+		this._audioConsumerCreated = false;
 	}
 
 	/**
@@ -827,7 +829,8 @@ class Room extends EventEmitter
 					displayName,
 					device,
 					rtpCapabilities,
-					sctpCapabilities
+					sctpCapabilities,
+					singleAudioConsumerMode
 				} = request.data;
 
 				// Store client data into the protoo Peer data object.
@@ -836,6 +839,8 @@ class Room extends EventEmitter
 				peer.data.device = device;
 				peer.data.rtpCapabilities = rtpCapabilities;
 				peer.data.sctpCapabilities = sctpCapabilities;
+				peer.data.singleAudioConsumerMode = singleAudioConsumerMode;
+				peer.data.singleAudioConsumer = null;
 
 				// Tell the new Peer about already joined Peers.
 				// And also create Consumers for existing Producers.
@@ -1402,7 +1407,9 @@ class Room extends EventEmitter
 
 				const stats = await consumer.getStats();
 
-				accept(stats);
+				accept([
+					{ producerId: consumer.producerId }
+				].concat(stats));
 
 				break;
 			}
@@ -1508,6 +1515,40 @@ class Room extends EventEmitter
 				break;
 			}
 
+			case 'changeAudioPeer':
+			{
+				if (!peer.data.singleAudioConsumerMode)
+				{
+					throw new Error('Single audio consumer not activated');
+				}
+
+				const { peerId } = request.data;
+				const producerPeer = this._protooRoom.peers.find((p) => p.id === peerId);
+
+				// Ensure the Peer is joined.
+				if (!producerPeer.data.joined)
+					throw new Error('Peer not yet joined');
+
+				const producer = [ ...producerPeer.data.producers.values() ].find((p) => p.kind === 'audio');
+
+				if (peer.data.singleAudioConsumer)
+				{
+					await peer.data.singleAudioConsumer.changeProducer(producer.id);
+				}
+				else
+				{
+					await this._createConsumer({
+						consumerPeer : peer,
+						producerPeer,
+						producer
+					});
+				}
+
+				accept();
+
+				break;
+			}
+
 			default:
 			{
 				logger.error('unknown request.method "%s"', request.method);
@@ -1570,6 +1611,19 @@ class Room extends EventEmitter
 			return;
 		}
 
+		if (producer.kind === 'audio' && consumerPeer.data.singleAudioConsumerMode)
+		{
+			if (consumerPeer.data.singleAudioConsumer)
+			{
+				return;
+			}
+			else
+			{
+				// Set a value to avoid race conditions.
+				consumerPeer.data.singleAudioConsumer = true;
+			}
+		}
+
 		// Create the Consumer in paused mode.
 		let consumer;
 
@@ -1586,23 +1640,44 @@ class Room extends EventEmitter
 		{
 			logger.warn('_createConsumer() | transport.consume():%o', error);
 
+			if (producer.kind === 'audio' && consumerPeer.data.singleAudioConsumerMode)
+			{
+				consumerPeer.data.singleAudioConsumer = null;
+			}
+
 			return;
 		}
 
 		// Store the Consumer into the protoo consumerPeer data Object.
 		consumerPeer.data.consumers.set(consumer.id, consumer);
 
+		// Set the consumer in single mode.
+		if (producer.kind === 'audio' && consumerPeer.data.singleAudioConsumerMode)
+		{
+			consumerPeer.data.singleAudioConsumer = consumer;
+		}
+
 		// Set Consumer events.
 		consumer.on('transportclose', () =>
 		{
 			// Remove from its map.
 			consumerPeer.data.consumers.delete(consumer.id);
+
+			if (consumerPeer.data.singleAudioConsumer === consumer)
+			{
+				consumerPeer.data.singleAudioConsumer = null;
+			}
 		});
 
 		consumer.on('producerclose', () =>
 		{
 			// Remove from its map.
 			consumerPeer.data.consumers.delete(consumer.id);
+
+			if (consumerPeer.data.singleAudioConsumer === consumer)
+			{
+				consumerPeer.data.singleAudioConsumer = null;
+			}
 
 			consumerPeer.notify('consumerClosed', { consumerId: consumer.id })
 				.catch(() => {});

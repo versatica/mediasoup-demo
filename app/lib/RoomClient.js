@@ -80,7 +80,8 @@ export default class RoomClient
 			svc,
 			datachannel,
 			externalVideo,
-			e2eKey
+			e2eKey,
+			singleAudioConsumerMode
 		}
 	)
 	{
@@ -128,6 +129,10 @@ export default class RoomClient
 
 		// Enabled end-to-end encryption.
 		this._e2eKey = e2eKey;
+
+		// Enable single audio consumer mode.
+		// @type {Boolean}
+		this._singleAudioConsumerMode = singleAudioConsumerMode;
 
 		// MediaStream of the external video.
 		// @type {MediaStream}
@@ -2359,7 +2364,8 @@ export default class RoomClient
 						: undefined,
 					sctpCapabilities : this._useDataChannel && this._consume
 						? this._mediasoupDevice.sctpCapabilities
-						: undefined
+						: undefined,
+					singleAudioConsumerMode : this._singleAudioConsumerMode
 				});
 
 			store.dispatch(
@@ -2555,5 +2561,23 @@ export default class RoomClient
 			throw new Error('video.captureStream() not supported');
 
 		return this._externalVideoStream;
+	}
+
+	async changeAudioPeer(peerId)
+	{
+		try
+		{
+			await this._protoo.request('changeAudioPeer', { peerId });
+		}
+		catch (error)
+		{
+			logger.error('changeAudioPeer() | failed:%o', error);
+
+			store.dispatch(requestActions.notify(
+				{
+					type : 'error',
+					text : `Error changing audio peer: ${error}`
+				}));
+		}
 	}
 }

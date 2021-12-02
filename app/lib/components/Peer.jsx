@@ -87,6 +87,10 @@ const Peer = (props) =>
 					roomClient.requestConsumerKeyFrame(videoConsumer.id);
 				}}
 				onStatsClick={onSetStatsPeerId}
+				onAudioClick={() => 
+				{
+					roomClient.changeAudioPeer(peer.id);
+				}}
 			/>
 		</div>
 	);
