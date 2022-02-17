@@ -1589,8 +1589,6 @@ class Room extends EventEmitter
 
 		const consumerCount = 1 + this._consumerReplicas;
 
-		logger.warn(`creating ${consumerCount} consumers`);
-
 		for (let i=0; i<consumerCount; i++)
 		{
 			promises.push(
