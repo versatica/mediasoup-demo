@@ -25,7 +25,7 @@ class Room extends EventEmitter
 	 *   mediasoup Router must be created.
 	 * @param {String} roomId - Id of the Room instance.
 	 */
-	static async create({ mediasoupWorker, roomId })
+	static async create({ mediasoupWorker, roomId, consumerReplicas })
 	{
 		logger.info('create() [roomId:%s]', roomId);
 
@@ -54,13 +54,24 @@ class Room extends EventEmitter
 				protooRoom,
 				mediasoupRouter,
 				audioLevelObserver,
-				bot
+				bot,
+				consumerReplicas
 			});
 	}
 
-	constructor({ roomId, protooRoom, mediasoupRouter, audioLevelObserver, bot })
+	constructor(
+		{
+			roomId,
+			protooRoom,
+			mediasoupRouter,
+			audioLevelObserver,
+			bot,
+			consumerReplicas
+		})
 	{
 		super();
+
+		console.warn(`Room constructor. consumerReplicas:${consumerReplicas}`);
 		this.setMaxListeners(Infinity);
 
 		// Room id.
@@ -100,6 +111,10 @@ class Room extends EventEmitter
 		// DataChannel bot.
 		// @type {Bot}
 		this._bot = bot;
+
+		// Consumer replicas.
+		// @type {Number}
+		this._consumerReplicas = consumerReplicas || 0;
 
 		// Network throttled.
 		// @type {Boolean}
@@ -1570,119 +1585,142 @@ class Room extends EventEmitter
 			return;
 		}
 
-		// Create the Consumer in paused mode.
-		let consumer;
+		const promises = [];
+
+		const consumerCount = 1 + this._consumerReplicas;
+
+		logger.warn(`creating ${consumerCount} consumers`);
+
+		for (let i=0; i<consumerCount; i++)
+		{
+			promises.push(
+				(async () =>
+				{
+					// Create the Consumer in paused mode.
+					let consumer;
+
+					try
+					{
+						consumer = await transport.consume(
+							{
+								producerId      : producer.id,
+								rtpCapabilities : consumerPeer.data.rtpCapabilities,
+								paused          : true
+							});
+					}
+					catch (error)
+					{
+						logger.warn('_createConsumer() | transport.consume():%o', error);
+
+						return;
+					}
+
+					// Store the Consumer into the protoo consumerPeer data Object.
+					consumerPeer.data.consumers.set(consumer.id, consumer);
+
+					// Set Consumer events.
+					consumer.on('transportclose', () =>
+					{
+						// Remove from its map.
+						consumerPeer.data.consumers.delete(consumer.id);
+					});
+
+					consumer.on('producerclose', () =>
+					{
+						// Remove from its map.
+						consumerPeer.data.consumers.delete(consumer.id);
+
+						consumerPeer.notify('consumerClosed', { consumerId: consumer.id })
+							.catch(() => {});
+					});
+
+					consumer.on('producerpause', () =>
+					{
+						consumerPeer.notify('consumerPaused', { consumerId: consumer.id })
+							.catch(() => {});
+					});
+
+					consumer.on('producerresume', () =>
+					{
+						consumerPeer.notify('consumerResumed', { consumerId: consumer.id })
+							.catch(() => {});
+					});
+
+					consumer.on('score', (score) =>
+					{
+						// logger.debug(
+						//	 'consumer "score" event [consumerId:%s, score:%o]',
+						//	 consumer.id, score);
+
+						consumerPeer.notify('consumerScore', { consumerId: consumer.id, score })
+							.catch(() => {});
+					});
+
+					consumer.on('layerschange', (layers) =>
+					{
+						consumerPeer.notify(
+							'consumerLayersChanged',
+							{
+								consumerId    : consumer.id,
+								spatialLayer  : layers ? layers.spatialLayer : null,
+								temporalLayer : layers ? layers.temporalLayer : null
+							})
+							.catch(() => {});
+					});
+
+					// NOTE: For testing.
+					// await consumer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
+					// await consumer.enableTraceEvent([ 'pli', 'fir' ]);
+					// await consumer.enableTraceEvent([ 'keyframe' ]);
+
+					consumer.on('trace', (trace) =>
+					{
+						logger.debug(
+							'consumer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
+							consumer.id, trace.type, trace);
+					});
+
+					// Send a protoo request to the remote Peer with Consumer parameters.
+					try
+					{
+						await consumerPeer.request(
+							'newConsumer',
+							{
+								peerId         : producerPeer.id,
+								producerId     : producer.id,
+								id             : consumer.id,
+								kind           : consumer.kind,
+								rtpParameters  : consumer.rtpParameters,
+								type           : consumer.type,
+								appData        : producer.appData,
+								producerPaused : consumer.producerPaused
+							});
+
+						// Now that we got the positive response from the remote endpoint, resume
+						// the Consumer so the remote endpoint will receive the a first RTP packet
+						// of this new stream once its PeerConnection is already ready to process
+						// and associate it.
+						await consumer.resume();
+
+						consumerPeer.notify(
+							'consumerScore',
+							{
+								consumerId : consumer.id,
+								score      : consumer.score
+							})
+							.catch(() => {});
+					}
+					catch (error)
+					{
+						logger.warn('_createConsumer() | failed:%o', error);
+					}
+				})()
+			);
+		}
 
 		try
 		{
-			consumer = await transport.consume(
-				{
-					producerId      : producer.id,
-					rtpCapabilities : consumerPeer.data.rtpCapabilities,
-					paused          : true
-				});
-		}
-		catch (error)
-		{
-			logger.warn('_createConsumer() | transport.consume():%o', error);
-
-			return;
-		}
-
-		// Store the Consumer into the protoo consumerPeer data Object.
-		consumerPeer.data.consumers.set(consumer.id, consumer);
-
-		// Set Consumer events.
-		consumer.on('transportclose', () =>
-		{
-			// Remove from its map.
-			consumerPeer.data.consumers.delete(consumer.id);
-		});
-
-		consumer.on('producerclose', () =>
-		{
-			// Remove from its map.
-			consumerPeer.data.consumers.delete(consumer.id);
-
-			consumerPeer.notify('consumerClosed', { consumerId: consumer.id })
-				.catch(() => {});
-		});
-
-		consumer.on('producerpause', () =>
-		{
-			consumerPeer.notify('consumerPaused', { consumerId: consumer.id })
-				.catch(() => {});
-		});
-
-		consumer.on('producerresume', () =>
-		{
-			consumerPeer.notify('consumerResumed', { consumerId: consumer.id })
-				.catch(() => {});
-		});
-
-		consumer.on('score', (score) =>
-		{
-			// logger.debug(
-			// 	'consumer "score" event [consumerId:%s, score:%o]',
-			// 	consumer.id, score);
-
-			consumerPeer.notify('consumerScore', { consumerId: consumer.id, score })
-				.catch(() => {});
-		});
-
-		consumer.on('layerschange', (layers) =>
-		{
-			consumerPeer.notify(
-				'consumerLayersChanged',
-				{
-					consumerId    : consumer.id,
-					spatialLayer  : layers ? layers.spatialLayer : null,
-					temporalLayer : layers ? layers.temporalLayer : null
-				})
-				.catch(() => {});
-		});
-
-		// NOTE: For testing.
-		// await consumer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
-		// await consumer.enableTraceEvent([ 'pli', 'fir' ]);
-		// await consumer.enableTraceEvent([ 'keyframe' ]);
-
-		consumer.on('trace', (trace) =>
-		{
-			logger.debug(
-				'consumer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
-				consumer.id, trace.type, trace);
-		});
-
-		// Send a protoo request to the remote Peer with Consumer parameters.
-		try
-		{
-			await consumerPeer.request(
-				'newConsumer',
-				{
-					peerId         : producerPeer.id,
-					producerId     : producer.id,
-					id             : consumer.id,
-					kind           : consumer.kind,
-					rtpParameters  : consumer.rtpParameters,
-					type           : consumer.type,
-					appData        : producer.appData,
-					producerPaused : consumer.producerPaused
-				});
-
-			// Now that we got the positive response from the remote endpoint, resume
-			// the Consumer so the remote endpoint will receive the a first RTP packet
-			// of this new stream once its PeerConnection is already ready to process
-			// and associate it.
-			await consumer.resume();
-
-			consumerPeer.notify(
-				'consumerScore',
-				{
-					consumerId : consumer.id,
-					score      : consumer.score
-				})
-				.catch(() => {});
+			await Promise.all(promises);
 		}
 		catch (error)
 		{

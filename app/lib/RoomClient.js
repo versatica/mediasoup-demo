@@ -80,7 +80,8 @@ export default class RoomClient
 			svc,
 			datachannel,
 			externalVideo,
-			e2eKey
+			e2eKey,
+			consumerReplicas
 		}
 	)
 	{
@@ -166,7 +167,7 @@ export default class RoomClient
 
 		// Protoo URL.
 		// @type {String}
-		this._protooUrl = getProtooUrl({ roomId, peerId });
+		this._protooUrl = getProtooUrl({ roomId, peerId, consumerReplicas });
 
 		// protoo-client Peer instance.
 		// @type {protooClient.Peer}
