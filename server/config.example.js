@@ -121,13 +121,13 @@ module.exports =
 			[
 				{
 					protocol    : 'udp',
-					ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
+					ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
 					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP,
 					port        : 44444
 				},
 				{
 					protocol    : 'tcp',
-					ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
+					ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
 					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP,
 					port        : 44444
 				}
@@ -138,13 +138,7 @@ module.exports =
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions
 		webRtcTransportOptions :
 		{
-			listenIps :
-			[
-				{
-					ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
-					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP
-				}
-			],
+			// listenIps is not given because we pass webRtcServer instead.
 			initialAvailableOutgoingBitrate : 1000000,
 			minimumAvailableOutgoingBitrate : 600000,
 			maxSctpMessageSize              : 262144,
@@ -158,7 +152,7 @@ module.exports =
 		{
 			listenIp :
 			{
-				ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
+				ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
 				announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP
 			},
 			maxSctpMessageSize : 262144
