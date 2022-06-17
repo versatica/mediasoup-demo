@@ -112,6 +112,27 @@ module.exports =
 				}
 			]
 		},
+		// mediasoup WebRtcServer options for WebRTC endpoints (mediasoup-client,
+		// libmediasoupclient).
+		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcServerOptions
+		webRtcServerOptions :
+		{
+			listenInfos :
+			[
+				{
+					protocol    : 'udp',
+					ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
+					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP,
+					port        : 44444
+				},
+				{
+					protocol    : 'tcp',
+					ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
+					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP,
+					port        : 44444
+				}
+			],
+		},
 		// mediasoup WebRtcTransport options for WebRTC endpoints (mediasoup-client,
 		// libmediasoupclient).
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions
