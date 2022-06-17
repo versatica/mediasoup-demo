@@ -116,10 +116,13 @@ async function runMediasoupWorkers()
 		mediasoupWorkers.push(worker);
 
 		// Create a WebRtcServer in this Worker.
-		const webRtcServer =
-			await worker.createWebRtcServer(config.mediasoup.webRtcServerOptions);
+		if (process.env.MEDIASOUP_USE_WEBRTC_SERVER !== 'false')
+		{
+			const webRtcServer =
+				await worker.createWebRtcServer(config.mediasoup.webRtcServerOptions);
 
-		worker.appData.webRtcServer = webRtcServer;
+			worker.appData.webRtcServer = webRtcServer;
+		}
 
 		// Log worker resource usage every X seconds.
 		setInterval(async () =>

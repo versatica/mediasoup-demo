@@ -138,7 +138,15 @@ module.exports =
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions
 		webRtcTransportOptions :
 		{
-			// listenIps is not given because we pass webRtcServer instead.
+			// listenIps is not needed since webRtcServer is used.
+			// However passing MEDIASOUP_USE_WEBRTC_SERVER=false will change it.
+			listenIps :
+			[
+				{
+					ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
+					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP
+				}
+			],
 			initialAvailableOutgoingBitrate : 1000000,
 			minimumAvailableOutgoingBitrate : 600000,
 			maxSctpMessageSize              : 262144,
