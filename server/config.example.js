@@ -115,6 +115,8 @@ module.exports =
 		// mediasoup WebRtcServer options for WebRTC endpoints (mediasoup-client,
 		// libmediasoupclient).
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcServerOptions
+		// NOTE: mediasoup-demo/server/lib/Room.js will increase this port for
+		// each mediasoup Worker since each Worker is a separate process.
 		webRtcServerOptions :
 		{
 			listenInfos :

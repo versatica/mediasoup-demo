@@ -19,6 +19,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { AwaitQueue } = require('awaitqueue');
 const Logger = require('./lib/Logger');
+const utils = require('./lib/utils');
 const Room = require('./lib/Room');
 const interactiveServer = require('./lib/interactiveServer');
 const interactiveClient = require('./lib/interactiveClient');
@@ -118,8 +119,18 @@ async function runMediasoupWorkers()
 		// Create a WebRtcServer in this Worker.
 		if (process.env.MEDIASOUP_USE_WEBRTC_SERVER !== 'false')
 		{
-			const webRtcServer =
-				await worker.createWebRtcServer(config.mediasoup.webRtcServerOptions);
+			// Each mediasoup Worker will run its own WebRtcServer, so those cannot
+			// share the same listening ports. Hence we increase the value in config.js
+			// for each Worker.
+			const webRtcServerOptions = utils.clone(config.mediasoup.webRtcServerOptions);
+			const portIncrement = mediasoupWorkers.length - 1;
+
+			for (const listenInfo of webRtcServerOptions.listenInfos)
+			{
+				listenInfo.port += portIncrement;
+			}
+
+			const webRtcServer = await worker.createWebRtcServer(webRtcServerOptions);
 
 			worker.appData.webRtcServer = webRtcServer;
 		}
