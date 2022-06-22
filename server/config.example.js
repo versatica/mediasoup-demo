@@ -112,15 +112,40 @@ module.exports =
 				}
 			]
 		},
+		// mediasoup WebRtcServer options for WebRTC endpoints (mediasoup-client,
+		// libmediasoupclient).
+		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcServerOptions
+		// NOTE: mediasoup-demo/server/lib/Room.js will increase this port for
+		// each mediasoup Worker since each Worker is a separate process.
+		webRtcServerOptions :
+		{
+			listenInfos :
+			[
+				{
+					protocol    : 'udp',
+					ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
+					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP,
+					port        : 44444
+				},
+				{
+					protocol    : 'tcp',
+					ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
+					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP,
+					port        : 44444
+				}
+			],
+		},
 		// mediasoup WebRtcTransport options for WebRTC endpoints (mediasoup-client,
 		// libmediasoupclient).
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions
 		webRtcTransportOptions :
 		{
+			// listenIps is not needed since webRtcServer is used.
+			// However passing MEDIASOUP_USE_WEBRTC_SERVER=false will change it.
 			listenIps :
 			[
 				{
-					ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
+					ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
 					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP
 				}
 			],
@@ -137,7 +162,7 @@ module.exports =
 		{
 			listenIp :
 			{
-				ip          : process.env.MEDIASOUP_LISTEN_IP || '1.2.3.4',
+				ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
 				announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP
 			},
 			maxSctpMessageSize : 262144

@@ -52,13 +52,22 @@ class Room extends EventEmitter
 			{
 				roomId,
 				protooRoom,
+				webRtcServer : mediasoupWorker.appData.webRtcServer,
 				mediasoupRouter,
 				audioLevelObserver,
 				bot
 			});
 	}
 
-	constructor({ roomId, protooRoom, mediasoupRouter, audioLevelObserver, bot })
+	constructor(
+		{
+			roomId,
+			protooRoom,
+			webRtcServer,
+			mediasoupRouter,
+			audioLevelObserver,
+			bot
+		})
 	{
 		super();
 		this.setMaxListeners(Infinity);
@@ -88,6 +97,10 @@ class Room extends EventEmitter
 		//   - {Map<String, mediasoup.DataConsumers>} dataConsumers
 		// @type {Map<String, Object>}
 		this._broadcasters = new Map();
+
+		// mediasoup WebRtcServer instance.
+		// @type {mediasoup.WebRtcServer}
+		this._webRtcServer = webRtcServer;
 
 		// mediasoup Router instance.
 		// @type {mediasoup.Router}
@@ -430,7 +443,10 @@ class Room extends EventEmitter
 				};
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					webRtcTransportOptions);
+					{
+						...webRtcTransportOptions,
+						webRtcServer : this._webRtcServer
+					});
 
 				// Store it.
 				broadcaster.data.transports.set(transport.id, transport);
@@ -939,7 +955,10 @@ class Room extends EventEmitter
 				}
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					webRtcTransportOptions);
+					{
+						...webRtcTransportOptions,
+						webRtcServer : this._webRtcServer
+					});
 
 				transport.on('sctpstatechange', (sctpState) =>
 				{

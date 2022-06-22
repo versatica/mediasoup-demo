@@ -15,6 +15,7 @@ const SOCKET_PATH = os.platform() === 'win32' ? SOCKET_PATH_WIN : SOCKET_PATH_UN
 
 // Maps to store all mediasoup objects.
 const workers = new Map();
+const webRtcServers = new Map();
 const routers = new Map();
 const transports = new Map();
 const producers = new Map();
@@ -78,6 +79,7 @@ class Interactive
 						this.log('- logLevel level              : changes logLevel in all mediasoup Workers');
 						this.log('- logTags [tag] [tag]         : changes logTags in all mediasoup Workers (values separated by space)');
 						this.log('- dw, dumpWorkers             : dump mediasoup Workers');
+						this.log('- dwrs, dumpWebRtcServer [id] : dump mediasoup WebRtcServer with given id (or the latest created one)');
 						this.log('- dr, dumpRouter [id]         : dump mediasoup Router with given id (or the latest created one)');
 						this.log('- dt, dumpTransport [id]      : dump mediasoup Transport with given id (or the latest created one)');
 						this.log('- dp, dumpProducer [id]       : dump mediasoup Producer with given id (or the latest created one)');
@@ -177,6 +179,33 @@ class Interactive
 							{
 								this.error(`worker.dump() failed: ${error}`);
 							}
+						}
+
+						break;
+					}
+
+					case 'dwrs':
+					case 'dumpWebRtcServer':
+					{
+						const id = params[0] || Array.from(webRtcServers.keys()).pop();
+						const webRtcServer = webRtcServers.get(id);
+
+						if (!webRtcServer)
+						{
+							this.error('WebRtcServer not found');
+
+							break;
+						}
+
+						try
+						{
+							const dump = await webRtcServer.dump();
+
+							this.log(`webRtcServer.dump():\n${JSON.stringify(dump, null, '  ')}`);
+						}
+						catch (error)
+						{
+							this.error(`webRtcServer.dump() failed: ${error}`);
 						}
 
 						break;
@@ -531,7 +560,7 @@ class Interactive
 	openTerminal()
 	{
 		this.log('\n[opening Node REPL Terminal...]');
-		this.log('here you have access to workers, routers, transports, producers, consumers, dataProducers and dataConsumers ES6 maps');
+		this.log('here you have access to workers, webRtcServers, routers, transports, producers, consumers, dataProducers and dataConsumers ES6 maps');
 
 		const terminal = repl.start(
 			{
@@ -542,7 +571,7 @@ class Interactive
 				useColors       : true,
 				useGlobal       : true,
 				ignoreUndefined : false,
-				preview         : false,
+				preview         : false
 			});
 
 		this._isTerminalOpen = true;
@@ -577,6 +606,15 @@ function runMediasoupObserver()
 
 		workers.set(worker.pid, worker);
 		worker.observer.on('close', () => workers.delete(worker.pid));
+
+		worker.observer.on('newwebrtcserver', (webRtcServer) =>
+		{
+			// Store the latest webRtcServer in a global variable.
+			global.webRtcServer = webRtcServer;
+
+			webRtcServers.set(webRtcServer.id, webRtcServer);
+			webRtcServer.observer.on('close', () => webRtcServers.delete(webRtcServer.id));
+		});
 
 		worker.observer.on('newrouter', (router) =>
 		{
