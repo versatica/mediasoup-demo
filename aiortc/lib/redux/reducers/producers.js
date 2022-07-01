@@ -14,12 +14,12 @@ const producers = (state = initialState, action) => {
         case 'ADD_PRODUCER':
             {
                 const { producer } = action.payload;
-                return Object.assign(Object.assign({}, state), { [producer.id]: producer });
+                return { ...state, [producer.id]: producer };
             }
         case 'REMOVE_PRODUCER':
             {
                 const { producerId } = action.payload;
-                const newState = Object.assign({}, state);
+                const newState = { ...state };
                 // @ts-ignore
                 delete newState[producerId];
                 return newState;
@@ -29,24 +29,24 @@ const producers = (state = initialState, action) => {
                 const { producerId } = action.payload;
                 // @ts-ignore
                 const producer = state[producerId];
-                const newProducer = Object.assign(Object.assign({}, producer), { paused: true });
-                return Object.assign(Object.assign({}, state), { [producerId]: newProducer });
+                const newProducer = { ...producer, paused: true };
+                return { ...state, [producerId]: newProducer };
             }
         case 'SET_PRODUCER_RESUMED':
             {
                 const { producerId } = action.payload;
                 // @ts-ignore
                 const producer = state[producerId];
-                const newProducer = Object.assign(Object.assign({}, producer), { paused: false });
-                return Object.assign(Object.assign({}, state), { [producerId]: newProducer });
+                const newProducer = { ...producer, paused: false };
+                return { ...state, [producerId]: newProducer };
             }
         case 'SET_PRODUCER_TRACK':
             {
                 const { producerId, track } = action.payload;
                 // @ts-ignore
                 const producer = state[producerId];
-                const newProducer = Object.assign(Object.assign({}, producer), { track });
-                return Object.assign(Object.assign({}, state), { [producerId]: newProducer });
+                const newProducer = { ...producer, track };
+                return { ...state, [producerId]: newProducer };
             }
         case 'SET_PRODUCER_SCORE':
             {
@@ -55,8 +55,8 @@ const producers = (state = initialState, action) => {
                 const producer = state[producerId];
                 if (!producer)
                     return state;
-                const newProducer = Object.assign(Object.assign({}, producer), { score });
-                return Object.assign(Object.assign({}, state), { [producerId]: newProducer });
+                const newProducer = { ...producer, score };
+                return { ...state, [producerId]: newProducer };
             }
         default:
             {

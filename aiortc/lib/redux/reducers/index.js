@@ -11,7 +11,7 @@ const dataProducers_1 = __importDefault(require("./dataProducers"));
 const peers_1 = __importDefault(require("./peers"));
 const consumers_1 = __importDefault(require("./consumers"));
 const dataConsumers_1 = __importDefault(require("./dataConsumers"));
-const reducers = redux_1.combineReducers({
+const reducers = (0, redux_1.combineReducers)({
     room: room_1.default,
     me: me_1.default,
     producers: producers_1.default,

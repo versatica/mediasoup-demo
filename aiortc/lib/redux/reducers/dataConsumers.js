@@ -14,12 +14,12 @@ const dataConsumers = (state = initialState, action) => {
         case 'ADD_DATA_CONSUMER':
             {
                 const { dataConsumer } = action.payload;
-                return Object.assign(Object.assign({}, state), { [dataConsumer.id]: dataConsumer });
+                return { ...state, [dataConsumer.id]: dataConsumer };
             }
         case 'REMOVE_DATA_CONSUMER':
             {
                 const { dataConsumerId } = action.payload;
-                const newState = Object.assign({}, state);
+                const newState = { ...state };
                 // @ts-ignore
                 delete newState[dataConsumerId];
                 return newState;

@@ -14,12 +14,12 @@ const dataProducers = (state = initialState, action) => {
         case 'ADD_DATA_PRODUCER':
             {
                 const { dataProducer } = action.payload;
-                return Object.assign(Object.assign({}, state), { [dataProducer.id]: dataProducer });
+                return { ...state, [dataProducer.id]: dataProducer };
             }
         case 'REMOVE_DATA_PRODUCER':
             {
                 const { dataProducerId } = action.payload;
-                const newState = Object.assign({}, state);
+                const newState = { ...state };
                 // @ts-ignore
                 delete newState[dataProducerId];
                 return newState;
