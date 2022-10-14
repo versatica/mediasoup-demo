@@ -59,7 +59,7 @@ $ npm start
 
 ```bash
 $ cd app
-$ npm start
+$ MEDIASOUP_ANNOUNCED_IP=[public ip of your server] npm start
 ```
 
 * Enjoy.
