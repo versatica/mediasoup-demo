@@ -835,11 +835,11 @@ class Room extends EventEmitter
 
 	_handleActiveSpeakerObserver()
 	{
-		this._activeSpeakerObserver.on('dominantspeaker', (producer) =>
+		this._activeSpeakerObserver.on('dominantspeaker', (dominantSpeaker) =>
 		{
 			logger.debug(
 				'activeSpeakerObserver "dominantspeaker" event [producerId:%s]',
-				producer.id);
+				dominantSpeaker.producer.id);
 		});
 	}
 
