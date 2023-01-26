@@ -46,16 +46,21 @@ class Room extends EventEmitter
 				interval   : 800
 			});
 
+		// Create a mediasoup ActiveSpeakerObserver.
+		const activeSpeakerObserver = await mediasoupRouter.createActiveSpeakerObserver();
+
 		const bot = await Bot.create({ mediasoupRouter });
 
 		return new Room(
 			{
 				roomId,
 				protooRoom,
+				webRtcServer : mediasoupWorker.appData.webRtcServer,
 				mediasoupRouter,
 				audioLevelObserver,
-				bot,
-				consumerReplicas
+				activeSpeakerObserver,
+				consumerReplicas,
+				bot
 			});
 	}
 
@@ -63,15 +68,16 @@ class Room extends EventEmitter
 		{
 			roomId,
 			protooRoom,
+			webRtcServer,
 			mediasoupRouter,
 			audioLevelObserver,
-			bot,
-			consumerReplicas
+			activeSpeakerObserver,
+			consumerReplicas,
+			bot
 		})
 	{
 		super();
 
-		console.warn(`Room constructor. consumerReplicas:${consumerReplicas}`);
 		this.setMaxListeners(Infinity);
 
 		// Room id.
@@ -100,6 +106,10 @@ class Room extends EventEmitter
 		// @type {Map<String, Object>}
 		this._broadcasters = new Map();
 
+		// mediasoup WebRtcServer instance.
+		// @type {mediasoup.WebRtcServer}
+		this._webRtcServer = webRtcServer;
+
 		// mediasoup Router instance.
 		// @type {mediasoup.Router}
 		this._mediasoupRouter = mediasoupRouter;
@@ -107,6 +117,10 @@ class Room extends EventEmitter
 		// mediasoup AudioLevelObserver.
 		// @type {mediasoup.AudioLevelObserver}
 		this._audioLevelObserver = audioLevelObserver;
+
+		// mediasoup ActiveSpeakerObserver.
+		// @type {mediasoup.ActiveSpeakerObserver}
+		this._activeSpeakerObserver = activeSpeakerObserver;
 
 		// DataChannel bot.
 		// @type {Bot}
@@ -123,8 +137,12 @@ class Room extends EventEmitter
 		// Handle audioLevelObserver.
 		this._handleAudioLevelObserver();
 
+		// Handle activeSpeakerObserver.
+		this._handleActiveSpeakerObserver();
+
 		// For debugging.
 		global.audioLevelObserver = this._audioLevelObserver;
+		global.activeSpeakerObserver = this._activeSpeakerObserver;
 		global.bot = this._bot;
 	}
 
@@ -445,7 +463,10 @@ class Room extends EventEmitter
 				};
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					webRtcTransportOptions);
+					{
+						...webRtcTransportOptions,
+						webRtcServer : this._webRtcServer
+					});
 
 				// Store it.
 				broadcaster.data.transports.set(transport.id, transport);
@@ -586,10 +607,13 @@ class Room extends EventEmitter
 				});
 		}
 
-		// Add into the audioLevelObserver.
+		// Add into the AudioLevelObserver and ActiveSpeakerObserver.
 		if (producer.kind === 'audio')
 		{
 			this._audioLevelObserver.addProducer({ producerId: producer.id })
+				.catch(() => {});
+
+			this._activeSpeakerObserver.addProducer({ producerId: producer.id })
 				.catch(() => {});
 		}
 
@@ -816,6 +840,16 @@ class Room extends EventEmitter
 		});
 	}
 
+	_handleActiveSpeakerObserver()
+	{
+		this._activeSpeakerObserver.on('dominantspeaker', (dominantSpeaker) =>
+		{
+			logger.debug(
+				'activeSpeakerObserver "dominantspeaker" event [producerId:%s]',
+				dominantSpeaker.producer.id);
+		});
+	}
+
 	/**
 	 * Handle protoo requests from browsers.
 	 *
@@ -954,7 +988,10 @@ class Room extends EventEmitter
 				}
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					webRtcTransportOptions);
+					{
+						...webRtcTransportOptions,
+						webRtcServer : this._webRtcServer
+					});
 
 				transport.on('sctpstatechange', (sctpState) =>
 				{
@@ -1115,10 +1152,13 @@ class Room extends EventEmitter
 						});
 				}
 
-				// Add into the audioLevelObserver.
+				// Add into the AudioLevelObserver and ActiveSpeakerObserver.
 				if (producer.kind === 'audio')
 				{
 					this._audioLevelObserver.addProducer({ producerId: producer.id })
+						.catch(() => {});
+
+					this._activeSpeakerObserver.addProducer({ producerId: producer.id })
 						.catch(() => {});
 				}
 

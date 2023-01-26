@@ -4,8 +4,8 @@ export declare class Logger {
     private readonly _warn;
     private readonly _error;
     constructor(prefix?: string);
-    readonly debug: debug.Debugger;
-    readonly warn: debug.Debugger;
-    readonly error: debug.Debugger;
+    get debug(): debug.Debugger;
+    get warn(): debug.Debugger;
+    get error(): debug.Debugger;
 }
 //# sourceMappingURL=Logger.d.ts.map

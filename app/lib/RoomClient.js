@@ -353,7 +353,11 @@ export default class RoomClient
 								producerId,
 								kind,
 								rtpParameters,
-								appData : { ...appData, peerId } // Trick.
+								// NOTE: Force streamId to be same in mic and webcam and different
+								// in screen sharing so libwebrtc will just try to sync mic and
+								// webcam streams from the same remote peer.
+								streamId : `${peerId}-${appData.share ? 'share' : 'mic-webcam'}`,
+								appData  : { ...appData, peerId } // Trick.
 							});
 
 						if (this._e2eKey && e2e.isSupported())

@@ -14,12 +14,12 @@ const consumers = (state = initialState, action) => {
         case 'ADD_CONSUMER':
             {
                 const { consumer } = action.payload;
-                return Object.assign(Object.assign({}, state), { [consumer.id]: consumer });
+                return { ...state, [consumer.id]: consumer };
             }
         case 'REMOVE_CONSUMER':
             {
                 const { consumerId } = action.payload;
-                const newState = Object.assign({}, state);
+                const newState = { ...state };
                 // @ts-ignore
                 delete newState[consumerId];
                 return newState;
@@ -31,10 +31,10 @@ const consumers = (state = initialState, action) => {
                 const consumer = state[consumerId];
                 let newConsumer;
                 if (originator === 'local')
-                    newConsumer = Object.assign(Object.assign({}, consumer), { locallyPaused: true });
+                    newConsumer = { ...consumer, locallyPaused: true };
                 else
-                    newConsumer = Object.assign(Object.assign({}, consumer), { remotelyPaused: true });
-                return Object.assign(Object.assign({}, state), { [consumerId]: newConsumer });
+                    newConsumer = { ...consumer, remotelyPaused: true };
+                return { ...state, [consumerId]: newConsumer };
             }
         case 'SET_CONSUMER_RESUMED':
             {
@@ -43,42 +43,50 @@ const consumers = (state = initialState, action) => {
                 const consumer = state[consumerId];
                 let newConsumer;
                 if (originator === 'local')
-                    newConsumer = Object.assign(Object.assign({}, consumer), { locallyPaused: false });
+                    newConsumer = { ...consumer, locallyPaused: false };
                 else
-                    newConsumer = Object.assign(Object.assign({}, consumer), { remotelyPaused: false });
-                return Object.assign(Object.assign({}, state), { [consumerId]: newConsumer });
+                    newConsumer = { ...consumer, remotelyPaused: false };
+                return { ...state, [consumerId]: newConsumer };
             }
         case 'SET_CONSUMER_CURRENT_LAYERS':
             {
                 const { consumerId, spatialLayer, temporalLayer } = action.payload;
                 // @ts-ignore
                 const consumer = state[consumerId];
-                const newConsumer = Object.assign(Object.assign({}, consumer), { currentSpatialLayer: spatialLayer, currentTemporalLayer: temporalLayer });
-                return Object.assign(Object.assign({}, state), { [consumerId]: newConsumer });
+                const newConsumer = {
+                    ...consumer,
+                    currentSpatialLayer: spatialLayer,
+                    currentTemporalLayer: temporalLayer
+                };
+                return { ...state, [consumerId]: newConsumer };
             }
         case 'SET_CONSUMER_PREFERRED_LAYERS':
             {
                 const { consumerId, spatialLayer, temporalLayer } = action.payload;
                 // @ts-ignore
                 const consumer = state[consumerId];
-                const newConsumer = Object.assign(Object.assign({}, consumer), { preferredSpatialLayer: spatialLayer, preferredTemporalLayer: temporalLayer });
-                return Object.assign(Object.assign({}, state), { [consumerId]: newConsumer });
+                const newConsumer = {
+                    ...consumer,
+                    preferredSpatialLayer: spatialLayer,
+                    preferredTemporalLayer: temporalLayer
+                };
+                return { ...state, [consumerId]: newConsumer };
             }
         case 'SET_CONSUMER_PRIORITY':
             {
                 const { consumerId, priority } = action.payload;
                 // @ts-ignore
                 const consumer = state[consumerId];
-                const newConsumer = Object.assign(Object.assign({}, consumer), { priority });
-                return Object.assign(Object.assign({}, state), { [consumerId]: newConsumer });
+                const newConsumer = { ...consumer, priority };
+                return { ...state, [consumerId]: newConsumer };
             }
         case 'SET_CONSUMER_TRACK':
             {
                 const { consumerId, track } = action.payload;
                 // @ts-ignore
                 const consumer = state[consumerId];
-                const newConsumer = Object.assign(Object.assign({}, consumer), { track });
-                return Object.assign(Object.assign({}, state), { [consumerId]: newConsumer });
+                const newConsumer = { ...consumer, track };
+                return { ...state, [consumerId]: newConsumer };
             }
         case 'SET_CONSUMER_SCORE':
             {
@@ -87,8 +95,8 @@ const consumers = (state = initialState, action) => {
                 const consumer = state[consumerId];
                 if (!consumer)
                     return state;
-                const newConsumer = Object.assign(Object.assign({}, consumer), { score });
-                return Object.assign(Object.assign({}, state), { [consumerId]: newConsumer });
+                const newConsumer = { ...consumer, score };
+                return { ...state, [consumerId]: newConsumer };
             }
         default:
             {
