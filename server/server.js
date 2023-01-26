@@ -492,6 +492,13 @@ async function runProtooWebSocketServer()
 			return;
 		}
 
+		let consumerReplicas = Number(u.query['consumerReplicas']);
+
+		if (isNaN(consumerReplicas))
+		{
+			consumerReplicas = 0;
+		}
+
 		logger.info(
 			'protoo connection request [roomId:%s, peerId:%s, address:%s, origin:%s]',
 			roomId, peerId, info.socket.remoteAddress, info.origin);
@@ -501,7 +508,7 @@ async function runProtooWebSocketServer()
 		// roomId.
 		queue.push(async () =>
 		{
-			const room = await getOrCreateRoom({ roomId });
+			const room = await getOrCreateRoom({ roomId, consumerReplicas });
 
 			// Accept the protoo WebSocket connection.
 			const protooWebSocketTransport = accept();
@@ -533,7 +540,7 @@ function getMediasoupWorker()
 /**
  * Get a Room instance (or create one if it does not exist).
  */
-async function getOrCreateRoom({ roomId })
+async function getOrCreateRoom({ roomId, consumerReplicas })
 {
 	let room = rooms.get(roomId);
 
@@ -544,7 +551,7 @@ async function getOrCreateRoom({ roomId })
 
 		const mediasoupWorker = getMediasoupWorker();
 
-		room = await Room.create({ mediasoupWorker, roomId });
+		room = await Room.create({ mediasoupWorker, roomId, consumerReplicas });
 
 		rooms.set(roomId, room);
 		room.on('close', () => rooms.delete(roomId));
