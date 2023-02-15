@@ -68,15 +68,17 @@ async function run()
 	let displayName =
 		urlParser.query.displayName || (cookiesManager.getUser() || {}).displayName;
 	const handlerName = urlParser.query.handlerName || urlParser.query.handler;
-	const useSimulcast = urlParser.query.simulcast !== 'false';
-	const useSharingSimulcast = urlParser.query.sharingSimulcast !== 'false';
 	const forceTcp = urlParser.query.forceTcp === 'true';
 	const produce = urlParser.query.produce !== 'false';
 	const consume = urlParser.query.consume !== 'false';
+	const datachannel = urlParser.query.datachannel !== 'false';
+	const forceVP8 = urlParser.query.forceVP8 === 'true';
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
-	const svc = urlParser.query.svc;
-	const datachannel = urlParser.query.datachannel !== 'false';
+	const enableWebcamLayers = urlParser.query.enableWebcamLayers !== 'false';
+	const enableSharingLayers = urlParser.query.enableSharingLayers !== 'false';
+	const webcamScalabilityMode = urlParser.query.webcamScalabilityMode;
+	const sharingScalabilityMode = urlParser.query.sharingScalabilityMode;
 	const info = urlParser.query.info === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
@@ -119,15 +121,17 @@ async function run()
 			case 'roomId':
 			case 'handlerName':
 			case 'handler':
-			case 'simulcast':
-			case 'sharingSimulcast':
+			case 'forceTcp':
 			case 'produce':
 			case 'consume':
+			case 'datachannel':
+			case 'forceVP8':
 			case 'forceH264':
 			case 'forceVP9':
-			case 'forceTcp':
-			case 'svc':
-			case 'datachannel':
+			case 'enableWebcamLayers':
+			case 'enableSharingLayers':
+			case 'webcamScalabilityMode':
+			case 'sharingScalabilityMode':
 			case 'info':
 			case 'faceDetection':
 			case 'externalVideo':
@@ -177,15 +181,17 @@ async function run()
 			displayName,
 			device,
 			handlerName : handlerName,
-			useSimulcast,
-			useSharingSimulcast,
 			forceTcp,
 			produce,
 			consume,
+			datachannel,
+			forceVP8,
 			forceH264,
 			forceVP9,
-			svc,
-			datachannel,
+			enableWebcamLayers,
+			enableSharingLayers,
+			webcamScalabilityMode,
+			sharingScalabilityMode,
 			externalVideo,
 			e2eKey,
 			consumerReplicas
