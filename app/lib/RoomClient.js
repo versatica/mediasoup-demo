@@ -30,7 +30,7 @@ const WEBCAM_SIMULCAST_ENCODINGS =
 // Used for VP9 webcam video.
 const WEBCAM_KSVC_ENCODINGS =
 [
-	{ scalabilityMode: 'S3T3_KEY' }
+	{ scalabilityMode: 'L3T3_KEY' }
 ];
 
 // Used for simulcast screen sharing.
@@ -43,7 +43,7 @@ const SCREEN_SHARING_SIMULCAST_ENCODINGS =
 // Used for VP9 screen sharing.
 const SCREEN_SHARING_SVC_ENCODINGS =
 [
-	{ scalabilityMode: 'S3T3', dtx: true }
+	{ scalabilityMode: 'L3T3', dtx: true }
 ];
 
 const EXTERNAL_VIDEO_SRC = '/resources/videos/video-audio-stereo.mp4';
