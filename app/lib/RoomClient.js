@@ -51,6 +51,7 @@ export default class RoomClient
 			enableSharingLayers,
 			webcamScalabilityMode,
 			sharingScalabilityMode,
+			numSimulcastStreams,
 			forceVP8,
 			forceH264,
 			forceVP9,
@@ -124,6 +125,10 @@ export default class RoomClient
 		// Scalability mode for sharing.
 		// @type {String}
 		this._sharingScalabilityMode = sharingScalabilityMode;
+
+		// Number of simuclast streams for webcam and sharing.
+		// @type {Number}
+		this._numSimulcastStreams = numSimulcastStreams;
 
 		// External video.
 		// @type {HTMLVideoElement}
@@ -1064,21 +1069,33 @@ export default class RoomClient
 					encodings =
 					[
 						{
-							scaleResolutionDownBy : 4,
-							maxBitrate            : 500000,
-							scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
-						},
-						{
-							scaleResolutionDownBy : 2,
-							maxBitrate            : 1000000,
-							scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
-						},
-						{
 							scaleResolutionDownBy : 1,
 							maxBitrate            : 5000000,
 							scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
 						}
 					];
+
+					if (this._numSimulcastStreams > 1)
+					{
+						encodings.unshift(
+							{
+								scaleResolutionDownBy : 2,
+								maxBitrate            : 1000000,
+								scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
+							}
+						);
+					}
+
+					if (this._numSimulcastStreams > 2)
+					{
+						encodings.unshift(
+							{
+								scaleResolutionDownBy : 4,
+								maxBitrate            : 500000,
+								scalabilityMode       : this._webcamScalabilityMode || 'L1T3'
+							}
+						);
+					}
 				}
 			}
 
@@ -1415,18 +1432,36 @@ export default class RoomClient
 					encodings =
 					[
 						{
-							scaleResolutionDownBy : 2,
-							maxBitrate            : 1000000,
-							scalabilityMode       : this._sharingScalabilityMode || 'L1T3',
-							dtx                   : true
-						},
-						{
 							scaleResolutionDownBy : 1,
 							maxBitrate            : 5000000,
 							scalabilityMode       : this._sharingScalabilityMode || 'L1T3',
 							dtx                   : true
 						}
 					];
+
+					if (this._numSimulcastStreams > 1)
+					{
+						encodings.unshift(
+							{
+								scaleResolutionDownBy : 2,
+								maxBitrate            : 1000000,
+								scalabilityMode       : this._sharingScalabilityMode || 'L1T3',
+								dtx                   : true
+							}
+						);
+					}
+
+					if (this._numSimulcastStreams > 2)
+					{
+						encodings.unshift(
+							{
+								scaleResolutionDownBy : 4,
+								maxBitrate            : 500000,
+								scalabilityMode       : this._sharingScalabilityMode || 'L1T3',
+								dtx                   : true
+							}
+						);
+					}
 				}
 			}
 

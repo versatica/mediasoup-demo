@@ -79,6 +79,8 @@ async function run()
 	const enableSharingLayers = urlParser.query.enableSharingLayers !== 'false';
 	const webcamScalabilityMode = urlParser.query.webcamScalabilityMode;
 	const sharingScalabilityMode = urlParser.query.sharingScalabilityMode;
+	const numSimulcastStreams = urlParser.query.numSimulcastStreams ?
+		Number(urlParser.query.numSimulcastStreams) : 3;
 	const info = urlParser.query.info === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
@@ -132,6 +134,7 @@ async function run()
 			case 'enableSharingLayers':
 			case 'webcamScalabilityMode':
 			case 'sharingScalabilityMode':
+			case 'numSimulcastStreams':
 			case 'info':
 			case 'faceDetection':
 			case 'externalVideo':
@@ -192,6 +195,7 @@ async function run()
 			enableSharingLayers,
 			webcamScalabilityMode,
 			sharingScalabilityMode,
+			numSimulcastStreams,
 			externalVideo,
 			e2eKey,
 			consumerReplicas
