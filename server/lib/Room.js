@@ -1643,6 +1643,8 @@ class Room extends EventEmitter
 							{
 								producerId      : producer.id,
 								rtpCapabilities : consumerPeer.data.rtpCapabilities,
+								// Enable NACK for OPUS.
+								enableRtx       : true,
 								paused          : true
 							});
 					}

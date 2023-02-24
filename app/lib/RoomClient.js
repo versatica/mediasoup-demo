@@ -812,8 +812,10 @@ export default class RoomClient
 					track,
 					codecOptions :
 					{
-						opusStereo : 1,
-						opusDtx    : 1
+						opusStereo : true,
+						opusDtx    : true,
+						opusFec    : true,
+						opusNack   : true
 					}
 					// NOTE: for testing codec selection.
 					// codec : this._mediasoupDevice.rtpCapabilities.codecs
