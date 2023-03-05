@@ -64,7 +64,7 @@ $ npm install
 $ cp config.example.js config.js
 ```
 
-**NOTE:** To be perfectly clear, "customize it for your scenario" is not something "optional". If you don't set proper values in `config.js` the application **won't work**.  You must configure a tls certificate.
+**NOTE:** To be perfectly clear, "customize it for your scenario" is not something "optional". If you don't set proper values in `config.js` the application **won't work**. You must configure a tls certificate.
 
 * Set up the mediasoup-demo browser app:
 
