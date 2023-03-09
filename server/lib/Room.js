@@ -668,6 +668,8 @@ class Room extends EventEmitter
 
 		consumer.on('producerclose', () =>
 		{
+			// Should close consumer on server side.
+			consumer.close();
 			// Remove from its map.
 			broadcaster.data.consumers.delete(consumer.id);
 		});
@@ -1667,6 +1669,8 @@ class Room extends EventEmitter
 
 					consumer.on('producerclose', () =>
 					{
+						// Should close consumer on server side.
+						consumer.close();
 						// Remove from its map.
 						consumerPeer.data.consumers.delete(consumer.id);
 
