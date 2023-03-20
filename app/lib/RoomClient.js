@@ -1423,7 +1423,7 @@ export default class RoomClient
 					[
 						{
 							maxBitrate      : 5000000,
-							scalabilityMode : 'L3T3',
+							scalabilityMode : this._sharingScalabilityMode || 'L3T3',
 							dtx             : true
 						}
 					];
