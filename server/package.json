@@ -12,7 +12,7 @@
     "connect": "node connect.js"
   },
   "dependencies": {
-    "@sitespeed.io/throttle": "^0.5.4",
+    "@sitespeed.io/throttle": "^3.1.1",
     "awaitqueue": "^2.3.3",
     "body-parser": "^1.19.0",
     "colors": "^1.4.0",
