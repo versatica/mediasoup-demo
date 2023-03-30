@@ -2193,17 +2193,17 @@ export default class RoomClient
 		return consumer.getStats();
 	}
 
-	async applyNetworkThrottle({ uplink, downlink, rtt, secret })
+	async applyNetworkThrottle({ uplink, downlink, rtt, secret, packetLoss })
 	{
 		logger.debug(
-			'applyNetworkThrottle() [uplink:%s, downlink:%s, rtt:%s]',
-			uplink, downlink, rtt);
+			'applyNetworkThrottle() [uplink:%s, downlink:%s, rtt:%s, packetLoss:%s]',
+			uplink, downlink, rtt, packetLoss);
 
 		try
 		{
 			await this._protoo.request(
 				'applyNetworkThrottle',
-				{ uplink, downlink, rtt, secret });
+				{ secret, uplink, downlink, rtt, packetLoss });
 		}
 		catch (error)
 		{

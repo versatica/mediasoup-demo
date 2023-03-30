@@ -11,16 +11,17 @@ class NetworkThrottle extends React.Component
 
 		this.state =
 		{
-			uplink   : '',
-			downlink : '',
-			rtt      : '',
-			disabled : false
+			uplink     : '',
+			downlink   : '',
+			rtt        : '',
+			packetLoss : '',
+			disabled   : false
 		};
 	}
 
 	render()
 	{
-		const { uplink, downlink, rtt, disabled } = this.state;
+		const { uplink, downlink, rtt, packetLoss, disabled } = this.state;
 
 		return (
 			<Draggable
@@ -93,6 +94,24 @@ class NetworkThrottle extends React.Component
 								onChange={(event) => this.setState({ rtt: event.target.value })}
 							/>
 						</div>
+
+						<div className='row'>
+							<p className='key'>
+								PACKETLOSS (%)
+							</p>
+
+							<input
+								className='value'
+								type='text'
+								placeholder='NOT SET'
+								disabled={disabled}
+								pattern='[0-9]*'
+								value={packetLoss}
+								autoCorrect='false'
+								spellCheck='false'
+								onChange={(event) => this.setState({ packetLoss: event.target.value })}
+							/>
+						</div>
 					</div>
 
 					<div className='buttons'>
@@ -110,7 +129,7 @@ class NetworkThrottle extends React.Component
 							className='apply'
 							disabled={
 								disabled ||
-								(!uplink.trim() && !downlink.trim() && !rtt.trim())
+								(!uplink.trim() && !downlink.trim() && !rtt.trim() && !packetLoss.trim())
 							}
 						>
 							APPLY
@@ -131,16 +150,17 @@ class NetworkThrottle extends React.Component
 	async _apply()
 	{
 		const { roomClient, secret } = this.props;
-		let { uplink, downlink, rtt } = this.state;
+		let { uplink, downlink, rtt, packetLoss } = this.state;
 
 		uplink = Number(uplink) || 0;
 		downlink = Number(downlink) || 0;
 		rtt = Number(rtt) || 0;
+		packetLoss = Number(packetLoss) || 0;
 
 		this.setState({ disabled: true });
 
 		await roomClient.applyNetworkThrottle(
-			{ uplink, downlink, rtt, secret });
+			{ secret, uplink, downlink, rtt, packetLoss });
 
 		window.onunload = () =>
 		{
@@ -156,10 +176,11 @@ class NetworkThrottle extends React.Component
 
 		this.setState(
 			{
-				uplink   : '',
-				downlink : '',
-				rtt      : '',
-				disabled : false
+				uplink     : '',
+				downlink   : '',
+				rtt        : '',
+				packetLoss : '',
+				disabled   : false
 			});
 
 		this.setState({ disabled: true });
