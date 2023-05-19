@@ -5,7 +5,7 @@ const DEVICES_COOKIE = 'mediasoup-demo.devices';
 
 export function getUser()
 {
-	return jsCookie.getJSON(USER_COOKIE);
+	return jsCookie.get(USER_COOKIE);
 }
 
 export function setUser({ displayName })
@@ -15,7 +15,7 @@ export function setUser({ displayName })
 
 export function getDevices()
 {
-	return jsCookie.getJSON(DEVICES_COOKIE);
+	return jsCookie.get(DEVICES_COOKIE);
 }
 
 export function setDevices({ webcamEnabled })
