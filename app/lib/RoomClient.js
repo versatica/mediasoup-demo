@@ -2251,6 +2251,10 @@ export default class RoomClient
 					handlerName : this._handlerName
 				});
 
+			store.dispatch(stateActions.setRoomMediasoupClientHandler(
+				this._mediasoupDevice.handlerName
+			));
+
 			const routerRtpCapabilities =
 				await this._protoo.request('getRouterRtpCapabilities');
 

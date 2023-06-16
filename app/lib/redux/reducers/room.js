@@ -1,10 +1,11 @@
 const initialState =
 {
-	url             : null,
-	state           : 'new', // new/connecting/connected/disconnected/closed,
-	activeSpeakerId : null,
-	statsPeerId     : null,
-	faceDetection   : false
+	url                    : null,
+	state                  : 'new', // new/connecting/connected/disconnected/closed,
+	mediasoupClientHandler : undefined,
+	activeSpeakerId        : null,
+	statsPeerId            : null,
+	faceDetection          : false
 };
 
 const room = (state = initialState, action) =>
@@ -26,6 +27,13 @@ const room = (state = initialState, action) =>
 				return { ...state, state: roomState };
 			else
 				return { ...state, state: roomState, activeSpeakerId: null, statsPeerId: null };
+		}
+
+		case 'SET_ROOM_MEDIASOUP_CLIENT_HANDLER':
+		{
+			const { mediasoupClientHandler } = action.payload;
+
+			return { ...state, mediasoupClientHandler };
 		}
 
 		case 'SET_ROOM_ACTIVE_SPEAKER':
@@ -67,7 +75,9 @@ const room = (state = initialState, action) =>
 		}
 
 		default:
+		{
 			return state;
+		}
 	}
 };
 

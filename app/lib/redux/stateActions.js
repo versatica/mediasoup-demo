@@ -14,6 +14,14 @@ export const setRoomState = (state) =>
 	};
 };
 
+export const setRoomMediasoupClientHandler = (mediasoupClientHandler) =>
+{
+	return {
+		type    : 'SET_ROOM_MEDIASOUP_CLIENT_HANDLER',
+		payload : { mediasoupClientHandler }
+	};
+};
+
 export const setRoomActiveSpeaker = (peerId) =>
 {
 	return {

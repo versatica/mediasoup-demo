@@ -88,6 +88,53 @@
 		}
 	}
 
+	> .mediasoup-client-handler-name {
+		position: fixed;
+		z-index: 100;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		border-radius: 25px;
+		background-color: $COLOR_BG_1;
+
+		+desktop() {
+			top: 55px;
+			left: 20px;
+			height: 18px;
+			width: 124px;
+		}
+
+		+mobile() {
+			top: 40px;
+			left: 10px;
+			height: 18px;
+			width: 110px;
+		}
+
+		> .text {
+			flex: 100 0 auto;
+			user-select: none;
+			pointer-events: none;
+			text-align: center;
+			font-family: 'Roboto';
+			font-weight: 400;
+			color: rgba(#fff, 0.75);
+
+			+desktop() {
+				font-size: 10px;
+			}
+
+			+mobile() {
+				font-size: 9px;
+			}
+
+			> span.label {
+				color: rgba(#fff, 0.45);
+			}
+		}
+	}
+
 	> .room-link-wrapper {
 		pointer-events: none;
 		position: absolute;
