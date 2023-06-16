@@ -31,31 +31,34 @@
  *   Alias for `gulp dist`.
  */
 
-const fs = require('fs');
-const path = require('path');
-const gulp = require('gulp');
-const gulpif = require('gulp-if');
-const gutil = require('gulp-util');
-const plumber = require('gulp-plumber');
-const rename = require('gulp-rename');
-const header = require('gulp-header');
-const touch = require('gulp-touch-cmd');
-const browserify = require('browserify');
-const watchify = require('watchify');
-const envify = require('envify/custom');
-const uglify = require('gulp-uglify-es').default;
-const source = require('vinyl-source-stream');
-const buffer = require('vinyl-buffer');
-const del = require('del');
-const mkdirp = require('mkdirp');
-const ncp = require('ncp');
-const eslint = require('gulp-eslint');
-const stylus = require('gulp-stylus');
-const cssBase64 = require('gulp-css-base64');
-const nib = require('nib');
-const browserSync = require('browser-sync');
+import * as fs from 'fs';
+import * as path from 'path';
+import { default as gulp } from 'gulp';
+import { default as gulpif } from 'gulp-if';
+import { default as gutil } from 'gulp-util';
+import { default as plumber } from 'gulp-plumber';
+import { default as rename } from 'gulp-rename';
+import { default as header } from 'gulp-header';
+import { default as touch } from 'gulp-touch-cmd';
+import { default as browserify } from 'browserify';
+import { default as watchify } from 'watchify';
+// eslint-disable-next-line import/extensions
+import { default as envify } from 'envify/custom.js';
+import { default as uglify } from 'gulp-uglify-es';
+import { default as source } from 'vinyl-source-stream';
+import { default as buffer } from 'vinyl-buffer';
+import { deleteAsync } from 'del';
+import * as mkdirp from 'mkdirp';
+import { default as ncp } from 'ncp';
+import { default as eslint } from 'gulp-eslint';
+import { default as stylus } from 'gulp-stylus';
+import { default as cssBase64 } from 'gulp-css-base64';
+import { default as nib } from 'nib';
+import { default as browserSync } from 'browser-sync';
+// eslint-disable-next-line import/extensions
+import config from '../server/config.js';
 
-const PKG = require('./package.json');
+const PKG = JSON.parse(fs.readFileSync('package.json').toString());
 const BANNER = fs.readFileSync('banner.txt').toString();
 const BANNER_OPTIONS =
 {
@@ -123,7 +126,7 @@ function bundle(options)
 			.pipe(buffer())
 			.pipe(rename(`${PKG.name}.js`))
 			.pipe(gulpif(process.env.NODE_ENV === 'production',
-				uglify()
+				uglify.default()
 			))
 			.pipe(header(BANNER, BANNER_OPTIONS))
 			.pipe(gulp.dest(OUTPUT_DIR));
@@ -132,7 +135,7 @@ function bundle(options)
 	return rebundle();
 }
 
-gulp.task('clean', () => del(OUTPUT_DIR, { force: true }));
+gulp.task('clean', () => deleteAsync(OUTPUT_DIR, { force: true }));
 
 gulp.task('lint', () =>
 {
@@ -180,6 +183,7 @@ gulp.task('resources', (done) =>
 	const dst = path.join(OUTPUT_DIR, 'resources');
 
 	mkdirp.sync(dst);
+
 	ncp('resources', dst, { stopOnErr: true }, (error) =>
 	{
 		if (error && error[0].code !== 'ENOENT')
@@ -247,8 +251,6 @@ gulp.task('live', gulp.series(
 	'browser:base',
 	(done) =>
 	{
-		const config = require('../server/config');
-
 		browserSync(
 			{
 				open      : 'external',
@@ -271,8 +273,6 @@ gulp.task('devel', gulp.series(
 	'browser:base',
 	async (done) =>
 	{
-		const config = require('../server/config');
-
 		await new Promise((resolve) =>
 		{
 			browserSync.create('producer1').init(
@@ -317,8 +317,6 @@ gulp.task('devel:tcp', gulp.series(
 	'browser:base',
 	async (done) =>
 	{
-		const config = require('../server/config');
-
 		await new Promise((resolve) =>
 		{
 			browserSync.create('producer1').init(
@@ -363,8 +361,6 @@ gulp.task('devel:vp9', gulp.series(
 	'browser:base',
 	async (done) =>
 	{
-		const config = require('../server/config');
-
 		await new Promise((resolve) =>
 		{
 			browserSync.create('producer1').init(
@@ -409,8 +405,6 @@ gulp.task('devel:h264', gulp.series(
 	'browser:base',
 	async (done) =>
 	{
-		const config = require('../server/config');
-
 		await new Promise((resolve) =>
 		{
 			browserSync.create('producer1').init(
