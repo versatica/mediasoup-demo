@@ -16,13 +16,19 @@ const url = require('url');
 const protoo = require('protoo-server');
 const mediasoup = require('mediasoup');
 const express = require('express');
-const bodyParser = require('body-parser');
 const { AwaitQueue } = require('awaitqueue');
 const Logger = require('./lib/Logger');
 const utils = require('./lib/utils');
 const Room = require('./lib/Room');
 const interactiveServer = require('./lib/interactiveServer');
 const interactiveClient = require('./lib/interactiveClient');
+const sdpTransform = require('sdp-transform');
+const sdpCommonUtils = require('mediasoup-client/lib/handlers/sdp/commonUtils');
+const ortc = require('mediasoup-client/lib/ortc');
+const { RemoteSdp } = require('mediasoup-client/lib/handlers/sdp/RemoteSdp');
+const sdpUnifiedPlanUtils = require('mediasoup-client/lib/handlers/sdp/unifiedPlanUtils');
+const utils = require('mediasoup-client/lib/utils');
+const cors = require('cors');
 
 const logger = new Logger();
 
@@ -154,22 +160,31 @@ async function createExpressApp()
 
 	expressApp = express();
 
-	expressApp.use(bodyParser.json());
+	expressApp.use(express.json());
+	expressApp.use(express.text({
+		type : [
+			'application/sdp',
+			'application/trickle-ice-sdpfrag',
+			'text/plain'
+		]
+	}));
+	expressApp.use(
+		cors({
+			origin : true
+		})
+	);
 
 	/**
 	 * For every API request, verify that the roomId in the path matches and
 	 * existing room.
 	 */
 	expressApp.param(
-		'roomId', (req, res, next, roomId) =>
+		'roomId', async (req, res, next, roomId) =>
 		{
 			// The room must exist for all API requests.
 			if (!rooms.has(roomId))
 			{
-				const error = new Error(`room with id "${roomId}" not found`);
-
-				error.status = 404;
-				throw error;
+				await getOrCreateRoom({ roomId });
 			}
 
 			req.room = rooms.get(roomId);
@@ -253,7 +268,7 @@ async function createExpressApp()
 						broadcasterId,
 						type,
 						rtcpMux,
-						comedia, 
+						comedia,
 						sctpCapabilities
 					});
 
@@ -383,7 +398,7 @@ async function createExpressApp()
 				next(error);
 			}
 		});
-	
+
 	/**
 	 * POST API to create a mediasoup DataProducer associated to a Broadcaster.
 	 * The exact Transport in which the DataProducer must be created is signaled in
@@ -408,6 +423,191 @@ async function createExpressApp()
 					});
 
 				res.status(200).json(data);
+			}
+			catch (error)
+			{
+				next(error);
+			}
+		});
+
+	/**
+	 * WHIP post handler.
+	 */
+	expressApp.post(
+		'/whip/:roomId/:broadcasterId', async (req, res, next) =>
+		{
+			logger.info('whip POST', req.params, req.headers, req.body);
+			const { broadcasterId } = req.params;
+
+			try
+			{
+				const localSdpObject = sdpTransform.parse(req.body);
+
+				const rtpCapabilities = sdpCommonUtils.extractRtpCapabilities(
+					{ sdpObject: localSdpObject });
+				const dtlsParameters = sdpCommonUtils.extractDtlsParameters(
+					{ sdpObject: localSdpObject });
+
+				const routerRtpCapabilities = req.room.getRouterRtpCapabilities();
+				const extendedRtpCapabilities = ortc.getExtendedRtpCapabilities(
+					rtpCapabilities, routerRtpCapabilities);
+
+				const sendingRtpParametersByKind =
+				{
+					audio : ortc.getSendingRtpParameters('audio', extendedRtpCapabilities),
+					video : ortc.getSendingRtpParameters('video', extendedRtpCapabilities)
+				};
+				const sendingRemoteRtpParametersByKind =
+				{
+					audio : ortc.getSendingRemoteRtpParameters('audio', extendedRtpCapabilities),
+					video : ortc.getSendingRemoteRtpParameters('video', extendedRtpCapabilities)
+				};
+
+				// Create a broadcaster, if it not exists.
+				let broadcaster = req.room.getBroadcaster({ broadcasterId });
+
+				if (!broadcaster)
+				{
+					await req.room.createBroadcaster({
+						id          : broadcasterId,
+						displayName : 'WHIP broadcaster',
+						device      : { name: 'WHIP device' },
+						rtpCapabilities
+					});
+					broadcaster = req.room.getBroadcaster({ broadcasterId });
+				}
+
+				// Create a WebRTC transport.
+				const transport = await req.room.createBroadcasterTransport({
+					broadcasterId,
+					type : 'webrtc'
+				});
+
+				// Connect the WebRTC transport.
+				await req.room.connectBroadcasterTransport({
+					broadcasterId,
+					transportId : transport.id,
+					dtlsParameters
+				});
+
+				const remoteSdp = new RemoteSdp({
+					iceParameters  : transport.iceParameters,
+					iceCandidates  : transport.iceCandidates,
+					dtlsParameters : transport.dtlsParameters,
+					sctpParameters : transport.sctpParameters
+				});
+
+				broadcaster.data.transports.get(transport.id).appData.remoteSdp = remoteSdp;
+
+				// Publish audio and video.
+				for (const { type, mid } of localSdpObject.media)
+				{
+					const mediaSectionIdx = remoteSdp.getNextMediaSectionIdx();
+					const offerMediaObject = localSdpObject.media[mediaSectionIdx.idx];
+
+					const sendingRtpParameters =
+						utils.clone(sendingRtpParametersByKind[type], {});
+
+					const sendingRemoteRtpParameters =
+						utils.clone(sendingRemoteRtpParametersByKind[type], {});
+
+					// Set MID.
+					sendingRtpParameters.mid = String(mid);
+
+					// Set RTCP CNAME.
+					sendingRtpParameters.rtcp.cname =
+						sdpCommonUtils.getCname({ offerMediaObject });
+
+					// Set RTP encodings by parsing the SDP offer.
+					sendingRtpParameters.encodings =
+						sdpUnifiedPlanUtils.getRtpEncodings({ offerMediaObject });
+
+					remoteSdp.send({
+						offerMediaObject,
+						reuseMid            : mediaSectionIdx.reuseMid,
+						offerRtpParameters  : sendingRtpParameters,
+						answerRtpParameters : sendingRemoteRtpParameters,
+						codecOptions        : {},
+						extmapAllowMixed    : true
+					});
+
+					await req.room.createBroadcasterProducer({
+						broadcasterId,
+						transportId   : transport.id,
+						kind          : type,
+						rtpParameters : sendingRtpParameters
+					});
+				}
+				const answer = remoteSdp.getSdp();
+
+				res.contentType('application/sdp')
+					.status(201)
+					.send(answer);
+			}
+			catch (error)
+			{
+				next(error);
+			}
+		});
+
+	/**
+	 * WHIP patch handler.
+	 */
+	expressApp.patch(
+		'/whip/:roomId/:broadcasterId', async (req, res, next) =>
+		{
+			logger.info('whip PATCH', req.params, req.headers, req.body);
+			const { broadcasterId } = req.params;
+
+			try
+			{
+				const broadcaster = req.room.getBroadcaster({ broadcasterId });
+
+				if (!broadcaster)
+					throw Error(`broadcaster with id "${broadcasterId}" does not exist`);
+
+				if (!broadcaster.data.transports.size)
+					throw Error(`broadcaster with id "${broadcasterId}" has no transports`);
+
+				const transport = [ ...broadcaster.data.transports.values() ][0];
+				const { remoteSdp } = transport.appData;
+
+				if (!remoteSdp)
+					throw Error(`broadcaster with id "${broadcasterId}" has no remote SDP set`);
+
+				const iceParameters = await req.room.restartBroadcasterTransportICE({
+					broadcasterId,
+					transportId : transport.id
+				});
+
+				remoteSdp.updateIceParameters(iceParameters);
+
+				const answer = remoteSdp.getSdp();
+
+				res.contentType('application/sdp')
+					.status(200)
+					.send(answer);
+			}
+			catch (error)
+			{
+				next(error);
+			}
+		});
+
+	/**
+	 * WHIP delete handler.
+	 */
+	expressApp.delete(
+		'/whip/:roomId/:broadcasterId', async (req, res, next) =>
+		{
+			logger.info('whip DELETE', req.params, req.headers);
+			const { broadcasterId } = req.params;
+
+			try
+			{
+				req.room.deleteBroadcaster({ broadcasterId });
+				res.contentType('text/plain').status(200)
+					.send();
 			}
 			catch (error)
 			{

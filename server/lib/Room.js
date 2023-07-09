@@ -292,6 +292,16 @@ class Room extends EventEmitter
 	}
 
 	/**
+	 * Get a Broadcaster.
+	 *
+	 * @type {String} broadcasterId - Broadcaster id.
+	 */
+	getBroadcaster({ broadcasterId })
+	{
+		return this._broadcasters.get(broadcasterId);
+	}
+
+	/**
 	 * Create a Broadcaster. This is for HTTP API requests (see server.js).
 	 *
 	 * @async
@@ -544,6 +554,40 @@ class Room extends EventEmitter
 		}
 
 		await transport.connect({ dtlsParameters });
+	}
+
+	/**
+	 * Restart ICE for a Broadcaster mediasoup WebRtcTransport.
+	 *
+	 * @async
+	 *
+	 * @type {String} broadcasterId
+	 * @type {String} transportId
+	 */
+	async restartBroadcasterTransportICE(
+		{
+			broadcasterId,
+			transportId
+		}
+	)
+	{
+		const broadcaster = this._broadcasters.get(broadcasterId);
+
+		if (!broadcaster)
+			throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
+
+		const transport = broadcaster.data.transports.get(transportId);
+
+		if (!transport)
+			throw new Error(`transport with id "${transportId}" does not exist`);
+
+		if (transport.constructor.name !== 'WebRtcTransport')
+		{
+			throw new Error(
+				`transport with id "${transportId}" is not a WebRtcTransport`);
+		}
+
+		return await transport.restartIce();
 	}
 
 	/**
