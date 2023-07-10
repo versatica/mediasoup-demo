@@ -163,18 +163,18 @@ async function createExpressApp()
 	expressApp.param(
 		'roomId', (req, res, next, roomId) =>
 		{
-			// The room must exist for all API requests.
-			if (!rooms.has(roomId))
+			queue.push(async () =>
 			{
-				const error = new Error(`room with id "${roomId}" not found`);
+				req.room = await getOrCreateRoom({ roomId, consumerReplicas: 0 });
 
-				error.status = 404;
-				throw error;
-			}
+				next();
+			})
+				.catch((error) =>
+				{
+					logger.error('room creation or room joining via broadcaster failed:%o', error);
 
-			req.room = rooms.get(roomId);
-
-			next();
+					next(error);
+				});
 		});
 
 	/**

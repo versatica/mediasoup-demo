@@ -133,7 +133,7 @@ module.exports =
 					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP,
 					port        : 44444
 				}
-			],
+			]
 		},
 		// mediasoup WebRtcTransport options for WebRTC endpoints (mediasoup-client,
 		// libmediasoupclient).
