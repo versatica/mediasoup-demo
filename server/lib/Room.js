@@ -170,8 +170,13 @@ class Room extends EventEmitter
 		// Stop network throttling.
 		if (this._networkThrottled)
 		{
+			logger.debug('close() | stopping network throttle');
+
 			throttle.stop({})
-				.catch(() => {});
+				.catch((error) =>
+				{
+					logger.error(`close() | failed to stop network throttle:${error}`);
+				});
 		}
 	}
 
@@ -1510,6 +1515,8 @@ class Room extends EventEmitter
 
 				try
 				{
+					this._networkThrottled = true;
+
 					await throttle.start(
 						{
 							up         : uplink || DefaultUplink,
