@@ -371,7 +371,7 @@ gulp.task('devel:vp9', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&consume=false',
+					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&numSimulcastStreams=3&webcamScalabilityMode=L1T3&consume=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
@@ -389,7 +389,7 @@ gulp.task('devel:vp9', gulp.series(
 				{
 					open      : 'external',
 					host      : config.domain,
-					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&produce=false',
+					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&produce=false',
 					server    :
 					{
 						baseDir : OUTPUT_DIR
