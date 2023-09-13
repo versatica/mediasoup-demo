@@ -36,6 +36,8 @@ module.exports =
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WorkerSettings
 		workerSettings :
 		{
+			dtlsCertificateFile : process.env.WORKER_CERT_FULLCHAIN,
+			dtlsPrivateKeyFile  : process.env.WORKER_CERT_PRIVKEY,
 			logLevel : 'warn',
 			logTags  :
 			[
