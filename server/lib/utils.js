@@ -1,10 +1,23 @@
 /**
- * Clones the given data.
+ * Clones the given value.
  */
-exports.clone = function(data, defaultValue)
+exports.clone = function(value)
 {
-	if (typeof data === 'undefined')
-		return defaultValue;
-
-	return JSON.parse(JSON.stringify(data));
-};
+	if (value === undefined)
+	{
+		return undefined;
+	}
+	else if (Number.isNaN(value))
+	{
+		return NaN;
+	}
+	else if (typeof structuredClone === 'function')
+	{
+		// Available in Node >= 18.
+		return structuredClone(value);
+	}
+	else
+	{
+		return JSON.parse(JSON.stringify(value));
+	}
+}
