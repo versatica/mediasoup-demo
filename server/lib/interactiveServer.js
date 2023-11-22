@@ -7,7 +7,6 @@ const fs = require('fs');
 const mediasoup = require('mediasoup');
 const colors = require('colors/safe');
 const pidusage = require('pidusage');
-const heapdump = require('heapdump');
 
 const SOCKET_PATH_UNIX = '/tmp/mediasoup-demo.sock';
 const SOCKET_PATH_WIN = path.join('\\\\?\\pipe', process.cwd(), 'mediasoup-demo');
@@ -91,7 +90,6 @@ class Interactive
 						this.log('- sc, statsConsumer [id]      : get stats for mediasoup Consumer with given id (or the latest created one)');
 						this.log('- sdp, statsDataProducer [id] : get stats for mediasoup DataProducer with given id (or the latest created one)');
 						this.log('- sdc, statsDataConsumer [id] : get stats for mediasoup DataConsumer with given id (or the latest created one)');
-						this.log('- hs, heapsnapshot            : write a heapdump snapshot to file');
 						this.log('- t,  terminal                : open Node REPL Terminal');
 						this.log('');
 						readStdin();
@@ -504,30 +502,6 @@ class Interactive
 						{
 							this.error(`dataConsumer.getStats() failed: ${error}`);
 						}
-
-						break;
-					}
-
-					case 'hs':
-					case 'heapsnapshot':
-					{
-						const filename =
-							`${process.env.SNAPSHOT_DIR || '/tmp'}/${Date.now()}-mediasoup-demo.heapsnapshot`;
-
-						// eslint-disable-next-line no-shadow
-						heapdump.writeSnapshot(filename, (error, filename) =>
-						{
-							if (!error)
-							{
-								this.log(`heapdump snapshot writen to ${filename}`);
-								this.log(
-									'learn how to use it at https://github.com/bnoordhuis/node-heapdump');
-							}
-							else
-							{
-								this.error(`heapdump snapshot failed: ${error}`);
-							}
-						});
 
 						break;
 					}

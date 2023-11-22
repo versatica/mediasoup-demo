@@ -14,10 +14,11 @@ exports.clone = function(value)
 	else if (typeof structuredClone === 'function')
 	{
 		// Available in Node >= 18.
+		// eslint-disable-next-line no-undef
 		return structuredClone(value);
 	}
 	else
 	{
 		return JSON.parse(JSON.stringify(value));
 	}
-}
+};

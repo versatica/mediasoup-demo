@@ -1,5 +1,6 @@
 const EventEmitter = require('events').EventEmitter;
 const protoo = require('protoo-server');
+// const rtp = require('rtp.js');
 const throttle = require('@sitespeed.io/throttle');
 const Logger = require('./Logger');
 const config = require('../config');
@@ -1156,6 +1157,43 @@ class Room extends EventEmitter
 							producer
 						});
 				}
+
+				/* Test rtpjs lib. */
+
+				// const directTransport = await this._mediasoupRouter.createDirectTransport();
+
+				// directTransport.on('rtcp', (buffer) =>
+				// {
+				// 	const rtcpPacket =
+				// 		new rtp.packets.CompoundPacket(rtp.utils.nodeBufferToDataView(buffer));
+
+				// 	logger.info('RTCP packet');
+				// 	logger.info(rtcpPacket.dump());
+				// });
+
+				// const directConsumer = await directTransport.consume(
+				// 	{
+				// 		producerId      : producer.id,
+				// 		rtpCapabilities : this._mediasoupRouter.rtpCapabilities
+				// 	}
+				// );
+
+				// const directProducer = await directTransport.produce(
+				// 	{
+				// 		kind          : directConsumer.kind,
+				// 		rtpParameters : directConsumer.rtpParameters
+				// 	});
+
+				// directConsumer.on('rtp', (buffer) =>
+				// {
+				// 	const rtpPacket =
+				// 		new rtp.packets.RtpPacket(rtp.utils.nodeBufferToDataView(buffer));
+
+				// 	// logger.info('RTP packet');
+				// 	// logger.info(rtpPacket.dump());
+
+				// 	directProducer.send(buffer);
+				// });
 
 				// Add into the AudioLevelObserver and ActiveSpeakerObserver.
 				if (producer.kind === 'audio')
