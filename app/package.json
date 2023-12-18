@@ -8,7 +8,7 @@
   "type": "module",
   "main": "lib/index.jsx",
   "scripts": {
-    "lint": "eslint -c .eslintrc.js --ext .js,.jsx gulpfile.js lib",
+    "lint": "eslint --fix -c .eslintrc.cjs --ext .js,.jsx gulpfile.js lib",
     "start": "gulp live"
   },
   "dependencies": {
@@ -56,6 +56,7 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-jsx-control-statements": "^3.0.0",
     "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "gulp": "^4.0.2",
     "gulp-css-base64": "^2.0.0",
     "gulp-eslint": "^6.0.0",

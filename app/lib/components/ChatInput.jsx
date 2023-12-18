@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { withRoomContext } from '../RoomContext';
+// import withRoomContext from '../RoomContext';
 
 const BotMessageRegex = new RegExp('^@bot (.*)');
 
@@ -115,9 +115,8 @@ const mapStateToProps = (state) =>
 	};
 };
 
-const ChatInputContainer = withRoomContext(connect(
-	mapStateToProps,
-	undefined
-)(ChatInput));
+const ChatInputContainer = connect(
+	mapStateToProps
+)(ChatInput);
 
-export default ChatInputContainer;
+// export default ChatInputContainer;

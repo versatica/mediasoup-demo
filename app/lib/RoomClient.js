@@ -1,13 +1,13 @@
+import * as cookiesManager from './cookiesManager';
 import protooClient from 'protoo-client';
 import * as mediasoupClient from 'mediasoup-client';
 import Logger from './Logger';
 import { getProtooUrl } from './urlFactory';
-import * as cookiesManager from './cookiesManager';
 import * as requestActions from './redux/requestActions';
 import * as stateActions from './redux/stateActions';
 import * as e2e from './e2e';
 
-const VIDEO_CONSTRAINS =
+const VIDEO_CONSTRAINTS =
 {
 	qvga : { width: { ideal: 320 }, height: { ideal: 240 } },
 	vga  : { width: { ideal: 640 }, height: { ideal: 480 } },
@@ -28,12 +28,12 @@ let store;
 export default class RoomClient
 {
 	/**
-	 * @param  {Object} data
-	 * @param  {Object} data.store - The Redux store.
+	 * @param  {Object} data - The Redux store.\
+	 * 
 	 */
-	static init(data)
+	static async init(data)
 	{
-		store = data.store;
+		store = data;
 	}
 
 	constructor(
@@ -247,7 +247,8 @@ export default class RoomClient
 			this._recvTransport.close();
 
 		store.dispatch(
-			stateActions.setRoomState('closed'));
+			stateActions.setRoomState('closed')
+		);
 	}
 
 	async join()
@@ -990,7 +991,7 @@ export default class RoomClient
 						video :
 						{
 							deviceId : { ideal: device.deviceId },
-							...VIDEO_CONSTRAINS[resolution]
+							...VIDEO_CONSTRAINTS[resolution]
 						}
 					});
 
@@ -1234,7 +1235,7 @@ export default class RoomClient
 					video :
 					{
 						deviceId : { exact: this._webcam.device.deviceId },
-						...VIDEO_CONSTRAINS[this._webcam.resolution]
+						...VIDEO_CONSTRAINTS[this._webcam.resolution]
 					}
 				});
 
@@ -1291,7 +1292,7 @@ export default class RoomClient
 					video :
 					{
 						deviceId : { exact: this._webcam.device.deviceId },
-						...VIDEO_CONSTRAINS[this._webcam.resolution]
+						...VIDEO_CONSTRAINTS[this._webcam.resolution]
 					}
 				});
 

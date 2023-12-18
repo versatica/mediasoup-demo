@@ -1,14 +1,45 @@
-import React from 'react';
+import React, {
+	createContext,
+	useContext,
+	useState
+} from 'react';
+import RoomClientContextComponent from './components/RoomClientContextComponent';
+import Logger from './Logger';
+const logger = new Logger();
 
-const RoomContext = React.createContext();
+export const RoomClientContext = createContext(null);
 
-export default RoomContext;
+export const RoomClientUpdateContext = createContext(null);
 
-export function withRoomContext(Component)
+export function UseRoomClient()
 {
-	return (props) => ( // eslint-disable-line react/display-name
-		<RoomContext.Consumer>
-			{(roomClient) => <Component {...props} roomClient={roomClient} />}
-		</RoomContext.Consumer>
+	return useContext(RoomClientContext);
+}
+
+export function UseRoomClientUpdate()
+{
+	return useContext(RoomClientUpdateContext);
+}
+
+export function RoomClientProvider({ children })
+{
+	logger.debug('children: ', children);
+
+	const [ roomClient, setRoomClient ] = useState(UseRoomClient());
+
+	function setRoomClientInstance(data)
+	{
+		logger.debug('RoomContext.setRoomClientInstance(data): ', data);
+		setRoomClient(data);
+	}
+
+	return (
+		<RoomClientContext.Provider value={roomClient}>
+			<RoomClientUpdateContext.Provider value={setRoomClientInstance}>
+				<RoomClientContextComponent>
+					{children}
+				</RoomClientContextComponent>
+			</RoomClientUpdateContext.Provider>
+		</RoomClientContext.Provider>
 	);
 }

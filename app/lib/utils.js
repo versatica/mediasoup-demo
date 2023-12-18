@@ -2,11 +2,11 @@ let mediaQueryDetectorElem;
 
 export function initialize()
 {
-	// Media query detector stuff.
-	mediaQueryDetectorElem =
-		document.getElementById('mediasoup-demo-app-media-query-detector');
-
-	return Promise.resolve();
+	return Promise.resolve(
+		// Media query detector stuff.
+		mediaQueryDetectorElem =
+			document.getElementById('mediasoup-demo-app-media-query-detector')
+	);
 }
 
 export function isDesktop()
