@@ -31,34 +31,36 @@
  *   Alias for `gulp dist`.
  */
 
-const fs = require('fs');
-const path = require('path');
-const gulp = require('gulp');
-const gulpif = require('gulp-if');
-const gutil = require('gulp-util');
-const plumber = require('gulp-plumber');
-const rename = require('gulp-rename');
-const header = require('gulp-header');
-const touch = require('gulp-touch-cmd');
-const browserify = require('browserify');
-const watchify = require('watchify');
-const envify = require('envify/custom');
-const uglify = require('gulp-uglify-es').default;
-const source = require('vinyl-source-stream');
-const buffer = require('vinyl-buffer');
-const del = require('del');
-const mkdirp = require('mkdirp');
-const ncp = require('ncp');
-const eslint = require('gulp-eslint');
-const stylus = require('gulp-stylus');
-const cssBase64 = require('gulp-css-base64');
-const nib = require('nib');
-const browserSync = require('browser-sync');
+import * as fs from 'fs';
+import * as path from 'path';
+import { default as gulp } from 'gulp';
+import { default as gulpif } from 'gulp-if';
+import { default as gutil } from 'gulp-util';
+import { default as plumber } from 'gulp-plumber';
+import { default as rename } from 'gulp-rename';
+import { default as header } from 'gulp-header';
+import { default as touch } from 'gulp-touch-cmd';
+import { default as browserify } from 'browserify';
+import { default as watchify } from 'watchify';
+// eslint-disable-next-line import/extensions
+import { default as envify } from 'envify/custom.js';
+import { default as uglify } from 'gulp-uglify-es';
+import { default as source } from 'vinyl-source-stream';
+import { default as buffer } from 'vinyl-buffer';
+import { deleteAsync } from 'del';
+import * as mkdirp from 'mkdirp';
+import { default as ncp } from 'ncp';
+import { default as eslint } from 'gulp-eslint';
+import { default as stylus } from 'gulp-stylus';
+import { default as cssBase64 } from 'gulp-css-base64';
+import { default as nib } from 'nib';
+import { default as browserSync } from 'browser-sync';
+// eslint-disable-next-line import/extensions
+import config from '../server/config.js';
 
-const PKG = require('./package.json');
+const PKG = JSON.parse(fs.readFileSync('package.json').toString());
 const BANNER = fs.readFileSync('banner.txt').toString();
-const BANNER_OPTIONS =
-{
+const BANNER_OPTIONS = {
 	pkg         : PKG,
 	currentYear : (new Date()).getFullYear()
 };
@@ -69,42 +71,40 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 gutil.log(`NODE_ENV: ${process.env.NODE_ENV}`);
 
-function logError(error)
+function logError(error) 
 {
 	gutil.log(gutil.colors.red(error.stack));
 }
 
-function bundle(options)
+function bundle(options) 
 {
 	options = options || {};
 
 	const watch = Boolean(options.watch);
 
-	let bundler = browserify(
-		{
-			entries      : PKG.main,
-			extensions   : [ '.js', '.jsx' ],
-			// required for sourcemaps (must be false otherwise).
-			debug        : process.env.NODE_ENV === 'development',
-			// required for watchify.
-			cache        : {},
-			// required for watchify.
-			packageCache : {},
-			// required to be true only for watchify.
-			fullPaths    : watch
-		})
+	let bundler = browserify({
+		entries      : PKG.main,
+		extensions   : [ '.js', '.jsx' ],
+		// required for sourcemaps (must be false otherwise).
+		debug        : process.env.NODE_ENV === 'development',
+		// required for watchify.
+		cache        : {},
+		// required for watchify.
+		packageCache : {},
+		// required to be true only for watchify.
+		fullPaths    : watch
+	})
 		.transform('babelify')
-		.transform(envify(
-			{
-				NODE_ENV : process.env.NODE_ENV,
-				_        : 'purge'
-			}));
+		.transform(envify({
+			NODE_ENV : process.env.NODE_ENV,
+			_        : 'purge'
+		}));
 
-	if (watch)
+	if (watch) 
 	{
 		bundler = watchify(bundler);
 
-		bundler.on('update', () =>
+		bundler.on('update', () => 
 		{
 			const start = Date.now();
 
@@ -114,7 +114,7 @@ function bundle(options)
 		});
 	}
 
-	function rebundle()
+	function rebundle() 
 	{
 		return bundler.bundle()
 			.on('error', logError)
@@ -123,7 +123,7 @@ function bundle(options)
 			.pipe(buffer())
 			.pipe(rename(`${PKG.name}.js`))
 			.pipe(gulpif(process.env.NODE_ENV === 'production',
-				uglify()
+				uglify.default()
 			))
 			.pipe(header(BANNER, BANNER_OPTIONS))
 			.pipe(gulp.dest(OUTPUT_DIR));
@@ -132,12 +132,11 @@ function bundle(options)
 	return rebundle();
 }
 
-gulp.task('clean', () => del(OUTPUT_DIR, { force: true }));
+gulp.task('clean', () => deleteAsync(OUTPUT_DIR, { force: true }));
 
-gulp.task('lint', () =>
+gulp.task('lint', () => 
 {
-	const src =
-	[
+	const src = [
 		'gulpfile.js',
 		'lib/**/*.js',
 		'lib/**/*.jsx'
@@ -149,38 +148,37 @@ gulp.task('lint', () =>
 		.pipe(eslint.format());
 });
 
-gulp.task('css', () =>
+gulp.task('css', () => 
 {
 	return gulp.src('stylus/index.styl')
 		.pipe(plumber())
-		.pipe(stylus(
-			{
-				use      : nib(),
-				compress : process.env.NODE_ENV === 'production'
-			}))
+		.pipe(stylus({
+			use      : nib(),
+			compress : process.env.NODE_ENV === 'production'
+		}))
 		.on('error', logError)
-		.pipe(cssBase64(
-			{
-				baseDir           : '.',
-				maxWeightResource : 50000 // So big ttf fonts are not included, nice.
-			}))
+		.pipe(cssBase64({
+			baseDir           : '.',
+			maxWeightResource : 50000 // So big ttf fonts are not included, nice.
+		}))
 		.pipe(rename(`${PKG.name}.css`))
 		.pipe(gulp.dest(OUTPUT_DIR))
 		.pipe(touch());
 });
 
-gulp.task('html', () =>
+gulp.task('html', () => 
 {
 	return gulp.src('index.html')
 		.pipe(gulp.dest(OUTPUT_DIR));
 });
 
-gulp.task('resources', (done) =>
+gulp.task('resources', (done) => 
 {
 	const dst = path.join(OUTPUT_DIR, 'resources');
 
 	mkdirp.sync(dst);
-	ncp('resources', dst, { stopOnErr: true }, (error) =>
+
+	ncp('resources', dst, { stopOnErr: true }, (error) => 
 	{
 		if (error && error[0].code !== 'ENOENT')
 			throw new Error(`resources copy failed: ${error}`);
@@ -189,12 +187,12 @@ gulp.task('resources', (done) =>
 	});
 });
 
-gulp.task('bundle', () =>
+gulp.task('bundle', () => 
 {
 	return bundle({ watch: false });
 });
 
-gulp.task('bundle:watch', () =>
+gulp.task('bundle:watch', () => 
 {
 	return bundle({ watch: true });
 });
@@ -208,7 +206,7 @@ gulp.task('dist', gulp.series(
 	'resources'
 ));
 
-gulp.task('watch', (done) =>
+gulp.task('watch', (done) => 
 {
 	// Watch changes in HTML.
 	gulp.watch([ 'index.html' ], gulp.series(
@@ -245,23 +243,19 @@ gulp.task('browser:base', gulp.series(
 
 gulp.task('live', gulp.series(
 	'browser:base',
-	(done) =>
+	(done) => 
 	{
-		const config = require('../server/config');
-
-		browserSync(
-			{
-				open      : 'external',
-				host      : config.domain,
-				startPath : '/?info=true',
-				server    :
-				{
-					baseDir : OUTPUT_DIR
-				},
-				https     : config.https.tls,
-				ghostMode : false,
-				files     : path.join(OUTPUT_DIR, '**', '*')
-			});
+		browserSync({
+			open      : 'external',
+			host      : config.domain,
+			startPath : '/?info=true',
+			server    : {
+				baseDir : OUTPUT_DIR
+			},
+			https     : config.https.tls,
+			ghostMode : false,
+			files     : path.join(OUTPUT_DIR, '**', '*')
+		});
 
 		done();
 	}
@@ -269,44 +263,38 @@ gulp.task('live', gulp.series(
 
 gulp.task('devel', gulp.series(
 	'browser:base',
-	async (done) =>
+	async (done) => 
 	{
-		const config = require('../server/config');
-
-		await new Promise((resolve) =>
+		await new Promise((resolve) => 
 		{
-			browserSync.create('producer1').init(
-				{
-					open      : 'external',
-					host      : config.domain,
-					startPath : '/?roomId=devel&info=true&_throttleSecret=foo&consume=false',
-					server    :
-					{
-						baseDir : OUTPUT_DIR
-					},
-					https     : config.https.tls,
-					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+			browserSync.create('producer1').init({
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel&info=true&_throttleSecret=foo&consume=false',
+				server    : {
+					baseDir : OUTPUT_DIR
 				},
-				resolve);
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
 		});
 
-		await new Promise((resolve) =>
+		await new Promise((resolve) => 
 		{
-			browserSync.create('consumer1').init(
-				{
-					open      : 'external',
-					host      : config.domain,
-					startPath : '/?roomId=devel&info=true&_throttleSecret=foo&produce=false',
-					server    :
-					{
-						baseDir : OUTPUT_DIR
-					},
-					https     : config.https.tls,
-					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+			browserSync.create('consumer1').init({
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel&info=true&_throttleSecret=foo&produce=false',
+				server    : {
+					baseDir : OUTPUT_DIR
 				},
-				resolve);
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
 		});
 
 		done();
@@ -315,44 +303,38 @@ gulp.task('devel', gulp.series(
 
 gulp.task('devel:tcp', gulp.series(
 	'browser:base',
-	async (done) =>
+	async (done) => 
 	{
-		const config = require('../server/config');
-
-		await new Promise((resolve) =>
+		await new Promise((resolve) => 
 		{
-			browserSync.create('producer1').init(
-				{
-					open      : 'external',
-					host      : config.domain,
-					startPath : '/?roomId=devel:tcp&info=true&_throttleSecret=foo&forceTcp=true&consume=false',
-					server    :
-					{
-						baseDir : OUTPUT_DIR
-					},
-					https     : config.https.tls,
-					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+			browserSync.create('producer1').init({
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel:tcp&info=true&_throttleSecret=foo&forceTcp=true&consume=false',
+				server    : {
+					baseDir : OUTPUT_DIR
 				},
-				resolve);
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
 		});
 
-		await new Promise((resolve) =>
+		await new Promise((resolve) => 
 		{
-			browserSync.create('consumer1').init(
-				{
-					open      : 'external',
-					host      : config.domain,
-					startPath : '/?roomId=devel:tcp&info=true&_throttleSecret=foo&forceTcp=true&produce=false',
-					server    :
-					{
-						baseDir : OUTPUT_DIR
-					},
-					https     : config.https.tls,
-					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+			browserSync.create('consumer1').init({
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel:tcp&info=true&_throttleSecret=foo&forceTcp=true&produce=false',
+				server    : {
+					baseDir : OUTPUT_DIR
 				},
-				resolve);
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
 		});
 
 		done();
@@ -361,44 +343,38 @@ gulp.task('devel:tcp', gulp.series(
 
 gulp.task('devel:vp9', gulp.series(
 	'browser:base',
-	async (done) =>
+	async (done) => 
 	{
-		const config = require('../server/config');
-
-		await new Promise((resolve) =>
+		await new Promise((resolve) => 
 		{
-			browserSync.create('producer1').init(
-				{
-					open      : 'external',
-					host      : config.domain,
-					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&consume=false',
-					server    :
-					{
-						baseDir : OUTPUT_DIR
-					},
-					https     : config.https.tls,
-					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+			browserSync.create('producer1').init({
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&consume=false',
+				server    : {
+					baseDir : OUTPUT_DIR
 				},
-				resolve);
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
 		});
 
-		await new Promise((resolve) =>
+		await new Promise((resolve) => 
 		{
-			browserSync.create('consumer1').init(
-				{
-					open      : 'external',
-					host      : config.domain,
-					startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&produce=false',
-					server    :
-					{
-						baseDir : OUTPUT_DIR
-					},
-					https     : config.https.tls,
-					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+			browserSync.create('consumer1').init({
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel:vp9&info=true&_throttleSecret=foo&forceVP9=true&svc=L3T3&produce=false',
+				server    : {
+					baseDir : OUTPUT_DIR
 				},
-				resolve);
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
 		});
 
 		done();
@@ -407,44 +383,38 @@ gulp.task('devel:vp9', gulp.series(
 
 gulp.task('devel:h264', gulp.series(
 	'browser:base',
-	async (done) =>
+	async (done) => 
 	{
-		const config = require('../server/config');
-
-		await new Promise((resolve) =>
+		await new Promise((resolve) => 
 		{
-			browserSync.create('producer1').init(
-				{
-					open      : 'external',
-					host      : config.domain,
-					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&consume=false',
-					server    :
-					{
-						baseDir : OUTPUT_DIR
-					},
-					https     : config.https.tls,
-					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+			browserSync.create('producer1').init({
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&consume=false',
+				server    : {
+					baseDir : OUTPUT_DIR
 				},
-				resolve);
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
 		});
 
-		await new Promise((resolve) =>
+		await new Promise((resolve) => 
 		{
-			browserSync.create('consumer1').init(
-				{
-					open      : 'external',
-					host      : config.domain,
-					startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&produce=false',
-					server    :
-					{
-						baseDir : OUTPUT_DIR
-					},
-					https     : config.https.tls,
-					ghostMode : false,
-					files     : path.join(OUTPUT_DIR, '**', '*')
+			browserSync.create('consumer1').init({
+				open      : 'external',
+				host      : config.domain,
+				startPath : '/?roomId=devel:h264&info=true&_throttleSecret=foo&forceH264=true&produce=false',
+				server    : {
+					baseDir : OUTPUT_DIR
 				},
-				resolve);
+				https     : config.https.tls,
+				ghostMode : false,
+				files     : path.join(OUTPUT_DIR, '**', '*')
+			},
+			resolve);
 		});
 
 		done();

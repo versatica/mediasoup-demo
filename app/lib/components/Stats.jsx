@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { Appear } from './transitions';
-import { withRoomContext } from '../RoomContext';
+// import withRoomContext from '../RoomContext';
 import * as stateActions from '../redux/stateActions';
 
 class Stats extends React.Component
@@ -523,9 +523,9 @@ const mapDispatchToProps = (dispatch) =>
 	};
 };
 
-const StatsContainer = withRoomContext(connect(
+const StatsContainer = connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(Stats));
+)(Stats);
 
 export default StatsContainer;

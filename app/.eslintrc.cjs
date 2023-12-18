@@ -10,7 +10,8 @@ module.exports =
 	[
 		'import',
 		'react',
-		'jsx-control-statements'
+		'jsx-control-statements',
+		"react-hooks"
 	],
 	extends:
 	[
@@ -171,6 +172,8 @@ module.exports =
 		'prefer-spread': 2,
 		'prefer-template': 2,
 		'quotes': [ 2, 'single', { avoidEscape: true } ],
+		"react-hooks/rules-of-hooks": "error",
+	    "react-hooks/exhaustive-deps": "warn",
 		'semi': [ 2, 'always' ],
 		'semi-spacing': 2,
 		'space-before-blocks': 2,

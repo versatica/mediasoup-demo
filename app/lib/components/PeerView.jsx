@@ -452,7 +452,6 @@ export default class PeerView extends React.Component
 				<audio
 					ref='audioElem'
 					autoPlay
-					playsInline
 					muted={isMe || audioMuted}
 					controls={false}
 				/>
@@ -679,14 +678,14 @@ export default class PeerView extends React.Component
 			{
 				const width = videoElem.offsetWidth;
 				const height = videoElem.offsetHeight;
-
+				
 				canvas.width = width;
 				canvas.height = height;
-
+				
 				// const resizedDetection = detection.forSize(width, height);
 				const resizedDetections =
 					faceapi.resizeResults(detection, { width, height });
-
+				
 				faceapi.draw.drawDetections(canvas, resizedDetections);
 			}
 			else
