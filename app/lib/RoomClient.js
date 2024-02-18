@@ -2315,12 +2315,13 @@ export default class RoomClient
 					});
 
 				this._sendTransport.on(
-					'connect', ({ dtlsParameters }, callback, errback) => // eslint-disable-line no-shadow
+					'connect', ({ iceParameters, dtlsParameters }, callback, errback) => // eslint-disable-line no-shadow
 					{
 						this._protoo.request(
 							'connectWebRtcTransport',
 							{
 								transportId : this._sendTransport.id,
+								iceParameters,
 								dtlsParameters
 							})
 							.then(callback)
@@ -2429,12 +2430,13 @@ export default class RoomClient
 					});
 
 				this._recvTransport.on(
-					'connect', ({ dtlsParameters }, callback, errback) => // eslint-disable-line no-shadow
+					'connect', ({ iceParameters, dtlsParameters }, callback, errback) => // eslint-disable-line no-shadow
 					{
 						this._protoo.request(
 							'connectWebRtcTransport',
 							{
 								transportId : this._recvTransport.id,
+								iceParameters,
 								dtlsParameters
 							})
 							.then(callback)

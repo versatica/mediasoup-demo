@@ -2,7 +2,6 @@
 import protooClient from 'protoo-client';
 import * as mediasoupClient from 'mediasoup-client';
 import {
-	version,
 	createWorker,
 	Worker,
 	WorkerLogLevel
@@ -34,8 +33,7 @@ export class RoomClient
 	// Device info.
 	_device: any = {
 		flag : 'aiortc',
-		name : 'aiortc',
-		version
+		name : 'aiortc'
 	};
 
 	// Whether we want to force RTC over TCP.
@@ -555,7 +553,7 @@ export class RoomClient
 					const { peerId } = consumer.appData;
 
 					store.dispatch(
-						stateActions.removeConsumer(consumerId, peerId));
+						stateActions.removeConsumer(consumerId, peerId as string));
 
 					break;
 				}
@@ -626,7 +624,7 @@ export class RoomClient
 					const { peerId } = dataConsumer.appData;
 
 					store.dispatch(
-						stateActions.removeDataConsumer(dataConsumerId, peerId));
+						stateActions.removeDataConsumer(dataConsumerId, peerId as string));
 
 					break;
 				}
@@ -1194,7 +1192,6 @@ export class RoomClient
 					ordered        : false,
 					maxRetransmits : 1,
 					label          : 'chat',
-					priority       : 'medium',
 					appData        : { info: 'my-chat-DataProducer' }
 				});
 
@@ -1260,7 +1257,6 @@ export class RoomClient
 					ordered           : false,
 					maxPacketLifeTime : 2000,
 					label             : 'bot',
-					priority          : 'medium',
 					appData           : { info: 'my-bot-DataProducer' }
 				});
 
@@ -1616,12 +1612,13 @@ export class RoomClient
 					});
 
 				this._sendTransport.on(
-					'connect', ({ dtlsParameters }, callback, errback) => // eslint-disable-line no-shadow
+					'connect', ({ iceParameters, dtlsParameters }, callback, errback) => // eslint-disable-line no-shadow
 					{
 						this._protoo.request(
 							'connectWebRtcTransport',
 							{
 								transportId : this._sendTransport.id,
+								iceParameters,
 								dtlsParameters
 							})
 							.then(callback)
@@ -1647,7 +1644,7 @@ export class RoomClient
 						}
 						catch (error)
 						{
-							errback(error);
+							errback(error as Error);
 						}
 					});
 
@@ -1683,7 +1680,7 @@ export class RoomClient
 					}
 					catch (error)
 					{
-						errback(error);
+						errback(error as Error);
 					}
 				});
 			}
@@ -1721,12 +1718,13 @@ export class RoomClient
 					});
 
 				this._recvTransport.on(
-					'connect', ({ dtlsParameters }, callback, errback) => // eslint-disable-line no-shadow
+					'connect', ({ iceParameters, dtlsParameters }, callback, errback) => // eslint-disable-line no-shadow
 					{
 						this._protoo.request(
 							'connectWebRtcTransport',
 							{
 								transportId : this._recvTransport.id,
+								iceParameters,
 								dtlsParameters
 							})
 							.then(callback)
