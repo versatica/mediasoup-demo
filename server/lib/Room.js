@@ -464,8 +464,9 @@ class Room extends EventEmitter
 				const webRtcTransportOptions =
 				{
 					...config.mediasoup.webRtcTransportOptions,
-					enableSctp     : Boolean(sctpCapabilities),
-					numSctpStreams : (sctpCapabilities || {}).numStreams
+					iceConsentTimeout : 20,
+					enableSctp        : Boolean(sctpCapabilities),
+					numSctpStreams    : (sctpCapabilities || {}).numStreams
 				};
 
 				const transport = await this._mediasoupRouter.createWebRtcTransport(
@@ -982,9 +983,10 @@ class Room extends EventEmitter
 				const webRtcTransportOptions =
 				{
 					...config.mediasoup.webRtcTransportOptions,
-					enableSctp     : Boolean(sctpCapabilities),
-					numSctpStreams : (sctpCapabilities || {}).numStreams,
-					appData        : { producing, consuming }
+					iceConsentTimeout : 20,
+					enableSctp        : Boolean(sctpCapabilities),
+					numSctpStreams    : (sctpCapabilities || {}).numStreams,
+					appData           : { producing, consuming }
 				};
 
 				if (forceTcp)
@@ -1003,7 +1005,9 @@ class Room extends EventEmitter
 				{
 					if (iceState === 'disconnected' || iceState === 'closed')
 					{
-						logger.warn('WebRtcTransport "icestatechange" event [iceState:%s]', iceState);
+						logger.warn('WebRtcTransport "icestatechange" event [iceState:%s], closing peer', iceState);
+
+						peer.close();
 					}
 				});
 
@@ -1016,7 +1020,9 @@ class Room extends EventEmitter
 				{
 					if (dtlsState === 'failed' || dtlsState === 'closed')
 					{
-						logger.warn('WebRtcTransport "dtlsstatechange" event [dtlsState:%s]', dtlsState);
+						logger.warn('WebRtcTransport "dtlsstatechange" event [dtlsState:%s], closing peer', dtlsState);
+
+						peer.close();
 					}
 				});
 
