@@ -124,16 +124,16 @@ module.exports =
 			listenInfos :
 			[
 				{
-					protocol    : 'udp',
-					ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
-					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP,
-					port        : 44444
+					protocol         : 'udp',
+					ip               : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
+					announcedAddress : process.env.MEDIASOUP_ANNOUNCED_IP,
+					port             : 44444
 				},
 				{
-					protocol    : 'tcp',
-					ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
-					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP,
-					port        : 44444
+					protocol         : 'tcp',
+					ip               : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
+					announcedAddress : process.env.MEDIASOUP_ANNOUNCED_IP,
+					port             : 44444
 				}
 			]
 		},
@@ -142,13 +142,19 @@ module.exports =
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions
 		webRtcTransportOptions :
 		{
-			// listenIps is not needed since webRtcServer is used.
+			// listenInfos is not needed since webRtcServer is used.
 			// However passing MEDIASOUP_USE_WEBRTC_SERVER=false will change it.
-			listenIps :
+			listenInfos :
 			[
 				{
-					ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
-					announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP
+					protocol         : 'udp',
+					ip               : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
+					announcedAddress : process.env.MEDIASOUP_ANNOUNCED_IP
+				},
+				{
+					protocol         : 'tcp',
+					ip               : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
+					announcedAddress : process.env.MEDIASOUP_ANNOUNCED_IP
 				}
 			],
 			initialAvailableOutgoingBitrate : 1000000,
@@ -162,10 +168,11 @@ module.exports =
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#PlainTransportOptions
 		plainTransportOptions :
 		{
-			listenIp :
+			listenInfo :
 			{
-				ip          : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
-				announcedIp : process.env.MEDIASOUP_ANNOUNCED_IP
+				protocol         : 'udp',
+				ip               : process.env.MEDIASOUP_LISTEN_IP || '0.0.0.0',
+				announcedAddress : process.env.MEDIASOUP_ANNOUNCED_IP
 			},
 			maxSctpMessageSize : 262144
 		}
