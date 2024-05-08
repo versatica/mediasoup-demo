@@ -7,6 +7,7 @@
   "license": "All Rights Reserved",
   "main": "lib/index.js",
   "scripts": {
+    "generate-dev-certificate": "mkcert -install --key-file certs/server.key --cert-file certs/server.crt mediasoup-demo.dev \"*.mediasoup-demo.dev\" localhost 127.0.0.1 ::1",
     "lint": "eslint -c .eslintrc.js server.js lib connect.js",
     "start": "DEBUG=${DEBUG:='*mediasoup* *INFO* *WARN* *ERROR*'} INTERACTIVE=${INTERACTIVE:='true'} node server.js",
     "connect": "node connect.js"

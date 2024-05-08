@@ -3,6 +3,7 @@ const protoo = require('protoo-server');
 // const rtp = require('rtp.js');
 const throttle = require('@sitespeed.io/throttle');
 const Logger = require('./Logger');
+const utils = require('./utils');
 const config = require('../config');
 const Bot = require('./Bot');
 
@@ -463,17 +464,15 @@ class Room extends EventEmitter
 			{
 				const webRtcTransportOptions =
 				{
-					...config.mediasoup.webRtcTransportOptions,
+					...utils.clone(config.mediasoup.webRtcTransportOptions),
+					webRtcServer      : this._webRtcServer,
 					iceConsentTimeout : 20,
 					enableSctp        : Boolean(sctpCapabilities),
 					numSctpStreams    : (sctpCapabilities || {}).numStreams
 				};
 
-				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					{
-						...webRtcTransportOptions,
-						webRtcServer : this._webRtcServer
-					});
+				const transport =
+					await this._mediasoupRouter.createWebRtcTransport(webRtcTransportOptions);
 
 				// Store it.
 				broadcaster.data.transports.set(transport.id, transport);
@@ -491,7 +490,7 @@ class Room extends EventEmitter
 			{
 				const plainTransportOptions =
 				{
-					...config.mediasoup.plainTransportOptions,
+					...utils.clone(config.mediasoup.plainTransportOptions),
 					rtcpMux : rtcpMux,
 					comedia : comedia
 				};
@@ -982,7 +981,8 @@ class Room extends EventEmitter
 
 				const webRtcTransportOptions =
 				{
-					...config.mediasoup.webRtcTransportOptions,
+					...utils.clone(config.mediasoup.webRtcTransportOptions),
+					webRtcServer      : this._webRtcServer,
 					iceConsentTimeout : 20,
 					enableSctp        : Boolean(sctpCapabilities),
 					numSctpStreams    : (sctpCapabilities || {}).numStreams,
@@ -991,15 +991,12 @@ class Room extends EventEmitter
 
 				if (forceTcp)
 				{
-					webRtcTransportOptions.enableUdp = false;
-					webRtcTransportOptions.enableTcp = true;
+					webRtcTransportOptions.listenInfos = webRtcTransportOptions.listenInfos
+						.filter((listenInfo) => listenInfo.protocol === 'tcp');
 				}
 
-				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					{
-						...webRtcTransportOptions,
-						webRtcServer : this._webRtcServer
-					});
+				const transport =
+					await this._mediasoupRouter.createWebRtcTransport(webRtcTransportOptions);
 
 				transport.on('icestatechange', (iceState) =>
 				{
