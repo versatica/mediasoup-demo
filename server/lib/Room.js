@@ -993,6 +993,9 @@ class Room extends EventEmitter
 				{
 					webRtcTransportOptions.listenInfos = webRtcTransportOptions.listenInfos
 						.filter((listenInfo) => listenInfo.protocol === 'tcp');
+
+					webRtcTransportOptions.enableUdp = false;
+					webRtcTransportOptions.enableTcp = true;
 				}
 
 				const transport =
