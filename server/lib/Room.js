@@ -1,4 +1,5 @@
 const EventEmitter = require('events').EventEmitter;
+const mediasoup = require('mediasoup');
 const protoo = require('protoo-server');
 // const rtp = require('rtp.js');
 const throttle = require('@sitespeed.io/throttle');
@@ -223,6 +224,10 @@ class Room extends EventEmitter
 		{
 			logger.error('protooRoom.createPeer() failed:%o', error);
 		}
+
+		// Notify mediasoup version to the peer.
+		peer.notify('mediasoup-version', { version: mediasoup.version })
+			.catch(() => {});
 
 		// Use the peer.data object to store mediasoup related objects.
 

@@ -141,10 +141,14 @@ async function run()
 			case 'throttleSecret':
 			case 'e2eKey':
 			case 'consumerReplicas':
+			{
 				break;
+			}
 
 			default:
+			{
 				delete roomUrlParser.query[key];
+			}
 		}
 	}
 	delete roomUrlParser.hash;

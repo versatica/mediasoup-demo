@@ -5,6 +5,8 @@
   room :
   {
     url             : 'https://demo.mediasoup.org/?roomId=d0el8y34',
+    mediasoupVersion       : null,
+    mediasoupClientVersion : null
     state           : 'connected', // new/connecting/connected/closed
     activeSpeakerId : 'alice',
     statsPeerId     : null,

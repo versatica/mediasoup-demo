@@ -2,6 +2,8 @@ const initialState =
 {
 	url                    : null,
 	state                  : 'new', // new/connecting/connected/disconnected/closed,
+	mediasoupVersion       : null,
+	mediasoupClientVersion : null,
 	mediasoupClientHandler : undefined,
 	activeSpeakerId        : null,
 	statsPeerId            : null,
@@ -34,6 +36,20 @@ const room = (state = initialState, action) =>
 			const { mediasoupClientHandler } = action.payload;
 
 			return { ...state, mediasoupClientHandler };
+		}
+
+		case 'SET_MEDIASOUP_VERSION':
+		{
+			const { version } = action.payload;
+
+			return { ...state, mediasoupVersion: version };
+		}
+
+		case 'SET_MEDIASOUP_CLIENT_VERSION':
+		{
+			const { version } = action.payload;
+
+			return { ...state, mediasoupClientVersion: version };
 		}
 
 		case 'SET_ROOM_ACTIVE_SPEAKER':

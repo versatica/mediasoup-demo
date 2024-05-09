@@ -27,6 +27,10 @@ class Room extends React.Component
 			onRoomLinkCopy
 		}	= this.props;
 
+		const mediasoupClientVersion = room.mediasoupClientVersion === '__MEDIASOUP_CLIENT_VERSION__'
+			? 'dev'
+			: room.mediasoupClientVersion;
+
 		return (
 			<Appear duration={300}>
 				<div data-component='Room'>
@@ -37,8 +41,10 @@ class Room extends React.Component
 						<p className={classnames('text', room.state)}>{room.state}</p>
 					</div>
 
-					<div className='mediasoup-client-handler-name'>
-						<p className='text'><span className='label'>handler: </span>{room.mediasoupClientHandler}</p>
+					<div className='info'>
+						<p className='text'><span className='label'>server:&nbsp;&nbsp;</span>{room.mediasoupVersion}</p>
+						<p className='text'><span className='label'>client:&nbsp;&nbsp;</span>{mediasoupClientVersion}</p>
+						<p className='text'><span className='label'>handler:&nbsp;&nbsp;</span>{room.mediasoupClientHandler}</p>
 					</div>
 
 					<div className='room-link-wrapper'>

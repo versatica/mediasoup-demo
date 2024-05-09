@@ -22,6 +22,22 @@ export const setRoomMediasoupClientHandler = (mediasoupClientHandler) =>
 	};
 };
 
+export const setMediasoupVersion = (version) =>
+{
+	return {
+		type    : 'SET_MEDIASOUP_VERSION',
+		payload : { version }
+	};
+};
+
+export const setMediasoupClientVersion = (version) =>
+{
+	return {
+		type    : 'SET_MEDIASOUP_CLIENT_VERSION',
+		payload : { version }
+	};
+};
+
 export const setRoomActiveSpeaker = (peerId) =>
 {
 	return {

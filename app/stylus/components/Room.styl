@@ -88,31 +88,29 @@
 		}
 	}
 
-	> .mediasoup-client-handler-name {
+	> .info {
 		position: fixed;
 		z-index: 100;
-		display: flex;
-		flex-direction: row;
-		justify-content: center;
-		align-items: center;
-		border-radius: 25px;
-		background-color: $COLOR_BG_1;
 
 		+desktop() {
 			top: 55px;
 			left: 20px;
-			height: 18px;
 			width: 124px;
 		}
 
 		+mobile() {
 			top: 40px;
-			left: 10px;
 			height: 18px;
 			width: 110px;
 		}
 
-		> .text {
+		> p.text {
+			height: 18px;
+			left: 10px;
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			align-items: center;
 			flex: 100 0 auto;
 			user-select: none;
 			pointer-events: none;
@@ -120,9 +118,12 @@
 			font-family: 'Roboto';
 			font-weight: 400;
 			color: rgba(#fff, 0.75);
+			border-radius: 25px;
+			background-color: $COLOR_BG_1;
+			margin-bottom: 2px;
 
 			+desktop() {
-				font-size: 10px;
+				font-size: 11px;
 			}
 
 			+mobile() {
