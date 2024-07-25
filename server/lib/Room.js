@@ -1701,7 +1701,8 @@ class Room extends EventEmitter
 		for (let i=0; i<consumerCount; i++)
 		{
 			promises.push(
-				(async () =>
+				// eslint-disable-next-line no-async-promise-executor
+				new Promise(async (resolve) =>
 				{
 					// Create the Consumer in paused mode.
 					let consumer;
@@ -1714,12 +1715,15 @@ class Room extends EventEmitter
 								rtpCapabilities : consumerPeer.data.rtpCapabilities,
 								// Enable NACK for OPUS.
 								enableRtx       : true,
-								paused          : true
+								paused          : true,
+								ignoreDtx       : true
 							});
 					}
 					catch (error)
 					{
 						logger.warn('_createConsumer() | transport.consume():%o', error);
+
+						resolve();
 
 						return;
 					}
@@ -1818,12 +1822,16 @@ class Room extends EventEmitter
 								score      : consumer.score
 							})
 							.catch(() => {});
+
+						resolve();
 					}
 					catch (error)
 					{
 						logger.warn('_createConsumer() | failed:%o', error);
+
+						resolve();
 					}
-				})()
+				})
 			);
 		}
 
