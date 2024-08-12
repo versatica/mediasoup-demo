@@ -53,7 +53,8 @@ module.exports =
 				'simulcast',
 				'svc',
 				'sctp'
-			]
+			],
+			disableLiburing: false
 		},
 		// mediasoup Router options.
 		// See https://mediasoup.org/documentation/v3/mediasoup/api/#RouterOptions
