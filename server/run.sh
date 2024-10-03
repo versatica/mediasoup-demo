@@ -5,7 +5,7 @@ function log_info() {
 }
 
 function log_error() {
-	echo -e "\033[0;31m[run.sh] [INFO] $@\033[0m" 1>&2;
+	echo -e "\033[0;31m[run.sh] [ERROR] $@\033[0m" 1>&2;
 }
 
 function check_os() {
