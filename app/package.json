@@ -11,7 +11,7 @@
     "start": "gulp live"
   },
   "dependencies": {
-    "@babel/runtime": "^7.8.4",
+    "@babel/runtime": "^7.25.7",
     "bowser": "^2.11.0",
     "classnames": "^2.2.6",
     "clipboard-copy": "^3.1.0",
@@ -40,15 +40,15 @@
     "url-parse": "^1.4.7"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.4",
+    "@babel/core": "^7.25.8",
     "@babel/plugin-proposal-object-rest-spread": "^7.8.3",
-    "@babel/plugin-transform-runtime": "^7.8.3",
-    "@babel/preset-env": "^7.8.4",
-    "@babel/preset-react": "^7.8.3",
-    "babel-plugin-jsx-control-statements": "^4.0.0",
+    "@babel/plugin-transform-runtime": "^7.25.7",
+    "@babel/preset-env": "^7.25.8",
+    "@babel/preset-react": "^7.25.7",
+    "babel-plugin-jsx-control-statements": "^4.1.2",
     "babelify": "^10.0.0",
     "browser-sync": "^2.26.7",
-    "browserify": "^16.5.0",
+    "browserify": "^17.0.1",
     "del": "^5.1.0",
     "envify": "^4.1.0",
     "eslint": "^6.8.0",

@@ -83,7 +83,7 @@ function bundle(options)
 	let bundler = browserify(
 		{
 			entries      : PKG.main,
-			extensions   : [ '.js', '.jsx' ],
+			extensions   : [ '.js', '.jsx', 'mjs' ],
 			// required for sourcemaps (must be false otherwise).
 			debug        : process.env.NODE_ENV === 'development',
 			// required for watchify.
@@ -93,7 +93,7 @@ function bundle(options)
 			// required to be true only for watchify.
 			fullPaths    : watch
 		})
-		.transform('babelify')
+		.transform('babelify', { presets: [ '@babel/preset-env' ] })
 		.transform(envify(
 			{
 				NODE_ENV : process.env.NODE_ENV,
