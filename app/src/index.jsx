@@ -1,7 +1,7 @@
 import domready from 'domready'
 import UrlParse from 'url-parse'
 import React from 'react'
-import { render } from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import {
   applyMiddleware as applyReduxMiddleware,
@@ -28,15 +28,15 @@ const reduxMiddlewares = [thunk]
 
 // if (process.env.NODE_ENV === 'development')
 // {
-// 	const reduxLogger = createReduxLogger(
-// 		{
-// 			duration  : true,
-// 			timestamp : false,
-// 			level     : 'log',
-// 			logErrors : true
-// 		});
+//  const reduxLogger = createReduxLogger(
+//    {
+//      duration  : true,
+//      timestamp : false,
+//      level     : 'log',
+//      logErrors : true
+//    });
 
-// 	reduxMiddlewares.push(reduxLogger);
+//  reduxMiddlewares.push(reduxLogger);
 // }
 
 let roomClient
@@ -200,13 +200,15 @@ async function run() {
   // eslint-disable-next-line require-atomic-updates
   window.CC = roomClient
 
-  render(
+  const domNode = document.getElementById('mediasoup-demo-app-container')
+  const root = createRoot(domNode)
+
+  root.render(
     <Provider store={store}>
       <RoomContext.Provider value={roomClient}>
         <Room />
       </RoomContext.Provider>
     </Provider>,
-    document.getElementById('mediasoup-demo-app-container'),
   )
 }
 
