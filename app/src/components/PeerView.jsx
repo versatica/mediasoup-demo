@@ -31,6 +31,10 @@ export default class PeerView extends React.Component {
       maxSpatialLayer: null,
     }
 
+    this._audioElemRef = React.createRef()
+    this._videoElemRef = React.createRef()
+    this._canvasElemRef = React.createRef()
+
     // Latest received video track.
     // @type {MediaStreamTrack}
     this._audioTrack = null
@@ -436,7 +440,7 @@ export default class PeerView extends React.Component {
         </div>
 
         <video
-          ref='videoElem'
+          ref={this._videoElemRef}
           className={classnames({
             'is-me': isMe,
             hidden: !videoVisible || !videoCanPlay,
@@ -452,14 +456,14 @@ export default class PeerView extends React.Component {
         />
 
         <audio
-          ref='audioElem'
+          ref={this._audioElemRef}
           autoPlay
           muted={isMe || audioMuted}
           controls={false}
         />
 
         <canvas
-          ref='canvas'
+          ref={this._canvasElemRef}
           className={classnames('face-detection', { 'is-me': isMe })}
         />
 
