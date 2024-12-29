@@ -43,7 +43,7 @@
     "redux-logger": "3.0.6",
     "redux-thunk": "2.3.0",
     "riek": "1.1.0",
-    "url-parse": "1.4.7"
+    "url-parse": "1.5.9"
   },
   "devDependencies": {
     "@types/node": "20",
