@@ -22,6 +22,12 @@ try {
 const port = Number(process.env.VITE_LISTEN_PORT) || 3000;
 const https = cert && key ? { cert, key } : undefined;
 
+const alias: {[k: string]: string} = {}
+if (process.env.LOCAL) {
+  const localClientEntryPoint = '../../mediasoup-client/src/index.ts'
+  alias['mediasoup-client'] = path.join(__dirname, localClientEntryPoint)
+}
+
 export default defineConfig({
   plugins: [react()],
   build: {
@@ -31,6 +37,9 @@ export default defineConfig({
     host,
     port,
     https,
+  },
+  resolve: {
+    alias,
   },
 });
 
