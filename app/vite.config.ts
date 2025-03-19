@@ -96,6 +96,15 @@ async function runDev() {
       roomId: 'dev-h264',
       forceH264: true,
     };
+  } else if (dev === 'av1') {
+    producer = {
+      roomId: 'dev-av1',
+      forceAV1: true,
+    };
+    consumer = {
+      roomId: 'dev-av1',
+      forceAV1: true,
+    };
   }
 
   const qProducer = qs.stringify({

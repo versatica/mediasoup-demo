@@ -27,6 +27,7 @@ By adding query parameters into the URL you can set certain settings of the appl
 | `forceVP8`        | Boolean | Force VP8 codec for webcam and screen sharing | `false` |
 | `forceH264`        | Boolean | Force H264 codec for webcam and screen sharing | `false` |
 | `forceVP9`        | Boolean | Force VP9 codec for webcam and screen sharing | `false` |
+| `forceAV1`        | Boolean | Force AV1 codec for webcam and screen sharing | `false` |
 | `enableWebcamLayers` | Boolean | Enable simulcast or SVC for webcam | `true` |
 | `enableSharingLayers` | Boolean | Enable simulcast or SVC for screen sharing | `true` |
 | `webcamScalabilityMode` | String | `scalabilityMode` for webcam | 'L1T3' for VP8/H264 (in each simulcast encoding), 'L3T3_KEY' for VP9 |

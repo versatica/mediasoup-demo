@@ -50,6 +50,7 @@ export default class RoomClient {
 		forceVP8,
 		forceH264,
 		forceVP9,
+		forceAV1,
 		externalVideo,
 		e2eKey,
 		consumerReplicas,
@@ -106,6 +107,10 @@ export default class RoomClient {
 		// Force VP9 codec for sending.
 		// @type {Boolean}
 		this._forceVP9 = Boolean(forceVP9);
+
+		// Force AV1 codec for sending.
+		// @type {Boolean}
+		this._forceAV1 = Boolean(forceAV1);
 
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
@@ -973,6 +978,14 @@ export default class RoomClient {
 				if (!codec) {
 					throw new Error('desired VP9 codec+configuration is not supported');
 				}
+			} else if (this._forceAV1) {
+				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+					c => c.mimeType.toLowerCase() === 'video/av1'
+				);
+
+				if (!codec) {
+					throw new Error('desired AV1 codec+configuration is not supported');
+				}
 			}
 
 			if (this._enableWebcamLayers) {
@@ -984,8 +997,10 @@ export default class RoomClient {
 
 				// VP9 with SVC.
 				if (
-					(this._forceVP9 && codec) ||
-					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
+					((this._forceVP9 || this._forceAV1) && codec) ||
+					['video/vp9', 'video/av1'].includes(
+						firstVideoCodec.mimeType.toLowerCase()
+					)
 				) {
 					encodings = [
 						{
@@ -1285,6 +1300,14 @@ export default class RoomClient {
 				if (!codec) {
 					throw new Error('desired VP9 codec+configuration is not supported');
 				}
+			} else if (this._forceAV1) {
+				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+					c => c.mimeType.toLowerCase() === 'video/av1'
+				);
+
+				if (!codec) {
+					throw new Error('desired AV1 codec+configuration is not supported');
+				}
 			}
 
 			if (this._enableSharingLayers) {
@@ -1296,8 +1319,10 @@ export default class RoomClient {
 
 				// VP9 with SVC.
 				if (
-					(this._forceVP9 && codec) ||
-					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
+					((this._forceVP9 || this._forceAV1) && codec) ||
+					['video/vp9', 'video/av1'].includes(
+						firstVideoCodec.mimeType.toLowerCase()
+					)
 				) {
 					encodings = [
 						{

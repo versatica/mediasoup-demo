@@ -12,6 +12,7 @@
     "start:tcp": "cross-env DEV=tcp vite",
     "start:vp9": "cross-env DEV=vp9 vite",
     "start:h264": "cross-env DEV=h264 vite",
+    "start:av1": "cross-env DEV=av1 vite",
     "build": "vite build",
     "lint": "eslint --fix --ext=.js,.jsx src && prettier --write --log-level=error src"
   },

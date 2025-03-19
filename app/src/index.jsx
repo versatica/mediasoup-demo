@@ -71,6 +71,7 @@ async function run() {
 	const forceVP8 = urlParser.query.forceVP8 === 'true';
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
+	const forceAV1 = urlParser.query.forceAV1 === 'true';
 	const enableWebcamLayers = urlParser.query.enableWebcamLayers !== 'false';
 	const enableSharingLayers = urlParser.query.enableSharingLayers !== 'false';
 	const webcamScalabilityMode = urlParser.query.webcamScalabilityMode;
@@ -122,6 +123,7 @@ async function run() {
 			case 'forceVP8':
 			case 'forceH264':
 			case 'forceVP9':
+			case 'forceAV1':
 			case 'enableWebcamLayers':
 			case 'enableSharingLayers':
 			case 'webcamScalabilityMode':
@@ -181,6 +183,7 @@ async function run() {
 		forceVP8,
 		forceH264,
 		forceVP9,
+		forceAV1,
 		enableWebcamLayers,
 		enableSharingLayers,
 		webcamScalabilityMode,
