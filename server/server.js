@@ -459,6 +459,7 @@ async function runHttpsServer()
 		cert : fs.readFileSync(config.https.tls.cert),
 		key  : fs.readFileSync(config.https.tls.key)
 	};
+
 	if (!tls)
 	{
 		logger.info('no tls provided in config, fallback to HTTP...');
