@@ -1231,7 +1231,6 @@ class Room extends EventEmitter
 				// 				protocol  : 'udp',
 				// 				ip        : '127.0.0.1',
 				// 				// NOTE: Adapt ports to your config.
-				// 				// // NOTE: Adapt ports to your config.
 				// 				portRange : { min: 2010, max: 2020 }
 				// 			}
 				// 		}
