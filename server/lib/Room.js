@@ -1251,6 +1251,16 @@ class Room extends EventEmitter
 				// 	logger.info(`payloadType: ${dump.rtpStream.params.payloadType}`);
 				// }
 
+				// Add into the AudioLevelObserver and ActiveSpeakerObserver.
+				if (producer.kind === 'audio')
+				{
+					this._audioLevelObserver.addProducer({ producerId: producer.id })
+						.catch(() => {});
+
+					this._activeSpeakerObserver.addProducer({ producerId: producer.id })
+						.catch(() => {});
+				}
+
 				break;
 			}
 
