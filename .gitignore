@@ -7,3 +7,5 @@ node_modules/
 /server/mediasoup_valgrind_*
 
 /.vscode/
+
+/app/dist/

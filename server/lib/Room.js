@@ -1,7 +1,10 @@
 const EventEmitter = require('events').EventEmitter;
+const mediasoup = require('mediasoup');
 const protoo = require('protoo-server');
+// const rtp = require('rtp.js');
 const throttle = require('@sitespeed.io/throttle');
 const Logger = require('./Logger');
+const utils = require('./utils');
 const config = require('../config');
 const Bot = require('./Bot');
 
@@ -25,7 +28,7 @@ class Room extends EventEmitter
 	 *   mediasoup Router must be created.
 	 * @param {String} roomId - Id of the Room instance.
 	 */
-	static async create({ mediasoupWorker, roomId })
+	static async create({ mediasoupWorker, roomId, consumerReplicas })
 	{
 		logger.info('create() [roomId:%s]', roomId);
 
@@ -46,21 +49,38 @@ class Room extends EventEmitter
 				interval   : 800
 			});
 
+		// Create a mediasoup ActiveSpeakerObserver.
+		const activeSpeakerObserver = await mediasoupRouter.createActiveSpeakerObserver();
+
 		const bot = await Bot.create({ mediasoupRouter });
 
 		return new Room(
 			{
 				roomId,
 				protooRoom,
+				webRtcServer : mediasoupWorker.appData.webRtcServer,
 				mediasoupRouter,
 				audioLevelObserver,
+				activeSpeakerObserver,
+				consumerReplicas,
 				bot
 			});
 	}
 
-	constructor({ roomId, protooRoom, mediasoupRouter, audioLevelObserver, bot })
+	constructor(
+		{
+			roomId,
+			protooRoom,
+			webRtcServer,
+			mediasoupRouter,
+			audioLevelObserver,
+			activeSpeakerObserver,
+			consumerReplicas,
+			bot
+		})
 	{
 		super();
+
 		this.setMaxListeners(Infinity);
 
 		// Room id.
@@ -89,6 +109,10 @@ class Room extends EventEmitter
 		// @type {Map<String, Object>}
 		this._broadcasters = new Map();
 
+		// mediasoup WebRtcServer instance.
+		// @type {mediasoup.WebRtcServer}
+		this._webRtcServer = webRtcServer;
+
 		// mediasoup Router instance.
 		// @type {mediasoup.Router}
 		this._mediasoupRouter = mediasoupRouter;
@@ -97,9 +121,17 @@ class Room extends EventEmitter
 		// @type {mediasoup.AudioLevelObserver}
 		this._audioLevelObserver = audioLevelObserver;
 
+		// mediasoup ActiveSpeakerObserver.
+		// @type {mediasoup.ActiveSpeakerObserver}
+		this._activeSpeakerObserver = activeSpeakerObserver;
+
 		// DataChannel bot.
 		// @type {Bot}
 		this._bot = bot;
+
+		// Consumer replicas.
+		// @type {Number}
+		this._consumerReplicas = consumerReplicas || 0;
 
 		// Network throttled.
 		// @type {Boolean}
@@ -108,8 +140,12 @@ class Room extends EventEmitter
 		// Handle audioLevelObserver.
 		this._handleAudioLevelObserver();
 
+		// Handle activeSpeakerObserver.
+		this._handleActiveSpeakerObserver();
+
 		// For debugging.
 		global.audioLevelObserver = this._audioLevelObserver;
+		global.activeSpeakerObserver = this._activeSpeakerObserver;
 		global.bot = this._bot;
 	}
 
@@ -137,8 +173,13 @@ class Room extends EventEmitter
 		// Stop network throttling.
 		if (this._networkThrottled)
 		{
+			logger.debug('close() | stopping network throttle');
+
 			throttle.stop({})
-				.catch(() => {});
+				.catch((error) =>
+				{
+					logger.error(`close() | failed to stop network throttle:${error}`);
+				});
 		}
 	}
 
@@ -183,6 +224,10 @@ class Room extends EventEmitter
 		{
 			logger.error('protooRoom.createPeer() failed:%o', error);
 		}
+
+		// Notify mediasoup version to the peer.
+		peer.notify('mediasoup-version', { version: mediasoup.version })
+			.catch(() => {});
 
 		// Use the peer.data object to store mediasoup related objects.
 
@@ -434,13 +479,15 @@ class Room extends EventEmitter
 			{
 				const webRtcTransportOptions =
 				{
-					...config.mediasoup.webRtcTransportOptions,
-					enableSctp     : Boolean(sctpCapabilities),
-					numSctpStreams : (sctpCapabilities || {}).numStreams
+					...utils.clone(config.mediasoup.webRtcTransportOptions),
+					webRtcServer      : this._webRtcServer,
+					iceConsentTimeout : 20,
+					enableSctp        : Boolean(sctpCapabilities),
+					numSctpStreams    : (sctpCapabilities || {}).numStreams
 				};
 
-				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					webRtcTransportOptions);
+				const transport =
+					await this._mediasoupRouter.createWebRtcTransport(webRtcTransportOptions);
 
 				// Store it.
 				broadcaster.data.transports.set(transport.id, transport);
@@ -458,7 +505,7 @@ class Room extends EventEmitter
 			{
 				const plainTransportOptions =
 				{
-					...config.mediasoup.plainTransportOptions,
+					...utils.clone(config.mediasoup.plainTransportOptions),
 					rtcpMux : rtcpMux,
 					comedia : comedia
 				};
@@ -615,10 +662,13 @@ class Room extends EventEmitter
 				});
 		}
 
-		// Add into the audioLevelObserver.
+		// Add into the AudioLevelObserver and ActiveSpeakerObserver.
 		if (producer.kind === 'audio')
 		{
 			this._audioLevelObserver.addProducer({ producerId: producer.id })
+				.catch(() => {});
+
+			this._activeSpeakerObserver.addProducer({ producerId: producer.id })
 				.catch(() => {});
 		}
 
@@ -815,9 +865,9 @@ class Room extends EventEmitter
 		{
 			const { producer, volume } = volumes[0];
 
-			// logger.debug(
-			// 	'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
-			// 	producer.id, volume);
+			logger.debug(
+				'audioLevelObserver "volumes" event [producerId:%s, volume:%s]',
+				producer.id, volume);
 
 			// Notify all Peers.
 			for (const peer of this._getJoinedPeers())
@@ -834,7 +884,7 @@ class Room extends EventEmitter
 
 		this._audioLevelObserver.on('silence', () =>
 		{
-			// logger.debug('audioLevelObserver "silence" event');
+			logger.debug('audioLevelObserver "silence" event');
 
 			// Notify all Peers.
 			for (const peer of this._getJoinedPeers())
@@ -842,6 +892,16 @@ class Room extends EventEmitter
 				peer.notify('activeSpeaker', { peerId: null })
 					.catch(() => {});
 			}
+		});
+	}
+
+	_handleActiveSpeakerObserver()
+	{
+		this._activeSpeakerObserver.on('dominantspeaker', (dominantSpeaker) =>
+		{
+			logger.debug(
+				'activeSpeakerObserver "dominantspeaker" event [producerId:%s]',
+				dominantSpeaker.producer.id);
 		});
 	}
 
@@ -970,20 +1030,35 @@ class Room extends EventEmitter
 
 				const webRtcTransportOptions =
 				{
-					...config.mediasoup.webRtcTransportOptions,
-					enableSctp     : Boolean(sctpCapabilities),
-					numSctpStreams : (sctpCapabilities || {}).numStreams,
-					appData        : { producing, consuming }
+					...utils.clone(config.mediasoup.webRtcTransportOptions),
+					webRtcServer      : this._webRtcServer,
+					iceConsentTimeout : 20,
+					enableSctp        : Boolean(sctpCapabilities),
+					numSctpStreams    : (sctpCapabilities || {}).numStreams,
+					appData           : { producing, consuming }
 				};
 
 				if (forceTcp)
 				{
+					webRtcTransportOptions.listenInfos = webRtcTransportOptions.listenInfos
+						.filter((listenInfo) => listenInfo.protocol === 'tcp');
+
 					webRtcTransportOptions.enableUdp = false;
 					webRtcTransportOptions.enableTcp = true;
 				}
 
-				const transport = await this._mediasoupRouter.createWebRtcTransport(
-					webRtcTransportOptions);
+				const transport =
+					await this._mediasoupRouter.createWebRtcTransport(webRtcTransportOptions);
+
+				transport.on('icestatechange', (iceState) =>
+				{
+					if (iceState === 'disconnected' || iceState === 'closed')
+					{
+						logger.warn('WebRtcTransport "icestatechange" event [iceState:%s], closing peer', iceState);
+
+						peer.close();
+					}
+				});
 
 				transport.on('sctpstatechange', (sctpState) =>
 				{
@@ -993,7 +1068,11 @@ class Room extends EventEmitter
 				transport.on('dtlsstatechange', (dtlsState) =>
 				{
 					if (dtlsState === 'failed' || dtlsState === 'closed')
-						logger.warn('WebRtcTransport "dtlsstatechange" event [dtlsState:%s]', dtlsState);
+					{
+						logger.warn('WebRtcTransport "dtlsstatechange" event [dtlsState:%s], closing peer', dtlsState);
+
+						peer.close();
+					}
 				});
 
 				// NOTE: For testing.
@@ -1144,10 +1223,84 @@ class Room extends EventEmitter
 						});
 				}
 
-				// Add into the audioLevelObserver.
+				/* Test rtpjs lib. */
+
+				// const directTransport = await this._mediasoupRouter.createDirectTransport();
+
+				// directTransport.on('rtcp', (buffer) =>
+				// {
+				// 	const rtcpPacket =
+				// 		new rtp.packets.CompoundPacket(rtp.utils.nodeBufferToDataView(buffer));
+
+				// 	logger.info('RTCP packet');
+				// 	logger.info(rtcpPacket.dump());
+				// });
+
+				// const directConsumer = await directTransport.consume(
+				// 	{
+				// 		producerId      : producer.id,
+				// 		rtpCapabilities : this._mediasoupRouter.rtpCapabilities
+				// 	}
+				// );
+
+				// const directProducer = await directTransport.produce(
+				// 	{
+				// 		kind          : directConsumer.kind,
+				// 		rtpParameters : directConsumer.rtpParameters
+				// 	});
+
+				// directConsumer.on('rtp', (buffer) =>
+				// {
+				// 	const rtpPacket =
+				// 		new rtp.packets.RtpPacket(rtp.utils.nodeBufferToDataView(buffer));
+
+				// 	// logger.info('RTP packet');
+				// 	// logger.info(rtpPacket.dump());
+
+				// 	directProducer.send(buffer);
+				// });
+
+				/* Test gstreamer.
+				 *
+				 * NOTE: Adapt payloadType to the consumer's payloadType.
+				 * gst-launch-1.0 -v udpsrc port=5004\
+				 * caps="application/x-rtp, media=(string)video, encoding-name=(string)H264, payload=(int)107"\
+				 * ! rtpjitterbuffer ! rtph264depay ! avdec_h264 ! autovideosink
+				 */
+				// if (kind === 'video')
+				// {
+				// 	const plainTransport = await this._mediasoupRouter.createPlainTransport(
+				// 		{
+				// 			listenInfo : {
+				// 				protocol  : 'udp',
+				// 				ip        : '127.0.0.1',
+				// 				// NOTE: Adapt ports to your config.
+				// 				portRange : { min: 2010, max: 2020 }
+				// 			}
+				// 		}
+				// 	);
+
+				// 	plainTransport.connect({ ip: '127.0.0.1', port: 5004 });
+
+				// 	const consumer = await plainTransport.consume(
+				// 		{
+				// 			producerId      : producer.id,
+				// 			rtpCapabilities : this._mediasoupRouter.rtpCapabilities
+				// 		}
+				// 	);
+
+				// 	const dump = await consumer.dump();
+
+				// 	logger.info(`payloadType: ${dump.rtpStream.params.payloadType}`);
+				// }
+
+				// Add into the AudioLevelObserver and ActiveSpeakerObserver.
 				if (producer.kind === 'audio')
 				{
 					this._audioLevelObserver.addProducer({ producerId: producer.id })
+						.catch(() => {});
+
+					this._activeSpeakerObserver.addProducer({ producerId: producer.id })
 						.catch(() => {});
 				}
 
@@ -1486,8 +1639,9 @@ class Room extends EventEmitter
 				const DefaultUplink = 1000000;
 				const DefaultDownlink = 1000000;
 				const DefaultRtt = 0;
+				const DefaultPacketLoss = 0;
 
-				const { uplink, downlink, rtt, secret } = request.data;
+				const { secret, uplink, downlink, rtt, packetLoss } = request.data;
 
 				if (!secret || secret !== process.env.NETWORK_THROTTLE_SECRET)
 				{
@@ -1498,18 +1652,22 @@ class Room extends EventEmitter
 
 				try
 				{
+					this._networkThrottled = true;
+
 					await throttle.start(
 						{
-							up   : uplink || DefaultUplink,
-							down : downlink || DefaultDownlink,
-							rtt  : rtt || DefaultRtt
+							up         : uplink || DefaultUplink,
+							down       : downlink || DefaultDownlink,
+							rtt        : rtt || DefaultRtt,
+							packetLoss : packetLoss || DefaultPacketLoss
 						});
 
 					logger.warn(
-						'network throttle set [uplink:%s, downlink:%s, rtt:%s]',
+						'network throttle set [uplink:%s, downlink:%s, rtt:%s, packetLoss:%s]',
 						uplink || DefaultUplink,
 						downlink || DefaultDownlink,
-						rtt || DefaultRtt);
+						rtt || DefaultRtt,
+						packetLoss || DefaultPacketLoss);
 
 					accept();
 				}
@@ -1614,119 +1772,150 @@ class Room extends EventEmitter
 			return;
 		}
 
-		// Create the Consumer in paused mode.
-		let consumer;
+		const promises = [];
+
+		const consumerCount = 1 + this._consumerReplicas;
+
+		for (let i=0; i<consumerCount; i++)
+		{
+			promises.push(
+				// eslint-disable-next-line no-async-promise-executor
+				new Promise(async (resolve) =>
+				{
+					// Create the Consumer in paused mode.
+					let consumer;
+
+					try
+					{
+						consumer = await transport.consume(
+							{
+								producerId      : producer.id,
+								rtpCapabilities : consumerPeer.data.rtpCapabilities,
+								// Enable NACK for OPUS.
+								enableRtx       : true,
+								paused          : true,
+								ignoreDtx       : true
+							});
+					}
+					catch (error)
+					{
+						logger.warn('_createConsumer() | transport.consume():%o', error);
+
+						resolve();
+
+						return;
+					}
+
+					// Store the Consumer into the protoo consumerPeer data Object.
+					consumerPeer.data.consumers.set(consumer.id, consumer);
+
+					// Set Consumer events.
+					consumer.on('transportclose', () =>
+					{
+						// Remove from its map.
+						consumerPeer.data.consumers.delete(consumer.id);
+					});
+
+					consumer.on('producerclose', () =>
+					{
+						// Remove from its map.
+						consumerPeer.data.consumers.delete(consumer.id);
+
+						consumerPeer.notify('consumerClosed', { consumerId: consumer.id })
+							.catch(() => {});
+					});
+
+					consumer.on('producerpause', () =>
+					{
+						consumerPeer.notify('consumerPaused', { consumerId: consumer.id })
+							.catch(() => {});
+					});
+
+					consumer.on('producerresume', () =>
+					{
+						consumerPeer.notify('consumerResumed', { consumerId: consumer.id })
+							.catch(() => {});
+					});
+
+					consumer.on('score', (score) =>
+					{
+						// logger.debug(
+						//	 'consumer "score" event [consumerId:%s, score:%o]',
+						//	 consumer.id, score);
+
+						consumerPeer.notify('consumerScore', { consumerId: consumer.id, score })
+							.catch(() => {});
+					});
+
+					consumer.on('layerschange', (layers) =>
+					{
+						consumerPeer.notify(
+							'consumerLayersChanged',
+							{
+								consumerId    : consumer.id,
+								spatialLayer  : layers ? layers.spatialLayer : null,
+								temporalLayer : layers ? layers.temporalLayer : null
+							})
+							.catch(() => {});
+					});
+
+					// NOTE: For testing.
+					// await consumer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
+					// await consumer.enableTraceEvent([ 'pli', 'fir' ]);
+					// await consumer.enableTraceEvent([ 'keyframe' ]);
+
+					consumer.on('trace', (trace) =>
+					{
+						logger.debug(
+							'consumer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
+							consumer.id, trace.type, trace);
+					});
+
+					// Send a protoo request to the remote Peer with Consumer parameters.
+					try
+					{
+						await consumerPeer.request(
+							'newConsumer',
+							{
+								peerId         : producerPeer.id,
+								producerId     : producer.id,
+								id             : consumer.id,
+								kind           : consumer.kind,
+								rtpParameters  : consumer.rtpParameters,
+								type           : consumer.type,
+								appData        : producer.appData,
+								producerPaused : consumer.producerPaused
+							});
+
+						// Now that we got the positive response from the remote endpoint, resume
+						// the Consumer so the remote endpoint will receive the a first RTP packet
+						// of this new stream once its PeerConnection is already ready to process
+						// and associate it.
+						await consumer.resume();
+
+						consumerPeer.notify(
+							'consumerScore',
+							{
+								consumerId : consumer.id,
+								score      : consumer.score
+							})
+							.catch(() => {});
+
+						resolve();
+					}
+					catch (error)
+					{
+						logger.warn('_createConsumer() | failed:%o', error);
+
+						resolve();
+					}
+				})
+			);
+		}
 
 		try
 		{
-			consumer = await transport.consume(
-				{
-					producerId      : producer.id,
-					rtpCapabilities : consumerPeer.data.rtpCapabilities,
-					paused          : true
-				});
-		}
-		catch (error)
-		{
-			logger.warn('_createConsumer() | transport.consume():%o', error);
-
-			return;
-		}
-
-		// Store the Consumer into the protoo consumerPeer data Object.
-		consumerPeer.data.consumers.set(consumer.id, consumer);
-
-		// Set Consumer events.
-		consumer.on('transportclose', () =>
-		{
-			// Remove from its map.
-			consumerPeer.data.consumers.delete(consumer.id);
-		});
-
-		consumer.on('producerclose', () =>
-		{
-			// Remove from its map.
-			consumerPeer.data.consumers.delete(consumer.id);
-
-			consumerPeer.notify('consumerClosed', { consumerId: consumer.id })
-				.catch(() => {});
-		});
-
-		consumer.on('producerpause', () =>
-		{
-			consumerPeer.notify('consumerPaused', { consumerId: consumer.id })
-				.catch(() => {});
-		});
-
-		consumer.on('producerresume', () =>
-		{
-			consumerPeer.notify('consumerResumed', { consumerId: consumer.id })
-				.catch(() => {});
-		});
-
-		consumer.on('score', (score) =>
-		{
-			// logger.debug(
-			// 	'consumer "score" event [consumerId:%s, score:%o]',
-			// 	consumer.id, score);
-
-			consumerPeer.notify('consumerScore', { consumerId: consumer.id, score })
-				.catch(() => {});
-		});
-
-		consumer.on('layerschange', (layers) =>
-		{
-			consumerPeer.notify(
-				'consumerLayersChanged',
-				{
-					consumerId    : consumer.id,
-					spatialLayer  : layers ? layers.spatialLayer : null,
-					temporalLayer : layers ? layers.temporalLayer : null
-				})
-				.catch(() => {});
-		});
-
-		// NOTE: For testing.
-		// await consumer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
-		// await consumer.enableTraceEvent([ 'pli', 'fir' ]);
-		// await consumer.enableTraceEvent([ 'keyframe' ]);
-
-		consumer.on('trace', (trace) =>
-		{
-			logger.debug(
-				'consumer "trace" event [producerId:%s, trace.type:%s, trace:%o]',
-				consumer.id, trace.type, trace);
-		});
-
-		// Send a protoo request to the remote Peer with Consumer parameters.
-		try
-		{
-			await consumerPeer.request(
-				'newConsumer',
-				{
-					peerId         : producerPeer.id,
-					producerId     : producer.id,
-					id             : consumer.id,
-					kind           : consumer.kind,
-					rtpParameters  : consumer.rtpParameters,
-					type           : consumer.type,
-					appData        : producer.appData,
-					producerPaused : consumer.producerPaused
-				});
-
-			// Now that we got the positive response from the remote endpoint, resume
-			// the Consumer so the remote endpoint will receive the a first RTP packet
-			// of this new stream once its PeerConnection is already ready to process
-			// and associate it.
-			await consumer.resume();
-
-			consumerPeer.notify(
-				'consumerScore',
-				{
-					consumerId : consumer.id,
-					score      : consumer.score
-				})
-				.catch(() => {});
+			await Promise.all(promises);
 		}
 		catch (error)
 		{

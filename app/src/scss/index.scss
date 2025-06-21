@@ -1,0 +1,66 @@
+@use './variables';
+@use './mixins';
+@use './fonts';
+@use './reset';
+
+// Components
+@use './components/Room';
+@use './components/Me';
+@use './components/ChatInput';
+@use './components/Peers';
+@use './components/Peer';
+@use './components/PeerView';
+@use './components/Stats';
+@use './components/Notifications';
+@use './components/NetworkThrottle';
+
+html {
+	height: 100%;
+	box-sizing: border-box;
+	// background-image: url('/images/body-bg-2.jpg');
+	// background-attachment: fixed;
+	// background-position: center;
+	// background-size: cover;
+	// background-repeat: no-repeat;
+	background: #141e30;
+	background: linear-gradient(to top, #243b55, #141e30);
+	font-family: 'Roboto';
+	font-weight: 300;
+
+	@include mixins.desktop() {
+		font-size: 16px;
+	}
+
+	@include mixins.mobile() {
+		font-size: 12px;
+	}
+}
+
+body {
+	height: 100%;
+}
+
+#mediasoup-demo-app-container {
+	height: 100%;
+	width: 100%;
+}
+
+// Hack to detect in JS the current media query
+#mediasoup-demo-app-media-query-detector {
+	position: relative;
+	z-index: -1000;
+	bottom: 0;
+	left: 0;
+	height: 1px;
+	width: 1px;
+
+	// In desktop let it "visible" so elem.offsetParent returns the parent element
+	@include mixins.desktop() {
+	}
+
+	// In mobile ensure it's not displayed so elem.offsetParent returns null
+	@include mixins.mobile() {
+		display: none;
+		position: fixed; // Required for old IE
+	}
+}
