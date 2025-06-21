@@ -487,7 +487,10 @@ class Room extends EventEmitter
 		{
 			broadcasterId,
 			transportId,
-			dtlsParameters
+			dtlsParameters,
+			ip,
+			port,
+			rtcpPort
 		}
 	)
 	{
@@ -501,13 +504,14 @@ class Room extends EventEmitter
 		if (!transport)
 			throw new Error(`transport with id "${transportId}" does not exist`);
 
-		if (transport.constructor.name !== 'WebRtcTransport')
+		if (transport.constructor.name == 'WebRtcTransport')
 		{
-			throw new Error(
-				`transport with id "${transportId}" is not a WebRtcTransport`);
+			await transport.connect({ dtlsParameters });
 		}
-
-		await transport.connect({ dtlsParameters });
+		else 
+		{
+			await transport.connect({ ip, port, rtcpPort });
+		}
 	}
 
 	/**
@@ -594,7 +598,9 @@ class Room extends EventEmitter
 		{
 			broadcasterId,
 			transportId,
-			producerId
+			producerId,
+			paused,
+			rtpCapabilities
 		}
 	)
 	{
@@ -602,9 +608,6 @@ class Room extends EventEmitter
 
 		if (!broadcaster)
 			throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
-
-		if (!broadcaster.data.rtpCapabilities)
-			throw new Error('broadcaster does not have rtpCapabilities');
 
 		const transport = broadcaster.data.transports.get(transportId);
 
@@ -614,7 +617,8 @@ class Room extends EventEmitter
 		const consumer = await transport.consume(
 			{
 				producerId,
-				rtpCapabilities : broadcaster.data.rtpCapabilities
+				paused,
+				rtpCapabilities
 			});
 
 		// Store it.
@@ -639,6 +643,25 @@ class Room extends EventEmitter
 			kind          : consumer.kind,
 			rtpParameters : consumer.rtpParameters,
 			type          : consumer.type
+		};
+	}
+
+	async resumeBroadcasterConsumer({ broadcasterId, consumerId })
+	{
+		const broadcaster = this._broadcasters.get(broadcasterId);
+
+		if (!broadcaster)
+			throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
+
+		const consumer = broadcaster.data.consumers.get(consumerId);
+
+		if (!consumer)
+			throw new Error(`consumer with id "${consumerId}" does not exist`);
+		
+		await consumer.resume();
+
+		return {
+			id : consumer.id
 		};
 	}
 

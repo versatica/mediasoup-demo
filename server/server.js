@@ -254,7 +254,7 @@ async function createExpressApp()
 		async (req, res, next) =>
 		{
 			const { broadcasterId, transportId } = req.params;
-			const { dtlsParameters } = req.body;
+			const { dtlsParameters, ip, port, rtcpPort } = req.body;
 
 			try
 			{
@@ -262,7 +262,10 @@ async function createExpressApp()
 					{
 						broadcasterId,
 						transportId,
-						dtlsParameters
+						dtlsParameters,
+						ip,
+						port,
+						rtcpPort
 					});
 
 				res.status(200).json(data);
@@ -315,7 +318,7 @@ async function createExpressApp()
 		async (req, res, next) =>
 		{
 			const { broadcasterId, transportId } = req.params;
-			const { producerId } = req.query;
+			const { producerId, paused, rtpCapabilities } = req.body;
 
 			try
 			{
@@ -323,7 +326,39 @@ async function createExpressApp()
 					{
 						broadcasterId,
 						transportId,
-						producerId
+						producerId,
+						paused,
+						rtpCapabilities
+					});
+
+				res.status(200).json(data);
+			}
+			catch (error)
+			{
+				next(error);
+			}
+		});
+
+	/**
+	 * POST API to resume a mediasoup Consumer associated to a Broadcaster.
+	 * The exact Transport in which the Consumer must be created is signaled in
+	 * the URL path. Body parameters must include the desired consumerId to
+	 * resume.
+	 */
+	expressApp.post(
+		'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/resume',
+		async (req, res, next) =>
+		{
+			const { broadcasterId, transportId } = req.params;
+			const { consumerId } = req.body;
+
+			try
+			{
+				const data = await req.room.resumeBroadcasterConsumer(
+					{
+						broadcasterId,
+						transportId,
+						consumerId
 					});
 
 				res.status(200).json(data);
