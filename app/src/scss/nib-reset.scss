@@ -1,0 +1,200 @@
+// https://github.com/stylus/nib/blob/main/lib/nib/reset.styl
+// Based on [Eric Meyer's reset](http://meyerweb.com/eric/thoughts/2007/05/01/reset-reloaded/)
+
+@mixin global-reset() {
+	html,
+	body,
+	div,
+	span,
+	applet,
+	object,
+	iframe,
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6,
+	p,
+	blockquote,
+	pre,
+	a,
+	abbr,
+	acronym,
+	address,
+	big,
+	cite,
+	code,
+	del,
+	dfn,
+	em,
+	img,
+	ins,
+	kbd,
+	q,
+	s,
+	samp,
+	small,
+	strike,
+	strong,
+	sub,
+	sup,
+	tt,
+	var,
+	dl,
+	dt,
+	dd,
+	ol,
+	ul,
+	li,
+	fieldset,
+	form,
+	label,
+	legend,
+	table,
+	caption,
+	tbody,
+	tfoot,
+	thead,
+	tr,
+	th,
+	td {
+		@include reset-box-model();
+		@include reset-font();
+	}
+	body {
+		@include reset-body();
+	}
+	ol,
+	ul {
+		list-style: none;
+	}
+	table {
+		@include reset-table();
+	}
+	caption,
+	th,
+	td {
+		@include reset-table-cell();
+	}
+	a img {
+		border: none;
+	}
+}
+
+@mixin nested-reset() {
+	div,
+	span,
+	object,
+	iframe,
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6,
+	p,
+	pre,
+	a,
+	abbr,
+	acronym,
+	address,
+	code,
+	del,
+	dfn,
+	em,
+	img,
+	dl,
+	dt,
+	dd,
+	ol,
+	ul,
+	li,
+	fieldset,
+	form,
+	label,
+	legend,
+	caption,
+	tbody,
+	tfoot,
+	thead,
+	tr {
+		@include reset-box-model();
+		@include reset-font();
+	}
+	table {
+		@include reset-table();
+	}
+	caption,
+	th,
+	td {
+		@include reset-table-cell();
+	}
+	a img {
+		border: none;
+	}
+}
+
+@mixin reset-box-model() {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+}
+
+@mixin reset-font() {
+	font-weight: inherit;
+	font-style: inherit;
+	font-family: inherit;
+	font-size: 100%;
+	vertical-align: baseline;
+}
+
+@mixin reset-body() {
+	line-height: 1;
+	color: black;
+	background: white;
+}
+
+@mixin reset-table() {
+	border-collapse: separate;
+	border-spacing: 0;
+	vertical-align: middle;
+}
+
+@mixin reset-table-cell() {
+	text-align: left;
+	font-weight: normal;
+	vertical-align: middle;
+}
+
+@mixin reset-html5() {
+	article,
+	aside,
+	canvas,
+	details,
+	figcaption,
+	figure,
+	footer,
+	header,
+	hgroup,
+	menu,
+	nav,
+	section,
+	summary,
+	main {
+		@include reset-box-model();
+		display: block;
+	}
+	audio,
+	canvas,
+	video {
+		display: inline-block;
+		*display: inline;
+		*zoom: 1;
+	}
+	audio:not([controls]),
+	[hidden] {
+		display: none;
+	}
+}

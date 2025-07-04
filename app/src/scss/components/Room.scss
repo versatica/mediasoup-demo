@@ -1,0 +1,325 @@
+@use '../mixins';
+@use '../variables';
+
+[data-component='Room'] {
+	position: relative;
+	height: 100%;
+	width: 100%;
+
+	@include mixins.AppearFadeIn(300ms);
+
+	> .state {
+		position: fixed;
+		z-index: 100;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		border-radius: 25px;
+		background-color: variables.$COLOR_BG_1;
+
+		@include mixins.desktop() {
+			top: 20px;
+			left: 20px;
+			width: 124px;
+		}
+
+		@include mixins.mobile() {
+			top: 10px;
+			left: 10px;
+			width: 110px;
+		}
+
+		> .icon {
+			flex: 0 0 auto;
+			border-radius: 100%;
+
+			@include mixins.desktop() {
+				margin: 6px;
+				margin-right: 0;
+				height: 16px;
+				width: 16px;
+			}
+
+			@include mixins.mobile() {
+				margin: 4px;
+				margin-right: 0;
+				height: 16px;
+				width: 16px;
+			}
+
+			&.new,
+			&.closed {
+				background-color: rgba(#aaa, 0.5);
+			}
+
+			&.connecting {
+				animation: Room-info-state-connecting 0.75s infinite linear;
+			}
+
+			&.connected {
+				background-color: rgba(#30bd18, 0.75);
+
+				@include mixins.mobile() {
+					display: none;
+				}
+			}
+		}
+
+		> .text {
+			flex: 100 0 auto;
+			user-select: none;
+			pointer-events: none;
+			text-align: center;
+			text-transform: uppercase;
+			font-family: 'Roboto';
+			font-weight: 400;
+			color: rgba(#fff, 0.75);
+
+			@include mixins.desktop() {
+				font-size: 12px;
+			}
+
+			@include mixins.mobile() {
+				font-size: 10px;
+			}
+
+			&.connected {
+				@include mixins.mobile() {
+					display: none;
+				}
+			}
+		}
+	}
+
+	> .info {
+		position: fixed;
+		z-index: 100;
+
+		@include mixins.desktop() {
+			top: 55px;
+			left: 20px;
+			width: 124px;
+		}
+
+		@include mixins.mobile() {
+			top: 40px;
+			height: 18px;
+			width: 110px;
+		}
+
+		> p.text {
+			height: 18px;
+			left: 10px;
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			align-items: center;
+			flex: 100 0 auto;
+			user-select: none;
+			pointer-events: none;
+			text-align: center;
+			font-family: 'Roboto';
+			font-weight: 400;
+			color: rgba(#fff, 0.75);
+			border-radius: 25px;
+			background-color: variables.$COLOR_BG_1;
+			margin-bottom: 2px;
+
+			@include mixins.desktop() {
+				font-size: 11px;
+			}
+
+			@include mixins.mobile() {
+				font-size: 9px;
+			}
+
+			> span.label {
+				color: rgba(#fff, 0.45);
+			}
+		}
+	}
+
+	> .room-link-wrapper {
+		pointer-events: none;
+		position: absolute;
+		z-index: 1;
+		top: 0;
+		left: 0;
+		right: 0;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+
+		> .room-link {
+			width: auto;
+			background-color: variables.$COLOR_BG_1;
+			border-bottom-right-radius: 4px;
+			border-bottom-left-radius: 4px;
+			box-shadow: 0px 3px 12px 2px rgba(#111, 0.4);
+
+			> a.link {
+				display: block;
+				user-select: none;
+				pointer-events: auto;
+				text-transform: uppercase;
+				font-family: 'Roboto';
+				font-weight: 400;
+				color: rgba(#fff, 0.75);
+				cursor: pointer;
+				text-decoration: none;
+				transition-property: color;
+				transition-duration: 0.1s;
+
+				@include mixins.desktop() {
+					padding: 10px 20px;
+					font-size: 12px;
+				}
+
+				@include mixins.mobile() {
+					padding: 6px 10px;
+					font-size: 10px;
+				}
+
+				&:hover {
+					color: #fff;
+					text-decoration: underline;
+				}
+			}
+		}
+	}
+
+	> .me-container {
+		position: fixed;
+		z-index: 100;
+		overflow: hidden;
+		box-shadow: 0px 5px 12px 2px rgba(#111, 0.5);
+		transition-property: border-color;
+		transition-duration: 0.2s;
+
+		&.active-speaker {
+			border-color: #fff;
+		}
+
+		@include mixins.desktop() {
+			height: 250px;
+			width: 294px;
+			bottom: 60px;
+			left: 20px;
+			border: 1px solid rgba(#fff, 0.15);
+		}
+
+		@include mixins.mobile() {
+			height: 220px;
+			width: 200px;
+			bottom: 50px;
+			left: 10px;
+			border: 1px solid rgba(#fff, 0.25);
+		}
+	}
+
+	> .chat-input-container {
+		position: fixed;
+		z-index: 100;
+		overflow: hidden;
+		box-shadow: 0px 5px 12px 2px rgba(#111, 0.5);
+
+		@include mixins.desktop() {
+			height: 30px;
+			width: 294px;
+			bottom: 20px;
+			left: 20px;
+			border: 1px solid rgba(#fff, 0.15);
+		}
+
+		@include mixins.mobile() {
+			height: 30px;
+			width: 200px;
+			bottom: 10px;
+			left: 10px;
+			border: 1px solid rgba(#fff, 0.25);
+		}
+	}
+
+	> .sidebar {
+		position: fixed;
+		z-index: 101;
+		top: calc(50% - 60px);
+		height: 120px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+
+		@include mixins.desktop() {
+			left: 20px;
+			width: 36px;
+			margin-top: -60px;
+		}
+
+		@include mixins.mobile() {
+			left: 10px;
+			width: 32px;
+			margin-top: -80px;
+		}
+
+		> .button {
+			flex: 0 0 auto;
+			margin: 4px 0;
+			background-position: center;
+			background-size: 75%;
+			background-repeat: no-repeat;
+			background-color: variables.$COLOR_BG_1;
+			cursor: pointer;
+			transition-property: opacity, background-color;
+			transition-duration: 0.2s;
+			border-radius: 100%;
+
+			@include mixins.desktop() {
+				height: 36px;
+				width: 36px;
+			}
+
+			@include mixins.mobile() {
+				height: 32px;
+				width: 32px;
+			}
+
+			&.on {
+				background-color: rgba(#fff, 0.7);
+			}
+
+			&.disabled {
+				pointer-events: none;
+				opacity: 0.5;
+				transition-duration: 0s;
+			}
+
+			&.hide-videos {
+				background-image: url('/images/icon_video_white_on.svg');
+
+				&.on {
+					background-image: url('/images/icon_video_black_off.svg');
+				}
+			}
+
+			&.mute-audio {
+				background-image: url('/images/icon_volume_white_on.svg');
+
+				&.on {
+					background-image: url('/images/icon_volume_black_off.svg');
+				}
+			}
+
+			&.restart-ice {
+				background-image: url('/images/icon_restart_ice_white.svg');
+			}
+		}
+	}
+}
+
+@keyframes Room-info-state-connecting {
+	50% {
+		background-color: rgba(orange, 0.75);
+	}
+}
