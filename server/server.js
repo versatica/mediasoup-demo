@@ -18,6 +18,7 @@ const protoo = require('protoo-server');
 const mediasoup = require('mediasoup');
 const express = require('express');
 const { AwaitQueue } = require('awaitqueue');
+const throttle = require('@sitespeed.io/throttle');
 const Logger = require('./lib/Logger');
 const utils = require('./lib/utils');
 const Room = require('./lib/Room');
@@ -92,6 +93,17 @@ async function run()
 			room.logStatus();
 		}
 	}, 120000);
+
+	process.on('exit', (code) =>
+	{
+		logger.info('process exited with code %o', code);
+
+		throttle.stop({})
+			.catch((error) =>
+			{
+				logger.error(`close() | failed to stop network throttle:${error}`);
+			});
+	});
 }
 
 /**
@@ -119,9 +131,15 @@ async function runMediasoupWorkers()
 		worker.on('died', () =>
 		{
 			logger.error(
-				'mediasoup Worker died, exiting  in 2 seconds... [pid:%d]', worker.pid);
+				'mediasoup Worker died, exiting  in 5 seconds... [pid:%d]', worker.pid);
 
-			setTimeout(() => process.exit(1), 2000);
+			throttle.stop({})
+				.catch((error) =>
+				{
+					logger.error(`failed to stop network throttle:${error}`);
+				});
+
+			setTimeout(() => process.exit(1), 5000);
 		});
 
 		mediasoupWorkers.push(worker);
@@ -300,7 +318,7 @@ async function createExpressApp()
 		async (req, res, next) =>
 		{
 			const { broadcasterId, transportId } = req.params;
-			const { dtlsParameters } = req.body;
+			const { dtlsParameters, ip, port, rtcpPort } = req.body;
 
 			try
 			{
@@ -308,7 +326,10 @@ async function createExpressApp()
 					{
 						broadcasterId,
 						transportId,
-						dtlsParameters
+						dtlsParameters,
+						ip,
+						port,
+						rtcpPort
 					});
 
 				res.status(200).json(data);
@@ -361,7 +382,7 @@ async function createExpressApp()
 		async (req, res, next) =>
 		{
 			const { broadcasterId, transportId } = req.params;
-			const { producerId } = req.query;
+			const { producerId, paused, rtpCapabilities } = req.body;
 
 			try
 			{
@@ -369,7 +390,39 @@ async function createExpressApp()
 					{
 						broadcasterId,
 						transportId,
-						producerId
+						producerId,
+						paused,
+						rtpCapabilities
+					});
+
+				res.status(200).json(data);
+			}
+			catch (error)
+			{
+				next(error);
+			}
+		});
+
+	/**
+	 * POST API to resume a mediasoup Consumer associated to a Broadcaster.
+	 * The exact Transport in which the Consumer must be created is signaled in
+	 * the URL path. Body parameters must include the desired consumerId to
+	 * resume.
+	 */
+	expressApp.post(
+		'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/resume',
+		async (req, res, next) =>
+		{
+			const { broadcasterId, transportId } = req.params;
+			const { consumerId } = req.body;
+
+			try
+			{
+				const data = await req.room.resumeBroadcasterConsumer(
+					{
+						broadcasterId,
+						transportId,
+						consumerId
 					});
 
 				res.status(200).json(data);
