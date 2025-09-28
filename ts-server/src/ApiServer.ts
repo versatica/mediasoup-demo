@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express from 'express';
 import type * as expressTypes from 'express';
 import * as bodyParser from 'body-parser';
 
@@ -8,62 +8,83 @@ import { Room } from './Room';
 
 const logger = new Logger('ApiServer');
 
-export type ApiServerCreateOptions = {
-	getOrCreateRoom: GetOrCreateRoom;
-};
-
-// TODO
-export type ApiServerEvents = {};
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type ApiServerCreateOptions = {};
 
 type ApiServerConstructorOptions = {
-	getOrCreateRoom: GetOrCreateRoom;
+	expressApp: expressTypes.Express;
 };
 
-type GetOrCreateRoom = ({
-	roomId,
-	consumerReplicas,
-}: {
-	roomId: string;
-	consumerReplicas?: number;
-}) => Promise<Room>;
+export type ApiServerEvents = {
+	'get-room': [
+		{ roomId: string; consumerReplicas: number },
+		resolve: (value: Room | PromiseLike<Room>) => void,
+		reject: (error: Error) => void,
+	];
+};
 
-interface ExpressRequest extends expressTypes.Request {
+interface ApiServerExpressRequest extends expressTypes.Request {
 	room?: Room;
 }
 
 export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
-	readonly #getOrCreateRoom: GetOrCreateRoom;
-	readonly #expressApp: express.Express;
+	readonly #expressApp: expressTypes.Express;
 
-	static async create({
-		getOrCreateRoom,
-	}: ApiServerCreateOptions): Promise<ApiServer> {
+	// eslint-disable-next-line @typescript-eslint/require-await, no-empty-pattern
+	static async create({}: ApiServerCreateOptions): Promise<ApiServer> {
 		logger.debug('create()');
 
-		const apiServer = new ApiServer({ getOrCreateRoom });
+		const expressApp = ApiServer.createExpressApp();
+		const apiServer = new ApiServer({ expressApp });
 
 		return apiServer;
 	}
 
-	private constructor({ getOrCreateRoom }: ApiServerConstructorOptions) {
+	private static createExpressApp(): expressTypes.Express {
+		logger.debug('createExpressApp()');
+
+		const expressApp = express();
+
+		return expressApp;
+	}
+
+	private constructor({ expressApp }: ApiServerConstructorOptions) {
 		super();
 
 		logger.debug('constructor()');
 
-		this.#getOrCreateRoom = getOrCreateRoom;
-		this.#expressApp = express();
+		this.#expressApp = expressApp;
 
+		this.handleExpressApp();
+	}
+
+	getExpressApp(): expressTypes.Express {
+		return this.#expressApp;
+	}
+
+	private async getRoom({
+		roomId,
+		consumerReplicas,
+	}: {
+		roomId: string;
+		consumerReplicas: number;
+	}): Promise<Room> {
+		return new Promise<Room>((resolve, reject) => {
+			this.emit('get-room', { roomId, consumerReplicas }, resolve, reject);
+		});
+	}
+
+	private handleExpressApp(): void {
 		this.#expressApp.use(bodyParser.json());
 
 		/**
-		 * For every API request, verify that the roomId in the path matches and
-		 * existing room.
+		 * For every API request, obtain or create a Room with the given `roomId`.
 		 */
 		this.#expressApp.param(
 			'roomId',
-			async (req: ExpressRequest, res, next, roomId) => {
+			async (req: ApiServerExpressRequest, res, next, roomId) => {
 				try {
-					req.room = await this.#getOrCreateRoom({
+					req.room = await this.getRoom({
 						roomId,
 						consumerReplicas: 0,
 					});
@@ -71,11 +92,287 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 					next();
 				} catch (error) {
 					logger.error(
-						'room creation or room joining via broadcaster failed:%o',
+						'room creation or room joining via broadcaster failed:',
 						error
 					);
 
 					next(error);
+				}
+			}
+		);
+
+		/**
+		 * API GET resource that returns the mediasoup Router RTP capabilities of
+		 * the room.
+		 */
+		this.#expressApp.get(
+			'/rooms/:roomId/routerRtpCapabilities',
+			(req: ApiServerExpressRequest, res) => {
+				const data = req.room!.getRouterRtpCapabilities();
+
+				res.status(200).json(data);
+			}
+		);
+
+		/**
+		 * POST API to create a Broadcaster.
+		 */
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { id, displayName, device, rtpCapabilities } = req.body;
+
+				try {
+					// TODO
+					// const data = await req.room!.createBroadcaster({
+					// 	id,
+					// 	displayName,
+					// 	device,
+					// 	rtpCapabilities,
+					// });
+					//
+					// res.status(200).json(data);
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * DELETE API to delete a Broadcaster.
+		 */
+		this.#expressApp.delete(
+			'/rooms/:roomId/broadcasters/:broadcasterId',
+			(req: ApiServerExpressRequest, res) => {
+				const { broadcasterId } = req.params;
+
+				// TODO
+				// req.room!.deleteBroadcaster({ broadcasterId });
+
+				res.status(200).send('broadcaster deleted');
+			}
+		);
+
+		/**
+		 * POST API to create a mediasoup Transport associated to a Broadcaster.
+		 * It can be a PlainTransport or a WebRtcTransport depending on the
+		 * type parameters in the body. There are also additional parameters for
+		 * PlainTransport.
+		 */
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters/:broadcasterId/transports',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { broadcasterId } = req.params;
+				const { type, rtcpMux, comedia, sctpCapabilities } = req.body;
+
+				try {
+					// TODO
+					// const data = await req.room.createBroadcasterTransport({
+					// 	broadcasterId,
+					// 	type,
+					// 	rtcpMux,
+					// 	comedia,
+					// 	sctpCapabilities,
+					// });
+					//
+					// res.status(200).json(data);
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * POST API to connect a Transport belonging to a Broadcaster. Not needed
+		 * for PlainTransport if it was created with comedia option set to true.
+		 */
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/connect',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { broadcasterId, transportId } = req.params;
+				const { dtlsParameters, ip, port, rtcpPort } = req.body;
+
+				try {
+					// TODO
+					// const data = await req.room!.connectBroadcasterTransport({
+					// 	broadcasterId,
+					// 	transportId,
+					// 	dtlsParameters,
+					// 	ip,
+					// 	port,
+					// 	rtcpPort,
+					// });
+					//
+					// res.status(200).json(data);
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * POST API to create a mediasoup Producer associated to a Broadcaster.
+		 * The exact Transport in which the Producer must be created is signaled in
+		 * the URL path. Body parameters include kind and rtpParameters of the
+		 * Producer.
+		 */
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/producers',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { broadcasterId, transportId } = req.params;
+				const { kind, rtpParameters } = req.body;
+
+				try {
+					// TODO
+					// const data = await req.room!.createBroadcasterProducer({
+					// 	broadcasterId,
+					// 	transportId,
+					// 	kind,
+					// 	rtpParameters,
+					// });
+					//
+					// res.status(200).json(data);
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * POST API to create a mediasoup Consumer associated to a Broadcaster.
+		 * The exact Transport in which the Consumer must be created is signaled in
+		 * the URL path. Query parameters must include the desired producerId to
+		 * consume.
+		 */
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/consume',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { broadcasterId, transportId } = req.params;
+				const { producerId, paused, rtpCapabilities } = req.body;
+
+				try {
+					// TODO
+					// const data = await req.room!.createBroadcasterConsumer({
+					// 	broadcasterId,
+					// 	transportId,
+					// 	producerId,
+					// 	paused,
+					// 	rtpCapabilities,
+					// });
+					//
+					// res.status(200).json(data);
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * POST API to resume a mediasoup Consumer associated to a Broadcaster.
+		 * The exact Transport in which the Consumer must be created is signaled in
+		 * the URL path. Body parameters must include the desired consumerId to
+		 * resume.
+		 */
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/resume',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { broadcasterId, transportId } = req.params;
+				const { consumerId } = req.body;
+
+				try {
+					// TODO
+					// const data = await req.room!.resumeBroadcasterConsumer(
+					// 	{
+					// 		broadcasterId,
+					// 		transportId,
+					// 		consumerId
+					// 	});
+					//
+					// res.status(200).json(data);
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * POST API to create a mediasoup DataConsumer associated to a Broadcaster.
+		 * The exact Transport in which the DataConsumer must be created is signaled in
+		 * the URL path. Query body must include the desired producerId to
+		 * consume.
+		 */
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/consume/data',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { broadcasterId, transportId } = req.params;
+				const { dataProducerId } = req.body;
+
+				try {
+					// TODO
+					// const data = await req.room!.createBroadcasterDataConsumer(
+					// 	{
+					// 		broadcasterId,
+					// 		transportId,
+					// 		dataProducerId
+					// 	});
+					//
+					// res.status(200).json(data);
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * POST API to create a mediasoup DataProducer associated to a Broadcaster.
+		 * The exact Transport in which the DataProducer must be created is signaled in
+		 */
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/produce/data',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { broadcasterId, transportId } = req.params;
+				const { label, protocol, sctpStreamParameters, appData } = req.body;
+
+				try {
+					// TODO
+					// const data = await req.room!.createBroadcasterDataProducer(
+					// 	{
+					// 		broadcasterId,
+					// 		transportId,
+					// 		label,
+					// 		protocol,
+					// 		sctpStreamParameters,
+					// 		appData
+					// 	});
+					//
+					// res.status(200).json(data);
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * Error handler.
+		 */
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		this.#expressApp.use(
+			(
+				error: any,
+				req: ApiServerExpressRequest,
+				res: expressTypes.Response,
+				next: expressTypes.NextFunction
+			) => {
+				if (error) {
+					logger.warn('Express app error:', error);
+
+					error.status =
+						error.status ?? (error.name === 'TypeError' ? 400 : 500);
+
+					res.statusMessage = error.message;
+					res.status(error.status).send(String(error));
+				} else {
+					next();
 				}
 			}
 		);

@@ -1,50 +1,46 @@
-// #!/usr/bin/env node
+#!/usr/bin/env node
 
-// process.title = 'mediasoup-demo-server';
-// process.env['DEBUG'] ??= '*INFO* *WARN* *ERROR*';
+process.title = 'mediasoup-demo-server';
+process.env['DEBUG'] ??= '*INFO* *WARN* *ERROR*';
 
-// import * as util from 'node:util';
-// import * as mediasoup from 'mediasoup';
-// import * as http from 'node:http';
-// import * as https from 'node:https';
-// import * as fs from 'node:fs';
-// import * as url from 'node:url';
-// // const protoo = require('protoo-server');
-// // const express = require('express');
-// // const bodyParser = require('body-parser');
-// // const { AwaitQueue } = require('awaitqueue');
-// // const throttle = require('@sitespeed.io/throttle');
+import * as util from 'node:util';
 
-// import { Logger } from './Logger';
-// // const utils = require('./lib/utils');
-// // const Room = require('./lib/Room');
-// // const interactiveServer = require('./lib/interactiveServer');
-// // const interactiveClient = require('./lib/interactiveClient');
-// // @ts-expect-error --- config.js has no TS declaration.
-// import config from '../config.mjs';
+import { Logger } from './Logger';
+import { Server } from './Server';
+// const interactiveServer = require('./lib/interactiveServer');
+// const interactiveClient = require('./lib/interactiveClient');
+// @ts-expect-error --- config.js has no TS declaration.
+import config from '../config.mjs';
 
-// /* eslint-disable no-console */
-// console.log('process.env.DEBUG: %o', process.env['DEBUG']);
-// console.log('config:', util.inspect(config, { depth: null, colors: true }));
-// /* eslint-enable no-console */
+/* eslint-disable no-console */
+console.log('process.env.DEBUG: %o', process.env['DEBUG']);
+console.log('config:', util.inspect(config, { depth: null, colors: true }));
+/* eslint-enable no-console */
 
-// const logger = new Logger();
+const logger = new Logger();
 
-// void run();
+void run().catch(error => {
+	logger.error('failed to run: %s', String(error));
 
-// async function run(): Promise<void> {
-// 	logger.info('run()');
+	exitWithError();
+});
 
-// 	const worker = await mediasoup.createWorker({
-// 		logLevel: 'debug',
-// 		logTags: ['info'],
-// 	});
+async function run(): Promise<void> {
+	logger.info('run()');
 
-// 	logger.debug('index mediasoup worker running!!!');
+	const server = await Server.create({ config });
 
-// 	console.log(await worker.dump());
-// }
+	handleServer(server);
+}
 
-// server.on('mediasoup-worker-died', () => {
-// 	process.exit(1)
-// })
+function handleServer(server: Server): void {
+	server.on('mediasoup-worker-died', () => {
+		exitWithError();
+	});
+}
+
+function exitWithError(): void {
+	logger.error('exiting with error');
+
+	process.exit(1);
+}

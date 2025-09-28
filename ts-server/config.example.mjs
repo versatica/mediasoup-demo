@@ -10,11 +10,6 @@
  */
 
 import * as os from 'node:os';
-import * as url from 'node:url';
-import * as path from 'node:path';
-
-const __filename = url.fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /** @type {import('./src/types.ts').Config} */
 const config = {
@@ -31,19 +26,13 @@ const config = {
 		 * @remarks
 		 * - Don't change listenPort (client app assumes 4443).
 		 */
-		listenPort: process.env['PROTOO_LISTEN_PORT']
-			? Number(process.env['PROTOO_LISTEN_PORT'])
-			: 4443,
+		listenPort: Number(process.env['PROTOO_LISTEN_PORT'] ?? 4443),
 		/**
 		 * Optional. If tls is not set, server will use HTTP instead.
 		 */
 		tls: {
-			certificateFile:
-				process.env['HTTPS_CERTIFICATE_FILE'] ??
-				`${__dirname}/certs/fullchain.pem`,
-			privateKeyFile:
-				process.env['HTTPS_PRIVATE_KEY_FILE'] ??
-				`${__dirname}/certs/privkey.pem`,
+			cert: 'ABSOLUTE_PATH_TO_YOUR_TLS_CERTIFICATE_FULLCHAIN',
+			key: 'ABSOLUTE_PATH_TO_YOUR_TLS_CERTIFICATE_PRIVATE_KEY',
 		},
 	},
 	/**
@@ -182,8 +171,8 @@ const config = {
 				ip: process.env['MEDIASOUP_LISTEN_IP'] ?? '0.0.0.0',
 				announcedAddress: process.env['MEDIASOUP_ANNOUNCED_IP'],
 				portRange: {
-					min: Number(process.env['MEDIASOUP_MIN_PORT']) || 40000,
-					max: Number(process.env['MEDIASOUP_MAX_PORT']) || 49999,
+					min: Number(process.env['MEDIASOUP_MIN_PORT'] ?? 40000),
+					max: Number(process.env['MEDIASOUP_MAX_PORT'] ?? 49999),
 				},
 			},
 			maxSctpMessageSize: 262144,

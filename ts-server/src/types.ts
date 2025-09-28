@@ -1,15 +1,13 @@
 import * as mediasoupTypes from 'mediasoup/types';
 
-import { Room } from './Room';
-
 export type Config = {
 	domain: string;
 	https: {
 		listenIp: string;
 		listenPort: number;
 		tls?: {
-			certificateFile: string;
-			privateKeyFile: string;
+			cert: string | NonSharedBuffer;
+			key: string | NonSharedBuffer;
 		};
 	};
 	mediasoup: {

@@ -68,11 +68,19 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#id = roomId;
 		this.#consumerReplicas = consumerReplicas;
 		this.#mediasoupRouter = mediasoupRouter;
-
-		logger.debug('constructor()');
 	}
 
 	get id(): string {
 		return this.#id;
+	}
+
+	close(): void {
+		logger.debug('close()');
+
+		// TODO
+	}
+
+	getRouterRtpCapabilities(): mediasoupTypes.RouterRtpCapabilities {
+		return this.#mediasoupRouter.rtpCapabilities;
 	}
 }
