@@ -1,0 +1,61 @@
+{
+	"name": "mediasoup-demo-server",
+	"version": "4.0.0-alpha.0",
+	"description": "mediasoup-demo server",
+	"author": "Iñaki Baz Castillo <ibc@aliax.net>",
+	"license": "All Rights Reserved",
+	"homepage": "https://mediasoup.org",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/versatica/mediasoup-demo.git"
+	},
+	"funding": {
+		"type": "opencollective",
+		"url": "https://opencollective.com/mediasoup"
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"engines": {
+		"node": ">=22"
+	},
+	"keywords": [
+		"mediasoup",
+		"webrtc",
+		"sfu",
+		"nodejs"
+	],
+	"scripts": {
+		"prepare": "node npm-scripts.mjs prepare",
+		"typescript:build": "node npm-scripts.mjs typescript:build",
+		"typescript:watch": "node npm-scripts.mjs typescript:watch",
+		"lint": "node npm-scripts.mjs lint",
+		"format": "node npm-scripts.mjs format",
+		"release:check": "node npm-scripts.mjs release:check",
+		"release": "node npm-scripts.mjs release",
+		"run:dev": "node npm-scripts.mjs run:dev"
+	},
+	"dependencies": {
+		"awaitqueue": "^3.3.0",
+		"body-parser": "^2.2.0",
+		"debug": "^4.4.3",
+		"express": "^5.1.0",
+		"mediasoup": "^3.19.3",
+		"protoo-server": "^4.0.6",
+		"supports-color": "^10.2.2"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.36.0",
+		"@types/debug": "^4.1.12",
+		"@types/express": "^5.0.3",
+		"@types/node": "^24.5.2",
+		"@types/protoo-server": "^4.0.6",
+		"eslint": "^9.36.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-prettier": "^5.5.4",
+		"globals": "^16.4.0",
+		"prettier": "^3.6.2",
+		"tsx": "^4.20.5",
+		"typescript": "^5.9.2",
+		"typescript-eslint": "^8.44.1"
+	}
+}

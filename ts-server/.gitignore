@@ -1,0 +1,7 @@
+/node_modules
+/lib
+/config.mjs
+!/config.example.mjs
+/mediasoup_valgrind_*
+/.vscode
+/.zed
