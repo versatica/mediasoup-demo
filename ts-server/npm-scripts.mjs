@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import { execSync } from 'node:child_process';
 import pkg from './package.json' with { type: 'json' };
 
-const RELEASE_BRANCH = 'master';
+const RELEASE_BRANCH = 'v3';
 const RELEASE_TASK_IMPLEMENTED = false;
 
 // Paths for ESLint to check. Converted to string for convenience.
@@ -167,12 +167,12 @@ function lint() {
 
 	executeCmd(`prettier --check ${PRETTIER_PATHS}`);
 
-	// Validate config.example.mjs.
+	// Validate config.example.mjs at TypeScript level.
 	executeCmd(
 		`tsc --project tsconfig.config.example.mjs.json --noEmit ${taskArgs}`
 	);
 
-	// Validate config.mjs if it exists.
+	// Validate config.mjs at TypeScript level if it exists.
 	if (fs.existsSync('config.mjs')) {
 		executeCmd(`tsc --project tsconfig.config.mjs.json --noEmit ${taskArgs}`);
 	}

@@ -32,8 +32,8 @@
 		"format": "node npm-scripts.mjs format",
 		"release:check": "node npm-scripts.mjs release:check",
 		"release": "node npm-scripts.mjs release",
-		"dev": "cross-env NODE_ENV=debug TERMINAL=true node npm-scripts.mjs dev",
-		"prod": "cross-env NODE_ENV=production TERMINAL=false node npm-scripts.mjs prod"
+		"dev": "cross-env NODE_ENV=debug node npm-scripts.mjs dev",
+		"prod": "cross-env NODE_ENV=production node npm-scripts.mjs prod"
 	},
 	"dependencies": {
 		"awaitqueue": "^3.3.0",

@@ -262,7 +262,7 @@ export class TerminalServer {
 						);
 						this.logInfo('- dw, dumpWorkers: Dump mediasoup Workers');
 						this.logInfo(
-							'- dwrs, dumpWebRtcServer [id]: Dump mediasoup WebRtcServer with given id (or the latest created one)'
+							'- dws, dumpWebRtcServer [id]: Dump mediasoup WebRtcServer with given id (or the latest created one)'
 						);
 						this.logInfo(
 							'- dr, dumpRouter [id]: Dump mediasoup Router with given id (or the latest created one)'

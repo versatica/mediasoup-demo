@@ -99,7 +99,6 @@ while IFS='=' read -r key value; do
 done < <(env)
 
 if $WATCH; then
-	# npx tsx watch src/index.ts
 	npm run dev
 else
 	npm run prod
