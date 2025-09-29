@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-./start.sh --watch ./start.sh "$@"
+./start.sh --watch --terminal "$@"

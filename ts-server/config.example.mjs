@@ -1,17 +1,18 @@
 /**
  * IMPORTANT (PLEASE READ THIS):
  *
- * This is not the "configuration file" of mediasoup. This is the server
- * configuration file in the mediasoup-demo app. mediasoup is a server-side
- * library, it* does not read any "configuration file". Instead it exposes an
- * API. This demo application just reads settings from this file (once copied
- * to config.mjs) and calls the mediasoup API with those settings when
- * appropriate.
+ * This is not the "configuration file" of mediasoup. This is the configuration
+ * file of the mediasoup-demo server. mediasoup is a server-side library, it
+ * does not read any "configuration file". Instead it exposes an API. This demo
+ * application just reads settings from this file (once copied to config.mjs)
+ * and calls the mediasoup API with those settings when appropriate.
  */
 
 import * as os from 'node:os';
 
-/** @type {import('./src/types.ts').Config} */
+/**
+ * @type {import('./src/types.ts').Config}
+ */
 const config = {
 	/**
 	 * Listening hostname for browser app Vite development server.

@@ -71,12 +71,23 @@ if [ $? -ne 0 ]; then
 		exit 1
 fi
 
-log_info "detected local IP: ${ip}"
+log_info "detected local IP: \"${ip}\""
 
 # Set env variables (don't override if already set).
 export DEBUG=${DEBUG:="mediasoup-demo-server* *INFO* *WARN* *ERROR*"}
-export TERMINAL=${TERMINAL:="true"}
 export MEDIASOUP_ANNOUNCED_IP=${MEDIASOUP_ANNOUNCED_IP:="${ip}"}
+
+WATCH=false
+
+for arg in "$@"; do
+	if [[ "$arg" == "--terminal" ]]; then
+		export TERMINAL="true"
+	fi
+
+	if [[ "$arg" == "--watch" ]]; then
+		WATCH=true
+	fi
+done
 
 log_info "starting server with envs:"
 log_info "- DEBUG: \"${DEBUG}\""
@@ -87,22 +98,9 @@ while IFS='=' read -r key value; do
 	fi
 done < <(env)
 
-WATCH=false
-
-for arg in "$@"; do
-	if [[ "$arg" == "--watch" ]]; then
-		WATCH=true
-
-		break
-	fi
-done
-
 if $WATCH; then
-	log_info "starting server in watch mode"
-	# npm run dev
 	# npx tsx watch src/index.ts
-	npx nodemon --no-stdin --watch src --exec tsx src/index.ts
+	npm run dev
 else
-	log_info "starting server in production mode"
-	node ./lib/index.js
+	npm run prod
 fi

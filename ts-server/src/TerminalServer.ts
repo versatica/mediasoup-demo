@@ -8,7 +8,7 @@ import type * as netTypes from 'node:net';
 import * as fs from 'node:fs';
 import * as mediasoup from 'mediasoup';
 import type * as mediasoupTypes from 'mediasoup/types';
-import chalk from 'chalk';
+import picocolors from 'picocolors';
 import pidusage from 'pidusage';
 
 import { Logger } from './Logger';
@@ -735,11 +735,13 @@ export class TerminalServer {
 	}
 
 	private logInfo(msg: string): void {
-		this.#socket.write(`${chalk.green(msg)}\n`);
+		this.#socket.write(`${picocolors.green(msg)}\n`);
 	}
 
 	private logError(msg: string): void {
-		this.#socket.write(`${chalk.red.bold('ERROR: ')}${chalk.red(msg)}\n`);
+		this.#socket.write(
+			`${picocolors.red(picocolors.bold('ERROR: '))}${picocolors.red(msg)}\n`
+		);
 	}
 }
 

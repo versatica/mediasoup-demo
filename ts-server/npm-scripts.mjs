@@ -103,6 +103,18 @@ async function run() {
 			break;
 		}
 
+		case 'dev': {
+			dev();
+
+			break;
+		}
+
+		case 'prod': {
+			prod();
+
+			break;
+		}
+
 		default: {
 			logError('unknown task');
 
@@ -208,6 +220,20 @@ function release() {
 	executeCmd(`git push origin ${RELEASE_BRANCH}`);
 	executeCmd(`git push origin '${pkg.version}'`);
 	executeInteractiveCmd('npm publish');
+}
+
+function dev() {
+	logInfo('dev()');
+
+	executeInteractiveCmd(
+		'nodemon --no-stdin --watch src --exec tsx src/index.ts'
+	);
+}
+
+function prod() {
+	logInfo('prod()');
+
+	executeInteractiveCmd('node ./lib/index.js');
 }
 
 function executeCmd(command) {
