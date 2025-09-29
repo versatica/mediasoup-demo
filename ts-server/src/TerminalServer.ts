@@ -72,12 +72,13 @@ export class TerminalServer {
 
 	readonly #socket: netTypes.Socket;
 	#isTerminalOpen: boolean = false;
+	readonly #onQuit: () => void;
 
-	static async start(): Promise<void> {
+	static async start({ onQuit }: { onQuit: () => void }): Promise<void> {
 		logger.debug('start()');
 
 		const netServer = net.createServer(socket => {
-			const terminalServer = new TerminalServer(socket);
+			const terminalServer = new TerminalServer({ socket, onQuit });
 
 			terminalServer.openCommandConsole();
 		});
@@ -207,10 +208,17 @@ export class TerminalServer {
 		});
 	}
 
-	private constructor(socket: netTypes.Socket) {
+	private constructor({
+		socket,
+		onQuit,
+	}: {
+		socket: netTypes.Socket;
+		onQuit: () => void;
+	}) {
 		logger.debug('constructor()');
 
 		this.#socket = socket;
+		this.#onQuit = onQuit;
 	}
 
 	private openCommandConsole(): void {
@@ -297,6 +305,7 @@ export class TerminalServer {
 						this.logInfo(
 							'- sdc, statsDataConsumer [id]: Get stats for mediasoup DataConsumer with given id (or the latest created one)'
 						);
+						this.logInfo('- quit: Quit the server');
 						this.logInfo('- t, terminal: Open Node REPL Terminal');
 						this.logInfo('');
 
@@ -684,6 +693,12 @@ export class TerminalServer {
 						break;
 					}
 
+					case 'quit': {
+						this.#onQuit();
+
+						break;
+					}
+
 					case 't':
 					case 'terminal': {
 						this.#isTerminalOpen = true;
@@ -691,6 +706,8 @@ export class TerminalServer {
 						cmd.close();
 						this.openTerminal();
 
+						// `return` instead of `break` to avoid the call to readStdin()
+						// below.
 						return;
 					}
 

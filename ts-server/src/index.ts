@@ -43,7 +43,9 @@ async function start(): Promise<void> {
 
 	try {
 		// Start the interactive terminal server.
-		await TerminalServer.start();
+		await TerminalServer.start({
+			onQuit: () => exit(),
+		});
 
 		const server = await Server.create({ config });
 
