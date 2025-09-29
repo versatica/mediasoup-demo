@@ -103,12 +103,6 @@ async function run() {
 			break;
 		}
 
-		case 'run:dev': {
-			runDev();
-
-			break;
-		}
-
 		default: {
 			logError('unknown task');
 
@@ -214,12 +208,6 @@ function release() {
 	executeCmd(`git push origin ${RELEASE_BRANCH}`);
 	executeCmd(`git push origin '${pkg.version}'`);
 	executeInteractiveCmd('npm publish');
-}
-
-function runDev() {
-	logInfo('runDev()');
-
-	executeCmd(`tsx watch src/ --clear-screen=true ${taskArgs}`);
 }
 
 function executeCmd(command) {

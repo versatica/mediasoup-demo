@@ -45,7 +45,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	/**
 	 * Async queue to manage Rooms.
 	 */
-	readonly #roomsAwaitQueue: AwaitQueue = new AwaitQueue();
+	readonly #roomCreationAwaitQueue: AwaitQueue = new AwaitQueue();
 	/**
 	 * Map of Room instances indexed by id.
 	 */
@@ -103,8 +103,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 				config.mediasoup;
 
 			logger.info(
-				'createMediasoupWorkersAndWebRtcServers() | launching %d mediasoup Workers...',
-				numWorkers
+				`createMediasoupWorkersAndWebRtcServers() | launching ${numWorkers} mediasoup ${numWorkers === 1 ? 'Worker' : 'Workers'}...`
 			);
 
 			for (let idx = 0; idx < numWorkers; ++idx) {
@@ -139,7 +138,10 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 
 			return mediasoupWorkersAndWebRtcServers;
 		} catch (error) {
-			logger.error('createMediasoupWorkersAndWebRtcServers() | failed:', error);
+			logger.error(
+				'createMediasoupWorkersAndWebRtcServers() | failed: %s',
+				String(error)
+			);
 
 			throw error;
 		}
@@ -179,7 +181,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 
 			return httpServer;
 		} catch (error) {
-			logger.error('createHttpServer() | failed:', error);
+			logger.error('createHttpServer() | failed: %s', String(error));
 
 			throw error;
 		}
@@ -208,7 +210,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		for (const { worker } of this.#mediasoupWorkersAndWebRtcServers.values()) {
 			if (worker.closed) {
 				throw new InvalidStateError(
-					`mediasoup worker is closed [pid:${worker.pid}, died:${worker.died ? 'true' : 'false'}]`
+					`mediasoup worker is closed [pid:${worker.pid}, died:${worker.died}]`
 				);
 			}
 
@@ -223,7 +225,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	close(): void {
 		logger.debug('close()');
 
-		this.#roomsAwaitQueue.stop();
+		this.#roomCreationAwaitQueue.stop();
 
 		for (const room of this.#rooms.values()) {
 			room.close();
@@ -253,7 +255,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		// If the Room does not exist create a new one.
 		// Enqueue it to avoid race conditions when multiple users join at the same
 		// time.
-		return this.#roomsAwaitQueue.push<Room>(async () => {
+		return this.#roomCreationAwaitQueue.push<Room>(async () => {
 			logger.info(
 				'getOrCreateRoom() | creating a new Room [roomId:%s]',
 				roomId

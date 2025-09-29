@@ -1,6 +1,12 @@
 import debug from 'debug';
+import * as process from 'node:process';
 
 const APP_NAME = 'mediasoup-demo-server';
+
+const useColor = process.stderr.isTTY;
+
+const RED_COLOR = useColor ? '\x1b[31m' : '';
+const RESET_COLOR = useColor ? '\x1b[0m' : '';
 
 export class Logger {
 	readonly #debug: debug.Debugger;
@@ -41,7 +47,26 @@ export class Logger {
 		return this.#warn;
 	}
 
-	get error(): debug.Debugger {
-		return this.#error;
+	/**
+	 * error() logger always prints to stderr no matter the Debug instance is not
+	 * enabled (if so it uses console.error() directly).
+	 */
+	get error(): debug.Debugger | typeof console.error {
+		if (this.#error.enabled) {
+			return this.#error;
+		} else {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			return (...args: any[]) => {
+				if (typeof args[0] === 'string') {
+					const [first, ...rest] = args;
+
+					// eslint-disable-next-line no-console
+					console.error(`${RED_COLOR}ERROR: ${first}${RESET_COLOR}`, ...rest);
+				} else {
+					// eslint-disable-next-line no-console
+					console.error(`${RED_COLOR}ERROR:${RESET_COLOR}`, ...args);
+				}
+			};
+		}
 	}
 }

@@ -12,7 +12,7 @@
 		"isolatedModules": true,
 		"verbatimModuleSyntax": false,
 		"useDefineForClassFields": true,
-		"esModuleInterop": false,
+		"esModuleInterop": true,
 		"allowImportingTsExtensions": false,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
