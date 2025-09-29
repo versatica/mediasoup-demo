@@ -82,9 +82,7 @@ WATCH=false
 for arg in "$@"; do
 	if [[ "$arg" == "--terminal" ]]; then
 		export TERMINAL="true"
-	fi
-
-	if [[ "$arg" == "--watch" ]]; then
+	elif [[ "$arg" == "--watch" ]]; then
 		WATCH=true
 	fi
 done
@@ -92,6 +90,7 @@ done
 log_info "starting server with envs:"
 log_info "- DEBUG: \"${DEBUG}\""
 log_info "- TERMINAL: \"${TERMINAL}\""
+
 while IFS='=' read -r key value; do
 	if [[ $key == MEDIASOUP_* ]]; then
 		log_info "- ${key}: \"${value}\""
