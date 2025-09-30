@@ -153,10 +153,10 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		logger.debug('createHttpServer()');
 
 		try {
-			const tls = config.https.tls
+			const tls = config.http.tls
 				? {
-						cert: fs.readFileSync(config.https.tls.cert),
-						key: fs.readFileSync(config.https.tls.key),
+						cert: fs.readFileSync(config.http.tls.cert),
+						key: fs.readFileSync(config.http.tls.key),
 					}
 				: undefined;
 
@@ -170,7 +170,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 
 			await new Promise<void>((resolve, reject) => {
 				httpServer.listen(
-					{ port: config.https.listenPort, host: config.https.listenIp },
+					{ port: config.http.listenPort, host: config.http.listenIp },
 					resolve
 				);
 

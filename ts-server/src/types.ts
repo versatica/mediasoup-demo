@@ -2,7 +2,7 @@ import * as mediasoupTypes from 'mediasoup/types';
 
 export type Config = {
 	domain: string;
-	https: {
+	http: {
 		listenIp: string;
 		listenPort: number;
 		tls?: {

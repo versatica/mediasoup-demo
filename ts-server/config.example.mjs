@@ -21,12 +21,8 @@ const config = {
 	/**
 	 * Signaling settings (protoo WebSocket server and HTTP API server).
 	 */
-	https: {
+	http: {
 		listenIp: '0.0.0.0',
-		/**
-		 * @remarks
-		 * - Don't change listenPort (client app assumes 4443).
-		 */
 		listenPort: Number(process.env['PROTOO_LISTEN_PORT'] ?? 4443),
 		/**
 		 * Optional. If tls is not set, server will use HTTP instead.
@@ -137,14 +133,18 @@ const config = {
 				{
 					protocol: 'udp',
 					ip: process.env['MEDIASOUP_LISTEN_IP'] ?? '0.0.0.0',
-					announcedAddress: process.env['MEDIASOUP_ANNOUNCED_IP'],
+					announcedAddress: process.env['MEDIASOUP_ANNOUNCED_ADDRESS'],
 					port: 44444,
+					sendBufferSize: undefined,
+					recvBufferSize: undefined,
 				},
 				{
 					protocol: 'tcp',
 					ip: process.env['MEDIASOUP_LISTEN_IP'] ?? '0.0.0.0',
-					announcedAddress: process.env['MEDIASOUP_ANNOUNCED_IP'],
+					announcedAddress: process.env['MEDIASOUP_ANNOUNCED_ADDRESS'],
 					port: 44444,
+					sendBufferSize: undefined,
+					recvBufferSize: undefined,
 				},
 			],
 		},
@@ -170,11 +170,13 @@ const config = {
 			listenInfo: {
 				protocol: 'udp',
 				ip: process.env['MEDIASOUP_LISTEN_IP'] ?? '0.0.0.0',
-				announcedAddress: process.env['MEDIASOUP_ANNOUNCED_IP'],
+				announcedAddress: process.env['MEDIASOUP_ANNOUNCED_ADDRESS'],
 				portRange: {
 					min: Number(process.env['MEDIASOUP_MIN_PORT'] ?? 40000),
-					max: Number(process.env['MEDIASOUP_MAX_PORT'] ?? 49999),
+					max: Number(process.env['MEDIASOUP_MAX_PORT'] ?? 40999),
 				},
+				// sendBufferSize: 2000000,
+				// recvBufferSize: 2000000,
 			},
 			maxSctpMessageSize: 262144,
 		},

@@ -10,6 +10,10 @@ export class TerminalClient {
 	static async start(): Promise<void> {
 		logger.debug('start()');
 
+		if (!process.stdin.isTTY) {
+			throw new Error('terminal is not a TTY');
+		}
+
 		const socket = net.connect(SOCKET_PATH);
 
 		process.stdin.pipe(socket);
