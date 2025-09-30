@@ -6,7 +6,7 @@ import type * as protooTypes from 'protoo-server';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Room } from './Room';
-import { RoomId } from './types';
+import { type RoomId } from './types';
 
 const logger = new Logger('WsServer');
 

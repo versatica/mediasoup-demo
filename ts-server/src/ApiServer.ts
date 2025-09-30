@@ -5,7 +5,7 @@ import * as bodyParser from 'body-parser';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Room } from './Room';
-import { RoomId } from './types';
+import type { RoomId } from './types';
 
 const logger = new Logger('ApiServer');
 
@@ -86,7 +86,6 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.param(
 			'roomId',
-			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next, roomId) => {
 				try {
 					req.room = await this.getRoom({

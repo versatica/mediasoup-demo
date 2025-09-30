@@ -12,7 +12,7 @@ import { ApiServer } from './ApiServer';
 import { Room } from './Room';
 import { InvalidStateError } from './errors';
 import * as utils from './utils';
-import { Config, WorkerAppData, RoomId } from './types';
+import type { Config, WorkerAppData, RoomId } from './types';
 
 const logger = new Logger('Server');
 

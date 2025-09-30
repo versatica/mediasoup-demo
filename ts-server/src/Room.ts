@@ -5,9 +5,9 @@ import type * as protooTypes from 'protoo-server';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Peer } from './Peer';
-import { Config, RoomId, PeerId } from './types';
+import type { Config, RoomId, PeerId } from './types';
 
-const logger = new Logger('Room');
+const staticLogger = new Logger('Room');
 
 export type RoomCreateOptions = {
 	roomId: RoomId;
@@ -18,6 +18,7 @@ export type RoomCreateOptions = {
 };
 
 type RoomConstructorOptions = {
+	logger: Logger;
 	roomId: RoomId;
 	consumerReplicas: number;
 	config: Config;
@@ -34,6 +35,7 @@ export type RoomEvents = {
 };
 
 export class Room extends EnhancedEventEmitter<RoomEvents> {
+	readonly #logger: Logger;
 	readonly #roomId: RoomId;
 	readonly #consumerReplicas: number;
 	readonly #config: Config;
@@ -52,10 +54,12 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		mediasoupRouter,
 		mediasoupWebRtcServer,
 	}: RoomCreateOptions): Promise<Room> {
-		logger.debug('create() [roomId:%o]', roomId);
+		staticLogger.debug('create() [roomId:%o]', roomId);
 
+		const logger = new Logger(`[roomId:${roomId}]`, staticLogger);
 		const protooRoom = new protoo.Room();
 		const room = new Room({
+			logger,
 			roomId,
 			consumerReplicas,
 			config,
@@ -68,6 +72,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	}
 
 	private constructor({
+		logger,
 		roomId,
 		consumerReplicas,
 		config,
@@ -77,11 +82,9 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	}: RoomConstructorOptions) {
 		super();
 
-		logger.debug(
-			'constructor() [roomId:%o, consumerReplicas:%o]',
-			roomId,
-			consumerReplicas
-		);
+		this.#logger = logger;
+
+		this.#logger.debug('constructor()');
 
 		this.#roomId = roomId;
 		this.#consumerReplicas = consumerReplicas;
@@ -96,7 +99,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	}
 
 	close(): void {
-		logger.debug('close()');
+		this.#logger.debug('close()');
 
 		if (this.#closed) {
 			return;
@@ -127,12 +130,12 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		peerId: PeerId,
 		protooTransport: protooTypes.WebSocketTransport
 	): Promise<void> {
-		logger.debug('handleWsConnection() [peerId:%o]', peerId);
+		this.#logger.debug('handleWsConnection() [peerId:%o]', peerId);
 
 		const existingPeer = this.#peers.get(peerId);
 
 		if (existingPeer) {
-			logger.warn(
+			this.#logger.warn(
 				'handleWsConnection() | there is already a Peer with same peerId, closing it [peerId:%o]',
 				peerId
 			);
@@ -143,7 +146,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		const existingJoiningPeer = this.#joiningPeers.get(peerId);
 
 		if (existingJoiningPeer) {
-			logger.warn(
+			this.#logger.warn(
 				'handleWsConnection() | there is already a joining Peer with same peerId, closing it [peerId:%o]',
 				peerId
 			);
@@ -151,7 +154,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			existingJoiningPeer.close();
 		}
 
-		logger.debug(
+		this.#logger.debug(
 			'handleWsConnection() | creating a new Peer [peerId:%o]',
 			peerId
 		);
@@ -169,10 +172,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	private mayClose(): void {
 		// If this is the latest Peer in the Room, close the Room.
 		if (this.#peers.size === 0 && this.#joiningPeers.size === 0) {
-			logger.info(
-				'last Peer in the Room left, closing the Room [roomId:%o]',
-				this.#roomId
-			);
+			this.#logger.info('last Peer in the Room left, closing the Room');
 
 			this.close();
 		}

@@ -61,7 +61,7 @@ const config = tsEslint.config(
 			'no-invalid-regexp': 2,
 			'no-invalid-this': 2,
 			'no-irregular-whitespace': 2,
-			'no-lonely-if': 2,
+			'no-lonely-if': 0,
 			'no-multi-str': 2,
 			'no-native-reassign': 2,
 			'no-negated-in-lhs': 2,
