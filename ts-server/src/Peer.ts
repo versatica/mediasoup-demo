@@ -17,7 +17,17 @@ type PeerConstructorOptions = {
 };
 
 export type PeerEvents = {
+	/**
+	 * Emitted when the Peer is closed no matter how.
+	 */
 	close: [];
+	/**
+	 * Emitted when the Peer remotely disconnects.
+	 *
+	 * @remarks
+	 * - 'disconnect' is guaranteed to be emitted after 'closed'.
+	 */
+	disconnect: [];
 };
 
 export class Peer extends EnhancedEventEmitter<PeerEvents> {
@@ -77,6 +87,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			}
 
 			this.close();
+			this.emit('disconnect');
 		});
 	}
 }

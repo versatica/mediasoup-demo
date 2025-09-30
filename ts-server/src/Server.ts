@@ -37,7 +37,14 @@ type MediasoupWorkersAndWebRtcServers = Map<
 >;
 
 export type ServerEvents = {
-	'mediasoup-worker-died': [];
+	/**
+	 * Emitted when the server is closed no matter how.
+	 */
+	close: [];
+	/**
+	 * Emitted to obtain a room.
+	 */
+	died: [];
 };
 
 export class Server extends EnhancedEventEmitter<ServerEvents> {
@@ -100,8 +107,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 
 				// Create a WebRtcServer in this Worker.
 				// Each mediasoup Worker will run its own WebRtcServer, so those cannot
-				// share the same listening ports. Hence we increase the value in config.js
-				// for each Worker.
+				// share the same listening port. Hence we increase the port for each
+				// Worker.
 				const clonnedWebRtcServerOptions = utils.clone(webRtcServerOptions);
 				const portIncrement = mediasoupWorkersAndWebRtcServers.size - 1;
 
@@ -119,8 +126,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			return mediasoupWorkersAndWebRtcServers;
 		} catch (error) {
 			logger.error(
-				'createMediasoupWorkersAndWebRtcServers() | failed: %s',
-				String(error)
+				`createMediasoupWorkersAndWebRtcServers() | failed: ${error}`
 			);
 
 			throw error;
@@ -161,7 +167,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 
 			return httpServer;
 		} catch (error) {
-			logger.error('createHttpServer() | failed: %s', String(error));
+			logger.error(`createHttpServer() | failed: ${error}`);
 
 			throw error;
 		}
@@ -220,6 +226,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		for (const { worker } of this.#mediasoupWorkersAndWebRtcServers.values()) {
 			worker.close();
 		}
+
+		this.emit('close');
 	}
 
 	/**
@@ -232,29 +240,32 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		roomId: RoomId;
 		consumerReplicas?: number;
 	}): Promise<Room> {
-		let room = this.#rooms.get(roomId);
-
-		if (room) {
-			return room;
-		}
-
-		// If the Room does not exist create a new one.
 		// Enqueue it to avoid race conditions when multiple users join at the same
-		// time.
+		// time requesting the same `roomId`.
 		return this.#roomCreationAwaitQueue.push<Room>(async () => {
+			let room = this.#rooms.get(roomId);
+
+			if (room) {
+				return room;
+			}
+
 			logger.info(
-				'getOrCreateRoom() | creating a new Room [roomId:%s]',
+				'getOrCreateRoom() | creating a new Room [roomId:%o]',
 				roomId
 			);
 
 			const { worker: mediasoupWorker, webRtcServer: mediasoupWebRtcServer } =
 				this.getNextMediasoupWorkerAndWebRtcServer();
+			const { mediaCodecs } = this.#config.mediasoup.routerOptions;
+			const mediasoupRouter = await mediasoupWorker.createRouter({
+				mediaCodecs,
+			});
 
 			room = await Room.create({
 				roomId,
 				consumerReplicas,
 				config: this.#config,
-				mediasoupWorker,
+				mediasoupRouter,
 				mediasoupWebRtcServer,
 			});
 
@@ -288,14 +299,25 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		worker: mediasoupTypes.Worker<WorkerAppData>
 	): void {
 		worker.on('died', () => {
-			logger.error('mediasoup Worker died [pid:%d]', worker.pid);
+			logger.error('mediasoup Worker died [pid:%o]', worker.pid);
 
 			this.close();
-			this.emit('mediasoup-worker-died');
+			this.emit('died');
 		});
 
 		worker.observer.on('close', () => {
 			this.#mediasoupWorkersAndWebRtcServers.delete(worker.appData.idx);
+
+			// Ignore if Server is closed or if the Worker died since then its 'died'
+			// event fired already.
+			if (this.#closed || worker.died) {
+				return;
+			}
+
+			logger.error('mediasoup Worker unexpectedly closed [pid:%o]', worker.pid);
+
+			this.close();
+			this.emit('died');
 		});
 	}
 

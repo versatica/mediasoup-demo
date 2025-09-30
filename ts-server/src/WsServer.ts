@@ -19,6 +19,9 @@ type WsServerConstructorOptions = {
 };
 
 export type WsServerEvents = {
+	/**
+	 * Emitted to obtain a Room.
+	 */
 	'get-room': [
 		{ roomId: RoomId; consumerReplicas: number },
 		resolve: (value: Room | PromiseLike<Room>) => void,
@@ -108,7 +111,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 
 				protooTransport = accept();
 			} catch (error) {
-				logger.error('room creation or room joining failed: %s', String(error));
+				logger.error('Room creation or Room joining failed:', error);
 
 				reject(error as Error);
 

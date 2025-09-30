@@ -17,6 +17,9 @@ type ApiServerConstructorOptions = {
 };
 
 export type ApiServerEvents = {
+	/**
+	 * Emitted to obtain a Room.
+	 */
 	'get-room': [
 		{ roomId: RoomId; consumerReplicas: number },
 		resolve: (value: Room | PromiseLike<Room>) => void,
@@ -92,10 +95,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 
 					next();
 				} catch (error) {
-					logger.error(
-						'room creation or room joining via broadcaster failed:',
-						error
-					);
+					logger.error('Room creation or Room joining failed:', error);
 
 					next(error);
 				}
@@ -104,7 +104,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 
 		/**
 		 * API GET resource that returns the mediasoup Router RTP capabilities of
-		 * the room.
+		 * the Room.
 		 */
 		this.#expressApp.get(
 			'/rooms/:roomId/routerRtpCapabilities',

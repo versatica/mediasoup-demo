@@ -5,7 +5,7 @@ import type * as protooTypes from 'protoo-server';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Peer } from './Peer';
-import { Config, WorkerAppData, RoomId, PeerId } from './types';
+import { Config, RoomId, PeerId } from './types';
 
 const logger = new Logger('Room');
 
@@ -13,47 +13,51 @@ export type RoomCreateOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
 	config: Config;
-	mediasoupWorker: mediasoupTypes.Worker<WorkerAppData>;
+	mediasoupRouter: mediasoupTypes.Router;
 	mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
 };
 
 type RoomConstructorOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
+	config: Config;
 	mediasoupRouter: mediasoupTypes.Router;
 	mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
 	protooRoom: protooTypes.Room;
 };
 
 export type RoomEvents = {
+	/**
+	 * Emitted when the peer is closed no matter how.
+	 */
 	close: [];
 };
 
 export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #roomId: RoomId;
 	readonly #consumerReplicas: number;
+	readonly #config: Config;
 	readonly #mediasoupRouter: mediasoupTypes.Router;
 	readonly #mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
 	readonly #protooRoom: protooTypes.Room;
 	readonly #peers: Map<string, Peer> = new Map();
 	#closed: boolean = false;
 
+	// eslint-disable-next-line @typescript-eslint/require-await
 	static async create({
 		roomId,
 		consumerReplicas,
 		config,
-		mediasoupWorker,
+		mediasoupRouter,
 		mediasoupWebRtcServer,
 	}: RoomCreateOptions): Promise<Room> {
 		logger.debug('create() [roomId:%o]', roomId);
 
-		const { mediaCodecs } = config.mediasoup.routerOptions;
-
-		const mediasoupRouter = await mediasoupWorker.createRouter({ mediaCodecs });
 		const protooRoom = new protoo.Room();
 		const room = new Room({
 			roomId,
 			consumerReplicas,
+			config,
 			mediasoupRouter,
 			mediasoupWebRtcServer,
 			protooRoom,
@@ -65,6 +69,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	private constructor({
 		roomId,
 		consumerReplicas,
+		config,
 		mediasoupRouter,
 		mediasoupWebRtcServer,
 		protooRoom,
@@ -79,6 +84,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		this.#roomId = roomId;
 		this.#consumerReplicas = consumerReplicas;
+		this.#config = config;
 		this.#mediasoupRouter = mediasoupRouter;
 		this.#mediasoupWebRtcServer = mediasoupWebRtcServer;
 		this.#protooRoom = protooRoom;
@@ -101,6 +107,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			peer.close();
 		}
 
+		this.#protooRoom.close();
+
 		this.#mediasoupRouter.close();
 
 		// TODO
@@ -118,7 +126,21 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	): Promise<void> {
 		logger.debug('handleWsConnection() [peerId:%o]', peerId);
 
-		// TODO: Check existing peer!
+		const existingPeer = this.#peers.get(peerId);
+
+		if (existingPeer) {
+			logger.warn(
+				'handleWsConnection() | there is already a Peer with same peerId, closing it [peerId:%o]',
+				peerId
+			);
+
+			existingPeer.close();
+		}
+
+		logger.info(
+			'handleWsConnection() | creating a new Peer [peerId:%o]',
+			peerId
+		);
 
 		const protooPeer = this.#protooRoom.createPeer(peerId, protooTransport);
 		const peer = await Peer.create({ peerId, protooPeer });
@@ -131,6 +153,10 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	private handlePeer(peer: Peer): void {
 		peer.on('close', () => {
 			this.#peers.delete(peer.id);
+		});
+
+		peer.on('disconnect', () => {
+			// TODO: Signal it to others.
 		});
 	}
 }

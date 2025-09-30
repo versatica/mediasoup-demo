@@ -167,16 +167,6 @@ function watchTypescript() {
 function lint() {
 	logInfo('lint()');
 
-	// Ensure there are no rules that are unnecessary or conflict with Prettier
-	// rules.
-	executeCmd('eslint-config-prettier eslint.config.mjs');
-
-	executeCmd(
-		`eslint -c eslint.config.mjs --max-warnings 0 ${ESLINT_IGNORE_PATTERN_ARGS} ${ESLINT_PATHS}`
-	);
-
-	executeCmd(`prettier --check ${PRETTIER_PATHS}`);
-
 	// Validate config.example.mjs at TypeScript level.
 	executeCmd(
 		`tsc --project tsconfig.config.example.mjs.json --noEmit ${taskArgs}`
@@ -186,6 +176,16 @@ function lint() {
 	if (fs.existsSync('config.mjs')) {
 		executeCmd(`tsc --project tsconfig.config.mjs.json --noEmit ${taskArgs}`);
 	}
+
+	// Ensure there are no rules that are unnecessary or conflict with Prettier
+	// rules.
+	executeCmd('eslint-config-prettier eslint.config.mjs');
+
+	executeCmd(
+		`eslint -c eslint.config.mjs --max-warnings 0 ${ESLINT_IGNORE_PATTERN_ARGS} ${ESLINT_PATHS}`
+	);
+
+	executeCmd(`prettier --check ${PRETTIER_PATHS}`);
 }
 
 function format() {

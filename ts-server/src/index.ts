@@ -46,7 +46,9 @@ async function start(): Promise<void> {
 }
 
 function handleServer(server: Server): void {
-	server.on('mediasoup-worker-died', () => {
+	server.on('died', () => {
+		logger.error('server died, exiting');
+
 		exitWithError();
 	});
 }
