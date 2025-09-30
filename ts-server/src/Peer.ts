@@ -20,7 +20,11 @@ export type PeerEvents = {
 	/**
 	 * Emitted when the Peer is closed no matter how.
 	 */
-	close: [];
+	closed: [];
+	/**
+	 * Emitted when the Peer joins the Room.
+	 */
+	joined: [];
 };
 
 export class Peer extends EnhancedEventEmitter<PeerEvents> {
@@ -66,7 +70,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 		this.#protooPeer.close();
 
-		this.emit('close');
+		this.emit('closed');
 	}
 
 	private handleProtooPeer(): void {

@@ -38,10 +38,6 @@ type MediasoupWorkersAndWebRtcServers = Map<
 
 export type ServerEvents = {
 	/**
-	 * Emitted when the server is closed no matter how.
-	 */
-	close: [];
-	/**
 	 * Emitted to obtain a room.
 	 */
 	died: [];
@@ -226,8 +222,6 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		for (const { worker } of this.#mediasoupWorkersAndWebRtcServers.values()) {
 			worker.close();
 		}
-
-		this.emit('close');
 	}
 
 	/**
@@ -269,7 +263,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 				mediasoupWebRtcServer,
 			});
 
-			this.#rooms.set(roomId, room);
+			this.#rooms.set(room.id, room);
 
 			this.handleRoom(room);
 
@@ -348,7 +342,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	}
 
 	private handleRoom(room: Room): void {
-		room.on('close', () => {
+		room.on('closed', () => {
 			this.#rooms.delete(room.id);
 		});
 	}

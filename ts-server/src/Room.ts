@@ -30,7 +30,7 @@ export type RoomEvents = {
 	/**
 	 * Emitted when the Room is closed no matter how.
 	 */
-	close: [];
+	closed: [];
 };
 
 export class Room extends EnhancedEventEmitter<RoomEvents> {
@@ -40,6 +40,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #mediasoupRouter: mediasoupTypes.Router;
 	readonly #mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
 	readonly #protooRoom: protooTypes.Room;
+	readonly #joiningPeers: Map<string, Peer> = new Map();
 	readonly #peers: Map<string, Peer> = new Map();
 	#closed: boolean = false;
 
@@ -107,11 +108,15 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			peer.close();
 		}
 
+		for (const peer of this.#joiningPeers.values()) {
+			peer.close();
+		}
+
 		this.#protooRoom.close();
 
 		this.#mediasoupRouter.close();
 
-		this.emit('close');
+		this.emit('closed');
 	}
 
 	getRouterRtpCapabilities(): mediasoupTypes.RouterRtpCapabilities {
@@ -135,7 +140,18 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			existingPeer.close();
 		}
 
-		logger.info(
+		const existingJoiningPeer = this.#joiningPeers.get(peerId);
+
+		if (existingJoiningPeer) {
+			logger.warn(
+				'handleWsConnection() | there is already a joining Peer with same peerId, closing it [peerId:%o]',
+				peerId
+			);
+
+			existingJoiningPeer.close();
+		}
+
+		logger.debug(
 			'handleWsConnection() | creating a new Peer [peerId:%o]',
 			peerId
 		);
@@ -143,30 +159,63 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		const protooPeer = this.#protooRoom.createPeer(peerId, protooTransport);
 		const peer = await Peer.create({ peerId, protooPeer });
 
-		this.#peers.set(peerId, peer);
+		// NOTE: The Peer is not yet joined. It will once it sends 'join' request.
 
-		this.handlePeer(peer);
+		this.#joiningPeers.set(peer.id, peer);
+
+		this.handleJoiningPeer(peer);
 	}
 
-	private handlePeer(peer: Peer): void {
-		peer.on('close', () => {
+	private mayClose(): void {
+		// If this is the latest Peer in the Room, close the Room.
+		if (this.#peers.size === 0 && this.#joiningPeers.size === 0) {
+			logger.info(
+				'last Peer in the Room left, closing the Room [roomId:%o]',
+				this.#roomId
+			);
+
+			this.close();
+		}
+	}
+
+	private handleJoiningPeer(peer: Peer): void {
+		const onClosed = (): void => {
+			this.#joiningPeers.delete(peer.id);
+
 			if (this.#closed) {
 				return;
 			}
 
+			this.mayClose();
+		};
+
+		const onJoined = (): void => {
+			// Remove the current event listeners.
+			peer.removeListener('closed', onClosed);
+			peer.removeListener('joined', onJoined);
+
+			this.#joiningPeers.delete(peer.id);
+			this.#peers.set(peer.id, peer);
+
+			this.handlePeer(peer);
+		};
+
+		peer.on('closed', onClosed);
+
+		peer.on('joined', onJoined);
+	}
+
+	private handlePeer(peer: Peer): void {
+		peer.on('closed', () => {
 			this.#peers.delete(peer.id);
+
+			if (this.#closed) {
+				return;
+			}
 
 			// TODO: Signal it to others.
 
-			// If this is the latest Peer in the Room, close the Room.
-			if (this.#peers.size === 0) {
-				logger.info(
-					'last Peer in the Room left, closing the Room [roomId:%o]',
-					this.#roomId
-				);
-
-				this.close();
-			}
+			this.mayClose();
 		});
 	}
 }

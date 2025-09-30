@@ -86,6 +86,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.param(
 			'roomId',
+			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next, roomId) => {
 				try {
 					req.room = await this.getRoom({
@@ -120,6 +121,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters',
+			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { id, displayName, device, rtpCapabilities } = req.body;
 
@@ -162,6 +164,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:broadcasterId/transports',
+			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { broadcasterId } = req.params;
 				const { type, rtcpMux, comedia, sctpCapabilities } = req.body;
@@ -189,6 +192,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/connect',
+			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { broadcasterId, transportId } = req.params;
 				const { dtlsParameters, ip, port, rtcpPort } = req.body;
@@ -219,6 +223,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/producers',
+			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { broadcasterId, transportId } = req.params;
 				const { kind, rtpParameters } = req.body;
@@ -247,6 +252,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/consume',
+			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { broadcasterId, transportId } = req.params;
 				const { producerId, paused, rtpCapabilities } = req.body;
@@ -276,6 +282,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/resume',
+			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { broadcasterId, transportId } = req.params;
 				const { consumerId } = req.body;
@@ -304,6 +311,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/consume/data',
+			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { broadcasterId, transportId } = req.params;
 				const { dataProducerId } = req.body;
@@ -330,6 +338,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/produce/data',
+			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { broadcasterId, transportId } = req.params;
 				const { label, protocol, sctpStreamParameters, appData } = req.body;
@@ -356,9 +365,9 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		/**
 		 * Error handler.
 		 */
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		this.#expressApp.use(
 			(
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				error: any,
 				req: ApiServerExpressRequest,
 				res: expressTypes.Response,
