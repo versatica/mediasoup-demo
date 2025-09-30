@@ -28,7 +28,7 @@ type RoomConstructorOptions = {
 
 export type RoomEvents = {
 	/**
-	 * Emitted when the peer is closed no matter how.
+	 * Emitted when the Room is closed no matter how.
 	 */
 	close: [];
 };

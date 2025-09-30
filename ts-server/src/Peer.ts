@@ -22,7 +22,7 @@ export type PeerEvents = {
 	 */
 	close: [];
 	/**
-	 * Emitted when the Peer remotely disconnects.
+	 * Emitted when the Peer remotely disconnects or connection was lost.
 	 *
 	 * @remarks
 	 * - 'disconnect' is guaranteed to be emitted after 'closed'.

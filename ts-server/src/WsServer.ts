@@ -80,7 +80,6 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 				return;
 			}
 
-			// The client indicates the roomId and peerId in the URL query.
 			const params = new URL(info.request.url).searchParams;
 			const roomId = params.get('roomId');
 			const peerId = params.get('peerId');
