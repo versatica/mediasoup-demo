@@ -111,8 +111,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		this.#mediasoupRouter.close();
 
-		// TODO
-
 		this.emit('close');
 	}
 
@@ -152,11 +150,23 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 	private handlePeer(peer: Peer): void {
 		peer.on('close', () => {
-			this.#peers.delete(peer.id);
-		});
+			if (this.#closed) {
+				return;
+			}
 
-		peer.on('disconnect', () => {
+			this.#peers.delete(peer.id);
+
 			// TODO: Signal it to others.
+
+			// If this is the latest Peer in the Room, close the Room.
+			if (this.#peers.size === 0) {
+				logger.info(
+					'last Peer in the Room left, closing the Room [roomId:%o]',
+					this.#roomId
+				);
+
+				this.close();
+			}
 		});
 	}
 }
