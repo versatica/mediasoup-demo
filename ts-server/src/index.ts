@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
-process.title = 'mediasoup-demo-server';
-process.env['DEBUG'] ??= '*INFO* *WARN* *ERROR*';
-
+import * as process from 'node:process';
 import * as util from 'node:util';
 
 import { Logger } from './Logger';
@@ -18,23 +16,6 @@ const logger = new Logger();
 console.log('process.env.DEBUG: %o', process.env['DEBUG']);
 
 logger.info('config:', util.inspect(config, { depth: null, colors: true }));
-
-// If we launch the server with nodemon --no-stdin, we need to listen to Ctrl+C
-// or Cmd+C via stdin.
-if (process.env['npm_lifecycle_script']?.includes('nodemon')) {
-	logger.debug('nodemon detected, listening to Cmd/Ctrl + C via stdin');
-
-	process.stdin.setRawMode(true);
-	process.stdin.resume();
-	process.stdin.on('data', chunk => {
-		// Ctrl/Cmd+C.
-		if (chunk[0] === 3) {
-			logger.info('caught Ctrl/Cmd+C, exiting');
-
-			exit();
-		}
-	});
-}
 
 void start();
 
@@ -52,7 +33,7 @@ async function start(): Promise<void> {
 		handleServer(server);
 
 		// Start the interactive terminal client if requested.
-		if (process.env['TERMINAL'] === 'true' || process.env['TERMINAL'] === '1') {
+		if (process.env['TERMINAL'] === 'true') {
 			await TerminalClient.start();
 		}
 

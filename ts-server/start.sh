@@ -74,22 +74,30 @@ fi
 log_info "detected local IP: \"${ip}\""
 
 # Set env variables (don't override if already set).
+export WATCH=${WATCH:="false"}
+export TERMINAL=${TERMINAL:="false"}
 export DEBUG=${DEBUG:="mediasoup-demo-server* *INFO* *WARN* *ERROR*"}
 export MEDIASOUP_LISTEN_IP=${MEDIASOUP_LISTEN_IP:="${ip}"}
 
-WATCH=false
-
+# Command line arguments override environment variables.
 for arg in "$@"; do
 	if [[ "$arg" == "--terminal" ]]; then
 		export TERMINAL="true"
 	elif [[ "$arg" == "--watch" ]]; then
-		WATCH=true
+		export WATCH="true"
 	fi
 done
 
-log_info "starting server with envs:"
-log_info "- DEBUG: \"${DEBUG}\""
+if [ "${TERMINAL}" = "true" ] && [ "${WATCH}" = "true" ] ; then
+	log_error "TERMINAL and WATCH environment variables cannot both be set to \"true\""
+
+	export TERMINAL="false"
+fi
+
+log_info "starting server:"
+log_info "- WATCH: \"${WATCH}\""
 log_info "- TERMINAL: \"${TERMINAL}\""
+log_info "- DEBUG: \"${DEBUG}\""
 
 while IFS='=' read -r key value; do
 	if [[ $key == MEDIASOUP_* ]]; then
@@ -97,8 +105,8 @@ while IFS='=' read -r key value; do
 	fi
 done < <(env)
 
-if $WATCH; then
-	npm run dev
+if [ "${WATCH}" = "true" ]; then
+	npm run watch
 else
-	npm run prod
+	npm run start
 fi

@@ -34,8 +34,9 @@ Edit your `config.mjs` according to your preferences.
 
 - The `start.sh` script detects the host IP and sets the `MEDIASOUP_LISTEN_IP` environment variable, useful if your `config.mjs` reads it. It also sets `DEBUG` variable to enable **mediasoup** and **mediasoup-demo-server** logs.
 - `start.sh --terminal` runs the server with an internative terminal.
-- `watch.sh` script is a shortcut of `start.sh --terminal --watch`, useful for development in case you are modifying server TypeScript code.
-- Additionally you can run `npm run prod` and `npm run dev` (see `npm-scripts.mjs`).
+- `watch.sh` script is a shortcut of `start.sh --watch`, useful for development in case you are modifying server TypeScript code.
+- Notice `start.sh` cannot be called with both `--terminal` and `--watch` command line arguments.
+- Additionally you can run `npm run start` and `npm run watch` (see `npm-scripts.mjs`).
 
 ## Connecting a terminal to a running server
 

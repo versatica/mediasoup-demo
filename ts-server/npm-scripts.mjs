@@ -40,6 +40,16 @@ const PRETTIER_PATHS = [
 	.filter(Boolean)
 	.join(' ');
 
+// Paths for Nodemon to watch.
+const NODEMON_WATCH_PATHS = [
+	'tsconfig.json',
+	fs.existsSync('config.mjs') ? 'config.mjs' : undefined,
+	'src',
+]
+	.filter(Boolean)
+	.map(item => `--watch ${item}`)
+	.join(' ');
+
 const task = process.argv[2];
 const taskArgs = process.argv.slice(3).join(' ');
 
@@ -103,14 +113,14 @@ async function run() {
 			break;
 		}
 
-		case 'dev': {
-			dev();
+		case 'start': {
+			start();
 
 			break;
 		}
 
-		case 'prod': {
-			prod();
+		case 'watch': {
+			watch();
 
 			break;
 		}
@@ -222,18 +232,18 @@ function release() {
 	executeInteractiveCmd('npm publish');
 }
 
-function dev() {
-	logInfo('dev()');
+function start() {
+	logInfo('start()');
 
-	executeInteractiveCmd(
-		'nodemon --no-stdin --watch src --exec tsx src/index.ts'
-	);
+	executeInteractiveCmd('cross-env NODE_ENV=production node ./lib/index.js');
 }
 
-function prod() {
-	logInfo('prod()');
+function watch() {
+	logInfo('watch()');
 
-	executeInteractiveCmd('node ./lib/index.js');
+	executeInteractiveCmd(
+		`cross-env NODE_ENV=debug nodemon ${NODEMON_WATCH_PATHS} -e ts,mjs,json --exec tsx src/index.ts`
+	);
 }
 
 function executeCmd(command) {

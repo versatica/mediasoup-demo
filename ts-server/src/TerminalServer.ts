@@ -47,28 +47,18 @@ const logger = new Logger('TerminalServer');
 
 export class TerminalServer {
 	// Maps to store all mediasoup entities indexed by id.
-	public static readonly workers: Map<number, mediasoupTypes.Worker> =
+	static readonly #workers: Map<number, mediasoupTypes.Worker> = new Map();
+	static readonly #webRtcServers: Map<string, mediasoupTypes.WebRtcServer> =
 		new Map();
-	public static readonly webRtcServers: Map<
-		string,
-		mediasoupTypes.WebRtcServer
-	> = new Map();
-	public static readonly routers: Map<string, mediasoupTypes.Router> =
+	static readonly #routers: Map<string, mediasoupTypes.Router> = new Map();
+	static readonly #transports: Map<string, mediasoupTypes.Transport> =
 		new Map();
-	public static readonly transports: Map<string, mediasoupTypes.Transport> =
+	static readonly #producers: Map<string, mediasoupTypes.Producer> = new Map();
+	static readonly #consumers: Map<string, mediasoupTypes.Consumer> = new Map();
+	static readonly #dataProducers: Map<string, mediasoupTypes.DataProducer> =
 		new Map();
-	public static readonly producers: Map<string, mediasoupTypes.Producer> =
+	static readonly #dataConsumers: Map<string, mediasoupTypes.DataConsumer> =
 		new Map();
-	public static readonly consumers: Map<string, mediasoupTypes.Consumer> =
-		new Map();
-	public static readonly dataProducers: Map<
-		string,
-		mediasoupTypes.DataProducer
-	> = new Map();
-	public static readonly dataConsumers: Map<
-		string,
-		mediasoupTypes.DataConsumer
-	> = new Map();
 
 	readonly #socket: netTypes.Socket;
 	#isTerminalOpen: boolean = false;
@@ -91,6 +81,15 @@ export class TerminalServer {
 			netServer.listen(SOCKET_PATH, resolve);
 		});
 
+		// Make maps global so they can be used during the REPL terminal.
+		global.workers = TerminalServer.#workers;
+		global.routers = TerminalServer.#routers;
+		global.transports = TerminalServer.#transports;
+		global.producers = TerminalServer.#producers;
+		global.consumers = TerminalServer.#consumers;
+		global.dataProducers = TerminalServer.#dataProducers;
+		global.dataConsumers = TerminalServer.#dataConsumers;
+
 		TerminalServer.runMediasoupObserver();
 	}
 
@@ -99,9 +98,9 @@ export class TerminalServer {
 			// Store the latest worker in a global variable.
 			global.worker = worker;
 
-			TerminalServer.workers.set(worker.pid, worker);
+			TerminalServer.#workers.set(worker.pid, worker);
 			worker.observer.on('close', () => {
-				TerminalServer.workers.delete(worker.pid);
+				TerminalServer.#workers.delete(worker.pid);
 
 				if (global.worker === worker) {
 					global.worker = undefined;
@@ -112,9 +111,9 @@ export class TerminalServer {
 				// Store the latest webRtcServer in a global variable.
 				global.webRtcServer = webRtcServer;
 
-				TerminalServer.webRtcServers.set(webRtcServer.id, webRtcServer);
+				TerminalServer.#webRtcServers.set(webRtcServer.id, webRtcServer);
 				webRtcServer.observer.on('close', () => {
-					TerminalServer.webRtcServers.delete(webRtcServer.id);
+					TerminalServer.#webRtcServers.delete(webRtcServer.id);
 
 					if (global.webRtcServer === webRtcServer) {
 						global.webRtcServer = undefined;
@@ -126,9 +125,9 @@ export class TerminalServer {
 				// Store the latest router in a global variable.
 				global.router = router;
 
-				TerminalServer.routers.set(router.id, router);
+				TerminalServer.#routers.set(router.id, router);
 				router.observer.on('close', () => {
-					TerminalServer.routers.delete(router.id);
+					TerminalServer.#routers.delete(router.id);
 
 					if (global.router === router) {
 						global.router = undefined;
@@ -139,9 +138,9 @@ export class TerminalServer {
 					// Store the latest transport in a global variable.
 					global.transport = transport;
 
-					TerminalServer.transports.set(transport.id, transport);
+					TerminalServer.#transports.set(transport.id, transport);
 					transport.observer.on('close', () => {
-						TerminalServer.transports.delete(transport.id);
+						TerminalServer.#transports.delete(transport.id);
 
 						if (global.transport === transport) {
 							global.transport = undefined;
@@ -152,9 +151,9 @@ export class TerminalServer {
 						// Store the latest producer in a global variable.
 						global.producer = producer;
 
-						TerminalServer.producers.set(producer.id, producer);
+						TerminalServer.#producers.set(producer.id, producer);
 						producer.observer.on('close', () => {
-							TerminalServer.producers.delete(producer.id);
+							TerminalServer.#producers.delete(producer.id);
 
 							if (global.producer === producer) {
 								global.producer = undefined;
@@ -166,9 +165,9 @@ export class TerminalServer {
 						// Store the latest consumer in a global variable.
 						global.consumer = consumer;
 
-						TerminalServer.consumers.set(consumer.id, consumer);
+						TerminalServer.#consumers.set(consumer.id, consumer);
 						consumer.observer.on('close', () => {
-							TerminalServer.consumers.delete(consumer.id);
+							TerminalServer.#consumers.delete(consumer.id);
 
 							if (global.consumer === consumer) {
 								global.consumer = undefined;
@@ -180,9 +179,9 @@ export class TerminalServer {
 						// Store the latest dataProducer in a global variable.
 						global.dataProducer = dataProducer;
 
-						TerminalServer.dataProducers.set(dataProducer.id, dataProducer);
+						TerminalServer.#dataProducers.set(dataProducer.id, dataProducer);
 						dataProducer.observer.on('close', () => {
-							TerminalServer.dataProducers.delete(dataProducer.id);
+							TerminalServer.#dataProducers.delete(dataProducer.id);
 
 							if (global.dataProducer === dataProducer) {
 								global.dataProducer = undefined;
@@ -194,9 +193,9 @@ export class TerminalServer {
 						// Store the latest dataConsumer in a global variable.
 						global.dataConsumer = dataConsumer;
 
-						TerminalServer.dataConsumers.set(dataConsumer.id, dataConsumer);
+						TerminalServer.#dataConsumers.set(dataConsumer.id, dataConsumer);
 						dataConsumer.observer.on('close', () => {
-							TerminalServer.dataConsumers.delete(dataConsumer.id);
+							TerminalServer.#dataConsumers.delete(dataConsumer.id);
 
 							if (global.dataConsumer === dataConsumer) {
 								global.dataConsumer = undefined;
@@ -322,7 +321,7 @@ export class TerminalServer {
 							`Node.js process [pid:${process.pid}]:\n${JSON.stringify(usage, null, '  ')}`
 						);
 
-						for (const worker of TerminalServer.workers.values()) {
+						for (const worker of TerminalServer.#workers.values()) {
 							usage = await pidusage(worker.pid);
 
 							this.logInfo(
@@ -337,7 +336,7 @@ export class TerminalServer {
 						const level = params[0] as mediasoupTypes.WorkerLogLevel;
 						const promises = [];
 
-						for (const worker of TerminalServer.workers.values()) {
+						for (const worker of TerminalServer.#workers.values()) {
 							promises.push(worker.updateSettings({ logLevel: level }));
 						}
 
@@ -356,7 +355,7 @@ export class TerminalServer {
 						const tags = params as mediasoupTypes.WorkerLogTag[];
 						const promises = [];
 
-						for (const worker of TerminalServer.workers.values()) {
+						for (const worker of TerminalServer.#workers.values()) {
 							promises.push(worker.updateSettings({ logTags: tags }));
 						}
 
@@ -373,7 +372,7 @@ export class TerminalServer {
 
 					case 'dw':
 					case 'dumpWorkers': {
-						for (const worker of TerminalServer.workers.values()) {
+						for (const worker of TerminalServer.#workers.values()) {
 							try {
 								const dump = await worker.dump();
 
@@ -392,8 +391,8 @@ export class TerminalServer {
 					case 'dumpWebRtcServer': {
 						const id =
 							params[0] ??
-							Array.from(TerminalServer.webRtcServers.keys()).pop();
-						const webRtcServer = TerminalServer.webRtcServers.get(id!);
+							Array.from(TerminalServer.#webRtcServers.keys()).pop();
+						const webRtcServer = TerminalServer.#webRtcServers.get(id!);
 
 						if (!webRtcServer) {
 							this.logError('WebRtcServer not found');
@@ -417,8 +416,8 @@ export class TerminalServer {
 					case 'dr':
 					case 'dumpRouter': {
 						const id =
-							params[0] ?? Array.from(TerminalServer.routers.keys()).pop();
-						const router = TerminalServer.routers.get(id!);
+							params[0] ?? Array.from(TerminalServer.#routers.keys()).pop();
+						const router = TerminalServer.#routers.get(id!);
 
 						if (!router) {
 							this.logError('Router not found');
@@ -442,8 +441,8 @@ export class TerminalServer {
 					case 'dt':
 					case 'dumpTransport': {
 						const id =
-							params[0] ?? Array.from(TerminalServer.transports.keys()).pop();
-						const transport = TerminalServer.transports.get(id!);
+							params[0] ?? Array.from(TerminalServer.#transports.keys()).pop();
+						const transport = TerminalServer.#transports.get(id!);
 
 						if (!transport) {
 							this.logError('Transport not found');
@@ -467,8 +466,8 @@ export class TerminalServer {
 					case 'dp':
 					case 'dumpProducer': {
 						const id =
-							params[0] ?? Array.from(TerminalServer.producers.keys()).pop();
-						const producer = TerminalServer.producers.get(id!);
+							params[0] ?? Array.from(TerminalServer.#producers.keys()).pop();
+						const producer = TerminalServer.#producers.get(id!);
 
 						if (!producer) {
 							this.logError('Producer not found');
@@ -492,8 +491,8 @@ export class TerminalServer {
 					case 'dc':
 					case 'dumpConsumer': {
 						const id =
-							params[0] ?? Array.from(TerminalServer.consumers.keys()).pop();
-						const consumer = TerminalServer.consumers.get(id!);
+							params[0] ?? Array.from(TerminalServer.#consumers.keys()).pop();
+						const consumer = TerminalServer.#consumers.get(id!);
 
 						if (!consumer) {
 							this.logError('Consumer not found');
@@ -518,8 +517,8 @@ export class TerminalServer {
 					case 'dumpDataProducer': {
 						const id =
 							params[0] ??
-							Array.from(TerminalServer.dataProducers.keys()).pop();
-						const dataProducer = TerminalServer.dataProducers.get(id!);
+							Array.from(TerminalServer.#dataProducers.keys()).pop();
+						const dataProducer = TerminalServer.#dataProducers.get(id!);
 
 						if (!dataProducer) {
 							this.logError('DataProducer not found');
@@ -544,8 +543,8 @@ export class TerminalServer {
 					case 'dumpDataConsumer': {
 						const id =
 							params[0] ??
-							Array.from(TerminalServer.dataConsumers.keys()).pop();
-						const dataConsumer = TerminalServer.dataConsumers.get(id!);
+							Array.from(TerminalServer.#dataConsumers.keys()).pop();
+						const dataConsumer = TerminalServer.#dataConsumers.get(id!);
 
 						if (!dataConsumer) {
 							this.logError('DataConsumer not found');
@@ -569,8 +568,8 @@ export class TerminalServer {
 					case 'st':
 					case 'statsTransport': {
 						const id =
-							params[0] ?? Array.from(TerminalServer.transports.keys()).pop();
-						const transport = TerminalServer.transports.get(id!);
+							params[0] ?? Array.from(TerminalServer.#transports.keys()).pop();
+						const transport = TerminalServer.#transports.get(id!);
 
 						if (!transport) {
 							this.logError('Transport not found');
@@ -594,8 +593,8 @@ export class TerminalServer {
 					case 'sp':
 					case 'statsProducer': {
 						const id =
-							params[0] ?? Array.from(TerminalServer.producers.keys()).pop();
-						const producer = TerminalServer.producers.get(id!);
+							params[0] ?? Array.from(TerminalServer.#producers.keys()).pop();
+						const producer = TerminalServer.#producers.get(id!);
 
 						if (!producer) {
 							this.logError('Producer not found');
@@ -619,8 +618,8 @@ export class TerminalServer {
 					case 'sc':
 					case 'statsConsumer': {
 						const id =
-							params[0] ?? Array.from(TerminalServer.consumers.keys()).pop();
-						const consumer = TerminalServer.consumers.get(id!);
+							params[0] ?? Array.from(TerminalServer.#consumers.keys()).pop();
+						const consumer = TerminalServer.#consumers.get(id!);
 
 						if (!consumer) {
 							this.logError('Consumer not found');
@@ -645,8 +644,8 @@ export class TerminalServer {
 					case 'statsDataProducer': {
 						const id =
 							params[0] ??
-							Array.from(TerminalServer.dataProducers.keys()).pop();
-						const dataProducer = TerminalServer.dataProducers.get(id!);
+							Array.from(TerminalServer.#dataProducers.keys()).pop();
+						const dataProducer = TerminalServer.#dataProducers.get(id!);
 
 						if (!dataProducer) {
 							this.logError('DataProducer not found');
@@ -671,8 +670,8 @@ export class TerminalServer {
 					case 'statsDataConsumer': {
 						const id =
 							params[0] ??
-							Array.from(TerminalServer.dataConsumers.keys()).pop();
-						const dataConsumer = TerminalServer.dataConsumers.get(id!);
+							Array.from(TerminalServer.#dataConsumers.keys()).pop();
+						const dataConsumer = TerminalServer.#dataConsumers.get(id!);
 
 						if (!dataConsumer) {
 							this.logError('DataConsumer not found');
@@ -761,12 +760,3 @@ export class TerminalServer {
 		);
 	}
 }
-
-// Make maps global so they can be used during the REPL terminal.
-global.workers = TerminalServer.workers;
-global.routers = TerminalServer.routers;
-global.transports = TerminalServer.transports;
-global.producers = TerminalServer.producers;
-global.consumers = TerminalServer.consumers;
-global.dataProducers = TerminalServer.dataProducers;
-global.dataConsumers = TerminalServer.dataConsumers;
