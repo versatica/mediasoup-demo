@@ -12,7 +12,7 @@ import { ApiServer } from './ApiServer';
 import { Room } from './Room';
 import { InvalidStateError } from './errors';
 import * as utils from './utils';
-import { Config, WorkerAppData } from './types';
+import { Config, WorkerAppData, RoomId } from './types';
 
 const logger = new Logger('Server');
 
@@ -42,35 +42,15 @@ export type ServerEvents = {
 
 export class Server extends EnhancedEventEmitter<ServerEvents> {
 	readonly #config: Config;
-	/**
-	 * Async queue to manage Rooms.
-	 */
 	readonly #roomCreationAwaitQueue: AwaitQueue = new AwaitQueue();
-	/**
-	 * Map of Room instances indexed by id.
-	 */
 	readonly #rooms: Map<string, Room> = new Map();
-	/**
-	 * HTTPS or HTTP server.
-	 */
 	readonly #httpServer: https.Server | http.Server;
-	/**
-	 * WebSocket server.
-	 */
 	readonly #wsServer: WsServer;
-	/**
-	 * API server.
-	 */
 	readonly #apiServer: ApiServer;
-	/**
-	 * Map of mediasoup Workers and WebRtcServers indexed by index.
-	 */
 	readonly #mediasoupWorkersAndWebRtcServers: MediasoupWorkersAndWebRtcServers =
 		new Map();
-	/**
-	 * Index of next mediasoup Worker to use.
-	 */
 	#nextMediasoupWorkerIdx: number = 0;
+	#closed: boolean = false;
 
 	static async create({ config }: ServerCreateOptions): Promise<Server> {
 		logger.debug('create()');
@@ -225,6 +205,12 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	close(): void {
 		logger.debug('close()');
 
+		if (this.#closed) {
+			return;
+		}
+
+		this.#closed = true;
+
 		this.#roomCreationAwaitQueue.stop();
 
 		for (const room of this.#rooms.values()) {
@@ -243,7 +229,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		roomId,
 		consumerReplicas = 0,
 	}: {
-		roomId: string;
+		roomId: RoomId;
 		consumerReplicas?: number;
 	}): Promise<Room> {
 		let room = this.#rooms.get(roomId);
@@ -305,7 +291,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			logger.error('mediasoup Worker died [pid:%d]', worker.pid);
 
 			this.close();
-			this.safeEmit('mediasoup-worker-died');
+			this.emit('mediasoup-worker-died');
 		});
 
 		worker.observer.on('close', () => {
@@ -322,8 +308,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			'get-room',
 			({ roomId, consumerReplicas }, resolve, reject) => {
 				this.getOrCreateRoom({ roomId, consumerReplicas })
-					.then(room => resolve(room))
-					.catch(error => reject(error));
+					.then(resolve)
+					.catch(reject);
 			}
 		);
 	}
@@ -333,8 +319,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			'get-room',
 			({ roomId, consumerReplicas }, resolve, reject) => {
 				this.getOrCreateRoom({ roomId, consumerReplicas })
-					.then(room => resolve(room))
-					.catch(error => reject(error));
+					.then(resolve)
+					.catch(reject);
 			}
 		);
 	}

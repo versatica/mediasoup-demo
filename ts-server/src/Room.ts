@@ -1,13 +1,16 @@
-import * as mediasoupTypes from 'mediasoup/types';
+import type * as mediasoupTypes from 'mediasoup/types';
+import * as protoo from 'protoo-server';
+import type * as protooTypes from 'protoo-server';
 
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
-import { Config, WorkerAppData } from './types';
+import { Peer } from './Peer';
+import { Config, WorkerAppData, RoomId, PeerId } from './types';
 
 const logger = new Logger('Room');
 
 export type RoomCreateOptions = {
-	roomId: string;
+	roomId: RoomId;
 	consumerReplicas: number;
 	config: Config;
 	mediasoupWorker: mediasoupTypes.Worker<WorkerAppData>;
@@ -15,10 +18,11 @@ export type RoomCreateOptions = {
 };
 
 type RoomConstructorOptions = {
-	roomId: string;
+	roomId: RoomId;
 	consumerReplicas: number;
 	mediasoupRouter: mediasoupTypes.Router;
 	mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
+	protooRoom: protooTypes.Room;
 };
 
 export type RoomEvents = {
@@ -26,9 +30,13 @@ export type RoomEvents = {
 };
 
 export class Room extends EnhancedEventEmitter<RoomEvents> {
-	readonly #id: string;
+	readonly #roomId: RoomId;
 	readonly #consumerReplicas: number;
 	readonly #mediasoupRouter: mediasoupTypes.Router;
+	readonly #mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
+	readonly #protooRoom: protooTypes.Room;
+	readonly #peers: Map<string, Peer> = new Map();
+	#closed: boolean = false;
 
 	static async create({
 		roomId,
@@ -42,11 +50,13 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		const { mediaCodecs } = config.mediasoup.routerOptions;
 
 		const mediasoupRouter = await mediasoupWorker.createRouter({ mediaCodecs });
+		const protooRoom = new protoo.Room();
 		const room = new Room({
 			roomId,
 			consumerReplicas,
 			mediasoupRouter,
 			mediasoupWebRtcServer,
+			protooRoom,
 		});
 
 		return room;
@@ -56,6 +66,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		roomId,
 		consumerReplicas,
 		mediasoupRouter,
+		mediasoupWebRtcServer,
+		protooRoom,
 	}: RoomConstructorOptions) {
 		super();
 
@@ -65,22 +77,60 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			consumerReplicas
 		);
 
-		this.#id = roomId;
+		this.#roomId = roomId;
 		this.#consumerReplicas = consumerReplicas;
 		this.#mediasoupRouter = mediasoupRouter;
+		this.#mediasoupWebRtcServer = mediasoupWebRtcServer;
+		this.#protooRoom = protooRoom;
 	}
 
-	get id(): string {
-		return this.#id;
+	get id(): RoomId {
+		return this.#roomId;
 	}
 
 	close(): void {
 		logger.debug('close()');
 
+		if (this.#closed) {
+			return;
+		}
+
+		this.#closed = true;
+
+		for (const peer of this.#peers.values()) {
+			peer.close();
+		}
+
+		this.#mediasoupRouter.close();
+
 		// TODO
+
+		this.emit('close');
 	}
 
 	getRouterRtpCapabilities(): mediasoupTypes.RouterRtpCapabilities {
 		return this.#mediasoupRouter.rtpCapabilities;
+	}
+
+	async handleWsConnection(
+		peerId: PeerId,
+		protooTransport: protooTypes.WebSocketTransport
+	): Promise<void> {
+		logger.debug('handleWsConnection() [peerId:%o]', peerId);
+
+		// TODO: Check existing peer!
+
+		const protooPeer = this.#protooRoom.createPeer(peerId, protooTransport);
+		const peer = await Peer.create({ peerId, protooPeer });
+
+		this.#peers.set(peerId, peer);
+
+		this.handlePeer(peer);
+	}
+
+	private handlePeer(peer: Peer): void {
+		peer.on('close', () => {
+			this.#peers.delete(peer.id);
+		});
 	}
 }

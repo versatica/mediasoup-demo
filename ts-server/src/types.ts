@@ -1,4 +1,4 @@
-import * as mediasoupTypes from 'mediasoup/types';
+import type * as mediasoupTypes from 'mediasoup/types';
 
 export type Config = {
 	domain: string;
@@ -42,3 +42,7 @@ export type Config = {
 export type WorkerAppData = {
 	idx: number;
 };
+
+export type RoomId = string;
+
+export type PeerId = string;

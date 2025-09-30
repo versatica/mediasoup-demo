@@ -5,6 +5,7 @@ import * as bodyParser from 'body-parser';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Room } from './Room';
+import { RoomId } from './types';
 
 const logger = new Logger('ApiServer');
 
@@ -17,7 +18,7 @@ type ApiServerConstructorOptions = {
 
 export type ApiServerEvents = {
 	'get-room': [
-		{ roomId: string; consumerReplicas: number },
+		{ roomId: RoomId; consumerReplicas: number },
 		resolve: (value: Room | PromiseLike<Room>) => void,
 		reject: (error: Error) => void,
 	];
@@ -66,7 +67,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		roomId,
 		consumerReplicas,
 	}: {
-		roomId: string;
+		roomId: RoomId;
 		consumerReplicas: number;
 	}): Promise<Room> {
 		return new Promise<Room>((resolve, reject) => {

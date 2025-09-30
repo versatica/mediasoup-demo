@@ -1,12 +1,12 @@
 import * as https from 'node:https';
 import * as http from 'node:http';
-import * as url from 'node:url';
 import * as protoo from 'protoo-server';
 import type * as protooTypes from 'protoo-server';
 
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Room } from './Room';
+import { RoomId } from './types';
 
 const logger = new Logger('WsServer');
 
@@ -20,7 +20,7 @@ type WsServerConstructorOptions = {
 
 export type WsServerEvents = {
 	'get-room': [
-		{ roomId: string; consumerReplicas: number },
+		{ roomId: RoomId; consumerReplicas: number },
 		resolve: (value: Room | PromiseLike<Room>) => void,
 		reject: (error: Error) => void,
 	];
@@ -60,7 +60,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 		roomId,
 		consumerReplicas,
 	}: {
-		roomId: string;
+		roomId: RoomId;
 		consumerReplicas: number;
 	}): Promise<Room> {
 		return new Promise<Room>((resolve, reject) => {
@@ -69,25 +69,53 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 	}
 
 	private handleProtooServer(): void {
-		this.#protooServer.on('connectionrequest', (info, accept, reject) => {
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		this.#protooServer.on('connectionrequest', async (info, accept, reject) => {
 			if (!info.request.url) {
-				reject(400, 'missing URL in the request');
+				reject(400, 'Missing URL in the request');
 
 				return;
 			}
 
 			// The client indicates the roomId and peerId in the URL query.
-			const u = url.parse(info.request.url, true);
-			const roomId = u.query['roomId'];
-			const peerId = u.query['peerId'];
+			const params = new URL(info.request.url).searchParams;
+			const roomId = params.get('roomId');
+			const peerId = params.get('peerId');
+			const consumerReplicas = Number(params.get('consumerReplicas') ?? 0);
 
 			if (!roomId || !peerId) {
-				reject(400, 'Connection request without roomId and/or peerId');
+				reject(400, 'Missing roomId and/or peerId');
 
 				return;
 			}
 
-			// TODO: More.
+			logger.debug(
+				'protoo WebSocket connection request [roomId:%o, peerId:%o, address:%o, origin:%o]',
+				roomId,
+				peerId,
+				info.socket.remoteAddress,
+				info.origin
+			);
+
+			let room: Room;
+			let protooTransport: protooTypes.WebSocketTransport;
+
+			try {
+				room = await this.getRoom({
+					roomId,
+					consumerReplicas,
+				});
+
+				protooTransport = accept();
+			} catch (error) {
+				logger.error('room creation or room joining failed: %s', String(error));
+
+				reject(error as Error);
+
+				return;
+			}
+
+			void room.handleWsConnection(peerId, protooTransport);
 		});
 	}
 }
