@@ -12,7 +12,7 @@ import { ApiServer } from './ApiServer';
 import { Room } from './Room';
 import { InvalidStateError } from './errors';
 import * as utils from './utils';
-import type { Config, WorkerAppData, RoomId } from './types';
+import type { Config, RoomId, MediasoupWorkerAppData } from './types';
 
 const logger = new Logger('Server');
 
@@ -31,7 +31,7 @@ type ServerConstructorOptions = {
 type MediasoupWorkersAndWebRtcServers = Map<
 	number,
 	{
-		worker: mediasoupTypes.Worker<WorkerAppData>;
+		worker: mediasoupTypes.Worker<MediasoupWorkerAppData>;
 		webRtcServer: mediasoupTypes.WebRtcServer;
 	}
 >;
@@ -90,7 +90,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			);
 
 			for (let idx = 0; idx < numWorkers; ++idx) {
-				const worker = await mediasoup.createWorker<WorkerAppData>({
+				const worker = await mediasoup.createWorker<MediasoupWorkerAppData>({
 					dtlsCertificateFile: workerSettings.dtlsCertificateFile,
 					dtlsPrivateKeyFile: workerSettings.dtlsPrivateKeyFile,
 					logLevel: workerSettings.logLevel,
@@ -272,7 +272,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	}
 
 	private getNextMediasoupWorkerAndWebRtcServer(): {
-		worker: mediasoupTypes.Worker<WorkerAppData>;
+		worker: mediasoupTypes.Worker<MediasoupWorkerAppData>;
 		webRtcServer: mediasoupTypes.WebRtcServer;
 	} {
 		const { worker, webRtcServer } = this.#mediasoupWorkersAndWebRtcServers.get(
@@ -290,7 +290,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	}
 
 	private handleMediasoupWorker(
-		worker: mediasoupTypes.Worker<WorkerAppData>
+		worker: mediasoupTypes.Worker<MediasoupWorkerAppData>
 	): void {
 		worker.on('died', () => {
 			logger.error('mediasoup Worker died [pid:%o]', worker.pid);

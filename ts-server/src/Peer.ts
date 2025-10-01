@@ -1,9 +1,17 @@
+import type * as mediasoupTypes from 'mediasoup/types';
 import type * as protooTypes from 'protoo-server';
 
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { InvalidStateError } from './errors';
-import type { PeerId } from './types';
+import type {
+	PeerId,
+	PeerDevice,
+	MediasoupProducerAppData,
+	MediasoupConsumerAppData,
+	MediasoupDataProducerAppData,
+	MediasoupDataConsumerAppData,
+} from './types';
 
 const JOIN_TIMEOUT_MS = 3000;
 
@@ -37,6 +45,24 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	readonly #protooPeer: protooTypes.Peer;
 	#joinTimer: ReturnType<typeof setTimeout>;
 	#joined: boolean = false;
+	#displayName?: string;
+	#device?: PeerDevice;
+	#rtpCapabilities?: mediasoupTypes.RtpCapabilities;
+	#sctpCapabilities?: mediasoupTypes.SctpCapabilities;
+	#sendTransport?: mediasoupTypes.WebRtcTransport;
+	#recvTransport?: mediasoupTypes.WebRtcTransport;
+	#producers: Map<string, mediasoupTypes.Producer<MediasoupProducerAppData>> =
+		new Map();
+	#consumers: Map<string, mediasoupTypes.Consumer<MediasoupConsumerAppData>> =
+		new Map();
+	#dataProducers: Map<
+		string,
+		mediasoupTypes.DataProducer<MediasoupDataProducerAppData>
+	> = new Map();
+	#dataConsumers: Map<
+		string,
+		mediasoupTypes.DataConsumer<MediasoupDataConsumerAppData>
+	> = new Map();
 	#closed: boolean = false;
 
 	// eslint-disable-next-line @typescript-eslint/require-await

@@ -39,10 +39,39 @@ export type Config = {
 	};
 };
 
-export type WorkerAppData = {
-	idx: number;
-};
-
 export type RoomId = string;
 
 export type PeerId = string;
+
+export type PeerDevice = {
+	flag:
+		| 'chrome'
+		| 'firefox'
+		| 'safari'
+		| 'opera'
+		| 'edge'
+		| 'aiortc'
+		| 'unknown';
+	name?: string;
+	version?: string;
+};
+
+export type MediasoupWorkerAppData = {
+	idx: number;
+};
+
+export type MediasoupProducerAppData = {
+	// TODO
+};
+
+export type MediasoupConsumerAppData = {
+	// TODO
+};
+
+export type MediasoupDataProducerAppData = {
+	// TODO
+};
+
+export type MediasoupDataConsumerAppData = {
+	// TODO
+};
