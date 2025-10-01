@@ -9,3 +9,4 @@
 - `Room.ts`: `activeSpeakerObserver` and `audioLevelObserver` stuff.
 - `npm run release`.
 - CI stuff.
+- `npm run release` stuff.
