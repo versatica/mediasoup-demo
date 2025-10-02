@@ -50,7 +50,7 @@
 		"@eslint/js": "^9.36.0",
 		"@types/debug": "^4.1.12",
 		"@types/express": "^5.0.3",
-		"@types/node": "^24.5.2",
+		"@types/node": "^24.6.2",
 		"@types/pidusage": "^2.0.5",
 		"@types/protoo-server": "^4.0.6",
 		"cross-env": "^10.1.0",
@@ -60,8 +60,8 @@
 		"globals": "^16.4.0",
 		"nodemon": "^3.1.10",
 		"prettier": "^3.6.2",
-		"tsx": "^4.20.5",
-		"typescript": "^5.9.2",
-		"typescript-eslint": "^8.44.1"
+		"tsx": "^4.20.6",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.45.0"
 	}
 }
