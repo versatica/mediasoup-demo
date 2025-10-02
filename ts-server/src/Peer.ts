@@ -3,6 +3,10 @@ import type * as protooTypes from 'protoo-server';
 
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
+import {
+	NotificationNameFromClient,
+	NotificationDataFromClient,
+} from './signaling/messages';
 import { InvalidStateError } from './errors';
 import type {
 	PeerId,
@@ -30,13 +34,20 @@ type PeerConstructorOptions = {
 
 export type PeerEvents = {
 	/**
-	 * Emitted when the Peer is closed no matter how.
-	 */
-	closed: [];
-	/**
 	 * Emitted when the Peer joins the Room.
 	 */
 	joined: [];
+	/**
+	 * Emitted when the Peer disconnects itself or due to network isses.
+	 *
+	 * @remarks
+	 * - 'disconnected' is guaranteed to be emitted after 'closed'.
+	 */
+	disconnected: [];
+	/**
+	 * Emitted when the Peer is closed no matter how.
+	 */
+	closed: [];
 };
 
 export class Peer extends EnhancedEventEmitter<PeerEvents> {
@@ -91,6 +102,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			logger.debug(`Peer didn't join in ${JOIN_TIMEOUT_MS}ms, closing it`);
 
 			this.close();
+			this.emit('disconnected');
 		}, JOIN_TIMEOUT_MS);
 
 		this.handleProtooPeer();
@@ -116,6 +128,22 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		this.emit('closed');
 	}
 
+	private notify<Name extends NotificationNameFromClient>(
+		name: Name,
+		...args: NotificationDataFromClient<Name> extends undefined
+			? [undefined?]
+			: [NotificationDataFromClient<Name>]
+	): void {
+		const data = args[0];
+
+		this.#protooPeer.notify(name, data).catch(error => {
+			this.#logger.warn(
+				`notify() | failed to send message [name:%o]: ${error}`,
+				name
+			);
+		});
+	}
+
 	private handleProtooPeer(): void {
 		this.#protooPeer.on('close', () => {
 			if (this.#closed) {
@@ -123,6 +151,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			}
 
 			this.close();
+			this.emit('disconnected');
 		});
 
 		this.#protooPeer.on('request', (request, accept, reject) => {

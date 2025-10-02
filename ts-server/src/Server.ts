@@ -38,7 +38,7 @@ type MediasoupWorkersAndWebRtcServers = Map<
 
 export type ServerEvents = {
 	/**
-	 * Emitted to obtain a room.
+	 * Emitted when Server dies.
 	 */
 	died: [];
 };

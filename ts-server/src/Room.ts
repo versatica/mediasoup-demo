@@ -171,7 +171,11 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 	private mayClose(): void {
 		// If this is the latest Peer in the Room, close the Room.
-		if (this.#peers.size === 0 && this.#joiningPeers.size === 0) {
+		if (
+			!this.#closed &&
+			this.#peers.size === 0 &&
+			this.#joiningPeers.size === 0
+		) {
 			this.#logger.info('last Peer in the Room left, closing the Room');
 
 			this.close();
@@ -181,10 +185,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	private handleJoiningPeer(peer: Peer): void {
 		const onClosed = (): void => {
 			this.#joiningPeers.delete(peer.id);
-
-			if (this.#closed) {
-				return;
-			}
 
 			this.mayClose();
 		};
@@ -209,13 +209,11 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		peer.on('closed', () => {
 			this.#peers.delete(peer.id);
 
-			if (this.#closed) {
-				return;
-			}
-
-			// TODO: Signal it to others.
-
 			this.mayClose();
+		});
+
+		peer.on('disconnected', () => {
+			// TODO: Signal it to others.
 		});
 	}
 }
