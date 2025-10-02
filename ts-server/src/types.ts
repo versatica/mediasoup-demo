@@ -56,22 +56,34 @@ export type PeerDevice = {
 	version?: string;
 };
 
+export type TransportDirection = 'producer' | 'consumer';
+
+export type Source = 'audio' | 'video' | 'screensharing';
+
+export type Channel = 'peer' | 'bot';
+
 export type MediasoupWorkerAppData = {
 	idx: number;
 };
 
+export type MediasoupWebRtcTransportAppData = {
+	direction: TransportDirection;
+};
+
 export type MediasoupProducerAppData = {
-	// TODO
+	source: Source;
 };
 
 export type MediasoupConsumerAppData = {
-	// TODO
+	peerId: PeerId;
+	source: Source;
 };
 
 export type MediasoupDataProducerAppData = {
-	// TODO
+	channel: Channel;
 };
 
 export type MediasoupDataConsumerAppData = {
-	// TODO
+	peerId?: PeerId;
+	channel: Channel;
 };

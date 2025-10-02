@@ -73,7 +73,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		roomId: RoomId;
 		consumerReplicas: number;
 	}): Promise<Room> {
-		return new Promise<Room>((resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			this.emit('get-room', { roomId, consumerReplicas }, resolve, reject);
 		});
 	}

@@ -5,7 +5,13 @@ import type * as protooTypes from 'protoo-server';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Peer } from './Peer';
-import type { Config, RoomId, PeerId } from './types';
+import { clone } from './utils';
+import type {
+	Config,
+	RoomId,
+	PeerId,
+	MediasoupWebRtcTransportAppData,
+} from './types';
 
 const staticLogger = new Logger('Room');
 
@@ -163,10 +169,9 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		const peer = await Peer.create({ peerId, protooPeer });
 
 		// NOTE: The Peer is not yet joined. It will once it sends 'join' request.
-
 		this.#joiningPeers.set(peer.id, peer);
 
-		this.handleJoiningPeer(peer);
+		this.handlePeer(peer);
 	}
 
 	private mayClose(): void {
@@ -182,38 +187,73 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		}
 	}
 
-	private handleJoiningPeer(peer: Peer): void {
-		const onClosed = (): void => {
-			this.#joiningPeers.delete(peer.id);
-
-			this.mayClose();
-		};
-
-		const onJoined = (): void => {
-			// Remove the current event listeners.
-			peer.removeListener('closed', onClosed);
-			peer.removeListener('joined', onJoined);
-
-			this.#joiningPeers.delete(peer.id);
-			this.#peers.set(peer.id, peer);
-
-			this.handlePeer(peer);
-		};
-
-		peer.on('closed', onClosed);
-
-		peer.on('joined', onJoined);
-	}
-
 	private handlePeer(peer: Peer): void {
 		peer.on('closed', () => {
+			this.#joiningPeers.delete(peer.id);
 			this.#peers.delete(peer.id);
 
 			this.mayClose();
 		});
 
+		peer.on('joined', () => {
+			this.#joiningPeers.delete(peer.id);
+			this.#peers.set(peer.id, peer);
+
+			// TODO: Signal to others.
+		});
+
 		peer.on('disconnected', () => {
-			// TODO: Signal it to others.
+			// TODO: Signal to others.
+		});
+
+		peer.on('get-router-rtp-capabilities', resolve => {
+			resolve(this.#mediasoupRouter.rtpCapabilities);
+		});
+
+		peer.on(
+			'create-webrtc-transport',
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			async ({ direction, sctpCapabilities, forceTcp }, resolve, reject) => {
+				try {
+					const webRtcTransportOptions: mediasoupTypes.WebRtcTransportOptions<MediasoupWebRtcTransportAppData> =
+						{
+							...clone(this.#config.mediasoup.webRtcTransportOptions),
+							webRtcServer: this.#mediasoupWebRtcServer,
+							iceConsentTimeout: 20,
+							enableSctp: Boolean(sctpCapabilities),
+							numSctpStreams: sctpCapabilities?.numStreams,
+							appData: { direction },
+						};
+
+					if (forceTcp) {
+						webRtcTransportOptions.enableUdp = false;
+						webRtcTransportOptions.enableTcp = true;
+					}
+
+					const transport = await this.#mediasoupRouter.createWebRtcTransport(
+						webRtcTransportOptions
+					);
+
+					const { maxIncomingBitrate } =
+						this.#config.mediasoup.webRtcTransportOptions ?? {};
+
+					if (maxIncomingBitrate) {
+						transport.setMaxIncomingBitrate(maxIncomingBitrate).catch(error => {
+							this.#logger.warn(
+								`transport.setMaxIncomingBitrate() failed: ${error}`
+							);
+						});
+					}
+
+					resolve(transport);
+				} catch (error) {
+					reject(error as Error);
+				}
+			}
+		);
+
+		peer.on('display-name-changed', ({ displayName, oldDisplayName }) => {
+			// TODO: Signal to others.
 		});
 	}
 }

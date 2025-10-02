@@ -7,6 +7,6 @@
 - Throttle stuff.
 - Logging of `worker.getResourceUsage()` stuff.
 - `Room.ts`: `activeSpeakerObserver` and `audioLevelObserver` stuff.
-- `npm run release`.
 - CI stuff.
 - `npm run release` stuff.
+- Tons of changes in WS messages (requests moved to notifications, changes in the payloads, etc).

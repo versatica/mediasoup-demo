@@ -13,3 +13,7 @@ export function clone<T>(value: T): T {
 		return JSON.parse(JSON.stringify(value));
 	}
 }
+
+export function assertUnreachable(value: never): never {
+	throw new Error(`didn't expect to get here, value: ${value}`);
+}

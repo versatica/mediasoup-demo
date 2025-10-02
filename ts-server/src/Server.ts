@@ -11,7 +11,7 @@ import { WsServer } from './WsServer';
 import { ApiServer } from './ApiServer';
 import { Room } from './Room';
 import { InvalidStateError } from './errors';
-import * as utils from './utils';
+import { clone } from './utils';
 import type { Config, RoomId, MediasoupWorkerAppData } from './types';
 
 const logger = new Logger('Server');
@@ -105,7 +105,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 				// Each mediasoup Worker will run its own WebRtcServer, so those cannot
 				// share the same listening port. Hence we increase the port for each
 				// Worker.
-				const clonnedWebRtcServerOptions = utils.clone(webRtcServerOptions);
+				const clonnedWebRtcServerOptions = clone(webRtcServerOptions);
 				const portIncrement = mediasoupWorkersAndWebRtcServers.size - 1;
 
 				for (const listenInfo of clonnedWebRtcServerOptions.listenInfos) {
