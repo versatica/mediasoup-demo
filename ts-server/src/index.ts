@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import * as process from 'node:process';
 import * as util from 'node:util';
 
@@ -17,27 +15,29 @@ console.log('process.env.DEBUG: %o', process.env['DEBUG']);
 
 logger.info('config:', util.inspect(config, { depth: null, colors: true }));
 
+let server: Server | undefined;
+
 void start();
 
 async function start(): Promise<void> {
 	logger.info('start()');
 
 	try {
+		server = await Server.create({ config });
+
+		logger.info('start() | server started');
+
+		handleServer();
+
 		// Start the interactive terminal server.
 		await TerminalServer.start({
-			onQuit: () => exit(),
+			onQuit: exitGracefully,
 		});
-
-		const server = await Server.create({ config });
-
-		handleServer(server);
 
 		// Start the interactive terminal client if requested.
 		if (process.env['TERMINAL'] === 'true') {
 			await TerminalClient.start();
 		}
-
-		logger.info('start() | server started');
 	} catch (error) {
 		logger.error('start() | failed:', error);
 
@@ -45,20 +45,26 @@ async function start(): Promise<void> {
 	}
 }
 
-function handleServer(server: Server): void {
-	server.on('died', () => {
+function handleServer(): void {
+	server?.on('died', () => {
 		logger.error('server died, exiting');
 
 		exitWithError();
 	});
 }
 
-function exit(): void {
-	process.exit(0);
+/**
+ * Here we close everything that keeps the Node process alive.
+ */
+function exitGracefully(): void {
+	logger.info('exiting gracefully...');
+
+	TerminalServer.close();
+	server?.close();
 }
 
 function exitWithError(): void {
-	logger.error('exiting with error');
+	logger.error('exiting with error...');
 
 	process.exit(1);
 }

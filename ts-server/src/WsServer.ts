@@ -1,5 +1,6 @@
 import * as https from 'node:https';
 import * as http from 'node:http';
+import * as tls from 'node:tls';
 import * as protoo from 'protoo-server';
 import type * as protooTypes from 'protoo-server';
 
@@ -74,13 +75,15 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 	private handleProtooServer(): void {
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.#protooServer.on('connectionrequest', async (info, accept, reject) => {
-			if (!info.request.url) {
-				reject(400, 'Missing URL in the request');
+			if (!info.request.url || !info.request.headers.host) {
+				reject(400, `Missing URL or Host header in the request`);
 
 				return;
 			}
 
-			const params = new URL(info.request.url).searchParams;
+			const scheme = info.socket instanceof tls.TLSSocket ? 'wss' : 'ws';
+			const fullUrl = `${scheme}://${info.request.headers.host}${info.request.url}`;
+			const params = new URL(fullUrl).searchParams;
 			const roomId = params.get('roomId');
 			const peerId = params.get('peerId');
 			const consumerReplicas = Number(params.get('consumerReplicas') ?? 0);

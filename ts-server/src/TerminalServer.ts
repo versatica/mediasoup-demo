@@ -46,6 +46,8 @@ export const SOCKET_PATH =
 const logger = new Logger('TerminalServer');
 
 export class TerminalServer {
+	static #netServer?: net.Server;
+	static #sockets: Set<net.Socket> = new Set();
 	// Maps to store all mediasoup entities indexed by id.
 	static readonly #workers: Map<number, mediasoupTypes.Worker> = new Map();
 	static readonly #webRtcServers: Map<string, mediasoupTypes.WebRtcServer> =
@@ -67,7 +69,13 @@ export class TerminalServer {
 	static async start({ onQuit }: { onQuit: () => void }): Promise<void> {
 		logger.debug('start()');
 
-		const netServer = net.createServer(socket => {
+		TerminalServer.#netServer = net.createServer(socket => {
+			TerminalServer.#sockets.add(socket);
+
+			socket.on('close', () => {
+				TerminalServer.#sockets.delete(socket);
+			});
+
 			const terminalServer = new TerminalServer({ socket, onQuit });
 
 			terminalServer.openCommandConsole();
@@ -78,7 +86,7 @@ export class TerminalServer {
 				fs.unlinkSync(SOCKET_PATH);
 			} catch (error) {}
 
-			netServer.listen(SOCKET_PATH, resolve);
+			TerminalServer.#netServer?.listen(SOCKET_PATH, resolve);
 		});
 
 		// Make maps global so they can be used during the REPL terminal.
@@ -91,6 +99,18 @@ export class TerminalServer {
 		global.dataConsumers = TerminalServer.#dataConsumers;
 
 		TerminalServer.runMediasoupObserver();
+	}
+
+	static close(): void {
+		logger.debug('close()');
+
+		// Stop listening for connections.
+		TerminalServer.#netServer?.close();
+
+		// Close all existing connections.
+		for (const socket of TerminalServer.#sockets) {
+			socket.destroy();
+		}
 	}
 
 	private static runMediasoupObserver(): void {

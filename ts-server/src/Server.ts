@@ -1,5 +1,6 @@
 import * as https from 'node:https';
 import * as http from 'node:http';
+import * as net from 'node:net';
 import * as fs from 'node:fs';
 import * as mediasoup from 'mediasoup';
 import type * as mediasoupTypes from 'mediasoup/types';
@@ -48,6 +49,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	readonly #roomCreationAwaitQueue: AwaitQueue = new AwaitQueue();
 	readonly #rooms: Map<string, Room> = new Map();
 	readonly #httpServer: https.Server | http.Server;
+	readonly #httpConnections: Set<net.Socket> = new Set();
 	readonly #wsServer: WsServer;
 	readonly #apiServer: ApiServer;
 	readonly #mediasoupWorkersAndWebRtcServers: MediasoupWorkersAndWebRtcServers =
@@ -222,6 +224,15 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		for (const { worker } of this.#mediasoupWorkersAndWebRtcServers.values()) {
 			worker.close();
 		}
+
+		// Stop listening for HTTP/WS connections.
+		this.#httpServer.close();
+		this.#httpServer.closeAllConnections();
+
+		// Close all existing HTTP/WS connections.
+		for (const httpConnection of this.#httpConnections) {
+			httpConnection.destroy();
+		}
 	}
 
 	/**
@@ -316,6 +327,16 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	}
 
 	private handleHttpServer(): void {
+		// Let's keep a list with the HTTP connections (including WebSocket
+		// upgrades) to later be able to close them all.
+		this.#httpServer.on('connection', (httpConnection: net.Socket) => {
+			this.#httpConnections.add(httpConnection);
+
+			httpConnection.on('close', () => {
+				this.#httpConnections.delete(httpConnection);
+			});
+		});
+
 		this.#httpServer.on('request', this.#apiServer.getExpressApp());
 	}
 

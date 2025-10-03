@@ -25,7 +25,7 @@ import type {
 	MediasoupDataConsumerAppData,
 } from './types';
 
-const JOIN_TIMEOUT_MS = 3000;
+const JOIN_TIMEOUT_MS = 10000;
 
 const staticLogger = new Logger('Peer');
 
