@@ -115,12 +115,6 @@ async function run() {
 			break;
 		}
 
-		case 'start': {
-			start();
-
-			break;
-		}
-
 		case 'watch': {
 			watch();
 
@@ -237,12 +231,6 @@ function release() {
 	executeCmd(`git push origin ${RELEASE_BRANCH}`);
 	executeCmd(`git push origin '${pkg.version}'`);
 	executeInteractiveCmd('npm publish');
-}
-
-function start() {
-	logInfo('start()');
-
-	executeInteractiveCmd('cross-env NODE_ENV=production node ./lib/index.js');
 }
 
 function watch() {

@@ -46,7 +46,7 @@ export const SOCKET_PATH =
 
 const logger = new Logger('TerminalServer');
 
-type TerminalServerEvents = {
+export type TerminalServerEvents = {
 	/**
 	 * Emitted when the terminal server is closed no matter how.
 	 */
@@ -72,14 +72,25 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 
 	readonly #socket: netTypes.Socket;
 	readonly #onQuit: () => void;
+	readonly #onForceQuit: () => void;
 	#isTerminalOpen: boolean = false;
 	#closed: boolean = false;
 
-	static async listen({ onQuit }: { onQuit: () => void }): Promise<void> {
+	static async listen({
+		onQuit,
+		onForceQuit,
+	}: {
+		onQuit: () => void;
+		onForceQuit: () => void;
+	}): Promise<void> {
 		logger.debug('listen()');
 
 		TerminalServer.#netServer = net.createServer(socket => {
-			const terminalServer = new TerminalServer({ socket, onQuit });
+			const terminalServer = new TerminalServer({
+				socket,
+				onQuit,
+				onForceQuit,
+			});
 
 			TerminalServer.#terminalServers.add(terminalServer);
 
@@ -239,9 +250,11 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 	private constructor({
 		socket,
 		onQuit,
+		onForceQuit,
 	}: {
 		socket: netTypes.Socket;
 		onQuit: () => void;
+		onForceQuit: () => void;
 	}) {
 		super();
 
@@ -249,6 +262,7 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 
 		this.#socket = socket;
 		this.#onQuit = onQuit;
+		this.#onForceQuit = onForceQuit;
 
 		this.handleSocket();
 	}
@@ -354,6 +368,9 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 						);
 						this.logInfoWithoutPrefix('- t, terminal: open Node REPL Terminal');
 						this.logInfoWithoutPrefix('- quit: quit the server');
+						this.logInfoWithoutPrefix(
+							'- force-quit: force quit the server (for development purposes)'
+						);
 
 						readStdin();
 
@@ -769,6 +786,15 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 
 					case 'quit': {
 						this.#onQuit();
+						this.logInfoWithoutPrefix('');
+
+						// `return` instead of `break` to avoid the call to readStdin()
+						// below.
+						return;
+					}
+
+					case 'force-quit': {
+						this.#onForceQuit();
 						this.logInfoWithoutPrefix('');
 
 						// `return` instead of `break` to avoid the call to readStdin()

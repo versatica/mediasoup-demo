@@ -16,6 +16,7 @@ console.log('process.env.DEBUG: %o', process.env['DEBUG']);
 logger.info('config:', util.inspect(config, { depth: null, colors: true }));
 
 let server: Server | undefined;
+let terminalClient: TerminalClient | undefined;
 
 void start();
 
@@ -31,14 +32,19 @@ async function start(): Promise<void> {
 
 		// Start the interactive terminal server.
 		await TerminalServer.listen({
-			onQuit: exitGracefully,
+			onQuit: () => {
+				exitGracefully();
+			},
+			onForceQuit: () => {
+				exitWithError();
+			},
 		});
 
 		// Start the interactive terminal client if requested.
 		if (process.env['TERMINAL'] === 'true') {
-			await TerminalClient.connect({
-				onQuit: exitGracefully,
-			});
+			terminalClient = await TerminalClient.connect();
+
+			handleTerminalClient();
 		}
 	} catch (error) {
 		logger.error('start() | failed:', error);
@@ -55,6 +61,12 @@ function handleServer(): void {
 	});
 }
 
+function handleTerminalClient(): void {
+	terminalClient?.on('closed', () => {
+		exitGracefully();
+	});
+}
+
 /**
  * Here we close everything that keeps the Node process alive.
  */
@@ -68,8 +80,10 @@ function exitGracefully(): void {
 function exitWithError(): void {
 	logger.error('exiting with error...');
 
-	TerminalServer.stop();
-	server?.close();
+	try {
+		TerminalServer.stop();
+		server?.close();
+	} catch (error) {}
 
 	process.exit(1);
 }

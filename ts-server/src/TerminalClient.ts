@@ -3,20 +3,23 @@ import * as process from 'node:process';
 import picocolors from 'picocolors';
 
 import { Logger } from './Logger';
+import { EnhancedEventEmitter } from './enhancedEvents';
 import { SOCKET_PATH } from './TerminalServer';
 
 const logger = new Logger('TerminalClient');
 
-export class TerminalClient {
+export type TerminalClientEvents = {
+	/**
+	 * Emitted when the terminal client is closed no matter how.
+	 */
+	closed: [];
+};
+
+export class TerminalClient extends EnhancedEventEmitter<TerminalClientEvents> {
 	readonly #socket: net.Socket;
-	readonly #onQuit?: () => void;
 	#closed: boolean = false;
 
-	static async connect({
-		onQuit,
-	}: {
-		onQuit?: () => void;
-	} = {}): Promise<TerminalClient> {
+	static async connect(): Promise<TerminalClient> {
 		logger.debug('connect()');
 
 		if (!process.stdin.isTTY) {
@@ -46,22 +49,17 @@ export class TerminalClient {
 			socket.on('error', onError);
 		});
 
-		return new TerminalClient({ socket, onQuit });
+		return new TerminalClient({ socket });
 	}
 
-	private constructor({
-		socket,
-		onQuit,
-	}: {
-		socket: net.Socket;
-		onQuit?: () => void;
-	}) {
+	private constructor({ socket }: { socket: net.Socket }) {
+		super();
+
 		logger.debug('constructor()');
 
 		logInfo('terminal connected');
 
 		this.#socket = socket;
-		this.#onQuit = onQuit;
 
 		this.handleSocket();
 	}
@@ -77,7 +75,7 @@ export class TerminalClient {
 
 		this.#socket.destroy();
 
-		this.#onQuit?.();
+		this.emit('closed');
 	}
 
 	private handleSocket(): void {

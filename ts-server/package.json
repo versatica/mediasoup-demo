@@ -32,7 +32,7 @@
 		"format": "node npm-scripts.mjs format",
 		"release:check": "node npm-scripts.mjs release:check",
 		"release": "node npm-scripts.mjs release",
-		"start": "node npm-scripts.mjs start",
+		"start": "cross-env NODE_ENV=production node ./lib/index.js",
 		"watch": "node npm-scripts.mjs watch"
 	},
 	"dependencies": {
