@@ -63,8 +63,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		const mediasoupWorkersAndWebRtcServers =
 			await Server.createMediasoupWorkersAndWebRtcServers(config);
 		const httpServer = await Server.createHttpServer(config);
-		const wsServer = await WsServer.create({ httpServer });
-		const apiServer = await ApiServer.create({});
+		const wsServer = WsServer.create({ httpServer });
+		const apiServer = ApiServer.create({});
 		const server = new Server({
 			config,
 			mediasoupWorkersAndWebRtcServers,

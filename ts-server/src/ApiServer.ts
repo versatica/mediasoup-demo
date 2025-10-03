@@ -34,8 +34,7 @@ interface ApiServerExpressRequest extends expressTypes.Request {
 export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 	readonly #expressApp: expressTypes.Express;
 
-	// eslint-disable-next-line @typescript-eslint/require-await, no-empty-pattern
-	static async create({}: ApiServerCreateOptions): Promise<ApiServer> {
+	static create({}: ApiServerCreateOptions): ApiServer {
 		logger.debug('create()');
 
 		const expressApp = ApiServer.createExpressApp();

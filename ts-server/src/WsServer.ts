@@ -33,10 +33,7 @@ export type WsServerEvents = {
 export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 	readonly #protooServer: protooTypes.WebSocketServer;
 
-	// eslint-disable-next-line @typescript-eslint/require-await
-	static async create({
-		httpServer,
-	}: WsServerCreateOptions): Promise<WsServer> {
+	static create({ httpServer }: WsServerCreateOptions): WsServer {
 		logger.debug('create()');
 
 		const protooServer = new protoo.WebSocketServer(httpServer, {
