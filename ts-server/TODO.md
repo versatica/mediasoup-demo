@@ -1,5 +1,7 @@
 # TODO
 
+- Delete `tmp` folder.
+- Delete `TODO.md`.
 - In README say that env to start interactive terminal is now "TERMINAL=true" instead of "INTERACTIVE=true".
 - Throttle stuff.
 - Logging of `worker.getResourceUsage()` stuff.
