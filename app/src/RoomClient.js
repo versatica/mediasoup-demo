@@ -346,26 +346,26 @@ export default class RoomClient {
 
 					const {
 						peerId,
+						consumerId,
 						producerId,
-						id,
 						kind,
 						rtpParameters,
 						type,
-						appData,
 						producerPaused,
+						appData,
 					} = request.data;
 
 					try {
 						const consumer = await this._recvTransport.consume({
-							id,
+							id: consumerId,
 							producerId,
 							kind,
 							rtpParameters,
 							// NOTE: Force streamId to be same in mic and webcam and different
 							// in screen sharing so libwebrtc will just try to sync mic and
 							// webcam streams from the same remote peer.
-							streamId: `${peerId}-${appData.share ? 'share' : 'mic-webcam'}`,
-							appData: { ...appData, peerId }, // Trick.
+							streamId: `${peerId}-${appData.source === 'screensharing' ? 'screensharing' : 'audio-video'}`,
+							appData: { ...appData, peerId },
 						});
 
 						if (this._e2eKey && e2e.isSupported()) {
@@ -443,8 +443,8 @@ export default class RoomClient {
 
 					const {
 						peerId, // NOTE: Null if bot.
+						dataConsumerId,
 						dataProducerId,
-						id,
 						sctpStreamParameters,
 						label,
 						protocol,
@@ -453,12 +453,12 @@ export default class RoomClient {
 
 					try {
 						const dataConsumer = await this._recvTransport.consumeData({
-							id,
+							id: dataConsumerId,
 							dataProducerId,
 							sctpStreamParameters,
 							label,
 							protocol,
-							appData: { ...appData, peerId }, // Trick.
+							appData: { ...appData, peerId },
 						});
 
 						// Store in the map.
@@ -617,7 +617,7 @@ export default class RoomClient {
 			);
 
 			switch (notification.method) {
-				case 'mediasoup-version': {
+				case 'mediasoupVersion': {
 					const { version } = notification.data;
 
 					store.dispatch(stateActions.setMediasoupVersion(version));
@@ -634,7 +634,12 @@ export default class RoomClient {
 				}
 
 				case 'newPeer': {
-					const peer = notification.data;
+					const { peerId, displayName, device } = notification.data;
+					const peer = {
+						id: peerId,
+						displayName,
+						device,
+					};
 
 					store.dispatch(
 						stateActions.addPeer({ ...peer, consumers: [], dataConsumers: [] })
@@ -830,13 +835,11 @@ export default class RoomClient {
 
 			this._micProducer = await this._sendTransport.produce({
 				track,
-				codecOptions: {
-					opusStereo: true,
-					opusDtx: true,
-					opusFec: true,
-					opusNack: true,
-				},
+				codecOptions,
 				codec,
+				appData: {
+					source: 'audio',
+				},
 			});
 
 			if (this._e2eKey && e2e.isSupported()) {
@@ -882,7 +885,7 @@ export default class RoomClient {
 		}
 	}
 
-	async disableMic() {
+	disableMic() {
 		logger.debug('disableMic()');
 
 		if (!this._micProducer) return;
@@ -891,73 +894,45 @@ export default class RoomClient {
 
 		store.dispatch(stateActions.removeProducer(this._micProducer.id));
 
-		try {
-			await this._protoo.request('closeProducer', {
-				producerId: this._micProducer.id,
-			});
-		} catch (error) {
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error closing server-side mic Producer: ${error}`,
-				})
-			);
-		}
+		this._protoo.notify('closeProducer', {
+			producerId: this._micProducer.id,
+		});
 
 		this._micProducer = null;
 	}
 
-	async muteMic() {
+	muteMic() {
 		logger.debug('muteMic()');
 
 		this._micProducer.pause();
 
-		try {
-			await this._protoo.request('pauseProducer', {
-				producerId: this._micProducer.id,
-			});
+		this._protoo.notify('pauseProducer', {
+			producerId: this._micProducer.id,
+		});
 
-			store.dispatch(stateActions.setProducerPaused(this._micProducer.id));
-		} catch (error) {
-			logger.error('muteMic() | failed: %o', error);
-
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error pausing server-side mic Producer: ${error}`,
-				})
-			);
-		}
+		store.dispatch(stateActions.setProducerPaused(this._micProducer.id));
 	}
 
-	async unmuteMic() {
+	unmuteMic() {
 		logger.debug('unmuteMic()');
 
 		this._micProducer.resume();
 
-		try {
-			await this._protoo.request('resumeProducer', {
-				producerId: this._micProducer.id,
-			});
+		this._protoo.notify('resumeProducer', {
+			producerId: this._micProducer.id,
+		});
 
-			store.dispatch(stateActions.setProducerResumed(this._micProducer.id));
-		} catch (error) {
-			logger.error('unmuteMic() | failed: %o', error);
-
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error resuming server-side mic Producer: ${error}`,
-				})
-			);
-		}
+		store.dispatch(stateActions.setProducerResumed(this._micProducer.id));
 	}
 
 	async enableWebcam() {
 		logger.debug('enableWebcam()');
 
-		if (this._webcamProducer) return;
-		else if (this._shareProducer) await this.disableShare();
+		if (this._webcamProducer) {
+			return;
+		} else if (this._shareProducer) {
+			await this.disableShare();
+		}
 
 		if (!this._mediasoupDevice.canProduce('video')) {
 			logger.error('enableWebcam() | cannot produce video');
@@ -1091,6 +1066,9 @@ export default class RoomClient {
 				encodings,
 				codecOptions,
 				codec,
+				appData: {
+					source: 'video',
+				},
 			});
 
 			if (this._e2eKey && e2e.isSupported()) {
@@ -1140,7 +1118,7 @@ export default class RoomClient {
 		store.dispatch(stateActions.setWebcamInProgress(false));
 	}
 
-	async disableWebcam() {
+	disableWebcam() {
 		logger.debug('disableWebcam()');
 
 		if (!this._webcamProducer) return;
@@ -1149,18 +1127,9 @@ export default class RoomClient {
 
 		store.dispatch(stateActions.removeProducer(this._webcamProducer.id));
 
-		try {
-			await this._protoo.request('closeProducer', {
-				producerId: this._webcamProducer.id,
-			});
-		} catch (error) {
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error closing server-side webcam Producer: ${error}`,
-				})
-			);
-		}
+		this._protoo.notify('closeProducer', {
+			producerId: this._webcamProducer.id,
+		});
 
 		this._webcamProducer = null;
 	}
@@ -1418,7 +1387,7 @@ export default class RoomClient {
 				codecOptions,
 				codec,
 				appData: {
-					share: true,
+					source: 'screensharing',
 				},
 			});
 
@@ -1470,7 +1439,7 @@ export default class RoomClient {
 		store.dispatch(stateActions.setShareInProgress(false));
 	}
 
-	async disableShare() {
+	disableShare() {
 		logger.debug('disableShare()');
 
 		if (!this._shareProducer) return;
@@ -1479,23 +1448,14 @@ export default class RoomClient {
 
 		store.dispatch(stateActions.removeProducer(this._shareProducer.id));
 
-		try {
-			await this._protoo.request('closeProducer', {
-				producerId: this._shareProducer.id,
-			});
-		} catch (error) {
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error closing server-side share Producer: ${error}`,
-				})
-			);
-		}
+		this._protoo.notify('closeProducer', {
+			producerId: this._shareProducer.id,
+		});
 
 		this._shareProducer = null;
 	}
 
-	async enableAudioOnly() {
+	enableAudioOnly() {
 		logger.debug('enableAudioOnly()');
 
 		store.dispatch(stateActions.setAudioOnlyInProgress(true));
@@ -1509,11 +1469,10 @@ export default class RoomClient {
 		}
 
 		store.dispatch(stateActions.setAudioOnlyState(true));
-
 		store.dispatch(stateActions.setAudioOnlyInProgress(false));
 	}
 
-	async disableAudioOnly() {
+	disableAudioOnly() {
 		logger.debug('disableAudioOnly()');
 
 		store.dispatch(stateActions.setAudioOnlyInProgress(true));
@@ -1533,17 +1492,16 @@ export default class RoomClient {
 		}
 
 		store.dispatch(stateActions.setAudioOnlyState(false));
-
 		store.dispatch(stateActions.setAudioOnlyInProgress(false));
 	}
 
-	async muteAudio() {
+	muteAudio() {
 		logger.debug('muteAudio()');
 
 		store.dispatch(stateActions.setAudioMutedState(true));
 	}
 
-	async unmuteAudio() {
+	unmuteAudio() {
 		logger.debug('unmuteAudio()');
 
 		store.dispatch(stateActions.setAudioMutedState(false));
@@ -1556,16 +1514,16 @@ export default class RoomClient {
 
 		try {
 			if (this._sendTransport) {
-				const iceParameters = await this._protoo.request('restartIce', {
-					transportId: this._sendTransport.id,
+				const { iceParameters } = await this._protoo.request('restartIce', {
+					direction: 'producer',
 				});
 
 				await this._sendTransport.restartIce({ iceParameters });
 			}
 
 			if (this._recvTransport) {
-				const iceParameters = await this._protoo.request('restartIce', {
-					transportId: this._recvTransport.id,
+				const { iceParameters } = await this._protoo.request('restartIce', {
+					direction: 'consumer',
 				});
 
 				await this._recvTransport.restartIce({ iceParameters });
@@ -1610,7 +1568,7 @@ export default class RoomClient {
 		}
 	}
 
-	async setConsumerPreferredLayers(consumerId, spatialLayer, temporalLayer) {
+	setConsumerPreferredLayers(consumerId, spatialLayer, temporalLayer) {
 		logger.debug(
 			'setConsumerPreferredLayers() [consumerId:%s, spatialLayer:%s, temporalLayer:%s]',
 			consumerId,
@@ -1618,79 +1576,46 @@ export default class RoomClient {
 			temporalLayer
 		);
 
-		try {
-			await this._protoo.request('setConsumerPreferredLayers', {
+		this._protoo.notify('setConsumerPreferredLayers', {
+			consumerId,
+			spatialLayer,
+			temporalLayer,
+		});
+
+		store.dispatch(
+			stateActions.setConsumerPreferredLayers(
 				consumerId,
 				spatialLayer,
-				temporalLayer,
-			});
-
-			store.dispatch(
-				stateActions.setConsumerPreferredLayers(
-					consumerId,
-					spatialLayer,
-					temporalLayer
-				)
-			);
-		} catch (error) {
-			logger.error('setConsumerPreferredLayers() | failed:%o', error);
-
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error setting Consumer preferred layers: ${error}`,
-				})
-			);
-		}
+				temporalLayer
+			)
+		);
 	}
 
-	async setConsumerPriority(consumerId, priority) {
+	setConsumerPriority(consumerId, priority) {
 		logger.debug(
 			'setConsumerPriority() [consumerId:%s, priority:%d]',
 			consumerId,
 			priority
 		);
 
-		try {
-			await this._protoo.request('setConsumerPriority', {
-				consumerId,
-				priority,
-			});
+		this._protoo.notify('setConsumerPriority', {
+			consumerId,
+			priority,
+		});
 
-			store.dispatch(stateActions.setConsumerPriority(consumerId, priority));
-		} catch (error) {
-			logger.error('setConsumerPriority() | failed:%o', error);
-
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error setting Consumer priority: ${error}`,
-				})
-			);
-		}
+		store.dispatch(stateActions.setConsumerPriority(consumerId, priority));
 	}
 
-	async requestConsumerKeyFrame(consumerId) {
+	notifyConsumerKeyFrame(consumerId) {
 		logger.debug('requestConsumerKeyFrame() [consumerId:%s]', consumerId);
 
-		try {
-			await this._protoo.request('requestConsumerKeyFrame', { consumerId });
+		this._protoo.notify('requestConsumerKeyFrame', { consumerId });
 
-			store.dispatch(
-				requestActions.notify({
-					text: 'Keyframe requested for video consumer',
-				})
-			);
-		} catch (error) {
-			logger.error('requestConsumerKeyFrame() | failed:%o', error);
-
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error requesting key frame for Consumer: ${error}`,
-				})
-			);
-		}
+		store.dispatch(
+			requestActions.notify({
+				text: 'Keyframe requested for video consumer',
+			})
+		);
 	}
 
 	async enableChatDataProducer() {
@@ -1708,7 +1633,7 @@ export default class RoomClient {
 				ordered: true,
 				label: 'chat',
 				priority: 'medium',
-				appData: { info: 'my-chat-DataProducer' },
+				appData: { channel: 'chat' },
 			});
 
 			store.dispatch(
@@ -1784,7 +1709,7 @@ export default class RoomClient {
 				ordered: true,
 				label: 'bot',
 				priority: 'medium',
-				appData: { info: 'my-bot-DataProducer' },
+				appData: { channel: 'bot' },
 			});
 
 			store.dispatch(
@@ -1940,9 +1865,11 @@ export default class RoomClient {
 
 		if (!this._sendTransport) return;
 
-		return this._protoo.request('getTransportStats', {
-			transportId: this._sendTransport.id,
+		const { stats } = await this._protoo.request('getTransportStats', {
+			direction: 'producer',
 		});
+
+		return stats;
 	}
 
 	async getRecvTransportRemoteStats() {
@@ -1950,9 +1877,11 @@ export default class RoomClient {
 
 		if (!this._recvTransport) return;
 
-		return this._protoo.request('getTransportStats', {
-			transportId: this._recvTransport.id,
+		const { stats } = await this._protoo.request('getTransportStats', {
+			direction: 'consumer',
 		});
+
+		return stats;
 	}
 
 	async getAudioRemoteStats() {
@@ -1960,9 +1889,11 @@ export default class RoomClient {
 
 		if (!this._micProducer) return;
 
-		return this._protoo.request('getProducerStats', {
+		const { stats } = await this._protoo.request('getProducerStats', {
 			producerId: this._micProducer.id,
 		});
+
+		return stats;
 	}
 
 	async getVideoRemoteStats() {
@@ -1972,9 +1903,11 @@ export default class RoomClient {
 
 		if (!producer) return;
 
-		return this._protoo.request('getProducerStats', {
+		const { stats } = await this._protoo.request('getProducerStats', {
 			producerId: producer.id,
 		});
+
+		return stats;
 	}
 
 	async getConsumerRemoteStats(consumerId) {
@@ -1984,7 +1917,11 @@ export default class RoomClient {
 
 		if (!consumer) return;
 
-		return this._protoo.request('getConsumerStats', { consumerId });
+		const { stats } = await this._protoo.request('getConsumerStats', {
+			consumerId,
+		});
+
+		return stats;
 	}
 
 	async getChatDataProducerRemoteStats() {
@@ -1994,9 +1931,11 @@ export default class RoomClient {
 
 		if (!dataProducer) return;
 
-		return this._protoo.request('getDataProducerStats', {
+		const { stats } = await this._protoo.request('getDataProducerStats', {
 			dataProducerId: dataProducer.id,
 		});
+
+		return stats;
 	}
 
 	async getBotDataProducerRemoteStats() {
@@ -2006,9 +1945,11 @@ export default class RoomClient {
 
 		if (!dataProducer) return;
 
-		return this._protoo.request('getDataProducerStats', {
+		const { stats } = await this._protoo.request('getDataProducerStats', {
 			dataProducerId: dataProducer.id,
 		});
+
+		return stats;
 	}
 
 	async getDataConsumerRemoteStats(dataConsumerId) {
@@ -2018,7 +1959,11 @@ export default class RoomClient {
 
 		if (!dataConsumer) return;
 
-		return this._protoo.request('getDataConsumerStats', { dataConsumerId });
+		const { stats } = await this._protoo.request('getDataConsumerStats', {
+			dataConsumerId,
+		});
+
+		return stats;
 	}
 
 	async getSendTransportLocalStats() {
@@ -2127,7 +2072,7 @@ export default class RoomClient {
 				)
 			);
 
-			const routerRtpCapabilities = await this._protoo.request(
+			const { routerRtpCapabilities } = await this._protoo.request(
 				'getRouterRtpCapabilities'
 			);
 
@@ -2155,17 +2100,16 @@ export default class RoomClient {
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
 					{
-						forceTcp: this._forceTcp,
-						producing: true,
-						consuming: false,
+						direction: 'producer',
 						sctpCapabilities: this._useDataChannel
 							? this._mediasoupDevice.sctpCapabilities
 							: undefined,
+						forceTcp: this._forceTcp,
 					}
 				);
 
 				const {
-					id,
+					transportId,
 					iceParameters,
 					iceCandidates,
 					dtlsParameters,
@@ -2173,7 +2117,7 @@ export default class RoomClient {
 				} = transportInfo;
 
 				this._sendTransport = this._mediasoupDevice.createSendTransport({
-					id,
+					id: transportId,
 					iceParameters,
 					iceCandidates,
 					dtlsParameters: {
@@ -2194,14 +2138,13 @@ export default class RoomClient {
 				this._sendTransport.on(
 					'connect',
 					(
-						{ iceParameters, dtlsParameters },
+						{ dtlsParameters },
 						callback,
 						errback // eslint-disable-line no-shadow
 					) => {
 						this._protoo
 							.request('connectWebRtcTransport', {
-								transportId: this._sendTransport.id,
-								iceParameters,
+								direction: 'producer',
 								dtlsParameters,
 							})
 							.then(callback)
@@ -2214,14 +2157,13 @@ export default class RoomClient {
 					async ({ kind, rtpParameters, appData }, callback, errback) => {
 						try {
 							// eslint-disable-next-line no-shadow
-							const { id } = await this._protoo.request('produce', {
-								transportId: this._sendTransport.id,
+							const { producerId } = await this._protoo.request('produce', {
 								kind,
 								rtpParameters,
 								appData,
 							});
 
-							callback({ id });
+							callback({ id: producerId });
 						} catch (error) {
 							errback(error);
 						}
@@ -2243,15 +2185,17 @@ export default class RoomClient {
 
 						try {
 							// eslint-disable-next-line no-shadow
-							const { id } = await this._protoo.request('produceData', {
-								transportId: this._sendTransport.id,
-								sctpStreamParameters,
-								label,
-								protocol,
-								appData,
-							});
+							const { dataProducerId } = await this._protoo.request(
+								'produceData',
+								{
+									sctpStreamParameters,
+									label,
+									protocol,
+									appData,
+								}
+							);
 
-							callback({ id });
+							callback({ id: dataProducerId });
 						} catch (error) {
 							errback(error);
 						}
@@ -2264,17 +2208,16 @@ export default class RoomClient {
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
 					{
-						forceTcp: this._forceTcp,
-						producing: false,
-						consuming: true,
+						direction: 'consumer',
 						sctpCapabilities: this._useDataChannel
 							? this._mediasoupDevice.sctpCapabilities
 							: undefined,
+						forceTcp: this._forceTcp,
 					}
 				);
 
 				const {
-					id,
+					transportId,
 					iceParameters,
 					iceCandidates,
 					dtlsParameters,
@@ -2282,7 +2225,7 @@ export default class RoomClient {
 				} = transportInfo;
 
 				this._recvTransport = this._mediasoupDevice.createRecvTransport({
-					id,
+					id: transportId,
 					iceParameters,
 					iceCandidates,
 					dtlsParameters: {
@@ -2302,14 +2245,13 @@ export default class RoomClient {
 				this._recvTransport.on(
 					'connect',
 					(
-						{ iceParameters, dtlsParameters },
+						{ dtlsParameters },
 						callback,
 						errback // eslint-disable-line no-shadow
 					) => {
 						this._protoo
 							.request('connectWebRtcTransport', {
-								transportId: this._recvTransport.id,
-								iceParameters,
+								direction: 'consumer',
 								dtlsParameters,
 							})
 							.then(callback)
@@ -2344,7 +2286,14 @@ export default class RoomClient {
 				})
 			);
 
-			for (const peer of peers) {
+			for (const peerInfo of peers) {
+				const { peerId, displayName, device } = peerInfo;
+				const peer = {
+					id: peerId,
+					displayName,
+					device,
+				};
+
 				store.dispatch(
 					stateActions.addPeer({ ...peer, consumers: [], dataConsumers: [] })
 				);
@@ -2442,46 +2391,24 @@ export default class RoomClient {
 		}
 	}
 
-	async _pauseConsumer(consumer) {
+	_pauseConsumer(consumer) {
 		if (consumer.paused) return;
 
-		try {
-			await this._protoo.request('pauseConsumer', { consumerId: consumer.id });
+		this._protoo.notify('pauseConsumer', { consumerId: consumer.id });
 
-			consumer.pause();
+		consumer.pause();
 
-			store.dispatch(stateActions.setConsumerPaused(consumer.id, 'local'));
-		} catch (error) {
-			logger.error('_pauseConsumer() | failed:%o', error);
-
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error pausing Consumer: ${error}`,
-				})
-			);
-		}
+		store.dispatch(stateActions.setConsumerPaused(consumer.id, 'local'));
 	}
 
 	async _resumeConsumer(consumer) {
 		if (!consumer.paused) return;
 
-		try {
-			await this._protoo.request('resumeConsumer', { consumerId: consumer.id });
+		this._protoo.notify('resumeConsumer', { consumerId: consumer.id });
 
-			consumer.resume();
+		consumer.resume();
 
-			store.dispatch(stateActions.setConsumerResumed(consumer.id, 'local'));
-		} catch (error) {
-			logger.error('_resumeConsumer() | failed:%o', error);
-
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Error resuming Consumer: ${error}`,
-				})
-			);
-		}
+		store.dispatch(stateActions.setConsumerResumed(consumer.id, 'local'));
 	}
 
 	async _getExternalVideoStream() {

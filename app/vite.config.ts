@@ -1,173 +1,175 @@
-import Module from 'node:module';
 import path from 'node:path';
 import fs from 'node:fs';
 import url from 'node:url';
-import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import qs from 'qs';
+import react from '@vitejs/plugin-react';
 import waitPort from 'wait-port';
+import qs from 'qs';
 import openBrowser from 'react-dev-utils/openBrowser';
 
-const require = Module.createRequire(import.meta.url);
+import * as envs from './src/envs';
 
-let host = process.env.DOMAIN || 'localhost';
-let cert: Buffer<ArrayBufferLike> | undefined = undefined;
-let key: Buffer<ArrayBufferLike> | undefined = undefined;
+export default defineConfig(async () => {
+  let host: string = 'localhost'; // Default value.
+  let cert: Buffer<ArrayBufferLike> | string | undefined = undefined;
+  let key: Buffer<ArrayBufferLike> | string | undefined = undefined;
+  let configFile = envs.getConfigFile();
 
-// Try to read server/config.js.
-try {
-  const c = require('../server/config');
+  try {
+    const { config } = await import(configFile);
 
-  host = c.domain || host;
-  cert = readTls(c.https.tls?.cert);
-  key = readTls(c.https.tls?.key);
-} catch (error) {
-  // ignore file not found
-}
+    host = config.domain;
+    cert = readTls(config.http.tls?.cert);
+    key = readTls(config.http.tls?.key);
+  } catch (error) {
+    console.warn('Failed to read config file %o:', configFile, error);
 
-const port = Number(process.env.VITE_LISTEN_PORT) || 5555;
-const https = cert && key ? { cert, key } : undefined;
-const alias: { [k: string]: string } = {};
+    process.exit(1);
+  }
 
-// Use mediasoup-client from same folder to allow hot reload when changing code
-// in mediasoup-client.
-if (process.env.LOCAL) {
-  const localClientEntryPoint = '../../mediasoup-client/src/index.ts';
+  const port = Number(process.env.VITE_LISTEN_PORT) || 5555;
+  const alias: { [k: string]: string } = {};
 
-  alias['mediasoup-client'] = path.join(__dirname, localClientEntryPoint);
-}
+  if (process.env.LOCAL) {
+    const localClientEntryPoint = '../../mediasoup-client/src/index.ts';
 
-export default defineConfig({
-  plugins: [react()],
-  build: {
-    chunkSizeWarningLimit: Infinity,
-  },
-  server: {
-    host,
-    port,
-    https,
-  },
-  resolve: {
-    alias,
-  },
+    alias['mediasoup-client'] = path.join(__dirname, localClientEntryPoint);
+  }
+
+  // Función para abrir navegador (manteniendo tu estilo)
+  function open(query: string) {
+    const protocol = cert && key ? 'https' : 'http';
+    const urlToOpen = `${protocol}://${host}:${port}/?${query}`;
+
+    openBrowser(urlToOpen);
+  }
+
+  // Función dev opcional, si quieres usar runDev()
+  async function runDev() {
+    const dev = process.env.DEV;
+
+    if (!dev) {
+      return;
+    }
+
+    await waitPort({
+      host,
+      port,
+      output: 'silent',
+    });
+
+    const default_ = {
+      roomId: 'dev',
+      _throttleSecret: 'foo',
+      info: true,
+      stats: true,
+    };
+
+    const defaultProducer = {
+      consume: false,
+    };
+
+    const defaultConsumer = {
+      produce: false,
+    };
+
+    let producer = null;
+    let consumer = null;
+
+    switch (dev) {
+      case 'tcp': {
+        producer = {
+          roomId: 'dev-tcp',
+          forceTcp: true,
+        };
+
+        consumer = {
+          roomId: 'dev-tcp',
+          forceTcp: true,
+        };
+
+        break;
+      }
+
+      case 'vp9': {
+        producer = {
+          roomId: 'dev-vp9',
+          forceVP9: true,
+          numSimulcastStreams: 3,
+          webcamScalabilityMode: 'L1T3',
+        };
+
+        consumer = {
+          roomId: 'dev-vp9',
+          forceVP9: true,
+        };
+
+        break;
+      }
+
+      case 'h264': {
+        producer = {
+          roomId: 'dev-h264',
+          forceH264: true,
+        };
+
+        consumer = {
+          roomId: 'dev-h264',
+          forceH264: true,
+        };
+
+        break;
+      }
+
+      case 'av1': {
+        producer = {
+          roomId: 'dev-av1',
+          forceAV1: true,
+        };
+
+        consumer = {
+          roomId: 'dev-av1',
+          forceAV1: true,
+        };
+
+        break;
+      }
+    }
+
+    const qProducer = qs.stringify({
+      ...default_,
+      ...defaultProducer,
+      ...producer,
+    });
+
+    open(qProducer);
+
+    const qConsumer = qs.stringify({
+      ...default_,
+      ...defaultConsumer,
+      ...consumer,
+    });
+
+    open(qConsumer);
+  }
+
+  runDev();
+
+  return {
+    plugins: [react()],
+    build: {
+      chunkSizeWarningLimit: Infinity,
+    },
+    server: {
+      host,
+      port,
+      https: cert && key ? { cert, key } : undefined,
+    },
+    resolve: {
+      alias,
+    },
+  };
 });
-
-runDev();
-
-async function runDev() {
-  const dev = process.env.DEV;
-
-  if (!dev) {
-    return;
-  }
-
-  await waitPort({
-    host,
-    port,
-    output: 'silent',
-  });
-
-  const default_ = {
-    roomId: 'dev',
-    _throttleSecret: 'foo',
-    info: true,
-    stats: true,
-  };
-
-  const defaultProducer = {
-    consume: false,
-  };
-
-  const defaultConsumer = {
-    produce: false,
-  };
-
-  let producer = null;
-  let consumer = null;
-
-  switch (dev) {
-    case 'tcp': {
-      producer = {
-        roomId: 'dev-tcp',
-        forceTcp: true,
-      };
-
-      consumer = {
-        roomId: 'dev-tcp',
-        forceTcp: true,
-      };
-
-      break;
-    }
-
-    case 'vp9': {
-      producer = {
-        roomId: 'dev-vp9',
-        forceVP9: true,
-        numSimulcastStreams: 3,
-        webcamScalabilityMode: 'L1T3',
-      };
-
-      consumer = {
-        roomId: 'dev-vp9',
-        forceVP9: true,
-      };
-
-      break;
-    }
-
-    case 'h264': {
-      producer = {
-        roomId: 'dev-h264',
-        forceH264: true,
-      };
-
-      consumer = {
-        roomId: 'dev-h264',
-        forceH264: true,
-      };
-
-      break;
-    }
-
-    case 'av1': {
-      producer = {
-        roomId: 'dev-av1',
-        forceAV1: true,
-      };
-
-      consumer = {
-        roomId: 'dev-av1',
-        forceAV1: true,
-      };
-
-      break;
-    }
-  }
-
-  const qProducer = qs.stringify({
-    ...default_,
-    ...defaultProducer,
-    ...producer,
-  });
-
-  open(qProducer);
-
-  const qConsumer = qs.stringify({
-    ...default_,
-    ...defaultConsumer,
-    ...consumer,
-  });
-
-  open(qConsumer);
-}
-
-function open(query: string) {
-  const protocol = https ? 'https' : 'http';
-  const url = `${protocol}://${host}:${port}/?${query}`;
-
-  openBrowser(url);
-}
 
 function readTls(v: string) {
   if (!v) {
