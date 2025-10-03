@@ -337,7 +337,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			});
 		});
 
-		this.#httpServer.on('request', this.#apiServer.getExpressApp());
+		this.#httpServer.on('request', this.#apiServer.getApp());
 	}
 
 	private handleWsServer(): void {

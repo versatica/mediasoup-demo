@@ -22,7 +22,7 @@ export type ApiServerEvents = {
 	 */
 	'get-room': [
 		{ roomId: RoomId; consumerReplicas: number },
-		resolve: (value: Room | PromiseLike<Room>) => void,
+		resolve: (room: Room) => void,
 		reject: (error: Error) => void,
 	];
 };
@@ -61,20 +61,8 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		this.handleExpressApp();
 	}
 
-	getExpressApp(): expressTypes.Express {
+	getApp(): expressTypes.Express {
 		return this.#expressApp;
-	}
-
-	private async getRoom({
-		roomId,
-		consumerReplicas,
-	}: {
-		roomId: RoomId;
-		consumerReplicas: number;
-	}): Promise<Room> {
-		return new Promise((resolve, reject) => {
-			this.emit('get-room', { roomId, consumerReplicas }, resolve, reject);
-		});
 	}
 
 	private handleExpressApp(): void {
@@ -87,9 +75,13 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 			'roomId',
 			async (req: ApiServerExpressRequest, res, next, roomId) => {
 				try {
-					req.room = await this.getRoom({
-						roomId,
-						consumerReplicas: 0,
+					req.room = await new Promise<Room>((resolve, reject) => {
+						this.emit(
+							'get-room',
+							{ roomId, consumerReplicas: 0 },
+							resolve,
+							reject
+						);
 					});
 
 					next();

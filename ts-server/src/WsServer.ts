@@ -25,7 +25,7 @@ export type WsServerEvents = {
 	 */
 	'get-room': [
 		{ roomId: RoomId; consumerReplicas: number },
-		resolve: (value: Room | PromiseLike<Room>) => void,
+		resolve: (room: Room) => void,
 		reject: (error: Error) => void,
 	];
 };
@@ -55,18 +55,6 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 		this.#protooServer = protooServer;
 
 		this.handleProtooServer();
-	}
-
-	private async getRoom({
-		roomId,
-		consumerReplicas,
-	}: {
-		roomId: RoomId;
-		consumerReplicas: number;
-	}): Promise<Room> {
-		return new Promise((resolve, reject) => {
-			this.emit('get-room', { roomId, consumerReplicas }, resolve, reject);
-		});
 	}
 
 	private handleProtooServer(): void {
@@ -99,16 +87,14 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 				info.origin
 			);
 
-			let room: Room;
-			let protooTransport: protooTypes.WebSocketTransport;
-
 			try {
-				room = await this.getRoom({
-					roomId,
-					consumerReplicas,
+				const room = await new Promise<Room>((resolve, reject) => {
+					this.emit('get-room', { roomId, consumerReplicas }, resolve, reject);
 				});
 
-				protooTransport = accept();
+				const protooTransport = accept();
+
+				room.handleWsConnection(peerId, protooTransport);
 			} catch (error) {
 				logger.error('Room creation or Room joining failed:', error);
 
@@ -116,8 +102,6 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 
 				return;
 			}
-
-			room.handleWsConnection(peerId, protooTransport);
 		});
 	}
 }

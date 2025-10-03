@@ -56,6 +56,12 @@ export type PeerDevice = {
 	version?: string;
 };
 
+export type SerializedPeer = {
+	peerId: PeerId;
+	displayName: string;
+	device: PeerDevice;
+};
+
 export type TransportDirection = 'producer' | 'consumer';
 
 export type Source = 'audio' | 'video' | 'screensharing';
@@ -71,6 +77,8 @@ export type MediasoupWebRtcTransportAppData = {
 };
 
 export type MediasoupProducerAppData = {
+	// Optional since it's not sent by client.
+	peerId?: PeerId;
 	source: Source;
 };
 
@@ -80,10 +88,13 @@ export type MediasoupConsumerAppData = {
 };
 
 export type MediasoupDataProducerAppData = {
+	// Optional since it's not sent by client.
+	peerId?: PeerId;
 	channel: Channel;
 };
 
 export type MediasoupDataConsumerAppData = {
+	// Unset in Bot.
 	peerId?: PeerId;
 	channel: Channel;
 };

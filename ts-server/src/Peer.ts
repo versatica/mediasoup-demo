@@ -17,6 +17,7 @@ import { InvalidStateError } from './errors';
 import type {
 	PeerId,
 	PeerDevice,
+	SerializedPeer,
 	TransportDirection,
 	MediasoupWebRtcTransportAppData,
 	MediasoupProducerAppData,
@@ -48,7 +49,7 @@ export type PeerEvents = {
 	/**
 	 * Emitted when the Peer joins the Room.
 	 */
-	joined: [];
+	joined: [callback: (serializedPeers: SerializedPeer[]) => void];
 	/**
 	 * Emitted when the Peer disconnects itself or due to network isses.
 	 *
@@ -61,12 +62,9 @@ export type PeerEvents = {
 	 * Emitted to obtain the mediasoup Router RTP capabilities.
 	 */
 	'get-router-rtp-capabilities': [
-		resolve: (
-			value:
-				| mediasoupTypes.RouterRtpCapabilities
-				| PromiseLike<mediasoupTypes.RouterRtpCapabilities>
+		callback: (
+			routerRtpCapabilities: mediasoupTypes.RouterRtpCapabilities
 		) => void,
-		reject: (error: Error) => void,
 	];
 	/**
 	 * Emitted to create and obtain a mediasoup WebRTC transport.
@@ -78,13 +76,15 @@ export type PeerEvents = {
 			forceTcp?: boolean;
 		},
 		resolve: (
-			value:
-				| mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>
-				| PromiseLike<
-						mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>
-				  >
+			transport: mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>
 		) => void,
 		reject: (error: Error) => void,
+	];
+	/**
+	 * Emitted when the Peer creates a Producer.
+	 */
+	'new-producer': [
+		{ producer: mediasoupTypes.Producer<MediasoupProducerAppData> },
 	];
 	/**
 	 * Emitted when Peer changes their display name.
@@ -169,7 +169,17 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		this.emit('closed');
 	}
 
-	private notify<Name extends NotificationNameFromServer>(
+	serialize(): SerializedPeer {
+		this.assertJoined();
+
+		return {
+			peerId: this.#peerId,
+			displayName: this.#displayName!,
+			device: this.#device!,
+		};
+	}
+
+	notify<Name extends NotificationNameFromServer>(
 		name: Name,
 		...args: NotificationDataFromServer<Name> extends undefined
 			? [undefined?]
@@ -198,29 +208,10 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		>;
 	}
 
-	private async getRouterRtpCapabilities(): Promise<mediasoupTypes.RouterRtpCapabilities> {
-		return new Promise((resolve, reject) => {
-			this.emit('get-router-rtp-capabilities', resolve, reject);
-		});
-	}
-
-	private async createWebRtcTransport({
-		direction,
-		sctpCapabilities,
-		forceTcp,
-	}: {
-		direction: TransportDirection;
-		sctpCapabilities?: mediasoupTypes.SctpCapabilities;
-		forceTcp?: boolean;
-	}): Promise<mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>> {
-		return new Promise((resolve, reject) => {
-			this.emit(
-				'create-webrtc-transport',
-				{ direction, sctpCapabilities, forceTcp },
-				resolve,
-				reject
-			);
-		});
+	private assertJoined(): void {
+		if (!this.#joined) {
+			throw new InvalidStateError('not joined');
+		}
 	}
 
 	private assertAndGetWebRtcTransport({
@@ -251,10 +242,64 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		}
 	}
 
-	private assertJoined(): void {
-		if (!this.#joined) {
-			throw new InvalidStateError('not joined');
+	private assertAndGetProducer({
+		producerId,
+	}: {
+		producerId: string;
+	}): mediasoupTypes.Producer<MediasoupProducerAppData> {
+		const producer = this.#producers.get(producerId);
+
+		if (!producer) {
+			throw new InvalidStateError(`Producer with id '${producerId}' not found`);
 		}
+
+		return producer;
+	}
+
+	private assertAndGetConsumer({
+		consumerId,
+	}: {
+		consumerId: string;
+	}): mediasoupTypes.Consumer<MediasoupConsumerAppData> {
+		const consumer = this.#consumers.get(consumerId);
+
+		if (!consumer) {
+			throw new InvalidStateError(`Consumer with id '${consumerId}' not found`);
+		}
+
+		return consumer;
+	}
+
+	private assertAndGetDataProducer({
+		dataProducerId,
+	}: {
+		dataProducerId: string;
+	}): mediasoupTypes.DataProducer<MediasoupDataProducerAppData> {
+		const dataProducer = this.#dataProducers.get(dataProducerId);
+
+		if (!dataProducer) {
+			throw new InvalidStateError(
+				`DataProducer with id '${dataProducerId}' not found`
+			);
+		}
+
+		return dataProducer;
+	}
+
+	private assertAndGetDataConsumer({
+		dataConsumerId,
+	}: {
+		dataConsumerId: string;
+	}): mediasoupTypes.DataConsumer<MediasoupDataConsumerAppData> {
+		const dataConsumer = this.#dataConsumers.get(dataConsumerId);
+
+		if (!dataConsumer) {
+			throw new InvalidStateError(
+				`DataConsumer with id '${dataConsumerId}' not found`
+			);
+		}
+
+		return dataConsumer;
 	}
 
 	private handleProtooPeer(): void {
@@ -310,49 +355,73 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 		switch (method) {
 			case 'closeProducer': {
-				// TODO
+				const { producerId } = data;
+				const producer = this.assertAndGetProducer({ producerId });
+
+				producer.close();
 
 				break;
 			}
 
 			case 'pauseProducer': {
-				// TODO
+				const { producerId } = data;
+				const producer = this.assertAndGetProducer({ producerId });
+
+				producer.pause();
 
 				break;
 			}
 
 			case 'resumeProducer': {
-				// TODO
+				const { producerId } = data;
+				const producer = this.assertAndGetProducer({ producerId });
+
+				producer.resume();
 
 				break;
 			}
 
 			case 'pauseConsumer': {
-				// TODO
+				const { consumerId } = data;
+				const consumer = this.assertAndGetConsumer({ consumerId });
+
+				consumer.pause();
 
 				break;
 			}
 
 			case 'resumeConsumer': {
-				// TODO
+				const { consumerId } = data;
+				const consumer = this.assertAndGetConsumer({ consumerId });
+
+				consumer.resume();
 
 				break;
 			}
 
 			case 'setConsumerPreferredLayers': {
-				// TODO
+				const { consumerId, spatialLayer, temporalLayer } = data;
+				const consumer = this.assertAndGetConsumer({ consumerId });
+
+				consumer.setPreferredLayers({ spatialLayer, temporalLayer });
 
 				break;
 			}
 
 			case 'setConsumerPriority': {
-				// TODO
+				const { consumerId, priority } = data;
+				const consumer = this.assertAndGetConsumer({ consumerId });
+
+				consumer.setPriority(priority);
 
 				break;
 			}
 
 			case 'requestConsumerKeyFrame': {
-				// TODO
+				const { consumerId } = data;
+				const consumer = this.assertAndGetConsumer({ consumerId });
+
+				consumer.requestKeyFrame();
 
 				break;
 			}
@@ -388,9 +457,9 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 		switch (method) {
 			case 'getRouterRtpCapabilities': {
-				const routerRtpCapabilities = await this.getRouterRtpCapabilities();
-
-				accept({ routerRtpCapabilities });
+				this.emit('get-router-rtp-capabilities', routerRtpCapabilities => {
+					accept({ routerRtpCapabilities });
+				});
 
 				break;
 			}
@@ -408,10 +477,9 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 				clearTimeout(this.#joinTimer);
 
-				console.log('get joined peers from Room');
-				accept({ peers: [] });
-
-				this.emit('joined');
+				this.emit('joined', serializedPeers => {
+					accept({ peers: serializedPeers });
+				});
 
 				break;
 			}
@@ -445,10 +513,15 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 					}
 				}
 
-				const transport = await this.createWebRtcTransport({
-					direction,
-					sctpCapabilities,
-					forceTcp,
+				const transport = await new Promise<
+					mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>
+				>((resolve, reject) => {
+					this.emit(
+						'create-webrtc-transport',
+						{ direction, sctpCapabilities, forceTcp },
+						resolve,
+						reject
+					);
 				});
 
 				switch (direction) {
@@ -500,12 +573,35 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			}
 
 			case 'produce': {
-				// TODO
+				this.assertJoined();
+
+				const { kind, rtpParameters, appData } = data;
+				const transport = this.assertAndGetWebRtcTransport({
+					direction: 'producer',
+				});
+
+				const producer = await transport.produce<MediasoupProducerAppData>({
+					kind,
+					rtpParameters,
+					appData: {
+						...appData,
+						peerId: this.id,
+					},
+				});
+
+				this.#producers.set(producer.id, producer);
+
+				this.handleProducer(producer);
+				this.emit('new-producer', { producer });
+
+				accept({ producerId: producer.id });
 
 				break;
 			}
 
 			case 'produceData': {
+				this.assertJoined();
+
 				// TODO
 
 				break;
@@ -522,25 +618,41 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			}
 
 			case 'getProducerStats': {
-				// TODO
+				const { producerId } = data;
+				const producer = this.assertAndGetProducer({ producerId });
+				const stats = await producer.getStats();
+
+				accept({ stats });
 
 				break;
 			}
 
 			case 'getConsumerStats': {
-				// TODO
+				const { consumerId } = data;
+				const consumer = this.assertAndGetConsumer({ consumerId });
+				const stats = await consumer.getStats();
+
+				accept({ stats });
 
 				break;
 			}
 
 			case 'getDataProducerStats': {
-				// TODO
+				const { dataProducerId } = data;
+				const dataProducer = this.assertAndGetDataProducer({ dataProducerId });
+				const stats = await dataProducer.getStats();
+
+				accept({ stats });
 
 				break;
 			}
 
 			case 'getDataConsumerStats': {
-				// TODO
+				const { dataConsumerId } = data;
+				const dataConsumer = this.assertAndGetDataConsumer({ dataConsumerId });
+				const stats = await dataConsumer.getStats();
+
+				accept({ stats });
 
 				break;
 			}
@@ -582,5 +694,55 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				this.emit('disconnected');
 			}
 		});
+	}
+
+	handleProducer(
+		producer: mediasoupTypes.Producer<MediasoupProducerAppData>
+	): void {
+		producer.observer.on('close', () => {
+			this.#producers.delete(producer.id);
+		});
+
+		producer.on('score', score => {
+			this.notify('producerScore', { producerId: producer.id, score });
+		});
+
+		producer.on('videoorientationchange', videoOrientation => {
+			this.#logger.debug(
+				'Producer "videoorientationchange" event [producerId:%o, videoOrientation:%o]',
+				producer.id,
+				videoOrientation
+			);
+		});
+	}
+
+	handleConsumer(
+		consumer: mediasoupTypes.Consumer<MediasoupConsumerAppData>
+	): void {
+		consumer.observer.on('close', () => {
+			this.#consumers.delete(consumer.id);
+		});
+
+		// TODO
+	}
+
+	handleDataProducer(
+		dataProducer: mediasoupTypes.DataProducer<MediasoupDataProducerAppData>
+	): void {
+		dataProducer.observer.on('close', () => {
+			this.#dataProducers.delete(dataProducer.id);
+		});
+
+		// TODO
+	}
+
+	handleDataConsumer(
+		dataConsumer: mediasoupTypes.DataConsumer<MediasoupDataConsumerAppData>
+	): void {
+		dataConsumer.observer.on('close', () => {
+			this.#dataConsumers.delete(dataConsumer.id);
+		});
+
+		// TODO
 	}
 }

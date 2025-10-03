@@ -11,6 +11,7 @@ import type {
 	RoomId,
 	PeerId,
 	MediasoupWebRtcTransportAppData,
+	SerializedPeer,
 } from './types';
 
 const staticLogger = new Logger('Room');
@@ -192,6 +193,16 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		});
 	}
 
+	private getAllPeers(): Peer[] {
+		return Array.from(this.#peers.values());
+	}
+
+	private getOtherPeers(excludedPeer: Peer): Peer[] {
+		return Array.from(this.#peers.values()).filter(
+			peer => peer !== excludedPeer
+		);
+	}
+
 	private handlePeer(peer: Peer): void {
 		peer.on('closed', () => {
 			this.#joiningPeers.delete(peer.id);
@@ -200,19 +211,31 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			this.mayClose();
 		});
 
-		peer.on('joined', () => {
+		peer.on('joined', callback => {
 			this.#joiningPeers.delete(peer.id);
 			this.#peers.set(peer.id, peer);
 
-			// TODO: Signal to others.
+			const otherPeers = this.getOtherPeers(peer);
+
+			callback(otherPeers.map(otherPeer => otherPeer.serialize()));
+
+			for (const otherPeer of otherPeers) {
+				otherPeer.notify('newPeer', { peer: peer.serialize() });
+			}
+
+			// TODO: Consume from other Peers.
 		});
 
 		peer.on('disconnected', () => {
-			// TODO: Signal to others.
+			const otherPeers = this.getOtherPeers(peer);
+
+			for (const otherPeer of otherPeers) {
+				otherPeer.notify('peerClosed', { peerId: peer.id });
+			}
 		});
 
-		peer.on('get-router-rtp-capabilities', resolve => {
-			resolve(this.#mediasoupRouter.rtpCapabilities);
+		peer.on('get-router-rtp-capabilities', callback => {
+			callback(this.#mediasoupRouter.rtpCapabilities);
 		});
 
 		peer.on(
@@ -257,8 +280,21 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			}
 		);
 
+		peer.on('new-producer', ({ producer }) => {
+			// TODO: Consume from others.
+			// TODO: Active speaker stuff.
+		});
+
 		peer.on('display-name-changed', ({ displayName, oldDisplayName }) => {
-			// TODO: Signal to others.
+			const otherPeers = this.getOtherPeers(peer);
+
+			for (const otherPeer of otherPeers) {
+				otherPeer.notify('peerDisplayNameChanged', {
+					peerId: peer.id,
+					displayName,
+					oldDisplayName,
+				});
+			}
 		});
 	}
 }

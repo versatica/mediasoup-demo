@@ -10,6 +10,7 @@ export default class EditableInput extends React.Component {
 			className,
 			classLoading,
 			classInvalid,
+			shouldBlockWhileLoading,
 			editProps,
 			onChange,
 		} = this.props;
@@ -21,7 +22,7 @@ export default class EditableInput extends React.Component {
 				className={className}
 				classLoading={classLoading}
 				classInvalid={classInvalid}
-				shouldBlockWhileLoading
+				shouldBlockWhileLoading={shouldBlockWhileLoading}
 				editProps={editProps}
 				change={data => onChange(data)}
 			/>
@@ -41,6 +42,7 @@ EditableInput.propTypes = {
 	className: PropTypes.string,
 	classLoading: PropTypes.string,
 	classInvalid: PropTypes.string,
+	shouldBlockWhileLoading: PropTypes.bool,
 	editProps: PropTypes.any,
 	onChange: PropTypes.func.isRequired,
 };

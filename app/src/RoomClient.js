@@ -634,7 +634,7 @@ export default class RoomClient {
 				}
 
 				case 'newPeer': {
-					const { peerId, displayName, device } = notification.data;
+					const { peerId, displayName, device } = notification.data.peer;
 					const peer = {
 						id: peerId,
 						displayName,
@@ -1826,38 +1826,23 @@ export default class RoomClient {
 		}
 	}
 
-	async changeDisplayName(displayName) {
+	changeDisplayName(displayName) {
 		logger.debug('changeDisplayName() [displayName:"%s"]', displayName);
 
 		// Store in cookie.
 		cookiesManager.setUser({ displayName });
 
-		try {
-			await this._protoo.request('changeDisplayName', { displayName });
+		this._protoo.notify('changeDisplayName', { displayName });
 
-			this._displayName = displayName;
+		this._displayName = displayName;
 
-			store.dispatch(stateActions.setDisplayName(displayName));
+		store.dispatch(stateActions.setDisplayName(displayName));
 
-			store.dispatch(
-				requestActions.notify({
-					text: 'Display name changed',
-				})
-			);
-		} catch (error) {
-			logger.error('changeDisplayName() | failed: %o', error);
-
-			store.dispatch(
-				requestActions.notify({
-					type: 'error',
-					text: `Could not change display name: ${error}`,
-				})
-			);
-
-			// We need to refresh the component for it to render the previous
-			// displayName again.
-			store.dispatch(stateActions.setDisplayName());
-		}
+		store.dispatch(
+			requestActions.notify({
+				text: 'Display name changed',
+			})
+		);
 	}
 
 	async getSendTransportRemoteStats() {
@@ -2286,8 +2271,8 @@ export default class RoomClient {
 				})
 			);
 
-			for (const peerInfo of peers) {
-				const { peerId, displayName, device } = peerInfo;
+			for (const serializedPeer of peers) {
+				const { peerId, displayName, device } = serializedPeer;
 				const peer = {
 					id: peerId,
 					displayName,

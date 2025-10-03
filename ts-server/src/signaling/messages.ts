@@ -4,6 +4,7 @@ import type * as protooTypes from 'protoo-server';
 import type {
 	PeerId,
 	PeerDevice,
+	SerializedPeer,
 	TransportDirection,
 	MediasoupProducerAppData,
 	MediasoupDataProducerAppData,
@@ -118,11 +119,7 @@ type RequestFromClient =
 				sctpCapabilities?: mediasoupTypes.SctpCapabilities;
 			};
 			responseData: {
-				peers: {
-					peerId: PeerId;
-					displayName: string;
-					device: PeerDevice;
-				}[];
+				peers: SerializedPeer[];
 			};
 	  }
 	| {
@@ -233,9 +230,7 @@ type NotificationFromServer =
 	| {
 			name: 'newPeer';
 			data: {
-				peerId: PeerId;
-				displayName: string;
-				device: PeerDevice;
+				peer: SerializedPeer;
 			};
 	  }
 	| {
