@@ -66,5 +66,8 @@ function exitGracefully(): void {
 function exitWithError(): void {
 	logger.error('exiting with error...');
 
+	TerminalServer.close();
+	server?.close();
+
 	process.exit(1);
 }
