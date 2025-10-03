@@ -60,7 +60,7 @@ export type TransportDirection = 'producer' | 'consumer';
 
 export type Source = 'audio' | 'video' | 'screensharing';
 
-export type Channel = 'peer' | 'bot';
+export type Channel = 'chat' | 'bot';
 
 export type MediasoupWorkerAppData = {
 	idx: number;

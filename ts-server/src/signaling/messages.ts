@@ -114,8 +114,8 @@ type RequestFromClient =
 			data: {
 				displayName: string;
 				device: PeerDevice;
-				rtpCapabilities: mediasoupTypes.RtpCapabilities;
-				sctpCapabilities: mediasoupTypes.SctpCapabilities;
+				rtpCapabilities?: mediasoupTypes.RtpCapabilities;
+				sctpCapabilities?: mediasoupTypes.SctpCapabilities;
 			};
 			responseData: {
 				peers: {
@@ -339,6 +339,7 @@ type RequestFromServer =
 	| {
 			name: 'newDataConsumer';
 			data: {
+				// TODO: This is undefined if it's the Bot.
 				peerId: PeerId;
 				dataConsumerId: string;
 				dataProducerId: string;

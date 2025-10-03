@@ -409,7 +409,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				clearTimeout(this.#joinTimer);
 
 				console.log('get joined peers from Room');
-				// accept({ peers: 123 });
+				accept({ peers: [] });
 
 				this.emit('joined');
 

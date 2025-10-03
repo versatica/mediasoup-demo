@@ -10,10 +10,10 @@ const ROOM_ID = 'ws-client-test-room';
 const PEER_ID = 'ws-client-test-peer';
 
 function connectWebSocket() {
-	console.log('--- connecting with an upgrade request');
+	console.log('> connecting with an upgrade request');
 
-	const peerIdSuffix = 123 ?? crypto.randomInt(1, 1001);
-	const url = `https://local.dev:4443/test?roomId=${ROOM_ID}&peerId=${PEER_ID}-${peerIdSuffix}`;
+	const peerIdSuffix = crypto.randomInt(1, 1001);
+	const url = `https://127.0.0.1:4443/test?roomId=${ROOM_ID}&peerId=${PEER_ID}-${peerIdSuffix}`;
 	const wsKey = crypto.randomBytes(16).toString('base64');
 
 	const req = https.request(url, {
@@ -29,11 +29,11 @@ function connectWebSocket() {
 	req.end();
 
 	req.on('error', error => {
-		console.error('--- request error:', error);
+		console.error('> request error:', error);
 	});
 
 	req.on('upgrade', (res, socket, upgradeHead) => {
-		console.log('--- request upgraded [status code:%o]', res.statusCode);
+		console.log('> request upgraded [status code:%o]', res.statusCode);
 	});
 }
 
