@@ -118,11 +118,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	> = new Map();
 	#closed: boolean = false;
 
-	// eslint-disable-next-line @typescript-eslint/require-await
-	static async create({
-		peerId,
-		protooPeer,
-	}: PeerCreateOptions): Promise<Peer> {
+	static create({ peerId, protooPeer }: PeerCreateOptions): Peer {
 		staticLogger.debug('create() [peerId:%o]', peerId);
 
 		const logger = new Logger(`[peerId:${peerId}]`, staticLogger);

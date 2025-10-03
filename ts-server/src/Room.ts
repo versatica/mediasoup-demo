@@ -132,10 +132,10 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		return this.#mediasoupRouter.rtpCapabilities;
 	}
 
-	async handleWsConnection(
+	handleWsConnection(
 		peerId: PeerId,
 		protooTransport: protooTypes.WebSocketTransport
-	): Promise<void> {
+	): void {
 		this.#logger.debug('handleWsConnection() [peerId:%o]', peerId);
 
 		const existingPeer = this.#peers.get(peerId);
@@ -166,7 +166,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		);
 
 		const protooPeer = this.#protooRoom.createPeer(peerId, protooTransport);
-		const peer = await Peer.create({ peerId, protooPeer });
+		const peer = Peer.create({ peerId, protooPeer });
 
 		// NOTE: The Peer is not yet joined. It will once it sends 'join' request.
 		this.#joiningPeers.set(peer.id, peer);
@@ -176,15 +176,20 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 	private mayClose(): void {
 		// If this is the latest Peer in the Room, close the Room.
-		if (
-			!this.#closed &&
-			this.#peers.size === 0 &&
-			this.#joiningPeers.size === 0
-		) {
-			this.#logger.info('last Peer in the Room left, closing the Room');
+		// NOTE: Run it in next loop iteration to avoid the case in which there is
+		// only a Peer in the Room and it reconnects without closing its previous
+		// connection.
+		setImmediate(() => {
+			if (
+				!this.#closed &&
+				this.#peers.size === 0 &&
+				this.#joiningPeers.size === 0
+			) {
+				this.#logger.info('last Peer in the Room left, closing the Room');
 
-			this.close();
-		}
+				this.close();
+			}
+		});
 	}
 
 	private handlePeer(peer: Peer): void {

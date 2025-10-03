@@ -117,7 +117,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 				return;
 			}
 
-			void room.handleWsConnection(peerId, protooTransport);
+			room.handleWsConnection(peerId, protooTransport);
 		});
 	}
 }

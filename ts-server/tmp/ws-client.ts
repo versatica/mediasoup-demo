@@ -12,7 +12,8 @@ const PEER_ID = 'ws-client-test-peer';
 function connectWebSocket() {
 	console.log('--- connecting with an upgrade request');
 
-	const url = `https://local.dev:4443/test?roomId=${ROOM_ID}&peerId=${PEER_ID}`;
+	const peerIdSuffix = 123 ?? crypto.randomInt(1, 1001);
+	const url = `https://local.dev:4443/test?roomId=${ROOM_ID}&peerId=${PEER_ID}-${peerIdSuffix}`;
 	const wsKey = crypto.randomBytes(16).toString('base64');
 
 	const req = https.request(url, {

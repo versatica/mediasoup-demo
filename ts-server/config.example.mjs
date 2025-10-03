@@ -19,11 +19,11 @@ export const config = {
 	 */
 	domain: 'localhost',
 	/**
-	 * Signaling settings (protoo WebSocket server and HTTP API server).
+	 * Signaling settings (Protoo WebSocket server and HTTP API server).
 	 */
 	http: {
 		listenIp: '0.0.0.0',
-		listenPort: Number(process.env['PROTOO_LISTEN_PORT'] ?? 4443),
+		listenPort: Number(process.env['HTTP_LISTEN_PORT'] ?? 4443),
 		/**
 		 * Optional. If tls is not set, server will use HTTP instead.
 		 */
