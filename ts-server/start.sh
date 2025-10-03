@@ -95,9 +95,10 @@ if [ "${TERMINAL}" = "true" ] && [ "${WATCH}" = "true" ] ; then
 fi
 
 log_info "starting server:"
-log_info "- WATCH: \"${WATCH}\""
-log_info "- TERMINAL: \"${TERMINAL}\""
 log_info "- DEBUG: \"${DEBUG}\""
+log_info "- TERMINAL: \"${TERMINAL}\""
+log_info "- WATCH: \"${WATCH}\""
+log_info "- CONFIG_FILE: \"${CONFIG_FILE}\""
 
 while IFS='=' read -r key value; do
 	if [[ $key == MEDIASOUP_* ]]; then
@@ -108,5 +109,5 @@ done < <(env)
 if [ "${WATCH}" = "true" ]; then
 	npm run watch
 else
-	npm run start
+	npm start
 fi

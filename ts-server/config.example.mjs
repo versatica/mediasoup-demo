@@ -13,7 +13,7 @@ import * as os from 'node:os';
 /**
  * @type {import('./src/types.ts').Config}
  */
-const config = {
+export const config = {
 	/**
 	 * Listening hostname for browser app Vite development server.
 	 */
@@ -182,5 +182,3 @@ const config = {
 		},
 	},
 };
-
-export default config;

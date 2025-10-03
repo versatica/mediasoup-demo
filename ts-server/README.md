@@ -25,25 +25,22 @@ Create your own `config.mjs` file:
 cp config.example.mjs config.mjs
 ```
 
-Edit your `config.mjs` according to your preferences.
+Edit your `config.mjs` file according to your preferences.
 
-- If you want to listen on HTTPS and WSS (instead of plain HTTP and WS) you need to provide your own certificate in `config.http.tls`.
-- Depending on your network setup, you may need to set a proper IP value in `ip` and/or `announcedAddress` in the corresponding `listenInfo` or WebRTC and plain transports. Check the mediasoup documentation.
+- By default, **mediasoup-demo-server** tries to read configuration from a `config.mjs` file in its root directory. However this can be overridden with the `CONFIG_FILE` environment variable. Example:
+  ```sh
+  export CONFIG_FILE=/home/foo/my-demo-server-config.mjs
+  ```
+- If you want to listen on HTTPS and WSS (instead of plain HTTP and WS) you need to provide your own TLS certificate in `config.http.tls`.
+- Depending on your network setup, you may need to set a proper IP value in `ip` and/or `announcedAddress` in the corresponding `listenInfo` entries of WebRTC and plain transports. Check the mediasoup documentation.
 
 ## Running locally
 
-- The `start.sh` script detects the host IP and sets the `MEDIASOUP_LISTEN_IP` environment variable, useful if your `config.mjs` reads it. It also sets `DEBUG` variable to enable **mediasoup** and **mediasoup-demo-server** logs.
-- Take into account that before being able to use `start.sh` script, you need to transpile TypeScript code to JavaScript:
-  ```bash
-  npm run typescript:build
-  ```
-- `start.sh --terminal` runs the server with an internative terminal.
-- `watch.sh` script is a shortcut of `start.sh --watch`, useful for development in case you are modifying server TypeScript code.
+- The `start.sh` script detects the host IP and sets the `MEDIASOUP_LISTEN_IP` environment variable, useful if your `config.mjs` reads it. It also sets `DEBUG` variable to enable **mediasoup** and **mediasoup-demo-server** logs. Then it invokes `npm start`.
+- `start.sh --terminal` runs the server with an internative terminal by running `npm run watch` instead.
+- `watch.sh` script is a shortcut of `start.sh --watch`, useful for development in case you are modifying TypeScript source code.
 - Notice that `start.sh` cannot be called with both `--terminal` and `--watch` command line arguments. Also notice that `watch.sh` cannot be called with `--terminal` command line argument. This is because, when in watch mode, **mediasoup-demo-server** is managed by [nodemon](https://nodemon.io/), which interferes with stdin, making it impossible to launch a terminal in the same process.
-- Additionally you can run `npm run start` and `npm run watch` (see `npm-scripts.mjs`). Again, you need to transpile TypeScript code to JavaScript before using `npm run start`:
-  ```bash
-  npm run typescript:build
-  ```
+- Additionally you can run `npm start` and `npm run watch` directly.
 
 ## Connecting a terminal to a running server
 
@@ -52,6 +49,16 @@ The `connect-terminal.mjs` script connects to the running **mediasoup-demo-serve
 ```sh
 ./connect-terminal.mjs
 ```
+
+## Development
+
+If you change TypeScript code then you need to transpile it to JavaScript for `npm start` and `start.sh` to work:
+
+```sh
+npm run typescript:build
+```
+
+For more NPM scripts and details, check the `npm-scripts.mjs` file.
 
 ## Authors
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as process from 'node:process';
 import * as util from 'node:util';
 
@@ -5,15 +7,10 @@ import { Logger } from './Logger';
 import { Server } from './Server';
 import { TerminalServer } from './TerminalServer';
 import { TerminalClient } from './TerminalClient';
-// @ts-expect-error --- config.js has no TS declaration.
-import config from '../config.mjs';
+import * as envs from './envs';
+import { Config } from './types';
 
 const logger = new Logger();
-
-// eslint-disable-next-line no-console
-console.log('process.env.DEBUG: %o', process.env['DEBUG']);
-
-logger.info('config:', util.inspect(config, { depth: null, colors: true }));
 
 let server: Server | undefined;
 let terminalClient: TerminalClient | undefined;
@@ -24,6 +21,17 @@ async function start(): Promise<void> {
 	logger.info('start()');
 
 	try {
+		logger.info('start() | debug: %o', envs.getDebug());
+		logger.info('start() | terminal: %o', envs.getTerminal());
+		logger.info('start() | config file: %o', envs.getConfigFile());
+
+		const config = await getConfig();
+
+		logger.info(
+			'start() | config:',
+			util.inspect(config, { depth: null, colors: true })
+		);
+
 		server = await Server.create({ config });
 
 		logger.info('start() | server started');
@@ -41,7 +49,7 @@ async function start(): Promise<void> {
 		});
 
 		// Start the interactive terminal client if requested.
-		if (process.env['TERMINAL'] === 'true') {
+		if (envs.getTerminal()) {
 			terminalClient = await TerminalClient.connect();
 
 			handleTerminalClient();
@@ -53,18 +61,19 @@ async function start(): Promise<void> {
 	}
 }
 
-function handleServer(): void {
-	server?.on('died', () => {
-		logger.error('server died, exiting');
+async function getConfig(): Promise<Config> {
+	const configFile = envs.getConfigFile();
 
-		exitWithError();
-	});
-}
+	try {
+		return (await import(configFile)).config;
+	} catch (error) {
+		logger.error(
+			`start() | failed to read config file %o: ${error}`,
+			configFile
+		);
 
-function handleTerminalClient(): void {
-	terminalClient?.on('closed', () => {
-		exitGracefully();
-	});
+		throw error;
+	}
 }
 
 /**
@@ -86,4 +95,18 @@ function exitWithError(): void {
 	} catch (error) {}
 
 	process.exit(1);
+}
+
+function handleServer(): void {
+	server?.on('died', () => {
+		logger.error('server died, exiting');
+
+		exitWithError();
+	});
+}
+
+function handleTerminalClient(): void {
+	terminalClient?.on('closed', () => {
+		exitGracefully();
+	});
 }

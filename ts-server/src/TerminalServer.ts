@@ -369,7 +369,7 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 						this.logInfoWithoutPrefix('- t, terminal: open Node REPL Terminal');
 						this.logInfoWithoutPrefix('- quit: quit the server');
 						this.logInfoWithoutPrefix(
-							'- force-quit: force quit the server (for development purposes)'
+							'- forceQuit: force quit the server (for development purposes)'
 						);
 
 						readStdin();
@@ -793,7 +793,7 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 						return;
 					}
 
-					case 'force-quit': {
+					case 'forceQuit': {
 						this.#onForceQuit();
 						this.logInfoWithoutPrefix('');
 
