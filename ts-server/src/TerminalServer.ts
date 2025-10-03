@@ -12,6 +12,7 @@ import picocolors from 'picocolors';
 import pidusage from 'pidusage';
 
 import { Logger } from './Logger';
+import { EnhancedEventEmitter } from './enhancedEvents';
 
 // We need to expose some globals.
 declare global {
@@ -45,9 +46,16 @@ export const SOCKET_PATH =
 
 const logger = new Logger('TerminalServer');
 
-export class TerminalServer {
+type TerminalServerEvents = {
+	/**
+	 * Emitted when the terminal server is closed no matter how.
+	 */
+	closed: [];
+};
+
+export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 	static #netServer?: net.Server;
-	static #sockets: Set<net.Socket> = new Set();
+	static #terminalServers: Set<TerminalServer> = new Set();
 	// Maps to store all mediasoup entities indexed by id.
 	static readonly #workers: Map<number, mediasoupTypes.Worker> = new Map();
 	static readonly #webRtcServers: Map<string, mediasoupTypes.WebRtcServer> =
@@ -63,20 +71,21 @@ export class TerminalServer {
 		new Map();
 
 	readonly #socket: netTypes.Socket;
-	#isTerminalOpen: boolean = false;
 	readonly #onQuit: () => void;
+	#isTerminalOpen: boolean = false;
+	#closed: boolean = false;
 
-	static async start({ onQuit }: { onQuit: () => void }): Promise<void> {
-		logger.debug('start()');
+	static async listen({ onQuit }: { onQuit: () => void }): Promise<void> {
+		logger.debug('listen()');
 
 		TerminalServer.#netServer = net.createServer(socket => {
-			TerminalServer.#sockets.add(socket);
-
-			socket.on('close', () => {
-				TerminalServer.#sockets.delete(socket);
-			});
-
 			const terminalServer = new TerminalServer({ socket, onQuit });
+
+			TerminalServer.#terminalServers.add(terminalServer);
+
+			terminalServer.on('closed', () => {
+				TerminalServer.#terminalServers.delete(terminalServer);
+			});
 
 			terminalServer.openCommandConsole();
 		});
@@ -101,15 +110,15 @@ export class TerminalServer {
 		TerminalServer.runMediasoupObserver();
 	}
 
-	static close(): void {
-		logger.debug('close()');
+	static stop(): void {
+		logger.debug('stop()');
 
 		// Stop listening for connections.
 		TerminalServer.#netServer?.close();
 
-		// Close all existing connections.
-		for (const socket of TerminalServer.#sockets) {
-			socket.destroy();
+		// Close all existing terminal servers.
+		for (const terminalServer of TerminalServer.#terminalServers) {
+			terminalServer.close();
 		}
 	}
 
@@ -234,14 +243,32 @@ export class TerminalServer {
 		socket: netTypes.Socket;
 		onQuit: () => void;
 	}) {
+		super();
+
 		logger.debug('constructor()');
 
 		this.#socket = socket;
 		this.#onQuit = onQuit;
+
+		this.handleSocket();
+	}
+
+	private close(): void {
+		logger.debug('close()');
+
+		if (this.#closed) {
+			return;
+		}
+
+		this.#closed = true;
+
+		this.#socket.destroy();
+
+		this.emit('closed');
 	}
 
 	private openCommandConsole(): void {
-		this.logInfo('\n[opening Readline Command Console...]');
+		this.logInfo('opening Readline Command Console...');
 		this.logInfo('type help to print available commands');
 
 		const cmd = readline.createInterface({
@@ -255,9 +282,9 @@ export class TerminalServer {
 				return;
 			}
 
-			this.logInfo('\nexiting...');
+			this.logInfo('exiting Readline Command Console...');
 
-			this.#socket.end();
+			this.close();
 		});
 
 		const readStdin = (): void => {
@@ -275,58 +302,58 @@ export class TerminalServer {
 
 					case 'h':
 					case 'help': {
-						this.logInfo('');
-						this.logInfo('available commands:');
-						this.logInfo('- h, help: Show this message');
-						this.logInfo(
-							'- usage: Show CPU and memory usage of the Node.js and mediasoup-worker processes'
+						this.logInfoWithoutPrefix('available commands:');
+						this.logInfoWithoutPrefix('- h, help: Show this message');
+						this.logInfoWithoutPrefix(
+							'- usage: show CPU and memory usage of the Node.js and mediasoup-worker processes'
 						);
-						this.logInfo(
-							'- logLevel level: Changes logLevel in all mediasoup Workers'
+						this.logInfoWithoutPrefix(
+							'- logLevel level: changes logLevel in all mediasoup Workers'
 						);
-						this.logInfo(
-							'- logTags [tag] [tag]: Changes logTags in all mediasoup Workers (values separated by space)'
+						this.logInfoWithoutPrefix(
+							'- logTags [tag] [tag]: changes logTags in all mediasoup Workers (values separated by space)'
 						);
-						this.logInfo('- dw, dumpWorkers: Dump mediasoup Workers');
-						this.logInfo(
-							'- dws, dumpWebRtcServer [id]: Dump mediasoup WebRtcServer with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- dw, dumpWorkers: dump mediasoup Workers'
 						);
-						this.logInfo(
-							'- dr, dumpRouter [id]: Dump mediasoup Router with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- dws, dumpWebRtcServer [id]: dump mediasoup WebRtcServer with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- dt, dumpTransport [id]: Dump mediasoup Transport with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- dr, dumpRouter [id]: dump mediasoup Router with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- dp, dumpProducer [id]: Dump mediasoup Producer with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- dt, dumpTransport [id]: dump mediasoup Transport with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- dc, dumpConsumer [id]: Dump mediasoup Consumer with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- dp, dumpProducer [id]: dump mediasoup Producer with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- ddp, dumpDataProducer [id]: Dump mediasoup DataProducer with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- dc, dumpConsumer [id]: dump mediasoup Consumer with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- ddc, dumpDataConsumer [id]: Dump mediasoup DataConsumer with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- ddp, dumpDataProducer [id]: dump mediasoup DataProducer with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- st, statsTransport [id]: Get stats for mediasoup Transport with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- ddc, dumpDataConsumer [id]: dump mediasoup DataConsumer with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- sp, statsProducer [id]: Get stats for mediasoup Producer with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- st, statsTransport [id]: get stats for mediasoup Transport with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- sc, statsConsumer [id]: Get stats for mediasoup Consumer with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- sp, statsProducer [id]: get stats for mediasoup Producer with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- sdp, statsDataProducer [id]: Get stats for mediasoup DataProducer with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- sc, statsConsumer [id]: get stats for mediasoup Consumer with given id (or the latest created one)'
 						);
-						this.logInfo(
-							'- sdc, statsDataConsumer [id]: Get stats for mediasoup DataConsumer with given id (or the latest created one)'
+						this.logInfoWithoutPrefix(
+							'- sdp, statsDataProducer [id]: get stats for mediasoup DataProducer with given id (or the latest created one)'
 						);
-						this.logInfo('- quit: Quit the server');
-						this.logInfo('- t, terminal: Open Node REPL Terminal');
-						this.logInfo('');
+						this.logInfoWithoutPrefix(
+							'- sdc, statsDataConsumer [id]: get stats for mediasoup DataConsumer with given id (or the latest created one)'
+						);
+						this.logInfoWithoutPrefix('- t, terminal: open Node REPL Terminal');
+						this.logInfoWithoutPrefix('- quit: quit the server');
 
 						readStdin();
 
@@ -337,14 +364,14 @@ export class TerminalServer {
 					case 'usage': {
 						let usage = await pidusage(process.pid);
 
-						this.logInfo(
+						this.logInfoWithoutPrefix(
 							`Node.js process [pid:${process.pid}]:\n${JSON.stringify(usage, null, '  ')}`
 						);
 
 						for (const worker of TerminalServer.#workers.values()) {
 							usage = await pidusage(worker.pid);
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`mediasoup-worker process [pid:${worker.pid}]:\n${JSON.stringify(usage, null, '  ')}`
 							);
 						}
@@ -354,7 +381,7 @@ export class TerminalServer {
 
 					case 'logLevel': {
 						const level = params[0] as mediasoupTypes.WorkerLogLevel;
-						const promises = [];
+						const promises: Promise<void>[] = [];
 
 						for (const worker of TerminalServer.#workers.values()) {
 							promises.push(worker.updateSettings({ logLevel: level }));
@@ -363,9 +390,9 @@ export class TerminalServer {
 						try {
 							await Promise.all(promises);
 
-							this.logInfo('done');
+							this.logInfoWithoutPrefix('done');
 						} catch (error) {
-							this.logError(String(error));
+							this.logErrorWithoutPrefix(String(error));
 						}
 
 						break;
@@ -373,7 +400,7 @@ export class TerminalServer {
 
 					case 'logTags': {
 						const tags = params as mediasoupTypes.WorkerLogTag[];
-						const promises = [];
+						const promises: Promise<void>[] = [];
 
 						for (const worker of TerminalServer.#workers.values()) {
 							promises.push(worker.updateSettings({ logTags: tags }));
@@ -382,9 +409,9 @@ export class TerminalServer {
 						try {
 							await Promise.all(promises);
 
-							this.logInfo('done');
+							this.logInfoWithoutPrefix('done');
 						} catch (error) {
-							this.logError(String(error));
+							this.logErrorWithoutPrefix(String(error));
 						}
 
 						break;
@@ -396,11 +423,11 @@ export class TerminalServer {
 							try {
 								const dump = await worker.dump();
 
-								this.logInfo(
+								this.logInfoWithoutPrefix(
 									`worker.dump():\n${JSON.stringify(dump, null, '  ')}`
 								);
 							} catch (error) {
-								this.logError(`worker.dump() failed: ${error}`);
+								this.logErrorWithoutPrefix(`worker.dump() failed: ${error}`);
 							}
 						}
 
@@ -415,7 +442,7 @@ export class TerminalServer {
 						const webRtcServer = TerminalServer.#webRtcServers.get(id!);
 
 						if (!webRtcServer) {
-							this.logError('WebRtcServer not found');
+							this.logErrorWithoutPrefix('WebRtcServer not found');
 
 							break;
 						}
@@ -423,11 +450,13 @@ export class TerminalServer {
 						try {
 							const dump = await webRtcServer.dump();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`webRtcServer.dump():\n${JSON.stringify(dump, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`webRtcServer.dump() failed: ${error}`);
+							this.logErrorWithoutPrefix(
+								`webRtcServer.dump() failed: ${error}`
+							);
 						}
 
 						break;
@@ -440,7 +469,7 @@ export class TerminalServer {
 						const router = TerminalServer.#routers.get(id!);
 
 						if (!router) {
-							this.logError('Router not found');
+							this.logErrorWithoutPrefix('Router not found');
 
 							break;
 						}
@@ -448,11 +477,11 @@ export class TerminalServer {
 						try {
 							const dump = await router.dump();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`router.dump():\n${JSON.stringify(dump, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`router.dump() failed: ${error}`);
+							this.logErrorWithoutPrefix(`router.dump() failed: ${error}`);
 						}
 
 						break;
@@ -465,7 +494,7 @@ export class TerminalServer {
 						const transport = TerminalServer.#transports.get(id!);
 
 						if (!transport) {
-							this.logError('Transport not found');
+							this.logErrorWithoutPrefix('Transport not found');
 
 							break;
 						}
@@ -473,11 +502,11 @@ export class TerminalServer {
 						try {
 							const dump = await transport.dump();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`transport.dump():\n${JSON.stringify(dump, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`transport.dump() failed: ${error}`);
+							this.logErrorWithoutPrefix(`transport.dump() failed: ${error}`);
 						}
 
 						break;
@@ -490,7 +519,7 @@ export class TerminalServer {
 						const producer = TerminalServer.#producers.get(id!);
 
 						if (!producer) {
-							this.logError('Producer not found');
+							this.logErrorWithoutPrefix('Producer not found');
 
 							break;
 						}
@@ -498,11 +527,11 @@ export class TerminalServer {
 						try {
 							const dump = await producer.dump();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`producer.dump():\n${JSON.stringify(dump, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`producer.dump() failed: ${error}`);
+							this.logErrorWithoutPrefix(`producer.dump() failed: ${error}`);
 						}
 
 						break;
@@ -515,7 +544,7 @@ export class TerminalServer {
 						const consumer = TerminalServer.#consumers.get(id!);
 
 						if (!consumer) {
-							this.logError('Consumer not found');
+							this.logErrorWithoutPrefix('Consumer not found');
 
 							break;
 						}
@@ -523,11 +552,11 @@ export class TerminalServer {
 						try {
 							const dump = await consumer.dump();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`consumer.dump():\n${JSON.stringify(dump, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`consumer.dump() failed: ${error}`);
+							this.logErrorWithoutPrefix(`consumer.dump() failed: ${error}`);
 						}
 
 						break;
@@ -541,7 +570,7 @@ export class TerminalServer {
 						const dataProducer = TerminalServer.#dataProducers.get(id!);
 
 						if (!dataProducer) {
-							this.logError('DataProducer not found');
+							this.logErrorWithoutPrefix('DataProducer not found');
 
 							break;
 						}
@@ -549,11 +578,13 @@ export class TerminalServer {
 						try {
 							const dump = await dataProducer.dump();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`dataProducer.dump():\n${JSON.stringify(dump, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`dataProducer.dump() failed: ${error}`);
+							this.logErrorWithoutPrefix(
+								`dataProducer.dump() failed: ${error}`
+							);
 						}
 
 						break;
@@ -567,7 +598,7 @@ export class TerminalServer {
 						const dataConsumer = TerminalServer.#dataConsumers.get(id!);
 
 						if (!dataConsumer) {
-							this.logError('DataConsumer not found');
+							this.logErrorWithoutPrefix('DataConsumer not found');
 
 							break;
 						}
@@ -575,11 +606,13 @@ export class TerminalServer {
 						try {
 							const dump = await dataConsumer.dump();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`dataConsumer.dump():\n${JSON.stringify(dump, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`dataConsumer.dump() failed: ${error}`);
+							this.logErrorWithoutPrefix(
+								`dataConsumer.dump() failed: ${error}`
+							);
 						}
 
 						break;
@@ -592,7 +625,7 @@ export class TerminalServer {
 						const transport = TerminalServer.#transports.get(id!);
 
 						if (!transport) {
-							this.logError('Transport not found');
+							this.logErrorWithoutPrefix('Transport not found');
 
 							break;
 						}
@@ -600,11 +633,13 @@ export class TerminalServer {
 						try {
 							const stats = await transport.getStats();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`transport.getStats():\n${JSON.stringify(stats, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`transport.getStats() failed: ${error}`);
+							this.logErrorWithoutPrefix(
+								`transport.getStats() failed: ${error}`
+							);
 						}
 
 						break;
@@ -617,7 +652,7 @@ export class TerminalServer {
 						const producer = TerminalServer.#producers.get(id!);
 
 						if (!producer) {
-							this.logError('Producer not found');
+							this.logErrorWithoutPrefix('Producer not found');
 
 							break;
 						}
@@ -625,11 +660,13 @@ export class TerminalServer {
 						try {
 							const stats = await producer.getStats();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`producer.getStats():\n${JSON.stringify(stats, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`producer.getStats() failed: ${error}`);
+							this.logErrorWithoutPrefix(
+								`producer.getStats() failed: ${error}`
+							);
 						}
 
 						break;
@@ -642,7 +679,7 @@ export class TerminalServer {
 						const consumer = TerminalServer.#consumers.get(id!);
 
 						if (!consumer) {
-							this.logError('Consumer not found');
+							this.logErrorWithoutPrefix('Consumer not found');
 
 							break;
 						}
@@ -650,11 +687,13 @@ export class TerminalServer {
 						try {
 							const stats = await consumer.getStats();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`consumer.getStats():\n${JSON.stringify(stats, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`consumer.getStats() failed: ${error}`);
+							this.logErrorWithoutPrefix(
+								`consumer.getStats() failed: ${error}`
+							);
 						}
 
 						break;
@@ -668,7 +707,7 @@ export class TerminalServer {
 						const dataProducer = TerminalServer.#dataProducers.get(id!);
 
 						if (!dataProducer) {
-							this.logError('DataProducer not found');
+							this.logErrorWithoutPrefix('DataProducer not found');
 
 							break;
 						}
@@ -676,11 +715,13 @@ export class TerminalServer {
 						try {
 							const stats = await dataProducer.getStats();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`dataProducer.getStats():\n${JSON.stringify(stats, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`dataProducer.getStats() failed: ${error}`);
+							this.logErrorWithoutPrefix(
+								`dataProducer.getStats() failed: ${error}`
+							);
 						}
 
 						break;
@@ -694,7 +735,7 @@ export class TerminalServer {
 						const dataConsumer = TerminalServer.#dataConsumers.get(id!);
 
 						if (!dataConsumer) {
-							this.logError('DataConsumer not found');
+							this.logErrorWithoutPrefix('DataConsumer not found');
 
 							break;
 						}
@@ -702,18 +743,14 @@ export class TerminalServer {
 						try {
 							const stats = await dataConsumer.getStats();
 
-							this.logInfo(
+							this.logInfoWithoutPrefix(
 								`dataConsumer.getStats():\n${JSON.stringify(stats, null, '  ')}`
 							);
 						} catch (error) {
-							this.logError(`dataConsumer.getStats() failed: ${error}`);
+							this.logErrorWithoutPrefix(
+								`dataConsumer.getStats() failed: ${error}`
+							);
 						}
-
-						break;
-					}
-
-					case 'quit': {
-						this.#onQuit();
 
 						break;
 					}
@@ -730,9 +767,18 @@ export class TerminalServer {
 						return;
 					}
 
+					case 'quit': {
+						this.#onQuit();
+						this.logInfoWithoutPrefix('');
+
+						// `return` instead of `break` to avoid the call to readStdin()
+						// below.
+						return;
+					}
+
 					default: {
-						this.logError(`unknown command '${command}'`);
-						this.logInfo(
+						this.logErrorWithoutPrefix(`unknown command '${command}'`);
+						this.logInfoWithoutPrefix(
 							"press 'h' or 'help' to get the list of available commands"
 						);
 					}
@@ -746,7 +792,7 @@ export class TerminalServer {
 	}
 
 	private openTerminal(): void {
-		this.logInfo('\n[opening Node REPL Terminal...]');
+		this.logInfo('opening Node REPL Terminal...');
 
 		const terminal = repl.start({
 			input: this.#socket,
@@ -762,7 +808,7 @@ export class TerminalServer {
 		this.#isTerminalOpen = true;
 
 		terminal.on('exit', () => {
-			this.logInfo('\n[exiting Node REPL Terminal...]');
+			this.logInfo('exiting Node REPL Terminal...');
 
 			this.#isTerminalOpen = false;
 
@@ -770,13 +816,37 @@ export class TerminalServer {
 		});
 	}
 
+	private handleSocket(): void {
+		this.#socket.on('close', () => {
+			if (this.#closed) {
+				return;
+			}
+
+			this.close();
+		});
+
+		this.#socket.on('error', error => {
+			logger.warn(`socket error: ${error}`);
+		});
+	}
+
 	private logInfo(msg: string): void {
+		this.#socket.write(`${picocolors.green(`[TerminalServer] ${msg}`)}\n`);
+	}
+
+	private logInfoWithoutPrefix(msg: string): void {
 		this.#socket.write(`${picocolors.green(msg)}\n`);
 	}
 
 	private logError(msg: string): void {
 		this.#socket.write(
-			`${picocolors.red(picocolors.bold('ERROR: '))}${picocolors.red(msg)}\n`
+			`${picocolors.red('[TerminalServer]')} ${picocolors.red(picocolors.bold('ERROR:'))} ${picocolors.red(msg)}\n`
+		);
+	}
+
+	private logErrorWithoutPrefix(msg: string): void {
+		this.#socket.write(
+			`${picocolors.red(picocolors.bold('ERROR:'))} ${picocolors.red(msg)}\n`
 		);
 	}
 }

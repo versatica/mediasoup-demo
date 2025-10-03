@@ -6,5 +6,5 @@
 		"checkJs": true,
 		"noImplicitAny": false
 	},
-	"include": ["config.mjs"]
+	"include": ["connect-terminal.mjs"]
 }

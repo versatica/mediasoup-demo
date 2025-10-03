@@ -30,13 +30,15 @@ async function start(): Promise<void> {
 		handleServer();
 
 		// Start the interactive terminal server.
-		await TerminalServer.start({
+		await TerminalServer.listen({
 			onQuit: exitGracefully,
 		});
 
 		// Start the interactive terminal client if requested.
 		if (process.env['TERMINAL'] === 'true') {
-			await TerminalClient.start();
+			await TerminalClient.connect({
+				onQuit: exitGracefully,
+			});
 		}
 	} catch (error) {
 		logger.error('start() | failed:', error);
@@ -59,14 +61,14 @@ function handleServer(): void {
 function exitGracefully(): void {
 	logger.info('exiting gracefully...');
 
-	TerminalServer.close();
+	TerminalServer.stop();
 	server?.close();
 }
 
 function exitWithError(): void {
 	logger.error('exiting with error...');
 
-	TerminalServer.close();
+	TerminalServer.stop();
 	server?.close();
 
 	process.exit(1);
