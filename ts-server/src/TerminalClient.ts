@@ -10,6 +10,7 @@ const logger = new Logger('TerminalClient');
 export class TerminalClient {
 	readonly #socket: net.Socket;
 	readonly #onQuit?: () => void;
+	#closed: boolean = false;
 
 	static async connect({
 		onQuit,
@@ -37,8 +38,6 @@ export class TerminalClient {
 			};
 
 			socket.on('connect', () => {
-				logInfo('terminal connected');
-
 				socket.removeListener('error', onError);
 
 				resolve();
@@ -59,6 +58,8 @@ export class TerminalClient {
 	}) {
 		logger.debug('constructor()');
 
+		logInfo('terminal connected');
+
 		this.#socket = socket;
 		this.#onQuit = onQuit;
 
@@ -67,6 +68,12 @@ export class TerminalClient {
 
 	close(): void {
 		logger.debug('close()');
+
+		if (this.#closed) {
+			return;
+		}
+
+		this.#closed = true;
 
 		this.#socket.destroy();
 
