@@ -36,8 +36,11 @@ Edit your `config.mjs` file according to your preferences.
 
 ## Running locally
 
-- The `start.sh` script detects the host IP and sets the `MEDIASOUP_LISTEN_IP` environment variable, useful if your `config.mjs` reads it. It also sets `DEBUG` variable to enable **mediasoup** and **mediasoup-demo-server** logs. Then it invokes `npm start`.
-- `start.sh --terminal` runs the server with an internative terminal by running `npm run watch` instead.
+- The `start.sh` script:
+  - It detects the host IP and sets the `MEDIASOUP_LISTEN_IP` environment variable, useful if your `config.mjs` reads it.
+  - It sets the `DEBUG` environment variable to enable **mediasoup** and **mediasoup-demo-server** logs.
+  - It sets `TERMINAL` environment variable if it was called with `--terminal` command line argument. This runs the server with an internative terminal.
+  - Then it invokes `npm run watch` if `WATCH` environment variable is set, or `npm start` otherwise.
 - `watch.sh` script is a shortcut of `start.sh --watch`, useful for development in case you are modifying TypeScript source code.
 - Notice that `start.sh` cannot be called with both `--terminal` and `--watch` command line arguments. Also notice that `watch.sh` cannot be called with `--terminal` command line argument. This is because, when in watch mode, **mediasoup-demo-server** is managed by [nodemon](https://nodemon.io/), which interferes with stdin, making it impossible to launch a terminal in the same process.
 - Additionally you can run `npm start` and `npm run watch` directly.

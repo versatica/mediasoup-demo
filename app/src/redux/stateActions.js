@@ -40,6 +40,13 @@ export const setRoomActiveSpeaker = peerId => {
 	};
 };
 
+export const setRoomSpeakingPeers = peerIds => {
+	return {
+		type: 'SET_ROOM_SPEAKING_PEERS',
+		payload: { peerIds },
+	};
+};
+
 export const setRoomStatsPeerId = peerId => {
 	return {
 		type: 'SET_ROOM_STATS_PEER_ID',

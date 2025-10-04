@@ -95,7 +95,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 
 				const protooTransport = accept();
 
-				room.handleWsConnection(peerId, protooTransport);
+				room.processWsConnection(peerId, protooTransport);
 			} catch (error) {
 				logger.error('Room creation or Room joining failed:', error);
 

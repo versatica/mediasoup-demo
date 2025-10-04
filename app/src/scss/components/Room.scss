@@ -197,8 +197,13 @@
 		transition-property: border-color;
 		transition-duration: 0.2s;
 
-		&.active-speaker {
+		&.speaking:not(.active-speaker) {
 			border-color: #fff;
+		}
+
+		&.active-speaker {
+			border-width: 2px;
+			border-color: yellow;
 		}
 
 		@include mixins.desktop() {

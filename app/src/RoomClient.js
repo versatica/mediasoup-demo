@@ -481,13 +481,6 @@ export default class RoomClient {
 							logger.warn('DataConsumer "close" event');
 
 							this._dataConsumers.delete(dataConsumer.id);
-
-							store.dispatch(
-								requestActions.notify({
-									type: 'error',
-									text: 'DataConsumer closed',
-								})
-							);
 						});
 
 						dataConsumer.on('error', error => {
@@ -778,6 +771,15 @@ export default class RoomClient {
 					const { peerId } = notification.data;
 
 					store.dispatch(stateActions.setRoomActiveSpeaker(peerId));
+
+					break;
+				}
+
+				case 'speakingPeers': {
+					const { peerVolumes } = notification.data;
+					const peerIds = peerVolumes.map(({ peerId }) => peerId);
+
+					store.dispatch(stateActions.setRoomSpeakingPeers(peerIds));
 
 					break;
 				}

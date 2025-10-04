@@ -68,34 +68,38 @@ export type Source = 'audio' | 'video' | 'screensharing';
 
 export type Channel = 'chat' | 'bot';
 
-export type MediasoupWorkerAppData = {
+export type WorkerAppData = {
 	idx: number;
 };
 
-export type MediasoupWebRtcTransportAppData = {
+export type WebRtcTransportAppData = {
 	direction: TransportDirection;
 };
 
-export type MediasoupProducerAppData = {
-	// Optional since it's not sent by client. However it's added in server side
-	// Producer.
-	peerId?: PeerId;
-	source: Source;
-};
-
-export type MediasoupConsumerAppData = {
+export type ProducerAppData = {
 	peerId: PeerId;
 	source: Source;
 };
 
-export type MediasoupDataProducerAppData = {
-	// Optional since it's not sent by client. However it's added in server side
-	// DataProducer.
-	peerId?: PeerId;
+export type PeerProducerAppData = {
+	source: Source;
+};
+
+export type ConsumerAppData = {
+	peerId: PeerId;
+	source: Source;
+};
+
+export type DataProducerAppData = {
+	peerId: PeerId;
 	channel: Channel;
 };
 
-export type MediasoupDataConsumerAppData = {
+export type PeerDataProducerAppData = {
+	channel: Channel;
+};
+
+export type DataConsumerAppData = {
 	// Unset in Bot.
 	peerId?: PeerId;
 	channel: Channel;

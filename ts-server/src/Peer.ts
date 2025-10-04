@@ -20,11 +20,11 @@ import type {
 	SerializedPeer,
 	TransportDirection,
 	Channel,
-	MediasoupWebRtcTransportAppData,
-	MediasoupProducerAppData,
-	MediasoupConsumerAppData,
-	MediasoupDataProducerAppData,
-	MediasoupDataConsumerAppData,
+	WebRtcTransportAppData,
+	ProducerAppData,
+	ConsumerAppData,
+	DataProducerAppData,
+	DataConsumerAppData,
 } from './types';
 
 const JOIN_TIMEOUT_MS = 10000;
@@ -77,21 +77,19 @@ export type PeerEvents = {
 			forceTcp?: boolean;
 		},
 		resolve: (
-			transport: mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>
+			transport: mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>
 		) => void,
 		reject: (error: Error) => void,
 	];
 	/**
 	 * Emitted when the Peer creates a Producer.
 	 */
-	'new-producer': [
-		{ producer: mediasoupTypes.Producer<MediasoupProducerAppData> },
-	];
+	'new-producer': [{ producer: mediasoupTypes.Producer<ProducerAppData> }];
 	/**
 	 * Emitted when the Peer creates a DataProducer.
 	 */
 	'new-data-producer': [
-		{ dataProducer: mediasoupTypes.DataProducer<MediasoupDataProducerAppData> },
+		{ dataProducer: mediasoupTypes.DataProducer<DataProducerAppData> },
 	];
 	/**
 	 * Emitted to know whether the Peer can consume a given Producer.
@@ -119,17 +117,15 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	#device?: PeerDevice;
 	#rtpCapabilities?: mediasoupTypes.RtpCapabilities;
 	#sctpCapabilities?: mediasoupTypes.SctpCapabilities;
-	#producerTransport?: mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>;
-	#consumerTransport?: mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>;
-	#producers: Map<string, mediasoupTypes.Producer<MediasoupProducerAppData>> =
-		new Map();
-	#consumers: Map<string, mediasoupTypes.Consumer<MediasoupConsumerAppData>> =
-		new Map();
-	#chatDataProducer?: mediasoupTypes.DataProducer<MediasoupDataProducerAppData>;
-	#botDataProducer?: mediasoupTypes.DataProducer<MediasoupDataProducerAppData>;
+	#producerTransport?: mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>;
+	#consumerTransport?: mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>;
+	#producers: Map<string, mediasoupTypes.Producer<ProducerAppData>> = new Map();
+	#consumers: Map<string, mediasoupTypes.Consumer<ConsumerAppData>> = new Map();
+	#chatDataProducer?: mediasoupTypes.DataProducer<DataProducerAppData>;
+	#botDataProducer?: mediasoupTypes.DataProducer<DataProducerAppData>;
 	#dataConsumers: Map<
 		string,
-		mediasoupTypes.DataConsumer<MediasoupDataConsumerAppData>
+		mediasoupTypes.DataConsumer<DataConsumerAppData>
 	> = new Map();
 	#closed: boolean = false;
 
@@ -177,6 +173,8 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 		this.#closed = true;
 
+		this.#producerTransport?.close();
+		this.#consumerTransport?.close();
 		this.#protooPeer.close();
 
 		clearTimeout(this.#joinTimer);
@@ -194,7 +192,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		};
 	}
 
-	getProducers(): mediasoupTypes.Producer<MediasoupProducerAppData>[] {
+	getProducers(): mediasoupTypes.Producer<ProducerAppData>[] {
 		return Array.from(this.#producers.values());
 	}
 
@@ -202,7 +200,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		channel,
 	}: {
 		channel: Channel;
-	}): mediasoupTypes.DataProducer<MediasoupDataProducerAppData> | undefined {
+	}): mediasoupTypes.DataProducer<DataProducerAppData> | undefined {
 		switch (channel) {
 			case 'chat': {
 				return this.#chatDataProducer;
@@ -218,7 +216,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		producer,
 		consumerReplicas,
 	}: {
-		producer: mediasoupTypes.Producer<MediasoupProducerAppData>;
+		producer: mediasoupTypes.Producer<ProducerAppData>;
 		consumerReplicas: number;
 	}): Promise<void> {
 		let canConsume = false;
@@ -245,11 +243,11 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			promises.push(
 				// eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
 				new Promise<void>(async resolve => {
-					let consumer: mediasoupTypes.Consumer<MediasoupConsumerAppData>;
+					let consumer: mediasoupTypes.Consumer<ConsumerAppData>;
 
 					try {
 						// Create the Consumer in paused mode.
-						consumer = await transport.consume<MediasoupConsumerAppData>({
+						consumer = await transport.consume<ConsumerAppData>({
 							producerId: producer.id,
 							rtpCapabilities: this.#rtpCapabilities!,
 							// Enable NACK for video and OPUS audio.
@@ -257,7 +255,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 							paused: true,
 							ignoreDtx: true,
 							appData: {
-								peerId: producer.appData.peerId!,
+								peerId: producer.appData.peerId,
 								source: producer.appData.source,
 							},
 						});
@@ -277,7 +275,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 					try {
 						await this.request('newConsumer', {
-							peerId: producer.appData.peerId!,
+							peerId: producer.appData.peerId,
 							consumerId: consumer.id,
 							producerId: producer.id,
 							kind: consumer.kind,
@@ -315,7 +313,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	async consumeData({
 		dataProducer,
 	}: {
-		dataProducer: mediasoupTypes.DataProducer<MediasoupDataProducerAppData>;
+		dataProducer: mediasoupTypes.DataProducer<DataProducerAppData>;
 	}): Promise<void> {
 		const canConsume = Boolean(this.#sctpCapabilities);
 
@@ -327,13 +325,13 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			direction: 'consumer',
 		});
 
-		let dataConsumer: mediasoupTypes.DataConsumer<MediasoupDataConsumerAppData>;
+		let dataConsumer: mediasoupTypes.DataConsumer<DataConsumerAppData>;
 
 		try {
-			dataConsumer = await transport.consumeData<MediasoupDataConsumerAppData>({
+			dataConsumer = await transport.consumeData<DataConsumerAppData>({
 				dataProducerId: dataProducer.id,
 				appData: {
-					peerId: dataProducer.appData.peerId!,
+					peerId: dataProducer.appData.peerId,
 					channel: dataProducer.appData.channel,
 				},
 			});
@@ -417,7 +415,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		direction,
 	}: {
 		direction: TransportDirection;
-	}): mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData> {
+	}): mediasoupTypes.WebRtcTransport<WebRtcTransportAppData> {
 		switch (direction) {
 			case 'producer': {
 				if (!this.#producerTransport) {
@@ -445,7 +443,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		producerId,
 	}: {
 		producerId: string;
-	}): mediasoupTypes.Producer<MediasoupProducerAppData> {
+	}): mediasoupTypes.Producer<ProducerAppData> {
 		const producer = this.#producers.get(producerId);
 
 		if (!producer) {
@@ -459,7 +457,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		consumerId,
 	}: {
 		consumerId: string;
-	}): mediasoupTypes.Consumer<MediasoupConsumerAppData> {
+	}): mediasoupTypes.Consumer<ConsumerAppData> {
 		const consumer = this.#consumers.get(consumerId);
 
 		if (!consumer) {
@@ -473,7 +471,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		channel,
 	}: {
 		channel: Channel;
-	}): mediasoupTypes.DataProducer<MediasoupDataProducerAppData> {
+	}): mediasoupTypes.DataProducer<DataProducerAppData> {
 		switch (channel) {
 			case 'chat': {
 				if (!this.#chatDataProducer) {
@@ -501,7 +499,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		dataConsumerId,
 	}: {
 		dataConsumerId: string;
-	}): mediasoupTypes.DataConsumer<MediasoupDataConsumerAppData> {
+	}): mediasoupTypes.DataConsumer<DataConsumerAppData> {
 		const dataConsumer = this.#dataConsumers.get(dataConsumerId);
 
 		if (!dataConsumer) {
@@ -724,7 +722,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				}
 
 				const transport = await new Promise<
-					mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>
+					mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>
 					// eslint-disable-next-line no-shadow
 				>((resolve, reject) => {
 					this.emit(
@@ -791,13 +789,12 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 					direction: 'producer',
 				});
 
-				const producer = await transport.produce<MediasoupProducerAppData>({
+				const producer = await transport.produce<ProducerAppData>({
 					kind,
 					rtpParameters,
 					appData: {
-						...appData,
-						// NOTE: We must add our PeerId.
 						peerId: this.id,
+						source: appData.source,
 					},
 				});
 
@@ -843,17 +840,15 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 					direction: 'producer',
 				});
 
-				const dataProducer =
-					await transport.produceData<MediasoupDataProducerAppData>({
-						sctpStreamParameters,
-						label,
-						protocol,
-						appData: {
-							...appData,
-							// NOTE: We must add our PeerId.
-							peerId: this.id,
-						},
-					});
+				const dataProducer = await transport.produceData<DataProducerAppData>({
+					sctpStreamParameters,
+					label,
+					protocol,
+					appData: {
+						peerId: this.id,
+						channel: appData.channel,
+					},
+				});
 
 				switch (channel) {
 					case 'chat': {
@@ -873,8 +868,6 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				this.emit('new-data-producer', { dataProducer });
 
 				accept({ dataProducerId: dataProducer.id });
-
-				// TODO
 
 				break;
 			}
@@ -939,7 +932,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	}
 
 	handleTransport(
-		transport: mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>
+		transport: mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>
 	): void {
 		const { direction } = transport.appData;
 
@@ -968,9 +961,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		});
 	}
 
-	handleProducer(
-		producer: mediasoupTypes.Producer<MediasoupProducerAppData>
-	): void {
+	handleProducer(producer: mediasoupTypes.Producer<ProducerAppData>): void {
 		producer.observer.on('close', () => {
 			this.#producers.delete(producer.id);
 		});
@@ -988,9 +979,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		});
 	}
 
-	handleConsumer(
-		consumer: mediasoupTypes.Consumer<MediasoupConsumerAppData>
-	): void {
+	handleConsumer(consumer: mediasoupTypes.Consumer<ConsumerAppData>): void {
 		consumer.observer.on('close', () => {
 			this.#consumers.delete(consumer.id);
 		});
@@ -1020,7 +1009,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	}
 
 	handleDataProducer(
-		dataProducer: mediasoupTypes.DataProducer<MediasoupDataProducerAppData>
+		dataProducer: mediasoupTypes.DataProducer<DataProducerAppData>
 	): void {
 		dataProducer.observer.on('close', () => {
 			switch (dataProducer.appData.channel) {
@@ -1040,7 +1029,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	}
 
 	handleDataConsumer(
-		dataConsumer: mediasoupTypes.DataConsumer<MediasoupDataConsumerAppData>
+		dataConsumer: mediasoupTypes.DataConsumer<DataConsumerAppData>
 	): void {
 		dataConsumer.observer.on('close', () => {
 			this.#dataConsumers.delete(dataConsumer.id);

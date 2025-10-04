@@ -10,7 +10,8 @@ import type {
 	Config,
 	RoomId,
 	PeerId,
-	MediasoupWebRtcTransportAppData,
+	WebRtcTransportAppData,
+	ProducerAppData,
 } from './types';
 
 const staticLogger = new Logger('Room');
@@ -30,6 +31,8 @@ type RoomConstructorOptions = {
 	config: Config;
 	mediasoupRouter: mediasoupTypes.Router;
 	mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
+	mediasoupAudioLevelObserver: mediasoupTypes.AudioLevelObserver;
+	mediasoupActiveSpeakerObserver: mediasoupTypes.ActiveSpeakerObserver;
 	protooRoom: protooTypes.Room;
 };
 
@@ -47,12 +50,13 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #config: Config;
 	readonly #mediasoupRouter: mediasoupTypes.Router;
 	readonly #mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
+	readonly #mediasoupAudioLevelObserver: mediasoupTypes.AudioLevelObserver;
+	readonly #mediasoupActiveSpeakerObserver: mediasoupTypes.ActiveSpeakerObserver;
 	readonly #protooRoom: protooTypes.Room;
 	readonly #joiningPeers: Map<string, Peer> = new Map();
 	readonly #peers: Map<string, Peer> = new Map();
 	#closed: boolean = false;
 
-	// eslint-disable-next-line @typescript-eslint/require-await
 	static async create({
 		roomId,
 		consumerReplicas,
@@ -63,6 +67,14 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		staticLogger.debug('create() [roomId:%o]', roomId);
 
 		const logger = new Logger(`[roomId:${roomId}]`, staticLogger);
+		const mediasoupAudioLevelObserver =
+			await mediasoupRouter.createAudioLevelObserver({
+				maxEntries: 10,
+				threshold: -80,
+				interval: 800,
+			});
+		const mediasoupActiveSpeakerObserver =
+			await mediasoupRouter.createActiveSpeakerObserver();
 		const protooRoom = new protoo.Room();
 		const room = new Room({
 			logger,
@@ -71,6 +83,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			config,
 			mediasoupRouter,
 			mediasoupWebRtcServer,
+			mediasoupAudioLevelObserver,
+			mediasoupActiveSpeakerObserver,
 			protooRoom,
 		});
 
@@ -84,6 +98,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		config,
 		mediasoupRouter,
 		mediasoupWebRtcServer,
+		mediasoupAudioLevelObserver,
+		mediasoupActiveSpeakerObserver,
 		protooRoom,
 	}: RoomConstructorOptions) {
 		super();
@@ -97,7 +113,12 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#config = config;
 		this.#mediasoupRouter = mediasoupRouter;
 		this.#mediasoupWebRtcServer = mediasoupWebRtcServer;
+		this.#mediasoupAudioLevelObserver = mediasoupAudioLevelObserver;
+		this.#mediasoupActiveSpeakerObserver = mediasoupActiveSpeakerObserver;
 		this.#protooRoom = protooRoom;
+
+		this.handleMediasoupAudioLevelObserver();
+		this.handleMediasoupActiveSpeakerObserver();
 	}
 
 	get id(): RoomId {
@@ -132,17 +153,17 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		return this.#mediasoupRouter.rtpCapabilities;
 	}
 
-	handleWsConnection(
+	processWsConnection(
 		peerId: PeerId,
 		protooTransport: protooTypes.WebSocketTransport
 	): void {
-		this.#logger.debug('handleWsConnection() [peerId:%o]', peerId);
+		this.#logger.debug('processWsConnection() [peerId:%o]', peerId);
 
 		const existingPeer = this.#peers.get(peerId);
 
 		if (existingPeer) {
 			this.#logger.warn(
-				'handleWsConnection() | there is already a Peer with same peerId, closing it [peerId:%o]',
+				'processWsConnection() | there is already a Peer with same peerId, closing it [peerId:%o]',
 				peerId
 			);
 
@@ -153,7 +174,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		if (existingJoiningPeer) {
 			this.#logger.warn(
-				'handleWsConnection() | there is already a joining Peer with same peerId, closing it [peerId:%o]',
+				'processWsConnection() | there is already a joining Peer with same peerId, closing it [peerId:%o]',
 				peerId
 			);
 
@@ -161,7 +182,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		}
 
 		this.#logger.debug(
-			'handleWsConnection() | creating a new Peer [peerId:%o]',
+			'processWsConnection() | creating a new Peer [peerId:%o]',
 			peerId
 		);
 
@@ -254,7 +275,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			async ({ direction, sctpCapabilities, forceTcp }, resolve, reject) => {
 				try {
 					const transport =
-						await this.#mediasoupRouter.createWebRtcTransport<MediasoupWebRtcTransportAppData>(
+						await this.#mediasoupRouter.createWebRtcTransport<WebRtcTransportAppData>(
 							{
 								...clone(this.#config.mediasoup.webRtcTransportOptions),
 								enableUdp: !forceTcp,
@@ -295,7 +316,15 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				});
 			}
 
-			// TODO: Active speaker stuff.
+			if (producer.kind === 'audio') {
+				this.#mediasoupAudioLevelObserver
+					.addProducer({ producerId: producer.id })
+					.catch(() => {});
+
+				this.#mediasoupActiveSpeakerObserver
+					.addProducer({ producerId: producer.id })
+					.catch(() => {});
+			}
 		});
 
 		peer.on('new-data-producer', ({ dataProducer }) => {
@@ -342,5 +371,46 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				});
 			}
 		});
+	}
+
+	private handleMediasoupAudioLevelObserver(): void {
+		this.#mediasoupAudioLevelObserver.on('volumes', volumes => {
+			const allPeers = this.getAllPeers();
+			const peerVolumes = volumes.map(({ producer, volume }) => {
+				const { peerId } = producer.appData as ProducerAppData;
+
+				return {
+					peerId,
+					volume,
+				};
+			});
+
+			for (const peer of allPeers) {
+				peer.notify('speakingPeers', { peerVolumes });
+			}
+		});
+
+		this.#mediasoupAudioLevelObserver.on('silence', () => {
+			const allPeers = this.getAllPeers();
+
+			for (const peer of allPeers) {
+				peer.notify('speakingPeers', { peerVolumes: [] });
+				peer.notify('activeSpeaker', { peerId: undefined });
+			}
+		});
+	}
+
+	private handleMediasoupActiveSpeakerObserver(): void {
+		this.#mediasoupActiveSpeakerObserver.on(
+			'dominantspeaker',
+			({ producer }) => {
+				const { peerId } = producer.appData as ProducerAppData;
+				const allPeers = this.getAllPeers();
+
+				for (const peer of allPeers) {
+					peer.notify('activeSpeaker', { peerId });
+				}
+			}
+		);
 	}
 }

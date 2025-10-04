@@ -7,10 +7,10 @@ import type {
 	SerializedPeer,
 	TransportDirection,
 	Channel,
-	MediasoupProducerAppData,
-	MediasoupConsumerAppData,
-	MediasoupDataProducerAppData,
-	MediasoupDataConsumerAppData,
+	PeerProducerAppData,
+	ConsumerAppData,
+	PeerDataProducerAppData,
+	DataConsumerAppData,
 } from '../types';
 
 type NotificationNameDataMap<U extends { name: string }> = {
@@ -157,7 +157,7 @@ type RequestFromClient =
 			data: {
 				kind: mediasoupTypes.MediaKind;
 				rtpParameters: mediasoupTypes.RtpParameters;
-				appData: MediasoupProducerAppData;
+				appData: PeerProducerAppData;
 			};
 			responseData: { producerId: string };
 	  }
@@ -167,7 +167,7 @@ type RequestFromClient =
 				sctpStreamParameters: mediasoupTypes.SctpStreamParameters;
 				label: string;
 				protocol: string;
-				appData: MediasoupDataProducerAppData;
+				appData: PeerDataProducerAppData;
 			};
 			responseData: { dataProducerId: string };
 	  }
@@ -251,13 +251,6 @@ type NotificationFromServer =
 			};
 	  }
 	| {
-			name: 'activeSpeaker';
-			data: {
-				peerId?: PeerId;
-				volume?: number;
-			};
-	  }
-	| {
 			name: 'producerScore';
 			data: {
 				producerId: string;
@@ -265,10 +258,18 @@ type NotificationFromServer =
 			};
 	  }
 	| {
+			name: 'speakingPeers';
+			data: {
+				peerVolumes: {
+					peerId: PeerId;
+					volume: number;
+				}[];
+			};
+	  }
+	| {
 			name: 'activeSpeaker';
 			data: {
 				peerId?: PeerId;
-				volume?: number;
 			};
 	  }
 	| {
@@ -332,7 +333,7 @@ type RequestFromServer =
 				type: mediasoupTypes.ConsumerType;
 				producerPaused: boolean;
 				consumerScore: mediasoupTypes.ConsumerScore;
-				appData: MediasoupConsumerAppData;
+				appData: ConsumerAppData;
 			};
 	  }
 	| {
@@ -345,7 +346,7 @@ type RequestFromServer =
 				sctpStreamParameters: mediasoupTypes.SctpStreamParameters;
 				label: string;
 				protocol: string;
-				appData: MediasoupDataConsumerAppData;
+				appData: DataConsumerAppData;
 			};
 	  };
 

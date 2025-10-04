@@ -17,8 +17,14 @@ import NetworkThrottle from './NetworkThrottle';
 
 class Room extends React.Component {
 	render() {
-		const { roomClient, room, me, amActiveSpeaker, onRoomLinkCopy } =
-			this.props;
+		const {
+			roomClient,
+			room,
+			me,
+			amActiveSpeaker,
+			amSpeakingPeer,
+			onRoomLinkCopy,
+		} = this.props;
 
 		const mediasoupClientVersion =
 			room.mediasoupClientVersion === '__MEDIASOUP_CLIENT_VERSION__'
@@ -85,6 +91,7 @@ class Room extends React.Component {
 					<div
 						className={classnames('me-container', {
 							'active-speaker': amActiveSpeaker,
+							speaking: amSpeakingPeer,
 						})}
 					>
 						<Me />
@@ -159,6 +166,7 @@ Room.propTypes = {
 	room: appPropTypes.Room.isRequired,
 	me: appPropTypes.Me.isRequired,
 	amActiveSpeaker: PropTypes.bool.isRequired,
+	amSpeakingPeer: PropTypes.bool.isRequired,
 	onRoomLinkCopy: PropTypes.func.isRequired,
 };
 
@@ -167,6 +175,7 @@ const mapStateToProps = state => {
 		room: state.room,
 		me: state.me,
 		amActiveSpeaker: state.me.id === state.room.activeSpeakerId,
+		amSpeakingPeer: state.room.speakingPeerIds.includes(state.me.id),
 	};
 };
 
