@@ -68,6 +68,12 @@ export class Bot {
 		dataProducer: mediasoupTypes.DataProducer<DataProducerAppData>;
 		peer: Peer;
 	}): Promise<void> {
+		logger.debug(
+			'consumeData() [dataProducerId:%o, peerId:%o]',
+			dataProducer.id,
+			peer.id
+		);
+
 		const dataConsumer =
 			await this.#directTransport.consumeData<DataConsumerAppData>({
 				dataProducerId: dataProducer.id,

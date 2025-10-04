@@ -240,6 +240,8 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		producer: mediasoupTypes.Producer<ProducerAppData>;
 		consumerReplicas: number;
 	}): Promise<void> {
+		this.#logger.debug('consume() [producerId:%o]', producer.id);
+
 		let canConsume = false;
 
 		this.emit(
@@ -338,6 +340,8 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			DataProducerAppData | BotDataProducerAppData
 		>;
 	}): Promise<void> {
+		this.#logger.debug('consumeData() [dataProducerId:%o]', dataProducer.id);
+
 		const canConsume = Boolean(this.#sctpCapabilities);
 
 		if (!canConsume) {
