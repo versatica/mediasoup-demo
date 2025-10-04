@@ -12,3 +12,7 @@ export function getDebug(): string | undefined {
 export function getTerminal(): boolean {
 	return process.env['TERMINAL'] === 'true';
 }
+
+export function getNetworkThrottleSecret(): string | undefined {
+	return process.env['NETWORK_THROTTLE_SECRET'];
+}

@@ -12,3 +12,18 @@ export class InvalidStateError extends Error {
 		}
 	}
 }
+
+export class UnauthorizedError extends Error {
+	constructor(message: string) {
+		super(message);
+
+		this.name = 'UnauthorizedError';
+
+		if (Error.hasOwnProperty('captureStackTrace')) {
+			// Just in V8.
+			Error.captureStackTrace(this, UnauthorizedError);
+		} else {
+			this.stack = new Error(message).stack;
+		}
+	}
+}

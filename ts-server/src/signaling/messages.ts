@@ -11,6 +11,7 @@ import type {
 	ConsumerAppData,
 	PeerDataProducerAppData,
 	DataConsumerAppData,
+	NetworkThrottleOptions,
 } from '../types';
 
 type NotificationNameDataMap<U extends { name: string }> = {
@@ -195,6 +196,21 @@ type RequestFromClient =
 			name: 'getDataConsumerStats';
 			data: { dataConsumerId: string };
 			responseData: { stats: mediasoupTypes.DataConsumerStat[] };
+	  }
+	| {
+			// TODO: TBD.
+			name: 'applyNetworkThrottle';
+			data: {
+				secret: string;
+				options: NetworkThrottleOptions;
+			};
+	  }
+	| {
+			// TODO: TBD.
+			name: 'resetNetworkThrottle';
+			data: {
+				secret: string;
+			};
 	  };
 
 export type RequestNameFromClient = keyof RequestNameDataMap<RequestFromClient>;

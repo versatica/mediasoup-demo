@@ -23,6 +23,10 @@ async function start(): Promise<void> {
 	try {
 		logger.info('start() | debug: %o', envs.getDebug());
 		logger.info('start() | terminal: %o', envs.getTerminal());
+		logger.info(
+			'start() | network throttle secret: %o',
+			envs.getNetworkThrottleSecret() ? '********' : undefined
+		);
 		logger.info('start() | config file: %o', envs.getConfigFile());
 
 		const config = await getConfig();
@@ -42,7 +46,10 @@ async function start(): Promise<void> {
 			},
 		});
 
-		server = await Server.create({ config });
+		server = await Server.create({
+			config,
+			networkThrottleSecret: envs.getNetworkThrottleSecret(),
+		});
 
 		logger.info('start() | server started');
 

@@ -4,7 +4,7 @@
 - Delete `TODO.md`.
 - `ApiServer` and adapt broadcaster scripts.
 - Aiortc client. Upps.
-- Throttle stuff. Really?
+- Throttle stuff.
 - Logging of `worker.getResourceUsage()` stuff.
 - CI stuff.
 - `npm run release` stuff. Really?

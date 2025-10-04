@@ -26,6 +26,7 @@ import type {
 	DataProducerAppData,
 	BotDataProducerAppData,
 	DataConsumerAppData,
+	NetworkThrottleOptions,
 } from './types';
 
 const JOIN_TIMEOUT_MS = 10000;
@@ -108,6 +109,27 @@ export type PeerEvents = {
 	 * Emitted when Peer changes their display name.
 	 */
 	'display-name-changed': [{ displayName: string; oldDisplayName: string }];
+	/**
+	 * Emitted to apply network throttle.
+	 */
+	'apply-network-throttle': [
+		{
+			secret: string;
+			options: NetworkThrottleOptions;
+		},
+		resolve: () => void,
+		reject: (error: Error) => void,
+	];
+	/**
+	 * Emitted to reset network throttle.
+	 */
+	'reset-network-throttle': [
+		{
+			secret: string;
+		},
+		resolve: () => void,
+		reject: (error: Error) => void,
+	];
 };
 
 export class Peer extends EnhancedEventEmitter<PeerEvents> {
@@ -433,13 +455,13 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 	private assertNotClosed(): void {
 		if (this.#closed) {
-			throw new InvalidStateError('closed');
+			throw new InvalidStateError('Peer closed');
 		}
 	}
 
 	private assertJoined(): void {
 		if (!this.#joined) {
-			throw new InvalidStateError('not joined');
+			throw new InvalidStateError('Peer not joined');
 		}
 	}
 
@@ -706,7 +728,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 			case 'join': {
 				if (this.#joined) {
-					throw new InvalidStateError('already joined');
+					throw new InvalidStateError('Peer already joined');
 				}
 
 				this.#joined = true;
@@ -950,6 +972,27 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				const stats = await dataConsumer.getStats();
 
 				accept({ stats });
+
+				break;
+			}
+
+			case 'applyNetworkThrottle': {
+				const { secret, options } = data;
+
+				this.emit(
+					'apply-network-throttle',
+					{ secret, options },
+					accept,
+					reject
+				);
+
+				break;
+			}
+
+			case 'resetNetworkThrottle': {
+				const { secret } = data;
+
+				this.emit('reset-network-throttle', { secret }, accept, reject);
 
 				break;
 			}

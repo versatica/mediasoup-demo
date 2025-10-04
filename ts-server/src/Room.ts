@@ -14,6 +14,7 @@ import type {
 	SerializedRoom,
 	WebRtcTransportAppData,
 	ProducerAppData,
+	NetworkThrottleOptions,
 } from './types';
 
 const staticLogger = new Logger('Room');
@@ -48,6 +49,27 @@ export type RoomEvents = {
 	 * Emitted when a new Peer is created.
 	 */
 	'new-peer': [Peer];
+	/**
+	 * Emitted to apply network throttle.
+	 */
+	'apply-network-throttle': [
+		{
+			secret: string;
+			options: NetworkThrottleOptions;
+		},
+		resolve: () => void,
+		reject: (error: Error) => void,
+	];
+	/**
+	 * Emitted to reset network throttle.
+	 */
+	'reset-network-throttle': [
+		{
+			secret: string;
+		},
+		resolve: () => void,
+		reject: (error: Error) => void,
+	];
 };
 
 export class Room extends EnhancedEventEmitter<RoomEvents> {
@@ -403,6 +425,22 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					oldDisplayName,
 				});
 			}
+		});
+
+		peer.on(
+			'apply-network-throttle',
+			({ secret, options }, resolve, reject) => {
+				this.emit(
+					'apply-network-throttle',
+					{ secret, options },
+					resolve,
+					reject
+				);
+			}
+		);
+
+		peer.on('reset-network-throttle', ({ secret }, resolve, reject) => {
+			this.emit('reset-network-throttle', { secret }, resolve, reject);
 		});
 	}
 

@@ -11,18 +11,25 @@ import { EnhancedEventEmitter } from './enhancedEvents';
 import { WsServer } from './WsServer';
 import { ApiServer } from './ApiServer';
 import { Room } from './Room';
-import { InvalidStateError } from './errors';
+import { InvalidStateError, UnauthorizedError } from './errors';
 import { clone } from './utils';
-import type { Config, RoomId, WorkerAppData } from './types';
+import type {
+	Config,
+	RoomId,
+	WorkerAppData,
+	NetworkThrottleOptions,
+} from './types';
 
 const logger = new Logger('Server');
 
 export type ServerCreateOptions = {
 	config: Config;
+	networkThrottleSecret?: string;
 };
 
 type ServerConstructorOptions = {
 	config: Config;
+	networkThrottleSecret?: string;
 	mediasoupWorkersAndWebRtcServers: MediasoupWorkersAndWebRtcServers;
 	httpServer: https.Server | http.Server;
 	wsServer: WsServer;
@@ -64,6 +71,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		new EnhancedEventEmitter();
 
 	readonly #config: Config;
+	readonly #networkThrottleSecret?: string;
 	readonly #roomCreationAwaitQueue: AwaitQueue = new AwaitQueue();
 	readonly #rooms: Map<string, Room> = new Map();
 	readonly #httpServer: https.Server | http.Server;
@@ -75,7 +83,10 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	#nextMediasoupWorkerIdx: number = 0;
 	#closed: boolean = false;
 
-	static async create({ config }: ServerCreateOptions): Promise<Server> {
+	static async create({
+		config,
+		networkThrottleSecret,
+	}: ServerCreateOptions): Promise<Server> {
 		logger.debug('create()');
 
 		const mediasoupWorkersAndWebRtcServers =
@@ -85,6 +96,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		const apiServer = ApiServer.create({});
 		const server = new Server({
 			config,
+			networkThrottleSecret,
 			mediasoupWorkersAndWebRtcServers,
 			httpServer,
 			wsServer,
@@ -193,6 +205,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 
 	private constructor({
 		config,
+		networkThrottleSecret,
 		mediasoupWorkersAndWebRtcServers,
 		httpServer,
 		wsServer,
@@ -203,6 +216,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		logger.debug('constructor()');
 
 		this.#config = config;
+		this.#networkThrottleSecret = networkThrottleSecret;
 		this.#mediasoupWorkersAndWebRtcServers = mediasoupWorkersAndWebRtcServers;
 		this.#httpServer = httpServer;
 		this.#wsServer = wsServer;
@@ -214,7 +228,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		for (const { worker } of this.#mediasoupWorkersAndWebRtcServers.values()) {
 			if (worker.closed) {
 				throw new InvalidStateError(
-					`mediasoup worker is closed [pid:${worker.pid}, died:${worker.died}]`
+					`mediasoup Worker is closed [pid:${worker.pid}, died:${worker.died}]`
 				);
 			}
 
@@ -324,6 +338,40 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		return { worker, webRtcServer };
 	}
 
+	// eslint-disable-next-line @typescript-eslint/require-await
+	private async applyNetworkThrottle({
+		secret,
+		options,
+	}: {
+		secret: string;
+		options: NetworkThrottleOptions;
+	}): Promise<void> {
+		logger.debug('applyNetworkThrottle() [options:%o]', options);
+
+		if (!secret || secret !== this.#networkThrottleSecret) {
+			throw new UnauthorizedError('GO TO HELL 🖕🏼');
+		}
+
+		// TODO: Not implemented yet.
+		throw new Error('network throttle not implemented yet');
+	}
+
+	// eslint-disable-next-line @typescript-eslint/require-await
+	private async resetNetworkThrottle({
+		secret,
+	}: {
+		secret: string;
+	}): Promise<void> {
+		logger.debug('resetNetworkThrottle()');
+
+		if (!secret || secret !== this.#networkThrottleSecret) {
+			throw new UnauthorizedError('GO TO HELL 🖕🏼');
+		}
+
+		// TODO: Not implemented yet.
+		throw new Error('network throttle not implemented yet');
+	}
+
 	private handleMediasoupWorker(
 		worker: mediasoupTypes.Worker<WorkerAppData>
 	): void {
@@ -389,6 +437,19 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	private handleRoom(room: Room): void {
 		room.on('closed', () => {
 			this.#rooms.delete(room.id);
+		});
+
+		room.on(
+			'apply-network-throttle',
+			({ secret, options }, resolve, reject) => {
+				this.applyNetworkThrottle({ secret, options })
+					.then(resolve)
+					.catch(reject);
+			}
+		);
+
+		room.on('reset-network-throttle', ({ secret }, resolve, reject) => {
+			this.resetNetworkThrottle({ secret }).then(resolve).catch(reject);
 		});
 	}
 }
