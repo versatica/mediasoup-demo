@@ -14,6 +14,6 @@ export function clone<T>(value: T): T {
 	}
 }
 
-export function assertUnreachable(value: never): never {
-	throw new Error(`didn't expect to get here, value: ${value}`);
+export function assertUnreachable(key: string, value: never): never {
+	throw new TypeError(`invalid ${key}: ${value}`);
 }

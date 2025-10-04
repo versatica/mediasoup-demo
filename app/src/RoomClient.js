@@ -352,6 +352,7 @@ export default class RoomClient {
 						rtpParameters,
 						type,
 						producerPaused,
+						consumerScore,
 						appData,
 					} = request.data;
 
@@ -403,6 +404,10 @@ export default class RoomClient {
 								},
 								peerId
 							)
+						);
+
+						store.dispatch(
+							stateActions.setConsumerScore(consumerId, consumerScore)
 						);
 
 						// We are ready. Answer the protoo request so the server will
@@ -1919,7 +1924,7 @@ export default class RoomClient {
 		if (!dataProducer) return;
 
 		const { stats } = await this._protoo.request('getDataProducerStats', {
-			dataProducerId: dataProducer.id,
+			channel: 'chat',
 		});
 
 		return stats;
@@ -1933,7 +1938,7 @@ export default class RoomClient {
 		if (!dataProducer) return;
 
 		const { stats } = await this._protoo.request('getDataProducerStats', {
-			dataProducerId: dataProducer.id,
+			channel: 'bot',
 		});
 
 		return stats;

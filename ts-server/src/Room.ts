@@ -220,9 +220,20 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 			for (const otherPeer of otherPeers) {
 				otherPeer.notify('newPeer', { peer: peer.serialize() });
-			}
 
-			// TODO: Consume from other Peers.
+				for (const producer of otherPeer.getProducers()) {
+					void peer.consume({
+						producer,
+						consumerReplicas: this.#consumerReplicas,
+					});
+				}
+
+				const chatDataProducer = otherPeer.getDataProducer({ channel: 'chat' });
+
+				if (chatDataProducer) {
+					void peer.consumeData({ dataProducer: chatDataProducer });
+				}
+			}
 		});
 
 		peer.on('disconnected', () => {
@@ -242,24 +253,19 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async ({ direction, sctpCapabilities, forceTcp }, resolve, reject) => {
 				try {
-					const webRtcTransportOptions: mediasoupTypes.WebRtcTransportOptions<MediasoupWebRtcTransportAppData> =
-						{
-							...clone(this.#config.mediasoup.webRtcTransportOptions),
-							webRtcServer: this.#mediasoupWebRtcServer,
-							iceConsentTimeout: 20,
-							enableSctp: Boolean(sctpCapabilities),
-							numSctpStreams: sctpCapabilities?.numStreams,
-							appData: { direction },
-						};
-
-					if (forceTcp) {
-						webRtcTransportOptions.enableUdp = false;
-						webRtcTransportOptions.enableTcp = true;
-					}
-
-					const transport = await this.#mediasoupRouter.createWebRtcTransport(
-						webRtcTransportOptions
-					);
+					const transport =
+						await this.#mediasoupRouter.createWebRtcTransport<MediasoupWebRtcTransportAppData>(
+							{
+								...clone(this.#config.mediasoup.webRtcTransportOptions),
+								enableUdp: !forceTcp,
+								enableTcp: true,
+								webRtcServer: this.#mediasoupWebRtcServer,
+								iceConsentTimeout: 20,
+								enableSctp: Boolean(sctpCapabilities),
+								numSctpStreams: sctpCapabilities?.numStreams,
+								appData: { direction },
+							}
+						);
 
 					const { maxIncomingBitrate } =
 						this.#config.mediasoup.webRtcTransportOptions ?? {};
@@ -290,6 +296,29 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			}
 
 			// TODO: Active speaker stuff.
+		});
+
+		peer.on('new-data-producer', ({ dataProducer }) => {
+			const { channel } = dataProducer.appData;
+			const otherPeers = this.getOtherPeers(peer);
+
+			switch (channel) {
+				case 'chat': {
+					for (const otherPeer of otherPeers) {
+						void otherPeer.consumeData({
+							dataProducer,
+						});
+					}
+
+					break;
+				}
+
+				case 'bot': {
+					// TODO
+
+					break;
+				}
+			}
 		});
 
 		peer.on('get-can-consume', ({ producerId, rtpCapabilities }, callback) => {

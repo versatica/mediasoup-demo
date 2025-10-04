@@ -6,8 +6,11 @@ import type {
 	PeerDevice,
 	SerializedPeer,
 	TransportDirection,
+	Channel,
 	MediasoupProducerAppData,
+	MediasoupConsumerAppData,
 	MediasoupDataProducerAppData,
+	MediasoupDataConsumerAppData,
 } from '../types';
 
 type NotificationNameDataMap<U extends { name: string }> = {
@@ -185,7 +188,7 @@ type RequestFromClient =
 	  }
 	| {
 			name: 'getDataProducerStats';
-			data: { dataProducerId: string };
+			data: { channel: Channel };
 			responseData: { stats: mediasoupTypes.DataProducerStat[] };
 	  }
 	| {
@@ -328,20 +331,21 @@ type RequestFromServer =
 				rtpParameters: mediasoupTypes.RtpParameters;
 				type: mediasoupTypes.ConsumerType;
 				producerPaused: boolean;
-				appData: MediasoupProducerAppData;
+				consumerScore: mediasoupTypes.ConsumerScore;
+				appData: MediasoupConsumerAppData;
 			};
 	  }
 	| {
 			name: 'newDataConsumer';
 			data: {
-				// TODO: This is undefined if it's the Bot.
-				peerId: PeerId;
+				// Optional since it is undefined if it's the Bot.
+				peerId?: PeerId;
 				dataConsumerId: string;
 				dataProducerId: string;
 				sctpStreamParameters: mediasoupTypes.SctpStreamParameters;
 				label: string;
 				protocol: string;
-				appData: MediasoupDataProducerAppData;
+				appData: MediasoupDataConsumerAppData;
 			};
 	  };
 

@@ -77,7 +77,8 @@ export type MediasoupWebRtcTransportAppData = {
 };
 
 export type MediasoupProducerAppData = {
-	// Optional since it's not sent by client.
+	// Optional since it's not sent by client. However it's added in server side
+	// Producer.
 	peerId?: PeerId;
 	source: Source;
 };
@@ -88,7 +89,8 @@ export type MediasoupConsumerAppData = {
 };
 
 export type MediasoupDataProducerAppData = {
-	// Optional since it's not sent by client.
+	// Optional since it's not sent by client. However it's added in server side
+	// DataProducer.
 	peerId?: PeerId;
 	channel: Channel;
 };
