@@ -5,12 +5,10 @@ import * as bodyParser from 'body-parser';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Room } from './Room';
+import { UnauthorizedError, RoomNotFound } from './errors';
 import type { RoomId } from './types';
 
 const logger = new Logger('ApiServer');
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export type ApiServerCreateOptions = {};
 
 type ApiServerConstructorOptions = {
 	expressApp: expressTypes.Express;
@@ -18,12 +16,12 @@ type ApiServerConstructorOptions = {
 
 export type ApiServerEvents = {
 	/**
-	 * Emitted to obtain a Room.
+	 * Emitted to get an existing Room.
 	 */
 	'get-room': [
-		{ roomId: RoomId; consumerReplicas: number },
-		resolve: (room: Room) => void,
-		reject: (error: Error) => void,
+		{ roomId: RoomId },
+		callback: (room: Room) => void,
+		errback: (error: Error) => void,
 	];
 };
 
@@ -34,7 +32,7 @@ interface ApiServerExpressRequest extends expressTypes.Request {
 export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 	readonly #expressApp: expressTypes.Express;
 
-	static create({}: ApiServerCreateOptions): ApiServer {
+	static create(): ApiServer {
 		logger.debug('create()');
 
 		const expressApp = ApiServer.createExpressApp();
@@ -73,23 +71,19 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.param(
 			'roomId',
-			async (req: ApiServerExpressRequest, res, next, roomId) => {
-				try {
-					req.room = await new Promise<Room>((resolve, reject) => {
-						this.emit(
-							'get-room',
-							{ roomId, consumerReplicas: 0 },
-							resolve,
-							reject
-						);
-					});
+			(req: ApiServerExpressRequest, res, next, roomId) => {
+				this.emit(
+					'get-room',
+					{ roomId },
+					room => {
+						req.room = room;
 
-					next();
-				} catch (error) {
-					logger.error('Room creation or Room joining failed:', error);
-
-					next(error);
-				}
+						next();
+					},
+					error => {
+						next(error);
+					}
+				);
 			}
 		);
 
@@ -98,11 +92,11 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 * the Room.
 		 */
 		this.#expressApp.get(
-			'/rooms/:roomId/routerRtpCapabilities',
+			'/rooms/:roomId',
 			(req: ApiServerExpressRequest, res) => {
-				const data = req.room!.getRouterRtpCapabilities();
+				const routerRtpCapabilities = req.room!.getRouterRtpCapabilities();
 
-				res.status(200).json(data);
+				res.status(200).json({ routerRtpCapabilities });
 			}
 		);
 
@@ -364,13 +358,28 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 				next: expressTypes.NextFunction
 			) => {
 				if (error) {
-					logger.warn('Express app error:', error);
+					let status: number;
 
-					error.status =
-						error.status ?? (error.name === 'TypeError' ? 400 : 500);
+					if (error instanceof RoomNotFound) {
+						logger.warn(`Express app error: ${error}`);
+
+						status = error.status;
+					} else if (error instanceof UnauthorizedError) {
+						logger.warn(`Express app error: ${error}`);
+
+						status = error.status;
+					} else if (error instanceof TypeError) {
+						logger.warn('Express app error:', error);
+
+						status = 400;
+					} else {
+						logger.warn('Express app error:', error);
+
+						status = 500;
+					}
 
 					res.statusMessage = error.message;
-					res.status(error.status).send(String(error));
+					res.status(status).send(String(error));
 				} else {
 					next();
 				}

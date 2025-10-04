@@ -21,9 +21,9 @@ type WsServerConstructorOptions = {
 
 export type WsServerEvents = {
 	/**
-	 * Emitted to obtain a Room.
+	 * Emitted to create or get an existing Room.
 	 */
-	'get-room': [
+	'get-or-create-room': [
 		{ roomId: RoomId; consumerReplicas: number },
 		resolve: (room: Room) => void,
 		reject: (error: Error) => void,
@@ -90,7 +90,12 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 			try {
 				// eslint-disable-next-line no-shadow
 				const room = await new Promise<Room>((resolve, reject) => {
-					this.emit('get-room', { roomId, consumerReplicas }, resolve, reject);
+					this.emit(
+						'get-or-create-room',
+						{ roomId, consumerReplicas },
+						resolve,
+						reject
+					);
 				});
 
 				const protooTransport = accept();

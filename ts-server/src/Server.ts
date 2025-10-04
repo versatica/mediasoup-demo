@@ -11,7 +11,7 @@ import { EnhancedEventEmitter } from './enhancedEvents';
 import { WsServer } from './WsServer';
 import { ApiServer } from './ApiServer';
 import { Room } from './Room';
-import { InvalidStateError, UnauthorizedError } from './errors';
+import { InvalidStateError, UnauthorizedError, RoomNotFound } from './errors';
 import { clone } from './utils';
 import type {
 	Config,
@@ -93,7 +93,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			await Server.createMediasoupWorkersAndWebRtcServers(config);
 		const httpServer = await Server.createHttpServer(config);
 		const wsServer = WsServer.create({ httpServer });
-		const apiServer = ApiServer.create({});
+		const apiServer = ApiServer.create();
 		const server = new Server({
 			config,
 			networkThrottleSecret,
@@ -317,7 +317,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			this.emit('new-room', room);
 
 			return room;
-		});
+		}, 'getOrCreateRoom()');
 	}
 
 	private getNextMediasoupWorkerAndWebRtcServer(): {
@@ -414,7 +414,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 
 	private handleWsServer(): void {
 		this.#wsServer.on(
-			'get-room',
+			'get-or-create-room',
 			({ roomId, consumerReplicas }, resolve, reject) => {
 				this.getOrCreateRoom({ roomId, consumerReplicas })
 					.then(resolve)
@@ -424,14 +424,15 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	}
 
 	private handleApiServer(): void {
-		this.#apiServer.on(
-			'get-room',
-			({ roomId, consumerReplicas }, resolve, reject) => {
-				this.getOrCreateRoom({ roomId, consumerReplicas })
-					.then(resolve)
-					.catch(reject);
+		this.#apiServer.on('get-room', ({ roomId }, callback, errback) => {
+			const room = this.#rooms.get(roomId);
+
+			if (room) {
+				callback(room);
+			} else {
+				errback(new RoomNotFound(`room '${roomId}' doesn't exist`));
 			}
-		);
+		});
 	}
 
 	private handleRoom(room: Room): void {
