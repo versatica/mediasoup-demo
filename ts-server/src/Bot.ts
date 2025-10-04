@@ -94,12 +94,6 @@ export class Bot {
 
 			const text = message.toString('utf8');
 
-			logger.debug(
-				'SCTP message received [peerId:%s, size:%d]',
-				peer.id,
-				message.byteLength
-			);
-
 			// Create a message to send it back to all Peers in behalf of the sending
 			// Peer.
 			const messageBack = `${peer.displayName} told me: "${text}"`;
