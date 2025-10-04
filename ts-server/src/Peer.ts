@@ -11,7 +11,7 @@ import {
 	RequestNameFromServer,
 	RequestDataFromServer,
 	RequestResponseDataFromServer,
-} from './signaling/messages';
+} from './signaling/protooMessages';
 import { assertUnreachable } from './utils';
 import { InvalidStateError } from './errors';
 import type {
