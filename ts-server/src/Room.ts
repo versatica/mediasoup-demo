@@ -11,6 +11,7 @@ import type {
 	Config,
 	RoomId,
 	PeerId,
+	SerializedRoom,
 	WebRtcTransportAppData,
 	ProducerAppData,
 } from './types';
@@ -43,6 +44,10 @@ export type RoomEvents = {
 	 * Emitted when the Room is closed no matter how.
 	 */
 	closed: [];
+	/**
+	 * Emitted when a new Peer is created.
+	 */
+	'new-peer': [Peer];
 };
 
 export class Room extends EnhancedEventEmitter<RoomEvents> {
@@ -58,6 +63,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #bot: Bot;
 	readonly #joiningPeers: Map<string, Peer> = new Map();
 	readonly #peers: Map<string, Peer> = new Map();
+	readonly #createdAt: Date;
 	#closed: boolean = false;
 
 	static async create({
@@ -123,6 +129,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#mediasoupActiveSpeakerObserver = mediasoupActiveSpeakerObserver;
 		this.#protooRoom = protooRoom;
 		this.#bot = bot;
+		this.#createdAt = new Date();
 
 		this.handleMediasoupAudioLevelObserver();
 		this.handleMediasoupActiveSpeakerObserver();
@@ -156,14 +163,29 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.emit('closed');
 	}
 
+	serialize(): SerializedRoom {
+		return {
+			roomId: this.#roomId,
+			createdAt: this.#createdAt,
+			numPeers: this.#peers.size,
+			numJoiningPeers: this.#joiningPeers.size,
+			peers: this.getAllPeers().map(peer => peer.serialize()),
+		};
+	}
+
 	getRouterRtpCapabilities(): mediasoupTypes.RouterRtpCapabilities {
 		return this.#mediasoupRouter.rtpCapabilities;
 	}
 
-	processWsConnection(
-		peerId: PeerId,
-		protooTransport: protooTypes.WebSocketTransport
-	): void {
+	processWsConnection({
+		peerId,
+		protooTransport,
+		remoteAddress,
+	}: {
+		peerId: PeerId;
+		protooTransport: protooTypes.WebSocketTransport;
+		remoteAddress?: string;
+	}): void {
 		this.#logger.debug('processWsConnection() [peerId:%o]', peerId);
 
 		const existingPeer = this.#peers.get(peerId);
@@ -194,12 +216,14 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		);
 
 		const protooPeer = this.#protooRoom.createPeer(peerId, protooTransport);
-		const peer = Peer.create({ peerId, protooPeer });
+		const peer = Peer.create({ peerId, protooPeer, remoteAddress });
 
 		// NOTE: The Peer is not yet joined. It will once it sends 'join' request.
 		this.#joiningPeers.set(peer.id, peer);
 
 		this.handlePeer(peer);
+
+		this.emit('new-peer', peer);
 	}
 
 	private mayClose(): void {

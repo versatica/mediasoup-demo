@@ -32,12 +32,6 @@ async function start(): Promise<void> {
 			util.inspect(config, { depth: null, colors: true })
 		);
 
-		server = await Server.create({ config });
-
-		logger.info('start() | server started');
-
-		handleServer();
-
 		// Start the interactive terminal server.
 		await TerminalServer.listen({
 			onQuit: () => {
@@ -47,6 +41,12 @@ async function start(): Promise<void> {
 				exitWithError();
 			},
 		});
+
+		server = await Server.create({ config });
+
+		logger.info('start() | server started');
+
+		handleServer();
 
 		// Start the interactive terminal client if requested.
 		if (envs.getTerminal()) {

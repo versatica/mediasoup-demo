@@ -13,6 +13,9 @@ import pidusage from 'pidusage';
 
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
+import { Server } from './Server';
+import type { Room } from './Room';
+import type { RoomId } from './types';
 
 // We need to expose some globals.
 declare global {
@@ -32,6 +35,7 @@ declare global {
 	var consumer: mediasoupTypes.Consumer | undefined;
 	var dataProducer: mediasoupTypes.DataProducer | undefined;
 	var dataConsumer: mediasoupTypes.DataConsumer | undefined;
+	var rooms: Map<RoomId, Room>;
 }
 
 const SOCKET_PATH_UNIX = '/tmp/mediasoup-demo.sock';
@@ -69,6 +73,8 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 		new Map();
 	static readonly #dataConsumers: Map<string, mediasoupTypes.DataConsumer> =
 		new Map();
+	// Maps to store all Rooms indexed by id.
+	static readonly #rooms: Map<RoomId, Room> = new Map();
 
 	readonly #socket: netTypes.Socket;
 	readonly #onQuit: () => void;
@@ -117,8 +123,10 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 		global.consumers = TerminalServer.#consumers;
 		global.dataProducers = TerminalServer.#dataProducers;
 		global.dataConsumers = TerminalServer.#dataConsumers;
+		global.rooms = TerminalServer.#rooms;
 
 		TerminalServer.runMediasoupObserver();
+		TerminalServer.runServerObserver();
 	}
 
 	static stop(): void {
@@ -247,6 +255,17 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 		});
 	}
 
+	private static runServerObserver(): void {
+		Server.observer.on('new-server', server => {
+			server.on('new-room', room => {
+				TerminalServer.#rooms.set(room.id, room);
+				room.on('closed', () => {
+					TerminalServer.#rooms.delete(room.id);
+				});
+			});
+		});
+	}
+
 	private constructor({
 		socket,
 		onQuit,
@@ -317,7 +336,8 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 					case 'h':
 					case 'help': {
 						this.logInfoWithoutPrefix('available commands:');
-						this.logInfoWithoutPrefix('- h, help: Show this message');
+						this.logInfoWithoutPrefix('- h, help: show this message');
+						this.logInfoWithoutPrefix('- d, dump: show active Rooms');
 						this.logInfoWithoutPrefix(
 							'- usage: show CPU and memory usage of the Node.js and mediasoup-worker processes'
 						);
@@ -373,6 +393,19 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 						);
 
 						readStdin();
+
+						break;
+					}
+
+					case 'd':
+					case 'dump': {
+						for (const room of TerminalServer.#rooms.values()) {
+							const dump = room.serialize();
+
+							this.logInfoWithoutPrefix(
+								`room.dump():\n${JSON.stringify(dump, null, '  ')}`
+							);
+						}
 
 						break;
 					}

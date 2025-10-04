@@ -37,14 +37,32 @@ type MediasoupWorkersAndWebRtcServers = Map<
 	}
 >;
 
+export type ServerObserverEvents = {
+	/**
+	 * Emitted when a new Server is created.
+	 */
+	'new-server': [Server];
+};
+
 export type ServerEvents = {
+	/**
+	 * Emitted when the Server is closed no matter how.
+	 */
+	closed: [];
 	/**
 	 * Emitted when Server dies.
 	 */
 	died: [];
+	/**
+	 * Emitted when a new Room is created.
+	 */
+	'new-room': [Room];
 };
 
 export class Server extends EnhancedEventEmitter<ServerEvents> {
+	public static readonly observer: EnhancedEventEmitter<ServerObserverEvents> =
+		new EnhancedEventEmitter();
+
 	readonly #config: Config;
 	readonly #roomCreationAwaitQueue: AwaitQueue = new AwaitQueue();
 	readonly #rooms: Map<string, Room> = new Map();
@@ -72,6 +90,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			wsServer,
 			apiServer,
 		});
+
+		Server.observer.emit('new-server', server);
 
 		return server;
 	}
@@ -233,6 +253,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		for (const httpConnection of this.#httpConnections) {
 			httpConnection.destroy();
 		}
+
+		this.emit('closed');
 	}
 
 	/**
@@ -277,6 +299,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			this.#rooms.set(room.id, room);
 
 			this.handleRoom(room);
+
+			this.emit('new-room', room);
 
 			return room;
 		});

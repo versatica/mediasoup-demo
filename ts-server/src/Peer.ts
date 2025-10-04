@@ -35,12 +35,14 @@ const staticLogger = new Logger('Peer');
 export type PeerCreateOptions = {
 	peerId: PeerId;
 	protooPeer: protooTypes.Peer;
+	remoteAddress?: string;
 };
 
 type PeerConstructorOptions = {
 	logger: Logger;
 	peerId: PeerId;
 	protooPeer: protooTypes.Peer;
+	remoteAddress?: string;
 };
 
 export type PeerEvents = {
@@ -112,6 +114,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	readonly #logger: Logger;
 	readonly #peerId: PeerId;
 	readonly #protooPeer: protooTypes.Peer;
+	readonly #remoteAddress?: string;
 	readonly #joinTimer: ReturnType<typeof setTimeout>;
 	#joined: boolean = false;
 	#displayName?: string;
@@ -132,16 +135,25 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	> = new Map();
 	#closed: boolean = false;
 
-	static create({ peerId, protooPeer }: PeerCreateOptions): Peer {
+	static create({
+		peerId,
+		protooPeer,
+		remoteAddress,
+	}: PeerCreateOptions): Peer {
 		staticLogger.debug('create() [peerId:%o]', peerId);
 
 		const logger = new Logger(`[peerId:${peerId}]`, staticLogger);
-		const peer = new Peer({ logger, peerId, protooPeer });
+		const peer = new Peer({ logger, peerId, protooPeer, remoteAddress });
 
 		return peer;
 	}
 
-	private constructor({ logger, peerId, protooPeer }: PeerConstructorOptions) {
+	private constructor({
+		logger,
+		peerId,
+		protooPeer,
+		remoteAddress,
+	}: PeerConstructorOptions) {
 		super();
 
 		this.#logger = logger;
@@ -150,6 +162,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 		this.#peerId = peerId;
 		this.#protooPeer = protooPeer;
+		this.#remoteAddress = remoteAddress;
 		this.#joinTimer = setTimeout(() => {
 			logger.debug(`Peer didn't join in ${JOIN_TIMEOUT_MS}ms, closing it`);
 
@@ -196,6 +209,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			peerId: this.#peerId,
 			displayName: this.#displayName!,
 			device: this.#device!,
+			ip: this.#remoteAddress,
 		};
 	}
 

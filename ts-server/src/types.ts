@@ -56,10 +56,19 @@ export type PeerDevice = {
 	version?: string;
 };
 
+export type SerializedRoom = {
+	roomId: RoomId;
+	createdAt: Date;
+	numPeers: number;
+	numJoiningPeers: number;
+	peers: SerializedPeer[];
+};
+
 export type SerializedPeer = {
 	peerId: PeerId;
 	displayName: string;
 	device: PeerDevice;
+	ip?: string;
 };
 
 export type TransportDirection = 'producer' | 'consumer';
