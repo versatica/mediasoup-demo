@@ -95,6 +95,10 @@ export type DataProducerAppData = {
 	channel: Channel;
 };
 
+export type BotDataProducerAppData = {
+	channel: Extract<Channel, 'bot'>;
+};
+
 export type PeerDataProducerAppData = {
 	channel: Channel;
 };

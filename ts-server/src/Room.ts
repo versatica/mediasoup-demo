@@ -4,6 +4,7 @@ import type * as protooTypes from 'protoo-server';
 
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
+import { Bot } from './Bot';
 import { Peer } from './Peer';
 import { clone } from './utils';
 import type {
@@ -34,6 +35,7 @@ type RoomConstructorOptions = {
 	mediasoupAudioLevelObserver: mediasoupTypes.AudioLevelObserver;
 	mediasoupActiveSpeakerObserver: mediasoupTypes.ActiveSpeakerObserver;
 	protooRoom: protooTypes.Room;
+	bot: Bot;
 };
 
 export type RoomEvents = {
@@ -53,6 +55,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #mediasoupAudioLevelObserver: mediasoupTypes.AudioLevelObserver;
 	readonly #mediasoupActiveSpeakerObserver: mediasoupTypes.ActiveSpeakerObserver;
 	readonly #protooRoom: protooTypes.Room;
+	readonly #bot: Bot;
 	readonly #joiningPeers: Map<string, Peer> = new Map();
 	readonly #peers: Map<string, Peer> = new Map();
 	#closed: boolean = false;
@@ -76,6 +79,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		const mediasoupActiveSpeakerObserver =
 			await mediasoupRouter.createActiveSpeakerObserver();
 		const protooRoom = new protoo.Room();
+		const bot = await Bot.create({ mediasoupRouter });
 		const room = new Room({
 			logger,
 			roomId,
@@ -86,6 +90,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			mediasoupAudioLevelObserver,
 			mediasoupActiveSpeakerObserver,
 			protooRoom,
+			bot,
 		});
 
 		return room;
@@ -101,6 +106,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		mediasoupAudioLevelObserver,
 		mediasoupActiveSpeakerObserver,
 		protooRoom,
+		bot,
 	}: RoomConstructorOptions) {
 		super();
 
@@ -116,6 +122,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#mediasoupAudioLevelObserver = mediasoupAudioLevelObserver;
 		this.#mediasoupActiveSpeakerObserver = mediasoupActiveSpeakerObserver;
 		this.#protooRoom = protooRoom;
+		this.#bot = bot;
 
 		this.handleMediasoupAudioLevelObserver();
 		this.handleMediasoupActiveSpeakerObserver();
@@ -255,6 +262,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					void peer.consumeData({ dataProducer: chatDataProducer });
 				}
 			}
+
+			void peer.consumeData({ dataProducer: this.#bot.getDataProducer() });
 		});
 
 		peer.on('disconnected', () => {
@@ -343,7 +352,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				}
 
 				case 'bot': {
-					// TODO
+					void this.#bot.consumeData({ dataProducer, peer });
 
 					break;
 				}

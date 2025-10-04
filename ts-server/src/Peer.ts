@@ -24,6 +24,7 @@ import type {
 	ProducerAppData,
 	ConsumerAppData,
 	DataProducerAppData,
+	BotDataProducerAppData,
 	DataConsumerAppData,
 } from './types';
 
@@ -111,7 +112,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	readonly #logger: Logger;
 	readonly #peerId: PeerId;
 	readonly #protooPeer: protooTypes.Peer;
-	#joinTimer: ReturnType<typeof setTimeout>;
+	readonly #joinTimer: ReturnType<typeof setTimeout>;
 	#joined: boolean = false;
 	#displayName?: string;
 	#device?: PeerDevice;
@@ -119,11 +120,13 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	#sctpCapabilities?: mediasoupTypes.SctpCapabilities;
 	#producerTransport?: mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>;
 	#consumerTransport?: mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>;
-	#producers: Map<string, mediasoupTypes.Producer<ProducerAppData>> = new Map();
-	#consumers: Map<string, mediasoupTypes.Consumer<ConsumerAppData>> = new Map();
+	readonly #producers: Map<string, mediasoupTypes.Producer<ProducerAppData>> =
+		new Map();
+	readonly #consumers: Map<string, mediasoupTypes.Consumer<ConsumerAppData>> =
+		new Map();
 	#chatDataProducer?: mediasoupTypes.DataProducer<DataProducerAppData>;
 	#botDataProducer?: mediasoupTypes.DataProducer<DataProducerAppData>;
-	#dataConsumers: Map<
+	readonly #dataConsumers: Map<
 		string,
 		mediasoupTypes.DataConsumer<DataConsumerAppData>
 	> = new Map();
@@ -162,6 +165,10 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 	get id(): PeerId {
 		return this.#peerId;
+	}
+
+	get displayName(): string | undefined {
+		return this.#displayName;
 	}
 
 	close(): void {
@@ -275,7 +282,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 					try {
 						await this.request('newConsumer', {
-							peerId: producer.appData.peerId,
+							peerId: consumer.appData.peerId,
 							consumerId: consumer.id,
 							producerId: producer.id,
 							kind: consumer.kind,
@@ -313,7 +320,9 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	async consumeData({
 		dataProducer,
 	}: {
-		dataProducer: mediasoupTypes.DataProducer<DataProducerAppData>;
+		dataProducer: mediasoupTypes.DataProducer<
+			DataProducerAppData | BotDataProducerAppData
+		>;
 	}): Promise<void> {
 		const canConsume = Boolean(this.#sctpCapabilities);
 
@@ -331,7 +340,12 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			dataConsumer = await transport.consumeData<DataConsumerAppData>({
 				dataProducerId: dataProducer.id,
 				appData: {
-					peerId: dataProducer.appData.peerId,
+					peerId:
+						// Trick to make TS happy due the fact that `peerId` is not present
+						// in BotDataProducerAppData.
+						'peerId' in dataProducer.appData
+							? dataProducer.appData.peerId
+							: undefined,
 					channel: dataProducer.appData.channel,
 				},
 			});
@@ -349,7 +363,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 		try {
 			await this.request('newDataConsumer', {
-				peerId: dataProducer.appData.peerId,
+				peerId: dataConsumer.appData.peerId,
 				dataConsumerId: dataConsumer.id,
 				dataProducerId: dataProducer.id,
 				// This is a WebRtcTransport so the DataConsumer has SCTP stream
