@@ -291,7 +291,7 @@ type NotificationFromServer =
 			name: 'consumerLayersChanged';
 			data: {
 				consumerId: string;
-				score?: mediasoupTypes.ConsumerLayers;
+				layers?: mediasoupTypes.ConsumerLayers;
 			};
 	  }
 	| {

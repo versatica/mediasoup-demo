@@ -87,6 +87,16 @@ export type PeerEvents = {
 		{ producer: mediasoupTypes.Producer<MediasoupProducerAppData> },
 	];
 	/**
+	 * Emitted to know whether the Peer can consume a given Producer.
+	 */
+	'get-can-consume': [
+		{
+			producerId: string;
+			rtpCapabilities?: mediasoupTypes.RtpCapabilities;
+		},
+		callback: (canConsume: boolean) => void,
+	];
+	/**
 	 * Emitted when Peer changes their display name.
 	 */
 	'display-name-changed': [{ displayName: string; oldDisplayName: string }];
@@ -179,12 +189,117 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		};
 	}
 
+	async consume({
+		producer,
+		consumerReplicas,
+	}: {
+		producer: mediasoupTypes.Producer<MediasoupProducerAppData>;
+		consumerReplicas: number;
+	}): Promise<void> {
+		// Don't consume if the Peer cannot consume.
+		let canConsume = false;
+
+		this.emit(
+			'get-can-consume',
+			{ producerId: producer.id, rtpCapabilities: this.#rtpCapabilities },
+			_canConsume => {
+				canConsume = _canConsume;
+			}
+		);
+
+		if (!canConsume) {
+			return;
+		}
+
+		const transport = this.assertAndGetWebRtcTransport({
+			direction: 'consumer',
+		});
+		const promises: Promise<void>[] = [];
+		const consumerCount = 1 + consumerReplicas;
+
+		for (let i = 0; i < consumerCount; ++i) {
+			promises.push(
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
+				new Promise<void>(async resolve => {
+					let consumer: mediasoupTypes.Consumer<MediasoupConsumerAppData>;
+
+					try {
+						// Create the Consumer in paused mode.
+						consumer = await transport.consume<MediasoupConsumerAppData>({
+							producerId: producer.id,
+							rtpCapabilities: this.#rtpCapabilities!,
+							// Enable NACK for video and OPUS audio.
+							enableRtx: true,
+							paused: true,
+							ignoreDtx: true,
+							appData: {
+								peerId: producer.appData.peerId!,
+								source: producer.appData.source,
+							},
+						});
+					} catch (error) {
+						this.#logger.warn('consume() | transport.consume() failed:', error);
+
+						resolve();
+
+						return;
+					}
+
+					this.#consumers.set(consumer.id, consumer);
+
+					this.handleConsumer(consumer);
+
+					try {
+						await this.request('newConsumer', {
+							peerId: producer.appData.peerId!,
+							consumerId: consumer.id,
+							producerId: producer.id,
+							kind: consumer.kind,
+							rtpParameters: consumer.rtpParameters,
+							type: consumer.type,
+							producerPaused: consumer.producerPaused,
+							appData: consumer.appData,
+						});
+
+						// Now that we got the positive response from the client, resume the
+						// Consumer so the client will receive the first RTP packet of this
+						// new stream once its PeerConnection is ready to process and
+						// associate it.
+						await consumer.resume();
+
+						this.notify('consumerScore', {
+							consumerId: consumer.id,
+							score: consumer.score,
+						});
+
+						resolve();
+					} catch (error) {
+						this.#logger.warn('createConsumer() | failed:', error);
+
+						resolve();
+					}
+				})
+			);
+		}
+
+		try {
+			await Promise.all(promises);
+		} catch (error) {
+			// NOTE: This shold never happen.
+			this.#logger.warn('createConsumer() | Promise.all() failed:', error);
+		}
+	}
+
 	notify<Name extends NotificationNameFromServer>(
 		name: Name,
 		...args: NotificationDataFromServer<Name> extends undefined
 			? [undefined?]
 			: [NotificationDataFromServer<Name>]
 	): void {
+		if (this.#closed) {
+			return;
+		}
+
 		const data = args[0];
 
 		this.#protooPeer.notify(name, data).catch(error => {
@@ -201,11 +316,19 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			? [undefined?]
 			: [RequestDataFromServer<Name>]
 	): Promise<RequestResponseDataFromServer<Name>> {
+		this.assertNotClosed();
+
 		const data = args[0];
 
 		return this.#protooPeer.request(name, data) as unknown as Promise<
 			RequestResponseDataFromServer<Name>
 		>;
+	}
+
+	private assertNotClosed(): void {
+		if (this.#closed) {
+			throw new InvalidStateError('closed');
+		}
 	}
 
 	private assertJoined(): void {
@@ -348,6 +471,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		});
 	}
 
+	// eslint-disable-next-line @typescript-eslint/require-await
 	private async handleProtooNotification(
 		notification: TypedProtooNotificationFromClient
 	): Promise<void> {
@@ -367,7 +491,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				const { producerId } = data;
 				const producer = this.assertAndGetProducer({ producerId });
 
-				producer.pause();
+				void producer.pause();
 
 				break;
 			}
@@ -376,52 +500,52 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				const { producerId } = data;
 				const producer = this.assertAndGetProducer({ producerId });
 
-				producer.resume();
+				void producer.resume();
 
 				break;
 			}
 
 			case 'pauseConsumer': {
 				const { consumerId } = data;
-				const consumer = this.assertAndGetConsumer({ consumerId });
+				const consumer = this.#consumers.get(consumerId);
 
-				consumer.pause();
+				void consumer?.pause();
 
 				break;
 			}
 
 			case 'resumeConsumer': {
 				const { consumerId } = data;
-				const consumer = this.assertAndGetConsumer({ consumerId });
+				const consumer = this.#consumers.get(consumerId);
 
-				consumer.resume();
+				void consumer?.resume();
 
 				break;
 			}
 
 			case 'setConsumerPreferredLayers': {
 				const { consumerId, spatialLayer, temporalLayer } = data;
-				const consumer = this.assertAndGetConsumer({ consumerId });
+				const consumer = this.#consumers.get(consumerId);
 
-				consumer.setPreferredLayers({ spatialLayer, temporalLayer });
+				void consumer?.setPreferredLayers({ spatialLayer, temporalLayer });
 
 				break;
 			}
 
 			case 'setConsumerPriority': {
 				const { consumerId, priority } = data;
-				const consumer = this.assertAndGetConsumer({ consumerId });
+				const consumer = this.#consumers.get(consumerId);
 
-				consumer.setPriority(priority);
+				void consumer?.setPriority(priority);
 
 				break;
 			}
 
 			case 'requestConsumerKeyFrame': {
 				const { consumerId } = data;
-				const consumer = this.assertAndGetConsumer({ consumerId });
+				const consumer = this.#consumers.get(consumerId);
 
-				consumer.requestKeyFrame();
+				void consumer?.requestKeyFrame();
 
 				break;
 			}
@@ -515,6 +639,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 				const transport = await new Promise<
 					mediasoupTypes.WebRtcTransport<MediasoupWebRtcTransportAppData>
+					// eslint-disable-next-line no-shadow
 				>((resolve, reject) => {
 					this.emit(
 						'create-webrtc-transport',
@@ -723,7 +848,28 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			this.#consumers.delete(consumer.id);
 		});
 
-		// TODO
+		consumer.on('producerclose', () => {
+			this.notify('consumerClosed', { consumerId: consumer.id });
+		});
+
+		consumer.on('producerpause', () => {
+			this.notify('consumerPaused', { consumerId: consumer.id });
+		});
+
+		consumer.on('producerresume', () => {
+			this.notify('consumerResumed', { consumerId: consumer.id });
+		});
+
+		consumer.on('score', score => {
+			this.notify('consumerScore', { consumerId: consumer.id, score });
+		});
+
+		consumer.on('layerschange', layers => {
+			this.notify('consumerLayersChanged', {
+				consumerId: consumer.id,
+				layers,
+			});
+		});
 	}
 
 	handleDataProducer(

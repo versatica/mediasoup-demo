@@ -725,7 +725,9 @@ export default class RoomClient {
 				}
 
 				case 'consumerLayersChanged': {
-					const { consumerId, spatialLayer, temporalLayer } = notification.data;
+					const { consumerId, layers } = notification.data;
+					const spatialLayer = layers?.spatialLayer ?? null;
+					const temporalLayer = layers?.temporalLayer ?? null;
 					const consumer = this._consumers.get(consumerId);
 
 					if (!consumer) break;
@@ -733,8 +735,8 @@ export default class RoomClient {
 					store.dispatch(
 						stateActions.setConsumerCurrentLayers(
 							consumerId,
-							spatialLayer,
-							temporalLayer
+							layers?.spatialLayer,
+							layers?.temporalLayer
 						)
 					);
 
@@ -1606,7 +1608,7 @@ export default class RoomClient {
 		store.dispatch(stateActions.setConsumerPriority(consumerId, priority));
 	}
 
-	notifyConsumerKeyFrame(consumerId) {
+	requestConsumerKeyFrame(consumerId) {
 		logger.debug('requestConsumerKeyFrame() [consumerId:%s]', consumerId);
 
 		this._protoo.notify('requestConsumerKeyFrame', { consumerId });

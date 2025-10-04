@@ -88,6 +88,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 			);
 
 			try {
+				// eslint-disable-next-line no-shadow
 				const room = await new Promise<Room>((resolve, reject) => {
 					this.emit('get-room', { roomId, consumerReplicas }, resolve, reject);
 				});

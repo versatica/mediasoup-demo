@@ -11,7 +11,6 @@ import type {
 	RoomId,
 	PeerId,
 	MediasoupWebRtcTransportAppData,
-	SerializedPeer,
 } from './types';
 
 const staticLogger = new Logger('Room');
@@ -281,8 +280,26 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		);
 
 		peer.on('new-producer', ({ producer }) => {
-			// TODO: Consume from others.
+			const otherPeers = this.getOtherPeers(peer);
+
+			for (const otherPeer of otherPeers) {
+				void otherPeer.consume({
+					producer,
+					consumerReplicas: this.#consumerReplicas,
+				});
+			}
+
 			// TODO: Active speaker stuff.
+		});
+
+		peer.on('get-can-consume', ({ producerId, rtpCapabilities }, callback) => {
+			if (rtpCapabilities) {
+				callback(
+					this.#mediasoupRouter.canConsume({ producerId, rtpCapabilities })
+				);
+			} else {
+				callback(false);
+			}
 		});
 
 		peer.on('display-name-changed', ({ displayName, oldDisplayName }) => {
