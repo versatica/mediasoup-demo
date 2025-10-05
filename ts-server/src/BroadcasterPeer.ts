@@ -439,17 +439,6 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 
 				this.handleConsumer(consumer);
 
-				console.log('REMOVE');
-				const timer = setInterval(async () => {
-					if (consumer.closed) {
-						clearInterval(timer);
-						return;
-					}
-
-					const stats = await consumer.getStats();
-					console.log(`--- ${consumer.kind} consumer stats:`, stats);
-				}, 5000);
-
 				accept({ consumerId: consumer.id });
 
 				break;
