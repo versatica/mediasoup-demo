@@ -301,7 +301,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		const producer = this.#producers.get(producerId);
 
 		if (!producer) {
-			throw new InvalidStateError(`Producer with id '${producerId}' not found`);
+			throw new InvalidStateError(`Producer '${producerId}' not found`);
 		}
 
 		return producer;
@@ -315,7 +315,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		const consumer = this.#consumers.get(consumerId);
 
 		if (!consumer) {
-			throw new InvalidStateError(`Consumer with id '${consumerId}' not found`);
+			throw new InvalidStateError(`Consumer '${consumerId}' not found`);
 		}
 
 		return consumer;
@@ -326,14 +326,6 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 	): void {
 		producer.observer.on('close', () => {
 			this.#producers.delete(producer.id);
-		});
-
-		producer.on('videoorientationchange', videoOrientation => {
-			this.#logger.debug(
-				'Producer "videoorientationchange" event [producerId:%o, videoOrientation:%o]',
-				producer.id,
-				videoOrientation
-			);
 		});
 	}
 

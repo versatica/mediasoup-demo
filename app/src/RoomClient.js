@@ -346,6 +346,9 @@ export default class RoomClient {
 
 					const {
 						peerId,
+						// NOTE: We don't need this since we will use our recv transport
+						// anyway.
+						// transportId,
 						consumerId,
 						producerId,
 						kind,
@@ -447,7 +450,11 @@ export default class RoomClient {
 					}
 
 					const {
-						peerId, // NOTE: Null if bot.
+						// NOTE: Undefined if bot.
+						peerId,
+						// NOTE: We don't need this since we will use our recv transport
+						// anyway.
+						// transportId,
 						dataConsumerId,
 						dataProducerId,
 						sctpStreamParameters,
@@ -1524,7 +1531,7 @@ export default class RoomClient {
 		try {
 			if (this._sendTransport) {
 				const { iceParameters } = await this._protoo.request('restartIce', {
-					direction: 'producer',
+					transportId: this._sendTransport.id,
 				});
 
 				await this._sendTransport.restartIce({ iceParameters });
@@ -1532,7 +1539,7 @@ export default class RoomClient {
 
 			if (this._recvTransport) {
 				const { iceParameters } = await this._protoo.request('restartIce', {
-					direction: 'consumer',
+					transportId: this._recvTransport.id,
 				});
 
 				await this._recvTransport.restartIce({ iceParameters });
@@ -1860,7 +1867,7 @@ export default class RoomClient {
 		if (!this._sendTransport) return;
 
 		const { stats } = await this._protoo.request('getTransportStats', {
-			direction: 'producer',
+			transportId: this._sendTransport.id,
 		});
 
 		return stats;
@@ -1872,7 +1879,7 @@ export default class RoomClient {
 		if (!this._recvTransport) return;
 
 		const { stats } = await this._protoo.request('getTransportStats', {
-			direction: 'consumer',
+			transportId: this._recvTransport.id,
 		});
 
 		return stats;
@@ -1926,7 +1933,7 @@ export default class RoomClient {
 		if (!dataProducer) return;
 
 		const { stats } = await this._protoo.request('getDataProducerStats', {
-			channel: 'chat',
+			dataProducerId: dataProducer.id,
 		});
 
 		return stats;
@@ -1940,7 +1947,7 @@ export default class RoomClient {
 		if (!dataProducer) return;
 
 		const { stats } = await this._protoo.request('getDataProducerStats', {
-			channel: 'bot',
+			dataProducerId: dataProducer.id,
 		});
 
 		return stats;
@@ -2094,11 +2101,13 @@ export default class RoomClient {
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
 					{
-						direction: 'producer',
 						sctpCapabilities: this._useDataChannel
 							? this._mediasoupDevice.sctpCapabilities
 							: undefined,
 						forceTcp: this._forceTcp,
+						appData: {
+							direction: 'producer',
+						},
 					}
 				);
 
@@ -2138,7 +2147,7 @@ export default class RoomClient {
 					) => {
 						this._protoo
 							.request('connectWebRtcTransport', {
-								direction: 'producer',
+								transportId: this._sendTransport.id,
 								dtlsParameters,
 							})
 							.then(callback)
@@ -2152,6 +2161,7 @@ export default class RoomClient {
 						try {
 							// eslint-disable-next-line no-shadow
 							const { producerId } = await this._protoo.request('produce', {
+								transportId: this._sendTransport.id,
 								kind,
 								rtpParameters,
 								appData,
@@ -2182,6 +2192,7 @@ export default class RoomClient {
 							const { dataProducerId } = await this._protoo.request(
 								'produceData',
 								{
+									transportId: this._sendTransport.id,
 									sctpStreamParameters,
 									label,
 									protocol,
@@ -2202,11 +2213,13 @@ export default class RoomClient {
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
 					{
-						direction: 'consumer',
 						sctpCapabilities: this._useDataChannel
 							? this._mediasoupDevice.sctpCapabilities
 							: undefined,
 						forceTcp: this._forceTcp,
+						appData: {
+							direction: 'consumer',
+						},
 					}
 				);
 
@@ -2245,7 +2258,7 @@ export default class RoomClient {
 					) => {
 						this._protoo
 							.request('connectWebRtcTransport', {
-								direction: 'consumer',
+								transportId: this._recvTransport.id,
 								dtlsParameters,
 							})
 							.then(callback)

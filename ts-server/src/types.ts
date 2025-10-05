@@ -100,9 +100,9 @@ export type ProducerAppData = {
 
 /**
  * @remarks
- * - This is the type of `addData` sent by the peer.
+ * - This is the type of `addData` sent by the Peer or BroadcasterPeer.
  */
-export type RemoteProducerAppData = {
+export type PeerProducerAppData = {
 	source: Source;
 };
 
@@ -116,12 +116,16 @@ export type DataProducerAppData = {
 	channel: Channel;
 };
 
-export type BotDataProducerAppData = {
-	channel: Extract<Channel, 'bot'>;
-};
-
+/**
+ * @remarks
+ * - This is the type of `addData` sent by the Peer or BroadcasterPeer.
+ */
 export type PeerDataProducerAppData = {
 	channel: Channel;
+};
+
+export type BotDataProducerAppData = {
+	channel: Extract<Channel, 'bot'>;
 };
 
 export type DataConsumerAppData = {

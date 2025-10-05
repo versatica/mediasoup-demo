@@ -58,11 +58,11 @@ export default defineConfig(async () => {
       output: 'silent',
     });
 
-    const default_ = {
+    const devRoom = {
       roomId: 'dev',
       _throttleSecret: 'foo',
       info: true,
-      stats: true,
+      stats: false,
     };
 
     const defaultProducer = {
@@ -137,7 +137,7 @@ export default defineConfig(async () => {
     }
 
     const qProducer = qs.stringify({
-      ...default_,
+      ...devRoom,
       ...defaultProducer,
       ...producer,
     });
@@ -145,7 +145,7 @@ export default defineConfig(async () => {
     open(qProducer);
 
     const qConsumer = qs.stringify({
-      ...default_,
+      ...devRoom,
       ...defaultConsumer,
       ...consumer,
     });

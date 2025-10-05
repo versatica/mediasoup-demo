@@ -108,7 +108,6 @@ echo ">>> creating mediasoup PlainTransport for producing audio..."
 
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
-	type="plain" \
 	comedia:=true \
 	rtcpMux:=false \
 	2> /dev/null)
@@ -128,7 +127,6 @@ echo ">>> creating mediasoup PlainTransport for producing video..."
 
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
-	type="plain" \
 	comedia:=true \
 	rtcpMux:=false \
 	2> /dev/null)

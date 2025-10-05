@@ -306,7 +306,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		const broadcasterPeer = this.#broadcasterPeers.get(peerId);
 
 		if (!broadcasterPeer) {
-			throw new PeerNotFound(`broadcaster '${peerId}' doesn't exist`);
+			throw new PeerNotFound(`BroadcasterPeer '${peerId}' not found`);
 		}
 
 		return broadcasterPeer.processApiRequest(name, ...args);
@@ -376,9 +376,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					});
 				}
 
-				const chatDataProducer = otherPeer.getDataProducer({ channel: 'chat' });
-
-				if (chatDataProducer) {
+				for (const chatDataProducer of otherPeer.getChatDataProducers()) {
 					void peer.consumeData({ dataProducer: chatDataProducer });
 				}
 			}
@@ -446,7 +444,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		peer.on('new-producer', ({ producer }) => {
 			const otherPeers = this.getOtherPeers(peer);
-			// TODO: Consume in broadcasters.
 
 			for (const otherPeer of otherPeers) {
 				void otherPeer.consume({
@@ -464,14 +461,17 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					.addProducer({ producerId: producer.id })
 					.catch(() => {});
 			}
+
+			// TODO: Consume in broadcasters.
 		});
 
 		peer.on('new-data-producer', ({ dataProducer }) => {
 			const { channel } = dataProducer.appData;
-			const otherPeers = this.getOtherPeers(peer);
 
 			switch (channel) {
 				case 'chat': {
+					const otherPeers = this.getOtherPeers(peer);
+
 					for (const otherPeer of otherPeers) {
 						void otherPeer.consumeData({
 							dataProducer,

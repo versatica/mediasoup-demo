@@ -10,9 +10,8 @@ import type {
 	PeerId,
 	PeerDevice,
 	SerializedPeer,
-	TransportDirection,
-	Channel,
-	RemoteProducerAppData,
+	WebRtcTransportAppData,
+	PeerProducerAppData,
 	ConsumerAppData,
 	PeerDataProducerAppData,
 	DataConsumerAppData,
@@ -121,9 +120,9 @@ type RequestFromPeer =
 	| {
 			name: 'createWebRtcTransport';
 			data: {
-				direction: TransportDirection;
 				sctpCapabilities?: mediasoupTypes.SctpCapabilities;
 				forceTcp: boolean;
+				appData: WebRtcTransportAppData;
 			};
 			responseData: {
 				transportId: string;
@@ -136,27 +135,29 @@ type RequestFromPeer =
 	| {
 			name: 'connectWebRtcTransport';
 			data: {
-				direction: TransportDirection;
+				transportId: string;
 				dtlsParameters: mediasoupTypes.DtlsParameters;
 			};
 	  }
 	| {
 			name: 'restartIce';
-			data: { direction: TransportDirection };
+			data: { transportId: string };
 			responseData: { iceParameters: mediasoupTypes.IceParameters };
 	  }
 	| {
 			name: 'produce';
 			data: {
+				transportId: string;
 				kind: mediasoupTypes.MediaKind;
 				rtpParameters: mediasoupTypes.RtpParameters;
-				appData: RemoteProducerAppData;
+				appData: PeerProducerAppData;
 			};
 			responseData: { producerId: string };
 	  }
 	| {
 			name: 'produceData';
 			data: {
+				transportId: string;
 				sctpStreamParameters: mediasoupTypes.SctpStreamParameters;
 				label: string;
 				protocol: string;
@@ -166,7 +167,7 @@ type RequestFromPeer =
 	  }
 	| {
 			name: 'getTransportStats';
-			data: { direction: TransportDirection };
+			data: { transportId: string };
 			responseData: { stats: mediasoupTypes.WebRtcTransportStat[] };
 	  }
 	| {
@@ -181,7 +182,7 @@ type RequestFromPeer =
 	  }
 	| {
 			name: 'getDataProducerStats';
-			data: { channel: Channel };
+			data: { dataProducerId: string };
 			responseData: { stats: mediasoupTypes.DataProducerStat[] };
 	  }
 	| {
@@ -334,6 +335,7 @@ type RequestFromServer =
 			name: 'newConsumer';
 			data: {
 				peerId: PeerId;
+				transportId: string;
 				consumerId: string;
 				producerId: string;
 				kind: mediasoupTypes.MediaKind;
@@ -349,6 +351,7 @@ type RequestFromServer =
 			data: {
 				// Optional since it is undefined if it's the Bot.
 				peerId?: PeerId;
+				transportId: string;
 				dataConsumerId: string;
 				dataProducerId: string;
 				sctpStreamParameters: mediasoupTypes.SctpStreamParameters;

@@ -101,14 +101,12 @@ trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${S
 
 #
 # Create a PlainTransport in the mediasoup to send our audio using plain RTP
-# over UDP. Do it via HTTP post specifying type:"plain" and comedia:true and
-# rtcpMux:false.
+# over UDP. Do it via HTTP post specifying comedia:true and rtcpMux:false.
 #
 echo ">>> creating mediasoup PlainTransport for producing audio..."
 
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
-	type="plain" \
 	comedia:=true \
 	rtcpMux:=false \
 	2> /dev/null)
@@ -128,7 +126,6 @@ echo ">>> creating mediasoup PlainTransport for producing video..."
 
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
-	type="plain" \
 	comedia:=true \
 	rtcpMux:=false \
 	2> /dev/null)

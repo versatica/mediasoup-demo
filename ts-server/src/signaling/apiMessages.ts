@@ -6,7 +6,7 @@ import type {
 	PeerDevice,
 	SerializedPeer,
 	TransportDirection,
-	RemoteProducerAppData,
+	PeerProducerAppData,
 	ConsumerAppData,
 } from '../types';
 
@@ -97,7 +97,7 @@ type RequestFromBroadcasterPeer = {
 // 		data: {
 // 			kind: mediasoupTypes.MediaKind;
 // 			rtpParameters: mediasoupTypes.RtpParameters;
-// 			appData: RemoteProducerAppData;
+// 			appData: PeerProducerAppData;
 // 		};
 // 		responseData: { producerId: string };
 //   };

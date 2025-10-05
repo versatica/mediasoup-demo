@@ -69,6 +69,21 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		this.#expressApp.use(bodyParser.json());
 
 		/**
+		 * Middleware to log success responses.
+		 */
+		this.#expressApp.use((req: ApiServerExpressRequest, res, next) => {
+			res.on('finish', () => {
+				if (res.statusCode >= 200 && res.statusCode < 300) {
+					logger.debug(
+						`request succeed '${req.method} ${req.originalUrl}' => ${res.statusCode}`
+					);
+				}
+			});
+
+			next();
+		});
+
+		/**
 		 * For every API request, obtain or create a Room with the given `roomId`.
 		 */
 		this.#expressApp.param(
@@ -88,21 +103,6 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 				);
 			}
 		);
-
-		/**
-		 * Middleware to log success responses.
-		 */
-		this.#expressApp.use((req: ApiServerExpressRequest, res, next) => {
-			res.on('finish', () => {
-				if (res.statusCode >= 200 && res.statusCode < 300) {
-					logger.debug(
-						`request succeed '${req.method} ${req.originalUrl}' => ${res.statusCode}`
-					);
-				}
-			});
-
-			next();
-		});
 
 		/**
 		 * API GET resource that returns the mediasoup Router RTP capabilities of
@@ -147,7 +147,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * DELETE API to delete a BroadcasterPeer.
+		 * DELETE API to close a BroadcasterPeer.
 		 */
 		this.#expressApp.delete(
 			'/rooms/:roomId/broadcasters/:peerId',
@@ -165,10 +165,8 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * POST API to create a mediasoup PlainTransport associated to a BroadcasterPeer.
-		 * It can be a PlainTransport or a WebRtcTransport depending on the
-		 * type parameters in the body. There are also additional parameters for
-		 * PlainTransport.
+		 * POST API to create a mediasoup PlainTransport associated to a
+		 * BroadcasterPeer.
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:peerId/transports',
@@ -193,8 +191,8 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * POST API to connect a Transport belonging to a BroadcasterPeer. Not
-		 * needed for PlainTransport if it was created with `comedia` option.
+		 * POST API to connect a PlainTransport belonging to a BroadcasterPeer. Not
+		 * needed if it was created with `comedia` option.
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/connect',

@@ -122,14 +122,11 @@ ${HTTPIE_COMMAND} \
 #
 trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID} > /dev/null' EXIT
 
-# audio
 echo ">>> creating mediasoup PlainTransport for consuming audio..."
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
-	type="plain" \
 	comedia:=false \
 	rtcpMux:=false \
-	enableSctp:=false \
 	2> /dev/null)
 eval "$(echo ${res} | jq -r '@sh "audioTransportId=\(.id)"')"
 
@@ -149,14 +146,11 @@ ${HTTPIE_COMMAND} \
 	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"audio\", \"mimeType\":\"audio/opus\", \"preferredPayloadType\":${AUDIO_PT}, \"clockRate\": 48000, \"channels\": 2, \"parameters\": { \"useinbandfec\": 1 } }] }" \
 	> /dev/null
 
-# video
 echo ">>> creating mediasoup PlainTransport for consuming video..."
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
-	type="plain" \
 	comedia:=false \
 	rtcpMux:=false \
-	enableSctp:=false \
 	2> /dev/null)
 eval "$(echo ${res} | jq -r '@sh "videoTransportId=\(.id)"')"
 
