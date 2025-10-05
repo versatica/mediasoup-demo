@@ -13,13 +13,13 @@ function show_usage()
 	echo "  - ROOM_ID is the id of the mediasoup-demo room (it must exist in advance)"
 	echo "  - AUDIO_PRODUCER_ID is the id of the mediasoup-demo audio producer"
 	echo "  - VIDEO_PRODUCER_ID is the id of the mediasoup-demo video producer"
-	echo "  - AUDIO_PT is the codec payload type of the audio producer"
-	echo "  - VIDEO_PT is the codec payload type of the video producer"
+	echo "  - AUDIO_CONSUMER_PT is the codec payload type of the Opus codec in the mediasoup Router"
+	echo "  - VIDEO_CONSUMER_PT is the codec payload type of the VP8 codec in the mediasoup Router"
 	echo
 	echo "NOTE"
 	echo "----"
 	echo
-	echo "  This script assumes that the consuming audio and video streams use OPUS and VP8 codecs"
+	echo "  This script assumes that the consuming audio and video streams use Opus and VP8 codecs"
 	echo
 	echo "REQUIREMENTS"
 	echo "------------"
@@ -56,14 +56,14 @@ if [ -z "${VIDEO_PRODUCER_ID}" ] ; then
 	exit 1
 fi
 
-if [ -z "${AUDIO_PT}" ] ; then
-	>&2 echo "ERROR: missing AUDIO_PT environment variable"
+if [ -z "${AUDIO_CONSUMER_PT}" ] ; then
+	>&2 echo "ERROR: missing AUDIO_CONSUMER_PT environment variable"
 	show_usage
 	exit 1
 fi
 
-if [ -z "${VIDEO_PT}" ] ; then
-	>&2 echo "ERROR: missing VIDEO_PT environment variable"
+if [ -z "${VIDEO_CONSUMER_PT}" ] ; then
+	>&2 echo "ERROR: missing VIDEO_CONSUMER_PT environment variable"
 	show_usage
 	exit 1
 fi
@@ -96,17 +96,17 @@ AUDIO_LOCAL_RTCP_PORT=10001
 VIDEO_LOCAL_PORT=10002
 VIDEO_LOCAL_RTCP_PORT=10003
 
-cat > /tmp/ffmpeg.sdp <<EOF
+cat > /tmp/mediasoup-demo-ffmpeg-receiver.sdp <<EOF
 v=0
 o=- 0 0 IN IP4 127.0.0.1
 s=mediasoup
 c=IN IP4 127.0.0.1
 t=0 0
 a=tool:libavformat 55.7.100
-m=audio ${AUDIO_LOCAL_PORT} RTP/AVP ${AUDIO_PT}
-a=rtpmap:${AUDIO_PT} opus/48000/2
-m=video ${VIDEO_LOCAL_PORT} RTP/AVP ${VIDEO_PT}
-a=rtpmap:${VIDEO_PT} VP8/90000
+m=audio ${AUDIO_LOCAL_PORT} RTP/AVP ${AUDIO_CONSUMER_PT}
+a=rtpmap:${AUDIO_CONSUMER_PT} opus/48000/2
+m=video ${VIDEO_LOCAL_PORT} RTP/AVP ${VIDEO_CONSUMER_PT}
+a=rtpmap:${VIDEO_CONSUMER_PT} VP8/90000
 EOF
 
 #
@@ -174,7 +174,7 @@ ${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${audioTransportId}/consume \
 	producerId="${AUDIO_PRODUCER_ID}" \
 	paused:=false \
-	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"audio\", \"mimeType\":\"audio/opus\", \"preferredPayloadType\":${AUDIO_PT}, \"clockRate\": 48000, \"channels\": 2, \"parameters\": { \"useinbandfec\": 1 } }] }" \
+	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"audio\", \"mimeType\":\"audio/opus\", \"preferredPayloadType\":${AUDIO_CONSUMER_PT}, \"clockRate\": 48000, \"channels\": 2, \"parameters\": { \"useinbandfec\": 1 } }] }" \
 	> /dev/null
 
 echo ">>> creating mediasoup PlainTransport for consuming video..."
@@ -205,37 +205,46 @@ res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/consume \
 	producerId="${VIDEO_PRODUCER_ID}" \
 	paused:=true \
-	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"video\", \"mimeType\":\"video/VP8\", \"preferredPayloadType\":${VIDEO_PT}, \"clockRate\": 90000, \"parameters\": {}, \"rtcpFeedback\": [{ \"type\": \"nack\" }] }] }" \
+	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"video\", \"mimeType\":\"video/VP8\", \"preferredPayloadType\":${VIDEO_CONSUMER_PT}, \"clockRate\": 90000, \"parameters\": {}, \"rtcpFeedback\": [{ \"type\": \"nack\" }] }] }" \
 	2> /dev/null)
 
 eval "$(echo ${res} | jq -r '@sh "videoConsumerId=\(.consumerId)"')"
 
 echo ">>> running ffmpeg..."
 
-# TODO: This is for Linux with Pulse audio.
+# NOTE: This is for Linux with Pulse audio.
 # ffmpeg \
 # 	-v info \
 # 	-thread_queue_size 1500 \
 # 	-protocol_whitelist file,udp,rtp \
-# 	-i /tmp/ffmpeg.sdp \
+# 	-i /tmp/mediasoup-demo-ffmpeg-receiver.sdp \
 # 	-f pulse -device default stream \
 # 	-f xv display &
 # ffmpeg_pid=$!
 
-# TODO: This is for macOS with ffmpeg with sdl2 support (whatever it is).
-# TODO: brew install ffmpeg --with-sdl2 (it fails, hehe).
+# NOTE: This is for macOS with ffmpeg with sdl2 support (whatever it is).
+# NOTE: brew install ffmpeg --with-sdl2 (it fails, hehe).
 # ffmpeg \
 # 	-v info \
 # 	-thread_queue_size 1500 \
 # 	-protocol_whitelist file,udp,rtp \
-# 	-i /tmp/ffmpeg.sdp \
+# 	-i /tmp/mediasoup-demo-ffmpeg-receiver.sdp \
 # 	-f audiotoolbox default \
 # 	-f sdl2 -
 # ffmpeg_pid=$!
 
-# TODO: Let's see if this works.
-ffplay -protocol_whitelist file,udp,rtp -i /tmp/ffmpeg.sdp &
+echo ">>> running ffplay..."
+
+ffplay \
+	-protocol_whitelist file,udp,rtp \
+	-i /tmp/mediasoup-demo-ffmpeg-receiver.sdp \
+	-window_title "mediasoup-demo ffmpeg-receiver" \
+	-probesize 5000000 \
+	-analyzeduration 10000000 \
+	-loglevel repeat+level+debug &
 ffmpeg_pid=$!
+
+sleep 2
 
 echo ">>> resuming video Consumer ${videoConsumerId}..."; \
 
