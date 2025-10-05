@@ -103,7 +103,9 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 				room.processWsConnection({
 					peerId,
 					protooTransport,
-					remoteAddress: info.socket.remoteAddress,
+					// NOTE: It should always exist (unless socket is disconnected, but
+					// we don't care about that).
+					remoteAddress: info.socket.remoteAddress!,
 				});
 			} catch (error) {
 				logger.error('Room creation or Room joining failed:', error);

@@ -51,8 +51,10 @@ export type PeerDevice = {
 		| 'opera'
 		| 'edge'
 		| 'aiortc'
+		| 'ffmpeg'
+		| 'gstreamer'
 		| 'unknown';
-	name?: string;
+	name: string;
 	version?: string;
 };
 
@@ -61,14 +63,16 @@ export type SerializedRoom = {
 	createdAt: Date;
 	numPeers: number;
 	numJoiningPeers: number;
+	numBroadcasterPeers: number;
 	peers: SerializedPeer[];
+	broadcasterPeers: SerializedPeer[];
 };
 
 export type SerializedPeer = {
 	peerId: PeerId;
 	displayName: string;
 	device: PeerDevice;
-	ip?: string;
+	remoteAddress: string;
 };
 
 export type TransportDirection = 'producer' | 'consumer';
@@ -85,12 +89,20 @@ export type WebRtcTransportAppData = {
 	direction: TransportDirection;
 };
 
+export type PlainTransportAppData = {
+	direction: TransportDirection;
+};
+
 export type ProducerAppData = {
 	peerId: PeerId;
 	source: Source;
 };
 
-export type PeerProducerAppData = {
+/**
+ * @remarks
+ * - This is the type of `addData` sent by the peer.
+ */
+export type RemoteProducerAppData = {
 	source: Source;
 };
 

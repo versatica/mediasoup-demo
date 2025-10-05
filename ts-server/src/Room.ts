@@ -6,7 +6,18 @@ import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Bot } from './Bot';
 import { Peer } from './Peer';
-import { clone } from './utils';
+import { BroadcasterPeer } from './BroadcasterPeer';
+import {
+	RequestNameFromBroadcasterPeerToRoom,
+	RequestDataFromBroadcasterPeerToRoom,
+	RequestResponseDataFromBroadcasterPeerToRoom,
+	TypedApiRequestFromBroadcasterPeerToRoom,
+	RequestNameFromBroadcasterPeer,
+	RequestDataFromBroadcasterPeer,
+	RequestResponseDataFromBroadcasterPeer,
+} from './signaling/apiMessages';
+import { PeerNotFound } from './errors';
+import { clone, assertUnreachable } from './utils';
 import type {
 	Config,
 	RoomId,
@@ -46,10 +57,6 @@ export type RoomEvents = {
 	 */
 	closed: [];
 	/**
-	 * Emitted when a new Peer is created.
-	 */
-	'new-peer': [Peer];
-	/**
 	 * Emitted to apply network throttle.
 	 */
 	'apply-network-throttle': [
@@ -85,6 +92,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #bot: Bot;
 	readonly #joiningPeers: Map<string, Peer> = new Map();
 	readonly #peers: Map<string, Peer> = new Map();
+	readonly #broadcasterPeers: Map<string, BroadcasterPeer> = new Map();
 	readonly #createdAt: Date;
 	#closed: boolean = false;
 
@@ -178,6 +186,10 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			peer.close();
 		}
 
+		for (const broadcasterPeer of this.#broadcasterPeers.values()) {
+			broadcasterPeer.close();
+		}
+
 		this.#protooRoom.close();
 
 		this.#mediasoupRouter.close();
@@ -191,12 +203,12 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			createdAt: this.#createdAt,
 			numPeers: this.#peers.size,
 			numJoiningPeers: this.#joiningPeers.size,
+			numBroadcasterPeers: this.#broadcasterPeers.size,
 			peers: this.getAllPeers().map(peer => peer.serialize()),
+			broadcasterPeers: this.getAllBroadcasterPeers().map(broadcasterPeer =>
+				broadcasterPeer.serialize()
+			),
 		};
-	}
-
-	getRouterRtpCapabilities(): mediasoupTypes.RouterRtpCapabilities {
-		return this.#mediasoupRouter.rtpCapabilities;
 	}
 
 	processWsConnection({
@@ -206,7 +218,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	}: {
 		peerId: PeerId;
 		protooTransport: protooTypes.WebSocketTransport;
-		remoteAddress?: string;
+		remoteAddress: string;
 	}): void {
 		this.#logger.debug('processWsConnection() [peerId:%o]', peerId);
 
@@ -232,6 +244,17 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			existingJoiningPeer.close();
 		}
 
+		const existingBroadcasterPeer = this.#broadcasterPeers.get(peerId);
+
+		if (existingBroadcasterPeer) {
+			this.#logger.warn(
+				'processWsConnection() | there is already a BroadcasterPeer with same peerId, closing it [peerId:%o]',
+				peerId
+			);
+
+			existingBroadcasterPeer.close();
+		}
+
 		this.#logger.debug(
 			'processWsConnection() | creating a new Peer [peerId:%o]',
 			peerId
@@ -244,8 +267,49 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#joiningPeers.set(peer.id, peer);
 
 		this.handlePeer(peer);
+	}
 
-		this.emit('new-peer', peer);
+	async processApiRequestToRoom<
+		Name extends RequestNameFromBroadcasterPeerToRoom,
+	>(
+		name: Name,
+		...args: RequestDataFromBroadcasterPeerToRoom<Name> extends undefined
+			? [undefined?]
+			: [RequestDataFromBroadcasterPeerToRoom<Name>]
+	): Promise<RequestResponseDataFromBroadcasterPeerToRoom<Name>> {
+		return new Promise((resolve, reject) => {
+			this.handleApiRequestToRoom({
+				name,
+				data: args[0],
+				accept: resolve,
+			} as TypedApiRequestFromBroadcasterPeerToRoom).catch(error => {
+				this.#logger.warn(
+					'API request processing failed [name:%o]:',
+					name,
+					error
+				);
+
+				reject(error as Error);
+			});
+		});
+	}
+
+	async processApiRequestToBroadcasterPeer<
+		Name extends RequestNameFromBroadcasterPeer,
+	>(
+		peerId: PeerId,
+		name: Name,
+		...args: RequestDataFromBroadcasterPeer<Name> extends undefined
+			? [undefined?]
+			: [RequestDataFromBroadcasterPeer<Name>]
+	): Promise<RequestResponseDataFromBroadcasterPeer<Name>> {
+		const broadcasterPeer = this.#broadcasterPeers.get(peerId);
+
+		if (!broadcasterPeer) {
+			throw new PeerNotFound(`broadcaster '${peerId}' doesn't exist`);
+		}
+
+		return broadcasterPeer.processApiRequest(name, ...args);
 	}
 
 	private mayClose(): void {
@@ -253,6 +317,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		// NOTE: Run it in next loop iteration to avoid the case in which there is
 		// only a Peer in the Room and it reconnects without closing its previous
 		// connection.
+		//
+		// NOTE: We do not take into account BroadcasterPeers.
 		setImmediate(() => {
 			if (
 				!this.#closed &&
@@ -276,6 +342,10 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		);
 	}
 
+	private getAllBroadcasterPeers(): BroadcasterPeer[] {
+		return Array.from(this.#broadcasterPeers.values());
+	}
+
 	private handlePeer(peer: Peer): void {
 		peer.on('closed', () => {
 			this.#joiningPeers.delete(peer.id);
@@ -289,8 +359,12 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			this.#peers.set(peer.id, peer);
 
 			const otherPeers = this.getOtherPeers(peer);
+			const broadcasterPeers = this.getAllBroadcasterPeers();
 
-			callback(otherPeers.map(otherPeer => otherPeer.serialize()));
+			callback([
+				...otherPeers.map(otherPeer => otherPeer.serialize()),
+				...broadcasterPeers.map(broadcasterPeer => broadcasterPeer.serialize()),
+			]);
 
 			for (const otherPeer of otherPeers) {
 				otherPeer.notify('newPeer', { peer: peer.serialize() });
@@ -306,6 +380,15 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 				if (chatDataProducer) {
 					void peer.consumeData({ dataProducer: chatDataProducer });
+				}
+			}
+
+			for (const broadcasterPeer of broadcasterPeers) {
+				for (const producer of broadcasterPeer.getProducers()) {
+					void peer.consume({
+						producer,
+						consumerReplicas: this.#consumerReplicas,
+					});
 				}
 			}
 
@@ -363,6 +446,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		peer.on('new-producer', ({ producer }) => {
 			const otherPeers = this.getOtherPeers(peer);
+			// TODO: Consume in broadcasters.
 
 			for (const otherPeer of otherPeers) {
 				void otherPeer.consume({
@@ -444,6 +528,112 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		});
 	}
 
+	private handleBroadcasterPeer(broadcasterPeer: BroadcasterPeer): void {
+		broadcasterPeer.on('closed', () => {
+			this.#broadcasterPeers.delete(broadcasterPeer.id);
+		});
+
+		broadcasterPeer.on('joined', () => {
+			this.#broadcasterPeers.set(broadcasterPeer.id, broadcasterPeer);
+
+			const peers = this.getAllPeers();
+
+			for (const otherPeer of peers) {
+				otherPeer.notify('newPeer', { peer: broadcasterPeer.serialize() });
+
+				for (const producer of otherPeer.getProducers()) {
+					void broadcasterPeer.consume({
+						producer,
+					});
+				}
+			}
+		});
+
+		broadcasterPeer.on('disconnected', () => {
+			const peers = this.getAllPeers();
+
+			for (const peer of peers) {
+				peer.notify('peerClosed', { peerId: broadcasterPeer.id });
+			}
+		});
+
+		broadcasterPeer.on('get-router-rtp-capabilities', callback => {
+			callback(this.#mediasoupRouter.rtpCapabilities);
+		});
+
+		// TODO
+		// broadcasterPeer.on(
+		// 	'create-plain-transport',
+		// 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		// 	async ({ direction, sctpCapabilities, forceTcp }, resolve, reject) => {
+		// 		try {
+		// 			const transport =
+		// 				await this.#mediasoupRouter.createWebRtcTransport<WebRtcTransportAppData>(
+		// 					{
+		// 						...clone(this.#config.mediasoup.webRtcTransportOptions),
+		// 						enableUdp: !forceTcp,
+		// 						enableTcp: true,
+		// 						webRtcServer: this.#mediasoupWebRtcServer,
+		// 						iceConsentTimeout: 20,
+		// 						enableSctp: Boolean(sctpCapabilities),
+		// 						numSctpStreams: sctpCapabilities?.numStreams,
+		// 						appData: { direction },
+		// 					}
+		// 				);
+
+		// 			const { maxIncomingBitrate } =
+		// 				this.#config.mediasoup.webRtcTransportOptions ?? {};
+
+		// 			if (maxIncomingBitrate) {
+		// 				transport.setMaxIncomingBitrate(maxIncomingBitrate).catch(error => {
+		// 					this.#logger.warn(
+		// 						`transport.setMaxIncomingBitrate() failed: ${error}`
+		// 					);
+		// 				});
+		// 			}
+
+		// 			resolve(transport);
+		// 		} catch (error) {
+		// 			reject(error as Error);
+		// 		}
+		// 	}
+		// );
+
+		broadcasterPeer.on('new-producer', ({ producer }) => {
+			const peers = this.getAllPeers();
+
+			for (const peer of peers) {
+				void peer.consume({
+					producer,
+					consumerReplicas: this.#consumerReplicas,
+				});
+			}
+
+			if (producer.kind === 'audio') {
+				this.#mediasoupAudioLevelObserver
+					.addProducer({ producerId: producer.id })
+					.catch(() => {});
+
+				this.#mediasoupActiveSpeakerObserver
+					.addProducer({ producerId: producer.id })
+					.catch(() => {});
+			}
+		});
+
+		broadcasterPeer.on(
+			'get-can-consume',
+			({ producerId, rtpCapabilities }, callback) => {
+				if (rtpCapabilities) {
+					callback(
+						this.#mediasoupRouter.canConsume({ producerId, rtpCapabilities })
+					);
+				} else {
+					callback(false);
+				}
+			}
+		);
+	}
+
 	private handleMediasoupAudioLevelObserver(): void {
 		this.#mediasoupAudioLevelObserver.on('volumes', volumes => {
 			const allPeers = this.getAllPeers();
@@ -483,5 +673,51 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				}
 			}
 		);
+	}
+
+	// eslint-disable-next-line @typescript-eslint/require-await
+	private async handleApiRequestToRoom(
+		request: TypedApiRequestFromBroadcasterPeerToRoom
+	): Promise<void> {
+		const { name, data, accept } = request;
+
+		switch (name) {
+			case 'getRouterRtpCapabilities': {
+				accept({
+					routerRtpCapabilities: this.#mediasoupRouter.rtpCapabilities,
+				});
+
+				break;
+			}
+
+			case 'join': {
+				const { peerId, remoteAddress, displayName, device, rtpCapabilities } =
+					data;
+
+				const broadcasterPeer = BroadcasterPeer.create({
+					peerId,
+					remoteAddress,
+					displayName,
+					device,
+					rtpCapabilities,
+				});
+
+				this.handleBroadcasterPeer(broadcasterPeer);
+
+				// NOTE: Here we invoke the 'joined' event on the new BroadcasterPeer
+				// to keep the events based logic consistent.
+				// NOTE: Take into account that BroadcasterPeers are always joined
+				// once created.
+				broadcasterPeer.emit('joined');
+
+				accept();
+
+				break;
+			}
+
+			default: {
+				assertUnreachable('request name', name);
+			}
+		}
 	}
 }

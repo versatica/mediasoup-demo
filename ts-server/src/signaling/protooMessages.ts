@@ -1,35 +1,28 @@
 import type * as mediasoupTypes from 'mediasoup/types';
 import type * as protooTypes from 'protoo-server';
 
+import {
+	NotificationNameDataMap,
+	RequestNameDataMap,
+	RequestNameResponseDataMap,
+} from './common';
 import type {
 	PeerId,
 	PeerDevice,
 	SerializedPeer,
 	TransportDirection,
 	Channel,
-	PeerProducerAppData,
+	RemoteProducerAppData,
 	ConsumerAppData,
 	PeerDataProducerAppData,
 	DataConsumerAppData,
 	NetworkThrottleOptions,
 } from '../types';
 
-type NotificationNameDataMap<U extends { name: string }> = {
-	[K in U as K['name']]: K extends { data: infer D } ? D : undefined;
-};
-
-type RequestNameDataMap<U extends { name: string }> = {
-	[K in U as K['name']]: K extends { data: infer D } ? D : undefined;
-};
-
-type RequestNameResponseDataMap<U extends { name: string }> = {
-	[K in U as K['name']]: K extends { responseData: infer R } ? R : undefined;
-};
-
 /**
- * Notifications sent from client to server using Protoo protocol.
+ * Notifications sent from peer to server using Protoo protocol.
  */
-type NotificationFromClient =
+type NotificationFromPeer =
 	| {
 			name: 'closeProducer';
 			data: {
@@ -86,28 +79,27 @@ type NotificationFromClient =
 			data: { displayName: string };
 	  };
 
-export type NotificationNameFromClient =
-	keyof NotificationNameDataMap<NotificationFromClient>;
+export type NotificationNameFromPeer =
+	keyof NotificationNameDataMap<NotificationFromPeer>;
 
-export type NotificationDataFromClient<
-	Name extends NotificationNameFromClient,
-> = NotificationNameDataMap<NotificationFromClient>[Name];
+export type NotificationDataFromPeer<Name extends NotificationNameFromPeer> =
+	NotificationNameDataMap<NotificationFromPeer>[Name];
 
 /**
- * This is needed to cast the Protoo notification from client into something
+ * This is needed to cast the Protoo notification from peer into something
  * that we can use with our signaling types.
  */
-export type TypedProtooNotificationFromClient = {
-	[N in NotificationNameFromClient]: {
+export type TypedProtooNotificationFromPeer = {
+	[N in NotificationNameFromPeer]: {
 		method: N;
-		data: NotificationDataFromClient<N>;
+		data: NotificationDataFromPeer<N>;
 	};
-}[NotificationNameFromClient];
+}[NotificationNameFromPeer];
 
 /**
- * Requests sent from client to server using Protoo protocol.
+ * Requests sent from peer to server using Protoo protocol.
  */
-type RequestFromClient =
+type RequestFromPeer =
 	| {
 			name: 'getRouterRtpCapabilities';
 			responseData: {
@@ -158,7 +150,7 @@ type RequestFromClient =
 			data: {
 				kind: mediasoupTypes.MediaKind;
 				rtpParameters: mediasoupTypes.RtpParameters;
-				appData: PeerProducerAppData;
+				appData: RemoteProducerAppData;
 			};
 			responseData: { producerId: string };
 	  }
@@ -213,31 +205,31 @@ type RequestFromClient =
 			};
 	  };
 
-export type RequestNameFromClient = keyof RequestNameDataMap<RequestFromClient>;
+export type RequestNameFromPeer = keyof RequestNameDataMap<RequestFromPeer>;
 
-export type RequestDataFromClient<Name extends RequestNameFromClient> =
-	RequestNameDataMap<RequestFromClient>[Name];
+export type RequestDataFromPeer<Name extends RequestNameFromPeer> =
+	RequestNameDataMap<RequestFromPeer>[Name];
 
-export type RequestResponseDataFromClient<Name extends RequestNameFromClient> =
-	RequestNameResponseDataMap<RequestFromClient>[Name];
+export type RequestResponseDataFromPeer<Name extends RequestNameFromPeer> =
+	RequestNameResponseDataMap<RequestFromPeer>[Name];
 
 /**
- * This is needed to cast the Protoo request from client into something that
+ * This is needed to cast the Protoo request from peer into something that
  * we can use with our signaling types.
  */
-export type TypedProtooRequestFromClient = {
-	[N in RequestNameFromClient]: {
+export type TypedProtooRequestFromPeer = {
+	[N in RequestNameFromPeer]: {
 		method: N;
-		data: RequestDataFromClient<N>;
-		accept: RequestResponseDataFromClient<N> extends undefined
-			? (responseData?: RequestResponseDataFromClient<N>) => void
-			: (responseData: RequestResponseDataFromClient<N>) => void;
+		data: RequestDataFromPeer<N>;
+		accept: RequestResponseDataFromPeer<N> extends undefined
+			? (responseData?: RequestResponseDataFromPeer<N>) => void
+			: (responseData: RequestResponseDataFromPeer<N>) => void;
 		reject: protooTypes.RejectFn;
 	};
-}[RequestNameFromClient];
+}[RequestNameFromPeer];
 
 /**
- * Notifications sent from server to client using Protoo protocol.
+ * Notifications sent from server to peer using Protoo protocol.
  */
 type NotificationFromServer =
 	| {
@@ -335,7 +327,7 @@ export type NotificationDataFromServer<
 > = NotificationNameDataMap<NotificationFromServer>[Name];
 
 /**
- * Requests sent from server to client using Protoo protocol.
+ * Requests sent from server to peer using Protoo protocol.
  */
 type RequestFromServer =
 	| {

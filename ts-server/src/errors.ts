@@ -57,3 +57,23 @@ export class RoomNotFound extends Error {
 		return 404;
 	}
 }
+
+export class PeerNotFound extends Error {
+	constructor(message: string) {
+		super(message);
+
+		this.name = 'PeerNotFound';
+
+		if (Error.hasOwnProperty('captureStackTrace')) {
+			// Just in V8.
+			Error.captureStackTrace(this, PeerNotFound);
+		} else {
+			this.stack = new Error(message).stack;
+		}
+	}
+
+	get status(): number {
+		// HTTP 404 Not Found.
+		return 404;
+	}
+}

@@ -5,7 +5,7 @@ import * as bodyParser from 'body-parser';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Room } from './Room';
-import { UnauthorizedError, RoomNotFound } from './errors';
+import { UnauthorizedError, RoomNotFound, PeerNotFound } from './errors';
 import type { RoomId } from './types';
 
 const logger = new Logger('ApiServer');
@@ -64,6 +64,8 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 	}
 
 	private handleExpressApp(): void {
+		this.#expressApp.set('trust proxy', true);
+
 		this.#expressApp.use(bodyParser.json());
 
 		/**
@@ -88,37 +90,33 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
+		 * Middleware to log success responses.
+		 */
+		this.#expressApp.use((req: ApiServerExpressRequest, res, next) => {
+			res.on('finish', () => {
+				if (res.statusCode >= 200 && res.statusCode < 300) {
+					logger.debug(
+						`request succeed '${req.method} ${req.originalUrl}' => ${res.statusCode}`
+					);
+				}
+			});
+
+			next();
+		});
+
+		/**
 		 * API GET resource that returns the mediasoup Router RTP capabilities of
 		 * the Room.
 		 */
 		this.#expressApp.get(
 			'/rooms/:roomId',
-			(req: ApiServerExpressRequest, res) => {
-				const routerRtpCapabilities = req.room!.getRouterRtpCapabilities();
-
-				res.status(200).json({ routerRtpCapabilities });
-			}
-		);
-
-		/**
-		 * POST API to create a Broadcaster.
-		 */
-		this.#expressApp.post(
-			'/rooms/:roomId/broadcasters',
-			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
-				const { id, displayName, device, rtpCapabilities } = req.body;
-
 				try {
-					// TODO
-					// const data = await req.room!.createBroadcaster({
-					// 	id,
-					// 	displayName,
-					// 	device,
-					// 	rtpCapabilities,
-					// });
-					//
-					// res.status(200).json(data);
+					const responseData = await req.room!.processApiRequestToRoom(
+						'getRouterRtpCapabilities'
+					);
+
+					res.status(200).json(responseData);
 				} catch (error) {
 					next(error);
 				}
@@ -126,41 +124,65 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * DELETE API to delete a Broadcaster.
+		 * POST API to create a BroadcasterPeer.
 		 */
-		this.#expressApp.delete(
-			'/rooms/:roomId/broadcasters/:broadcasterId',
-			(req: ApiServerExpressRequest, res) => {
-				const { broadcasterId } = req.params;
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters',
+			async (req: ApiServerExpressRequest, res, next) => {
+				try {
+					const { peerId, displayName, device, rtpCapabilities } = req.body;
+					const responseData = await req.room!.processApiRequestToRoom('join', {
+						peerId,
+						remoteAddress: req.ip ?? req.ips[0]!,
+						displayName,
+						device,
+						rtpCapabilities,
+					});
 
-				// TODO
-				// req.room!.deleteBroadcaster({ broadcasterId });
-
-				res.status(200).send('broadcaster deleted');
+					res.status(200).json(responseData);
+				} catch (error) {
+					next(error);
+				}
 			}
 		);
 
 		/**
-		 * POST API to create a mediasoup Transport associated to a Broadcaster.
+		 * DELETE API to delete a BroadcasterPeer.
+		 */
+		this.#expressApp.delete(
+			'/rooms/:roomId/broadcasters/:peerId',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { peerId } = req.params;
+
+				try {
+					await req.room!.processApiRequestToBroadcasterPeer(peerId!, 'close');
+
+					res.status(200).send('broadcaster deleted');
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * POST API to create a mediasoup PlainTransport associated to a BroadcasterPeer.
 		 * It can be a PlainTransport or a WebRtcTransport depending on the
 		 * type parameters in the body. There are also additional parameters for
 		 * PlainTransport.
 		 */
 		this.#expressApp.post(
-			'/rooms/:roomId/broadcasters/:broadcasterId/transports',
-			// eslint-disable-next-line @typescript-eslint/require-await
+			'/rooms/:roomId/broadcasters/:peerId/transports',
 			async (req: ApiServerExpressRequest, res, next) => {
-				const { broadcasterId } = req.params;
-				const { type, rtcpMux, comedia, sctpCapabilities } = req.body;
+				const { peerId } = req.params;
+				const { type, rtcpMux, comedia } = req.body;
 
 				try {
 					// TODO
 					// const data = await req.room.createBroadcasterTransport({
-					// 	broadcasterId,
+					// 	peerId,
 					// 	type,
 					// 	rtcpMux,
 					// 	comedia,
-					// 	sctpCapabilities,
 					// });
 					//
 					// res.status(200).json(data);
@@ -171,20 +193,19 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * POST API to connect a Transport belonging to a Broadcaster. Not needed
-		 * for PlainTransport if it was created with comedia option set to true.
+		 * POST API to connect a Transport belonging to a BroadcasterPeer. Not
+		 * needed for PlainTransport if it was created with `comedia` option.
 		 */
 		this.#expressApp.post(
-			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/connect',
-			// eslint-disable-next-line @typescript-eslint/require-await
+			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/connect',
 			async (req: ApiServerExpressRequest, res, next) => {
-				const { broadcasterId, transportId } = req.params;
+				const { peerId, transportId } = req.params;
 				const { dtlsParameters, ip, port, rtcpPort } = req.body;
 
 				try {
 					// TODO
 					// const data = await req.room!.connectBroadcasterTransport({
-					// 	broadcasterId,
+					// 	peerId,
 					// 	transportId,
 					// 	dtlsParameters,
 					// 	ip,
@@ -200,22 +221,21 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * POST API to create a mediasoup Producer associated to a Broadcaster.
+		 * POST API to create a mediasoup Producer associated to a BroadcasterPeer.
 		 * The exact Transport in which the Producer must be created is signaled in
 		 * the URL path. Body parameters include kind and rtpParameters of the
 		 * Producer.
 		 */
 		this.#expressApp.post(
-			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/producers',
-			// eslint-disable-next-line @typescript-eslint/require-await
+			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/producers',
 			async (req: ApiServerExpressRequest, res, next) => {
-				const { broadcasterId, transportId } = req.params;
+				const { peerId, transportId } = req.params;
 				const { kind, rtpParameters } = req.body;
 
 				try {
 					// TODO
 					// const data = await req.room!.createBroadcasterProducer({
-					// 	broadcasterId,
+					// 	peerId,
 					// 	transportId,
 					// 	kind,
 					// 	rtpParameters,
@@ -229,22 +249,21 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * POST API to create a mediasoup Consumer associated to a Broadcaster.
+		 * POST API to create a mediasoup Consumer associated to a BroadcasterPeer.
 		 * The exact Transport in which the Consumer must be created is signaled in
 		 * the URL path. Query parameters must include the desired producerId to
 		 * consume.
 		 */
 		this.#expressApp.post(
-			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/consume',
-			// eslint-disable-next-line @typescript-eslint/require-await
+			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/consume',
 			async (req: ApiServerExpressRequest, res, next) => {
-				const { broadcasterId, transportId } = req.params;
+				const { peerId, transportId } = req.params;
 				const { producerId, paused, rtpCapabilities } = req.body;
 
 				try {
 					// TODO
 					// const data = await req.room!.createBroadcasterConsumer({
-					// 	broadcasterId,
+					// 	peerId,
 					// 	transportId,
 					// 	producerId,
 					// 	paused,
@@ -259,23 +278,23 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * POST API to resume a mediasoup Consumer associated to a Broadcaster.
+		 * POST API to resume a mediasoup Consumer associated to a BroadcasterPeer.
 		 * The exact Transport in which the Consumer must be created is signaled in
 		 * the URL path. Body parameters must include the desired consumerId to
 		 * resume.
 		 */
 		this.#expressApp.post(
-			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/resume',
+			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/resume',
 			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
-				const { broadcasterId, transportId } = req.params;
+				const { peerId, transportId } = req.params;
 				const { consumerId } = req.body;
 
 				try {
 					// TODO
 					// const data = await req.room!.resumeBroadcasterConsumer(
 					// 	{
-					// 		broadcasterId,
+					// 		peerId,
 					// 		transportId,
 					// 		consumerId
 					// 	});
@@ -288,66 +307,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * POST API to create a mediasoup DataConsumer associated to a Broadcaster.
-		 * The exact Transport in which the DataConsumer must be created is signaled in
-		 * the URL path. Query body must include the desired producerId to
-		 * consume.
-		 */
-		this.#expressApp.post(
-			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/consume/data',
-			// eslint-disable-next-line @typescript-eslint/require-await
-			async (req: ApiServerExpressRequest, res, next) => {
-				const { broadcasterId, transportId } = req.params;
-				const { dataProducerId } = req.body;
-
-				try {
-					// TODO
-					// const data = await req.room!.createBroadcasterDataConsumer(
-					// 	{
-					// 		broadcasterId,
-					// 		transportId,
-					// 		dataProducerId
-					// 	});
-					//
-					// res.status(200).json(data);
-				} catch (error) {
-					next(error);
-				}
-			}
-		);
-
-		/**
-		 * POST API to create a mediasoup DataProducer associated to a Broadcaster.
-		 * The exact Transport in which the DataProducer must be created is signaled in
-		 */
-		this.#expressApp.post(
-			'/rooms/:roomId/broadcasters/:broadcasterId/transports/:transportId/produce/data',
-			// eslint-disable-next-line @typescript-eslint/require-await
-			async (req: ApiServerExpressRequest, res, next) => {
-				const { broadcasterId, transportId } = req.params;
-				const { label, protocol, sctpStreamParameters, appData } = req.body;
-
-				try {
-					// TODO
-					// const data = await req.room!.createBroadcasterDataProducer(
-					// 	{
-					// 		broadcasterId,
-					// 		transportId,
-					// 		label,
-					// 		protocol,
-					// 		sctpStreamParameters,
-					// 		appData
-					// 	});
-					//
-					// res.status(200).json(data);
-				} catch (error) {
-					next(error);
-				}
-			}
-		);
-
-		/**
-		 * Error handler.
+		 * Error handler and middleware to log error responses.
 		 */
 		this.#expressApp.use(
 			(
@@ -359,27 +319,35 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 			) => {
 				if (error) {
 					let status: number;
+					let logErrorStack = false;
 
-					if (error instanceof RoomNotFound) {
-						logger.warn(`Express app error: ${error}`);
-
-						status = error.status;
-					} else if (error instanceof UnauthorizedError) {
-						logger.warn(`Express app error: ${error}`);
-
+					if (
+						error instanceof RoomNotFound ||
+						error instanceof UnauthorizedError ||
+						error instanceof PeerNotFound
+					) {
 						status = error.status;
 					} else if (error instanceof TypeError) {
-						logger.warn('Express app error:', error);
-
 						status = 400;
+						logErrorStack = true;
 					} else {
-						logger.warn('Express app error:', error);
-
 						status = 500;
+						logErrorStack = true;
 					}
 
 					res.statusMessage = error.message;
 					res.status(status).send(String(error));
+
+					if (logErrorStack) {
+						logger.warn(
+							`request failed '${req.method} ${req.originalUrl}' => ${res.statusCode}`,
+							error
+						);
+					} else {
+						logger.warn(
+							`request failed '${req.method} ${req.originalUrl}' => ${res.statusCode} ${error}`
+						);
+					}
 				} else {
 					next();
 				}

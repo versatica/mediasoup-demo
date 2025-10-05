@@ -74,14 +74,22 @@ export class Bot {
 			peer.id
 		);
 
-		const dataConsumer =
-			await this.#directTransport.consumeData<DataConsumerAppData>({
-				dataProducerId: dataProducer.id,
-				appData: {
-					peerId: undefined,
-					channel: 'bot',
-				},
-			});
+		let dataConsumer: mediasoupTypes.DataConsumer<DataConsumerAppData>;
+
+		try {
+			dataConsumer =
+				await this.#directTransport.consumeData<DataConsumerAppData>({
+					dataProducerId: dataProducer.id,
+					appData: {
+						peerId: undefined,
+						channel: 'bot',
+					},
+				});
+		} catch (error) {
+			logger.warn(`consumeData() | transport.consumeData() failed: ${error}`);
+
+			return;
+		}
 
 		this.handleDataConsumer(dataConsumer, peer);
 	}

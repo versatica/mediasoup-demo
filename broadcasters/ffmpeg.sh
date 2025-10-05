@@ -62,7 +62,7 @@ fi
 
 set -e
 
-BROADCASTER_ID=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | fold -w ${1:-32} | head -n 1)
+PEER_ID=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | fold -w ${1:-32} | head -n 1)
 HTTPIE_COMMAND="http --check-status"
 AUDIO_SSRC=1111
 AUDIO_PT=100
@@ -88,16 +88,16 @@ echo ">>> creating Broadcaster..."
 
 ${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters \
-	id="${BROADCASTER_ID}" \
-	displayName="Broadcaster" \
-	device:='{"name": "FFmpeg"}' \
+	peerId="${PEER_ID}" \
+	displayName="FFmpeg" \
+	device:='{"name": "FFmpeg", "flag": "ffmpeg"}' \
 	> /dev/null
 
 #
 # Upon script termination delete the Broadcaster in the server by sending a
 # HTTP DELETE.
 #
-trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID} > /dev/null' EXIT
+trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID} > /dev/null' EXIT
 
 #
 # Create a PlainTransport in the mediasoup to send our audio using plain RTP
@@ -107,7 +107,7 @@ trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${S
 echo ">>> creating mediasoup PlainTransport for producing audio..."
 
 res=$(${HTTPIE_COMMAND} \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
 	type="plain" \
 	comedia:=true \
 	rtcpMux:=false \
@@ -127,7 +127,7 @@ eval "$(echo ${res} | jq -r '@sh "audioTransportId=\(.id) audioTransportIp=\(.ip
 echo ">>> creating mediasoup PlainTransport for producing video..."
 
 res=$(${HTTPIE_COMMAND} \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
 	type="plain" \
 	comedia:=true \
 	rtcpMux:=false \
@@ -146,7 +146,7 @@ eval "$(echo ${res} | jq -r '@sh "videoTransportId=\(.id) videoTransportIp=\(.ip
 echo ">>> creating mediasoup audio Producer..."
 
 ${HTTPIE_COMMAND} -v \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${audioTransportId}/producers \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${audioTransportId}/producers \
 	kind="audio" \
 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"audio/opus\", \"payloadType\":${AUDIO_PT}, \"clockRate\":48000, \"channels\":2, \"parameters\":{ \"sprop-stereo\":1 } }], \"encodings\": [{ \"ssrc\":${AUDIO_SSRC} }] }" \
 	> /dev/null
@@ -158,7 +158,7 @@ ${HTTPIE_COMMAND} -v \
 echo ">>> creating mediasoup video Producer..."
 
 ${HTTPIE_COMMAND} -v \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${videoTransportId}/producers \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/producers \
 	kind="video" \
 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/vp8\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000 }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
 	> /dev/null

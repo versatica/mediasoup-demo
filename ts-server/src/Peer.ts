@@ -4,8 +4,8 @@ import type * as protooTypes from 'protoo-server';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import {
-	TypedProtooNotificationFromClient,
-	TypedProtooRequestFromClient,
+	TypedProtooNotificationFromPeer,
+	TypedProtooRequestFromPeer,
 	NotificationNameFromServer,
 	NotificationDataFromServer,
 	RequestNameFromServer,
@@ -36,14 +36,14 @@ const staticLogger = new Logger('Peer');
 export type PeerCreateOptions = {
 	peerId: PeerId;
 	protooPeer: protooTypes.Peer;
-	remoteAddress?: string;
+	remoteAddress: string;
 };
 
 type PeerConstructorOptions = {
 	logger: Logger;
 	peerId: PeerId;
 	protooPeer: protooTypes.Peer;
-	remoteAddress?: string;
+	remoteAddress: string;
 };
 
 export type PeerEvents = {
@@ -136,7 +136,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	readonly #logger: Logger;
 	readonly #peerId: PeerId;
 	readonly #protooPeer: protooTypes.Peer;
-	readonly #remoteAddress?: string;
+	readonly #remoteAddress: string;
 	readonly #joinTimer: ReturnType<typeof setTimeout>;
 	#joined: boolean = false;
 	#displayName?: string;
@@ -231,7 +231,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			peerId: this.#peerId,
 			displayName: this.#displayName!,
 			device: this.#device!,
-			ip: this.#remoteAddress,
+			remoteAddress: this.#remoteAddress,
 		};
 	}
 
@@ -331,8 +331,8 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 							appData: consumer.appData,
 						});
 
-						// Now that we got the positive response from the client, resume the
-						// Consumer so the client will receive the first RTP packet of this
+						// Now that we got the positive response from the peer, resume the
+						// Consumer so the peer will receive the first RTP packet of this
 						// new stream once its PeerConnection is ready to process and
 						// associate it.
 						await consumer.resume();
@@ -582,7 +582,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			this.#logger.debug('protoo request [method:%o]', notification.method);
 
 			this.handleProtooNotification(
-				notification as TypedProtooNotificationFromClient
+				notification as TypedProtooNotificationFromPeer
 			).catch(error => {
 				this.#logger.warn(
 					'protoo notification processing failed [method:%o]:',
@@ -599,7 +599,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				...request,
 				accept,
 				reject,
-			} as TypedProtooRequestFromClient).catch(error => {
+			} as TypedProtooRequestFromPeer).catch(error => {
 				this.#logger.warn(
 					'protoo request processing failed [method:%o]:',
 					request.method,
@@ -613,7 +613,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 	// eslint-disable-next-line @typescript-eslint/require-await
 	private async handleProtooNotification(
-		notification: TypedProtooNotificationFromClient
+		notification: TypedProtooNotificationFromPeer
 	): Promise<void> {
 		const { method, data } = notification;
 
@@ -713,7 +713,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	}
 
 	private async handleProtooRequest(
-		request: TypedProtooRequestFromClient
+		request: TypedProtooRequestFromPeer
 	): Promise<void> {
 		const { method, data, accept, reject } = request;
 
@@ -731,11 +731,13 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 					throw new InvalidStateError('Peer already joined');
 				}
 
+				const { displayName, device, rtpCapabilities, sctpCapabilities } = data;
+
 				this.#joined = true;
-				this.#displayName = data.displayName;
-				this.#device = data.device;
-				this.#rtpCapabilities = data.rtpCapabilities;
-				this.#sctpCapabilities = data.sctpCapabilities;
+				this.#displayName = displayName;
+				this.#device = device;
+				this.#rtpCapabilities = rtpCapabilities;
+				this.#sctpCapabilities = sctpCapabilities;
 
 				clearTimeout(this.#joinTimer);
 
@@ -1006,7 +1008,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		}
 	}
 
-	handleTransport(
+	private handleTransport(
 		transport: mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>
 	): void {
 		const { direction } = transport.appData;
@@ -1036,7 +1038,9 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		});
 	}
 
-	handleProducer(producer: mediasoupTypes.Producer<ProducerAppData>): void {
+	private handleProducer(
+		producer: mediasoupTypes.Producer<ProducerAppData>
+	): void {
 		producer.observer.on('close', () => {
 			this.#producers.delete(producer.id);
 		});
@@ -1054,7 +1058,9 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		});
 	}
 
-	handleConsumer(consumer: mediasoupTypes.Consumer<ConsumerAppData>): void {
+	private handleConsumer(
+		consumer: mediasoupTypes.Consumer<ConsumerAppData>
+	): void {
 		consumer.observer.on('close', () => {
 			this.#consumers.delete(consumer.id);
 		});
@@ -1083,7 +1089,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		});
 	}
 
-	handleDataProducer(
+	private handleDataProducer(
 		dataProducer: mediasoupTypes.DataProducer<DataProducerAppData>
 	): void {
 		dataProducer.observer.on('close', () => {
@@ -1103,7 +1109,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		});
 	}
 
-	handleDataConsumer(
+	private handleDataConsumer(
 		dataConsumer: mediasoupTypes.DataConsumer<DataConsumerAppData>
 	): void {
 		dataConsumer.observer.on('close', () => {

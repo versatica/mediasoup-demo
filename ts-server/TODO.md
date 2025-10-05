@@ -1,5 +1,6 @@
 # TODO
 
+- Verify that when peers or broadcasters join before or later and they produce, all peers (and broadcasters capable of consuming) consume them.
 - Delete `tmp` folder.
 - Delete `TODO.md`.
 - `ApiServer` and adapt broadcaster scripts.
