@@ -89,6 +89,10 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
 	readonly #mediasoupAudioLevelObserver: mediasoupTypes.AudioLevelObserver;
 	readonly #mediasoupActiveSpeakerObserver: mediasoupTypes.ActiveSpeakerObserver;
+	readonly #observedProducers: Map<
+		string,
+		mediasoupTypes.Producer<ProducerAppData>
+	> = new Map();
 	readonly #protooRoom: protooTypes.Room;
 	readonly #bot: Bot;
 	readonly #joiningPeers: Map<string, Peer> = new Map();
@@ -163,6 +167,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#bot = bot;
 		this.#createdAt = new Date();
 
+		this.handleMediasoupRouter();
 		this.handleMediasoupAudioLevelObserver();
 		this.handleMediasoupActiveSpeakerObserver();
 	}
@@ -476,18 +481,11 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		peer.on('new-producer', ({ producer }) => {
 			const otherPeers = this.getOtherPeers(peer);
-			const broadcasterPeers = this.getAllBroadcasterPeers();
 
 			for (const otherPeer of otherPeers) {
 				void otherPeer.consume({
 					producer,
 					consumerReplicas: this.#consumerReplicas,
-				});
-			}
-
-			for (const broadcasterPeer of broadcasterPeers) {
-				void broadcasterPeer.consume({
-					producer,
 				});
 			}
 
@@ -576,25 +574,9 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			this.#broadcasterPeers.set(broadcasterPeer.id, broadcasterPeer);
 
 			const peers = this.getAllPeers();
-			const otherBroadcasterPeers =
-				this.getOtherBroadcasterPeers(broadcasterPeer);
 
 			for (const peer of peers) {
 				peer.notify('newPeer', { peer: broadcasterPeer.serialize() });
-
-				for (const producer of peer.getProducers()) {
-					void broadcasterPeer.consume({
-						producer,
-					});
-				}
-			}
-
-			for (const otherBroadcasterPeer of otherBroadcasterPeers) {
-				for (const producer of otherBroadcasterPeer.getProducers()) {
-					void broadcasterPeer.consume({
-						producer,
-					});
-				}
 			}
 		});
 
@@ -634,18 +616,12 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		broadcasterPeer.on('new-producer', ({ producer }) => {
 			const peers = this.getAllPeers();
-			const otherBroadcasterPeers =
-				this.getOtherBroadcasterPeers(broadcasterPeer);
 
 			for (const peer of peers) {
 				void peer.consume({
 					producer,
 					consumerReplicas: this.#consumerReplicas,
 				});
-			}
-
-			for (const otherBroadcasterPeer of otherBroadcasterPeers) {
-				void otherBroadcasterPeer.consume({ producer });
 			}
 
 			if (producer.kind === 'audio') {
@@ -671,6 +647,27 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				}
 			}
 		);
+
+		broadcasterPeer.on('get-producer', ({ producerId }, callback) => {
+			const producer = this.#observedProducers.get(producerId);
+
+			callback(producer);
+		});
+	}
+
+	private handleMediasoupRouter(): void {
+		this.#mediasoupRouter.observer.on('newtransport', transport => {
+			transport.observer.on('newproducer', producer => {
+				this.#observedProducers.set(
+					producer.id,
+					producer as mediasoupTypes.Producer<ProducerAppData>
+				);
+
+				producer.observer.on('close', () => {
+					this.#observedProducers.delete(producer.id);
+				});
+			});
+		});
 	}
 
 	private handleMediasoupAudioLevelObserver(): void {
@@ -730,8 +727,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			}
 
 			case 'createBroadcasterPeer': {
-				const { peerId, remoteAddress, displayName, device, rtpCapabilities } =
-					data;
+				const { peerId, remoteAddress, displayName, device } = data;
 
 				this.closeExistingPeer(peerId);
 
@@ -745,7 +741,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					remoteAddress,
 					displayName,
 					device,
-					rtpCapabilities,
 				});
 
 				// NOTE: The BroadcasterPeer is not yet joined. It will once it sends

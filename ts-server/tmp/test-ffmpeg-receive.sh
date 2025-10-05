@@ -16,7 +16,9 @@ fi
 
 export SERVER_URL=${SERVER_URL:="${PROTOCOL}://${DOMAIN}:${PORT}"}
 export ROOM_ID=${ROOM_ID:="dev"}
-export AUDIO_PRODUCER_ID=${AUDIO_PRODUCER_ID:="TODO"}
-export VIDEO_PRODUCER_ID=${VIDEO_PRODUCER_ID:="TODO"}
+# export AUDIO_PRODUCER_ID=
+# export VIDEO_PRODUCER_ID=
+export AUDIO_PT=${AUDIO_PT:="111"}
+export VIDEO_PT=${AUDIO_PT:="96"}
 
 ../../broadcasters/ffmpeg-receiver.sh

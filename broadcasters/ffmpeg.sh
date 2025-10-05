@@ -79,12 +79,12 @@ ${HTTPIE_COMMAND} \
 	GET ${SERVER_URL}/rooms/${ROOM_ID} > /dev/null
 
 #
-# Create a Broadcaster entity in the server by sending a POST with our metadata.
-# Note that this is not related to mediasoup at all, but will become just a JS
-# object in the Node.js application to hold our metadata and mediasoup Transports
-# and Producers.
+# Create a BroadcasterPeer entity in the server by sending a POST with our
+# metadata. Note that this is not related to mediasoup at all, but will become
+# just a JS object in the Node.js application to hold our metadata and mediasoup
+# Transports and Producers.
 #
-echo ">>> creating Broadcaster..."
+echo ">>> creating BroadcasterPeer..."
 
 ${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters \
@@ -94,7 +94,7 @@ ${HTTPIE_COMMAND} \
 	> /dev/null
 
 #
-# Upon script termination delete the Broadcaster in the server by sending a
+# Upon script termination delete the BroadcasterPeer in the server by sending a
 # HTTP DELETE.
 #
 trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID} > /dev/null' EXIT

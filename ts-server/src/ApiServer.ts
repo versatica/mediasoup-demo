@@ -130,7 +130,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 			'/rooms/:roomId/broadcasters',
 			async (req: ApiServerExpressRequest, res, next) => {
 				try {
-					const { peerId, displayName, device, rtpCapabilities } = req.body;
+					const { peerId, displayName, device } = req.body;
 					const responseData = await req.room!.processApiRequestToRoom(
 						'createBroadcasterPeer',
 						{
@@ -138,7 +138,6 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 							remoteAddress: req.ip ?? req.ips[0]!,
 							displayName,
 							device,
-							rtpCapabilities,
 						}
 					);
 
@@ -163,7 +162,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 						'disconnect'
 					);
 
-					res.status(200).send('broadcaster deleted');
+					res.status(200).send('BroadcasterPeer deleted');
 				} catch (error) {
 					next(error);
 				}
@@ -182,7 +181,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 				try {
 					await req.room!.processApiRequestToBroadcasterPeer(peerId!, 'join');
 
-					res.status(200).send('broadcaster joined');
+					res.status(200).send('BroadcasterPeer joined');
 				} catch (error) {
 					next(error);
 				}
@@ -294,16 +293,19 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 				const { producerId, paused, rtpCapabilities } = req.body;
 
 				try {
-					// TODO
-					// const data = await req.room!.createBroadcasterConsumer({
-					// 	peerId,
-					// 	transportId,
-					// 	producerId,
-					// 	paused,
-					// 	rtpCapabilities,
-					// });
-					//
-					// res.status(200).json(data);
+					const responseData =
+						await req.room!.processApiRequestToBroadcasterPeer(
+							peerId!,
+							'consume',
+							{
+								transportId: transportId!,
+								producerId,
+								paused,
+								rtpCapabilities,
+							}
+						);
+
+					res.status(200).json(responseData);
 				} catch (error) {
 					next(error);
 				}
@@ -318,20 +320,19 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 */
 		this.#expressApp.post(
 			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/consumers/:consumerId/resume',
-			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
-				const { peerId, transportId, consumerId } = req.params;
+				const { peerId, consumerId } = req.params;
 
 				try {
-					// TODO
-					// const data = await req.room!.resumeBroadcasterConsumer(
-					// 	{
-					// 		peerId,
-					// 		transportId,
-					// 		consumerId
-					// 	});
-					//
-					// res.status(200).json(data);
+					await req.room!.processApiRequestToBroadcasterPeer(
+						peerId!,
+						'resumeConsumer',
+						{
+							consumerId: consumerId!,
+						}
+					);
+
+					res.status(200).send('Consumer resumed');
 				} catch (error) {
 					next(error);
 				}

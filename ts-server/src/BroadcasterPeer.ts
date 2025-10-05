@@ -27,7 +27,6 @@ export type BroadcasterPeerCreateOptions = {
 	remoteAddress: string;
 	displayName: string;
 	device: PeerDevice;
-	rtpCapabilities?: mediasoupTypes.RtpCapabilities;
 };
 
 type BroadcasterPeerConstructorOptions = {
@@ -36,7 +35,6 @@ type BroadcasterPeerConstructorOptions = {
 	remoteAddress: string;
 	displayName: string;
 	device: PeerDevice;
-	rtpCapabilities?: mediasoupTypes.RtpCapabilities;
 };
 
 export type BroadcasterPeerEvents = {
@@ -93,6 +91,15 @@ export type BroadcasterPeerEvents = {
 		},
 		callback: (canConsume: boolean) => void,
 	];
+	/**
+	 * Emitted to obtain a Producer.
+	 */
+	'get-producer': [
+		{
+			producerId: string;
+		},
+		callback: (producer?: mediasoupTypes.Producer<ProducerAppData>) => void,
+	];
 };
 
 export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents> {
@@ -101,7 +108,6 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 	readonly #remoteAddress: string;
 	readonly #displayName: string;
 	readonly #device: PeerDevice;
-	readonly #rtpCapabilities?: mediasoupTypes.RtpCapabilities;
 	#joined: boolean = false;
 	readonly #transports: Map<
 		string,
@@ -118,7 +124,6 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		remoteAddress,
 		displayName,
 		device,
-		rtpCapabilities,
 	}: BroadcasterPeerCreateOptions): BroadcasterPeer {
 		staticLogger.debug('create() [peerId:%o]', peerId);
 
@@ -129,7 +134,6 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 			remoteAddress,
 			displayName,
 			device,
-			rtpCapabilities,
 		});
 
 		return broadcasterPeer;
@@ -141,7 +145,6 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		remoteAddress,
 		displayName,
 		device,
-		rtpCapabilities,
 	}: BroadcasterPeerConstructorOptions) {
 		super();
 
@@ -153,7 +156,6 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		this.#remoteAddress = remoteAddress;
 		this.#displayName = displayName;
 		this.#device = device;
-		this.#rtpCapabilities = rtpCapabilities;
 	}
 
 	get id(): PeerId {
@@ -193,69 +195,6 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 
 	getProducers(): mediasoupTypes.Producer<ProducerAppData>[] {
 		return Array.from(this.#producers.values());
-	}
-
-	async consume({
-		producer,
-	}: {
-		producer: mediasoupTypes.Producer<ProducerAppData>;
-	}): Promise<void> {
-		this.#logger.debug(
-			'consume() [peerId:%o, producerId:%o, source:%o]',
-			producer.appData.peerId,
-			producer.id,
-			producer.appData.source
-		);
-
-		const transport = this.getConsumerPlainTransport();
-
-		if (!transport) {
-			this.#logger.debug(
-				'consume() | no consumer PlainTransport, cannot consume'
-			);
-
-			return;
-		}
-
-		let canConsume = false;
-
-		this.emit(
-			'get-can-consume',
-			{ producerId: producer.id, rtpCapabilities: this.#rtpCapabilities },
-			_canConsume => {
-				canConsume = _canConsume;
-			}
-		);
-
-		if (!canConsume) {
-			this.#logger.debug('consume() | cannot consume');
-
-			return;
-		}
-
-		let consumer: mediasoupTypes.Consumer<ConsumerAppData>;
-
-		try {
-			consumer = await transport.consume<ConsumerAppData>({
-				producerId: producer.id,
-				rtpCapabilities: this.#rtpCapabilities!,
-				enableRtx: false,
-				paused: false,
-				ignoreDtx: true,
-				appData: {
-					peerId: producer.appData.peerId,
-					source: producer.appData.source,
-				},
-			});
-		} catch (error) {
-			this.#logger.warn(`consume() | transport.consume() failed: ${error}`);
-
-			return;
-		}
-
-		this.#consumers.set(consumer.id, consumer);
-
-		this.handleConsumer(consumer);
 	}
 
 	async processApiRequest<Name extends RequestNameFromBroadcasterPeer>(
@@ -450,6 +389,81 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 				this.emit('new-producer', { producer });
 
 				accept({ producerId: producer.id });
+
+				break;
+			}
+
+			case 'consume': {
+				this.assertJoined();
+
+				const { transportId, producerId, paused, rtpCapabilities } = data;
+				const transport = this.assertAndGetPlainTransport(transportId);
+
+				let canConsume = false;
+
+				this.emit(
+					'get-can-consume',
+					{ producerId, rtpCapabilities },
+					_canConsume => {
+						canConsume = _canConsume;
+					}
+				);
+
+				if (!canConsume) {
+					throw new InvalidStateError(
+						`cannot consume Producer '${producerId}'`
+					);
+				}
+
+				let producer: mediasoupTypes.Producer<ProducerAppData> | undefined;
+
+				this.emit('get-producer', { producerId }, _producer => {
+					producer = _producer;
+				});
+
+				if (!producer) {
+					throw new InvalidStateError(`Producer '${producerId}' not found`);
+				}
+
+				const consumer = await transport.consume<ConsumerAppData>({
+					producerId,
+					rtpCapabilities,
+					paused,
+					appData: {
+						peerId: producer.appData.peerId,
+						source: producer.appData.source,
+					},
+				});
+
+				this.#consumers.set(consumer.id, consumer);
+
+				this.handleConsumer(consumer);
+
+				console.log('REMOVE');
+				const timer = setInterval(async () => {
+					if (consumer.closed) {
+						clearInterval(timer);
+						return;
+					}
+
+					const stats = await consumer.getStats();
+					console.log(`--- ${consumer.kind} consumer stats:`, stats);
+				}, 5000);
+
+				accept({ consumerId: consumer.id });
+
+				break;
+			}
+
+			case 'resumeConsumer': {
+				this.assertJoined();
+
+				const { consumerId } = data;
+				const consumer = this.assertAndGetConsumer(consumerId);
+
+				await consumer.resume();
+
+				accept();
 
 				break;
 			}

@@ -13,6 +13,13 @@ function show_usage()
 	echo "  - ROOM_ID is the id of the mediasoup-demo room (it must exist in advance)"
 	echo "  - AUDIO_PRODUCER_ID is the id of the mediasoup-demo audio producer"
 	echo "  - VIDEO_PRODUCER_ID is the id of the mediasoup-demo video producer"
+	echo "  - AUDIO_PT is the codec payload type of the audio producer"
+	echo "  - VIDEO_PT is the codec payload type of the video producer"
+	echo
+	echo "NOTE"
+	echo "----"
+	echo
+	echo "  This script assumes that the consuming audio and video streams use OPUS and VP8 codecs"
 	echo
 	echo "REQUIREMENTS"
 	echo "------------"
@@ -49,6 +56,18 @@ if [ -z "${VIDEO_PRODUCER_ID}" ] ; then
 	exit 1
 fi
 
+if [ -z "${AUDIO_PT}" ] ; then
+	>&2 echo "ERROR: missing AUDIO_PT environment variable"
+	show_usage
+	exit 1
+fi
+
+if [ -z "${VIDEO_PT}" ] ; then
+	>&2 echo "ERROR: missing VIDEO_PT environment variable"
+	show_usage
+	exit 1
+fi
+
 if [ "$(command -v ffmpeg)" == "" ] ; then
 	>&2 echo "ERROR: ffmpeg command not found, must install FFmpeg"
 	show_usage
@@ -71,8 +90,6 @@ set -e
 
 PEER_ID=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | fold -w ${1:-32} | head -n 1)
 HTTPIE_COMMAND="http --check-status --verify=no"
-AUDIO_PT=100
-VIDEO_PT=101
 LOCAL_IP=127.0.0.1
 AUDIO_LOCAL_PORT=10000
 AUDIO_LOCAL_RTCP_PORT=10001
@@ -102,12 +119,12 @@ ${HTTPIE_COMMAND} \
 	GET ${SERVER_URL}/rooms/${ROOM_ID} > /dev/null
 
 #
-# Create a Broadcaster entity in the server by sending a POST with our metadata.
-# Note that this is not related to mediasoup at all, but will become just a JS
-# object in the Node.js application to hold our metadata and mediasoup Transports
-# and Producers.
+# Create a BroadcasterPeer entity in the server by sending a POST with our
+# metadata. Note that this is not related to mediasoup at all, but will become
+# just a JS object in the Node.js application to hold our metadata and mediasoup
+# Transports and Consumers.
 #
-echo ">>> creating Broadcaster..."
+echo ">>> creating BroadcasterPeer..."
 
 ${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters \
@@ -117,7 +134,7 @@ ${HTTPIE_COMMAND} \
 	> /dev/null
 
 #
-# Upon script termination delete the Broadcaster in the server by sending a
+# Upon script termination delete the BroadcasterPeer in the server by sending a
 # HTTP DELETE.
 #
 trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID} > /dev/null' EXIT
@@ -178,7 +195,9 @@ ${HTTPIE_COMMAND} -v \
 	ip="${LOCAL_IP}" \
 	port:=${VIDEO_LOCAL_PORT} \
 	rtcpPort:=${VIDEO_LOCAL_RTCP_PORT} \
-	> /dev/null
+	2> /dev/null
+
+eval "$(echo ${res} | jq -r '@sh "audioConsumerId=\(.consumerId)"')"
 
 echo ">>> creating mediasoup video Consumer..."
 
@@ -193,20 +212,35 @@ eval "$(echo ${res} | jq -r '@sh "videoConsumerId=\(.consumerId)"')"
 
 echo ">>> running ffmpeg..."
 
-/usr/bin/ffmpeg \
-	-v info \
-	-thread_queue_size 1500 \
-	-protocol_whitelist file,udp,rtp \
-	-i /tmp/ffmpeg.sdp \
-	-f pulse -device default stream \
-	-f xv display &
+# TODO: This is for Linux with Pulse audio.
+# ffmpeg \
+# 	-v info \
+# 	-thread_queue_size 1500 \
+# 	-protocol_whitelist file,udp,rtp \
+# 	-i /tmp/ffmpeg.sdp \
+# 	-f pulse -device default stream \
+# 	-f xv display &
+# ffmpeg_pid=$!
+
+# TODO: This is for macOS with ffmpeg with sdl2 support (whatever it is).
+# TODO: brew install ffmpeg --with-sdl2 (it fails, hehe).
+# ffmpeg \
+# 	-v info \
+# 	-thread_queue_size 1500 \
+# 	-protocol_whitelist file,udp,rtp \
+# 	-i /tmp/ffmpeg.sdp \
+# 	-f audiotoolbox default \
+# 	-f sdl2 -
+# ffmpeg_pid=$!
+
+# TODO: Let's see if this works.
+ffplay -protocol_whitelist file,udp,rtp -i /tmp/ffmpeg.sdp &
 ffmpeg_pid=$!
 
 echo ">>> resuming video Consumer ${videoConsumerId}..."; \
 
 ${HTTPIE_COMMAND} -v \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/resume \
-	consumerId="${videoConsumerId}" \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/consumers/${videoConsumerId}/resume \
 	> /dev/null;
 
 wait ${ffmpeg_pid}

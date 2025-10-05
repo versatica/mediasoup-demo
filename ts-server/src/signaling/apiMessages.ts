@@ -6,7 +6,6 @@ import type {
 	PeerDevice,
 	PlainTransportAppData,
 	PeerProducerAppData,
-	ConsumerAppData,
 } from '../types';
 
 /**
@@ -30,7 +29,6 @@ type RequestFromBroadcasterPeerToRoom =
 				remoteAddress: string;
 				displayName: string;
 				device: PeerDevice;
-				rtpCapabilities?: mediasoupTypes.RtpCapabilities;
 			};
 	  };
 
@@ -101,6 +99,22 @@ type RequestFromBroadcasterPeer =
 				appData: PeerProducerAppData;
 			};
 			responseData: { producerId: string };
+	  }
+	| {
+			name: 'consume';
+			data: {
+				transportId: string;
+				producerId: string;
+				paused?: boolean;
+				rtpCapabilities: mediasoupTypes.RtpCapabilities;
+			};
+			responseData: { consumerId: string };
+	  }
+	| {
+			name: 'resumeConsumer';
+			data: {
+				consumerId: string;
+			};
 	  };
 
 export type RequestNameFromBroadcasterPeer =
