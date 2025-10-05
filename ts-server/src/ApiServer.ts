@@ -178,19 +178,20 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 				const { direction, comedia, rtcpMux } = req.body;
 
 				try {
-					await req.room!.processApiRequestToBroadcasterPeer(
-						peerId!,
-						'createPlainTransport',
-						{
-							comedia,
-							rtcpMux,
-							appData: {
-								direction,
-							},
-						}
-					);
+					const responseData =
+						await req.room!.processApiRequestToBroadcasterPeer(
+							peerId!,
+							'createPlainTransport',
+							{
+								comedia,
+								rtcpMux,
+								appData: {
+									direction,
+								},
+							}
+						);
 
-					res.status(200).send('broadcaster deleted');
+					res.status(200).send(responseData);
 				} catch (error) {
 					next(error);
 				}
