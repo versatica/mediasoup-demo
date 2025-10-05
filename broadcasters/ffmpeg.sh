@@ -139,6 +139,15 @@ res=$(${HTTPIE_COMMAND} \
 eval "$(echo ${res} | jq -r '@sh "videoTransportId=\(.transportId) videoTransportIp=\(.ip) videoTransportPort=\(.port) videoTransportRtcpPort=\(.rtcpPort)"')"
 
 #
+# Once transports are created, join the room.
+#
+echo ">>> joining the room..."
+
+${HTTPIE_COMMAND} -v \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/join \
+	> /dev/null
+
+#
 # Create a mediasoup Producer to send audio by sending our RTP parameters via a
 # HTTP POST.
 #
@@ -148,6 +157,7 @@ ${HTTPIE_COMMAND} -v \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${audioTransportId}/producers \
 	kind="audio" \
 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"audio/opus\", \"payloadType\":${AUDIO_PT}, \"clockRate\":48000, \"channels\":2, \"parameters\":{ \"sprop-stereo\":1 } }], \"encodings\": [{ \"ssrc\":${AUDIO_SSRC} }] }" \
+	appData:="{ \"source\": \"audio\" }" \
 	> /dev/null
 
 #
@@ -159,7 +169,8 @@ echo ">>> creating mediasoup video Producer..."
 ${HTTPIE_COMMAND} -v \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/producers \
 	kind="video" \
-	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/vp8\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000 }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
+	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/vp8\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000, \"rtcpFeedback\": [{ \"type\":\"nack\" }, { \"type\":\"nack\", \"parameter\":\"pli\" }, { \"type\":\"ccm\", \"parameter\":\"fir\" }] }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
+	appData:="{ \"source\": \"video\" }" \
 	> /dev/null
 
 #

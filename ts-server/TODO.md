@@ -1,11 +1,9 @@
 # TODO
 
-- Verify that when peers or broadcasters join before or later and they produce, all peers (and broadcasters capable of it) consume.
-- In `BroadcasterPeer`... we are emitting 'joined' **before** the client creates the consumer plain transport so problems. Solution could be that the broadcaster sends a "join" post after creating the transports.
+- Testear `ffmpeg-receiver.sh` porque le pasa `paused: true` al crear el transport, que no está soportado, etc. Y los payload types dudo que funcionen hardcodeados.
 - Delete `tmp` folder.
 - Delete this `TODO.md`.
 - `ApiServer` and adapt broadcaster scripts.
-- Don't make client app assume that HTTPS listen port is 4443. Instead make client app read `config.mjs` somehow.
 - Edit `.gitignore` in root folder.
 - Edit `README` in app.
 - Throttle stuff.

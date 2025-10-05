@@ -150,7 +150,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
-		 * DELETE API to close a BroadcasterPeer.
+		 * DELETE API to disconnect a BroadcasterPeer.
 		 */
 		this.#expressApp.delete(
 			'/rooms/:roomId/broadcasters/:peerId',
@@ -158,9 +158,31 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 				const { peerId } = req.params;
 
 				try {
-					await req.room!.processApiRequestToBroadcasterPeer(peerId!, 'close');
+					await req.room!.processApiRequestToBroadcasterPeer(
+						peerId!,
+						'disconnect'
+					);
 
 					res.status(200).send('broadcaster deleted');
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
+		 * POST API to join the Room. This must be sent after creating the
+		 * mediasoup PlainTransports.
+		 */
+		this.#expressApp.post(
+			'/rooms/:roomId/broadcasters/:peerId/join',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { peerId } = req.params;
+
+				try {
+					await req.room!.processApiRequestToBroadcasterPeer(peerId!, 'join');
+
+					res.status(200).send('broadcaster joined');
 				} catch (error) {
 					next(error);
 				}
@@ -206,20 +228,21 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/connect',
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { peerId, transportId } = req.params;
-				const { dtlsParameters, ip, port, rtcpPort } = req.body;
+				const { ip, port, rtcpPort } = req.body;
 
 				try {
-					// TODO
-					// const data = await req.room!.connectBroadcasterTransport({
-					// 	peerId,
-					// 	transportId,
-					// 	dtlsParameters,
-					// 	ip,
-					// 	port,
-					// 	rtcpPort,
-					// });
-					//
-					// res.status(200).json(data);
+					await req.room!.processApiRequestToBroadcasterPeer(
+						peerId!,
+						'connectPlainTransport',
+						{
+							transportId: transportId!,
+							ip,
+							port,
+							rtcpPort,
+						}
+					);
+
+					res.status(200).send('PlainTransport connected');
 				} catch (error) {
 					next(error);
 				}
@@ -236,18 +259,22 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/producers',
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { peerId, transportId } = req.params;
-				const { kind, rtpParameters } = req.body;
+				const { kind, rtpParameters, appData } = req.body;
 
 				try {
-					// TODO
-					// const data = await req.room!.createBroadcasterProducer({
-					// 	peerId,
-					// 	transportId,
-					// 	kind,
-					// 	rtpParameters,
-					// });
-					//
-					// res.status(200).json(data);
+					const responseData =
+						await req.room!.processApiRequestToBroadcasterPeer(
+							peerId!,
+							'produce',
+							{
+								transportId: transportId!,
+								kind,
+								rtpParameters,
+								appData,
+							}
+						);
+
+					res.status(200).json(responseData);
 				} catch (error) {
 					next(error);
 				}
@@ -290,11 +317,10 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		 * resume.
 		 */
 		this.#expressApp.post(
-			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/resume',
+			'/rooms/:roomId/broadcasters/:peerId/transports/:transportId/consumers/:consumerId/resume',
 			// eslint-disable-next-line @typescript-eslint/require-await
 			async (req: ApiServerExpressRequest, res, next) => {
-				const { peerId, transportId } = req.params;
-				const { consumerId } = req.body;
+				const { peerId, transportId, consumerId } = req.params;
 
 				try {
 					// TODO

@@ -6,7 +6,7 @@ function show_usage()
 	echo "USAGE"
 	echo "-----"
 	echo
-	echo "  SERVER_URL=https://my.mediasoup-demo.org:4443 ROOM_ID=test AUDIO_PRODUCER_ID=id1 VIDEO_PRODUCER_ID=id2 ./ffmpeg_receiver.sh"
+	echo "  SERVER_URL=https://my.mediasoup-demo.org:4443 ROOM_ID=test AUDIO_PRODUCER_ID=id1 VIDEO_PRODUCER_ID=id2 ./ffmpeg-receiver.sh"
 	echo
 	echo "  where:"
 	echo "  - SERVER_URL is the URL of the mediasoup-demo API server"
@@ -123,15 +123,18 @@ ${HTTPIE_COMMAND} \
 trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID} > /dev/null' EXIT
 
 echo ">>> creating mediasoup PlainTransport for consuming audio..."
+
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
 	direction="consumer" \
 	comedia:=false \
 	rtcpMux:=false \
 	2> /dev/null)
+
 eval "$(echo ${res} | jq -r '@sh "audioTransportId=\(.transportId)"')"
 
 echo ">>> connecting mediasoup PlainTransport for consuming audio..."
+
 ${HTTPIE_COMMAND} -v \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${audioTransportId}/connect \
 	ip="${LOCAL_IP}" \
@@ -139,7 +142,17 @@ ${HTTPIE_COMMAND} -v \
 	rtcpPort:=${AUDIO_LOCAL_RTCP_PORT} \
 	> /dev/null
 
+#
+# Once transports are created, join the room.
+#
+echo ">>> joining the room..."
+
+${HTTPIE_COMMAND} -v \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/join \
+	> /dev/null
+
 echo ">>> creating mediasoup audio Consumer..."
+
 ${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${audioTransportId}/consume \
 	producerId="${AUDIO_PRODUCER_ID}" \
@@ -148,15 +161,18 @@ ${HTTPIE_COMMAND} \
 	> /dev/null
 
 echo ">>> creating mediasoup PlainTransport for consuming video..."
+
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
 	direction="consumer" \
 	comedia:=false \
 	rtcpMux:=false \
 	2> /dev/null)
+
 eval "$(echo ${res} | jq -r '@sh "videoTransportId=\(.transportId)"')"
 
 echo ">>> connecting mediasoup PlainTransport for consuming video..."
+
 ${HTTPIE_COMMAND} -v \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/connect \
 	ip="${LOCAL_IP}" \
@@ -165,15 +181,18 @@ ${HTTPIE_COMMAND} -v \
 	> /dev/null
 
 echo ">>> creating mediasoup video Consumer..."
+
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/consume \
 	producerId="${VIDEO_PRODUCER_ID}" \
 	paused:=true \
 	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"video\", \"mimeType\":\"video/VP8\", \"preferredPayloadType\":${VIDEO_PT}, \"clockRate\": 90000, \"parameters\": {}, \"rtcpFeedback\": [{ \"type\": \"nack\" }] }] }" \
 	2> /dev/null)
+
 eval "$(echo ${res} | jq -r '@sh "videoConsumerId=\(.consumerId)"')"
 
 echo ">>> running ffmpeg..."
+
 /usr/bin/ffmpeg \
 	-v info \
 	-thread_queue_size 1500 \
@@ -184,6 +203,7 @@ echo ">>> running ffmpeg..."
 ffmpeg_pid=$!
 
 echo ">>> resuming video Consumer ${videoConsumerId}..."; \
+
 ${HTTPIE_COMMAND} -v \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/resume \
 	consumerId="${videoConsumerId}" \

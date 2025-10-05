@@ -4,8 +4,6 @@ import { RequestNameDataMap, RequestNameResponseDataMap } from './common';
 import type {
 	PeerId,
 	PeerDevice,
-	SerializedPeer,
-	TransportDirection,
 	PlainTransportAppData,
 	PeerProducerAppData,
 	ConsumerAppData,
@@ -66,7 +64,10 @@ export type TypedApiRequestFromBroadcasterPeerToRoom = {
  */
 type RequestFromBroadcasterPeer =
 	| {
-			name: 'close';
+			name: 'join';
+	  }
+	| {
+			name: 'disconnect';
 	  }
 	| {
 			name: 'createPlainTransport';
@@ -81,24 +82,26 @@ type RequestFromBroadcasterPeer =
 				port: number;
 				rtcpPort?: number;
 			};
+	  }
+	| {
+			name: 'connectPlainTransport';
+			data: {
+				transportId: string;
+				ip: string;
+				port: number;
+				rtcpPort?: number;
+			};
+	  }
+	| {
+			name: 'produce';
+			data: {
+				transportId: string;
+				kind: mediasoupTypes.MediaKind;
+				rtpParameters: mediasoupTypes.RtpParameters;
+				appData: PeerProducerAppData;
+			};
+			responseData: { producerId: string };
 	  };
-// | {
-// 		name: 'connectPlainTransport';
-// 		data: {
-// 			direction: TransportDirection;
-// 			// TODO
-// 			dtlsParameters: mediasoupTypes.DtlsParameters;
-// 		};
-//   }
-// | {
-// 		name: 'produce';
-// 		data: {
-// 			kind: mediasoupTypes.MediaKind;
-// 			rtpParameters: mediasoupTypes.RtpParameters;
-// 			appData: PeerProducerAppData;
-// 		};
-// 		responseData: { producerId: string };
-//   };
 
 export type RequestNameFromBroadcasterPeer =
 	keyof RequestNameDataMap<RequestFromBroadcasterPeer>;

@@ -16,6 +16,7 @@ fi
 
 export SERVER_URL=${SERVER_URL:="${PROTOCOL}://${DOMAIN}:${PORT}"}
 export ROOM_ID=${ROOM_ID:="dev"}
-export MEDIA_FILE=${MEDIA_FILE:="../../app/public/videos/video-audio-stereo.mp4"}
+export AUDIO_PRODUCER_ID=${AUDIO_PRODUCER_ID:="TODO"}
+export VIDEO_PRODUCER_ID=${VIDEO_PRODUCER_ID:="TODO"}
 
-../../broadcasters/ffmpeg.sh
+../../broadcasters/ffmpeg-receiver.sh

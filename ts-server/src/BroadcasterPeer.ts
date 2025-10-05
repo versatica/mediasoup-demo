@@ -359,7 +359,21 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		const { name, data, accept } = request;
 
 		switch (name) {
-			case 'close': {
+			case 'join': {
+				if (this.#joined) {
+					throw new InvalidStateError('Peer already joined');
+				}
+
+				this.#joined = true;
+
+				this.emit('joined');
+
+				accept();
+
+				break;
+			}
+
+			case 'disconnect': {
 				this.close();
 
 				if (this.#joined) {
@@ -396,6 +410,46 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 					port: transport.tuple.localPort,
 					rtcpPort: transport.rtcpTuple?.localPort,
 				});
+
+				break;
+			}
+
+			case 'connectPlainTransport': {
+				const { transportId, ip, port, rtcpPort } = data;
+				const transport = this.assertAndGetPlainTransport(transportId);
+
+				await transport.connect({
+					ip,
+					port,
+					rtcpPort,
+				});
+
+				accept();
+
+				break;
+			}
+
+			case 'produce': {
+				this.assertJoined();
+
+				const { transportId, kind, rtpParameters, appData } = data;
+				const { source } = appData;
+				const transport = this.assertAndGetPlainTransport(transportId);
+				const producer = await transport.produce<ProducerAppData>({
+					kind,
+					rtpParameters,
+					appData: {
+						peerId: this.id,
+						source,
+					},
+				});
+
+				this.#producers.set(producer.id, producer);
+
+				this.handleProducer(producer);
+				this.emit('new-producer', { producer });
+
+				accept({ producerId: producer.id });
 
 				break;
 			}
