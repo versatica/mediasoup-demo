@@ -125,10 +125,11 @@ trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${S
 echo ">>> creating mediasoup PlainTransport for consuming audio..."
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
+	direction="consumer" \
 	comedia:=false \
 	rtcpMux:=false \
 	2> /dev/null)
-eval "$(echo ${res} | jq -r '@sh "audioTransportId=\(.id)"')"
+eval "$(echo ${res} | jq -r '@sh "audioTransportId=\(.transportId)"')"
 
 echo ">>> connecting mediasoup PlainTransport for consuming audio..."
 ${HTTPIE_COMMAND} -v \
@@ -149,10 +150,11 @@ ${HTTPIE_COMMAND} \
 echo ">>> creating mediasoup PlainTransport for consuming video..."
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
+	direction="consumer" \
 	comedia:=false \
 	rtcpMux:=false \
 	2> /dev/null)
-eval "$(echo ${res} | jq -r '@sh "videoTransportId=\(.id)"')"
+eval "$(echo ${res} | jq -r '@sh "videoTransportId=\(.transportId)"')"
 
 echo ">>> connecting mediasoup PlainTransport for consuming video..."
 ${HTTPIE_COMMAND} -v \
@@ -169,7 +171,7 @@ res=$(${HTTPIE_COMMAND} \
 	paused:=true \
 	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"video\", \"mimeType\":\"video/VP8\", \"preferredPayloadType\":${VIDEO_PT}, \"clockRate\": 90000, \"parameters\": {}, \"rtcpFeedback\": [{ \"type\": \"nack\" }] }] }" \
 	2> /dev/null)
-eval "$(echo ${res} | jq -r '@sh "videoConsumerId=\(.id)"')"
+eval "$(echo ${res} | jq -r '@sh "videoConsumerId=\(.consumerId)"')"
 
 echo ">>> running ffmpeg..."
 /usr/bin/ffmpeg \

@@ -63,8 +63,9 @@ export type SerializedRoom = {
 	createdAt: Date;
 	numPeers: number;
 	numJoiningPeers: number;
-	numBroadcasterPeers: number;
 	peers: SerializedPeer[];
+	numBroadcasterPeers: number;
+	numJoiningBroadcasterPeers: number;
 	broadcasterPeers: SerializedPeer[];
 };
 

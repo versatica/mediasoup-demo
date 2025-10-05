@@ -24,6 +24,7 @@ import type {
 	PeerId,
 	SerializedRoom,
 	WebRtcTransportAppData,
+	PlainTransportAppData,
 	ProducerAppData,
 	NetworkThrottleOptions,
 } from './types';
@@ -92,6 +93,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #bot: Bot;
 	readonly #joiningPeers: Map<string, Peer> = new Map();
 	readonly #peers: Map<string, Peer> = new Map();
+	readonly #joiningBroadcasterPeers: Map<string, BroadcasterPeer> = new Map();
 	readonly #broadcasterPeers: Map<string, BroadcasterPeer> = new Map();
 	readonly #createdAt: Date;
 	#closed: boolean = false;
@@ -178,12 +180,16 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		this.#closed = true;
 
+		for (const peer of this.#joiningPeers.values()) {
+			peer.close();
+		}
+
 		for (const peer of this.#peers.values()) {
 			peer.close();
 		}
 
-		for (const peer of this.#joiningPeers.values()) {
-			peer.close();
+		for (const broadcasterPeer of this.#joiningBroadcasterPeers.values()) {
+			broadcasterPeer.close();
 		}
 
 		for (const broadcasterPeer of this.#broadcasterPeers.values()) {
@@ -203,8 +209,9 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			createdAt: this.#createdAt,
 			numPeers: this.#peers.size,
 			numJoiningPeers: this.#joiningPeers.size,
-			numBroadcasterPeers: this.#broadcasterPeers.size,
 			peers: this.getAllPeers().map(peer => peer.serialize()),
+			numBroadcasterPeers: this.#broadcasterPeers.size,
+			numJoiningBroadcasterPeers: this.#joiningBroadcasterPeers.size,
 			broadcasterPeers: this.getAllBroadcasterPeers().map(broadcasterPeer =>
 				broadcasterPeer.serialize()
 			),
@@ -222,38 +229,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	}): void {
 		this.#logger.debug('processWsConnection() [peerId:%o]', peerId);
 
-		const existingPeer = this.#peers.get(peerId);
-
-		if (existingPeer) {
-			this.#logger.warn(
-				'processWsConnection() | there is already a Peer with same peerId, closing it [peerId:%o]',
-				peerId
-			);
-
-			existingPeer.close();
-		}
-
-		const existingJoiningPeer = this.#joiningPeers.get(peerId);
-
-		if (existingJoiningPeer) {
-			this.#logger.warn(
-				'processWsConnection() | there is already a joining Peer with same peerId, closing it [peerId:%o]',
-				peerId
-			);
-
-			existingJoiningPeer.close();
-		}
-
-		const existingBroadcasterPeer = this.#broadcasterPeers.get(peerId);
-
-		if (existingBroadcasterPeer) {
-			this.#logger.warn(
-				'processWsConnection() | there is already a BroadcasterPeer with same peerId, closing it [peerId:%o]',
-				peerId
-			);
-
-			existingBroadcasterPeer.close();
-		}
+		this.closeExistingPeer(peerId);
 
 		this.#logger.debug(
 			'processWsConnection() | creating a new Peer [peerId:%o]',
@@ -288,7 +264,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					name,
 					error
 				);
-
 				reject(error as Error);
 			});
 		});
@@ -303,7 +278,9 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			? [undefined?]
 			: [RequestDataFromBroadcasterPeer<Name>]
 	): Promise<RequestResponseDataFromBroadcasterPeer<Name>> {
-		const broadcasterPeer = this.#broadcasterPeers.get(peerId);
+		const broadcasterPeer =
+			this.#broadcasterPeers.get(peerId) ??
+			this.#joiningBroadcasterPeers.get(peerId);
 
 		if (!broadcasterPeer) {
 			throw new PeerNotFound(`BroadcasterPeer '${peerId}' not found`);
@@ -344,6 +321,61 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 	private getAllBroadcasterPeers(): BroadcasterPeer[] {
 		return Array.from(this.#broadcasterPeers.values());
+	}
+
+	private getOtherBroadcasterPeers(
+		excludedBroadcasterPeer: BroadcasterPeer
+	): BroadcasterPeer[] {
+		return Array.from(this.#broadcasterPeers.values()).filter(
+			broadcasterPeer => broadcasterPeer !== excludedBroadcasterPeer
+		);
+	}
+
+	private closeExistingPeer(peerId: PeerId): void {
+		const existingPeer = this.#peers.get(peerId);
+
+		if (existingPeer) {
+			this.#logger.warn(
+				'closeExistingPeer() | there is already a Peer with same peerId, closing it [peerId:%o]',
+				peerId
+			);
+
+			existingPeer.close();
+		}
+
+		const existingJoiningPeer = this.#joiningPeers.get(peerId);
+
+		if (existingJoiningPeer) {
+			this.#logger.warn(
+				'closeExistingPeer() | there is already a joining Peer with same peerId, closing it [peerId:%o]',
+				peerId
+			);
+
+			existingJoiningPeer.close();
+		}
+
+		const existingBroadcasterPeer = this.#broadcasterPeers.get(peerId);
+
+		if (existingBroadcasterPeer) {
+			this.#logger.warn(
+				'closeExistingPeer() | there is already a BroadcasterPeer with same peerId, closing it [peerId:%o]',
+				peerId
+			);
+
+			existingBroadcasterPeer.close();
+		}
+
+		const existingJoiningBroadcasterPeer =
+			this.#joiningBroadcasterPeers.get(peerId);
+
+		if (existingJoiningBroadcasterPeer) {
+			this.#logger.warn(
+				'closeExistingPeer() | there is already a joining BroadcasterPeer with same peerId, closing it [peerId:%o]',
+				peerId
+			);
+
+			existingJoiningBroadcasterPeer.close();
+		}
 	}
 
 	private handlePeer(peer: Peer): void {
@@ -444,11 +476,18 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		peer.on('new-producer', ({ producer }) => {
 			const otherPeers = this.getOtherPeers(peer);
+			const broadcasterPeers = this.getAllBroadcasterPeers();
 
 			for (const otherPeer of otherPeers) {
 				void otherPeer.consume({
 					producer,
 					consumerReplicas: this.#consumerReplicas,
+				});
+			}
+
+			for (const broadcasterPeer of broadcasterPeers) {
+				void broadcasterPeer.consume({
+					producer,
 				});
 			}
 
@@ -461,8 +500,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					.addProducer({ producerId: producer.id })
 					.catch(() => {});
 			}
-
-			// TODO: Consume in broadcasters.
 		});
 
 		peer.on('new-data-producer', ({ dataProducer }) => {
@@ -530,18 +567,30 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 	private handleBroadcasterPeer(broadcasterPeer: BroadcasterPeer): void {
 		broadcasterPeer.on('closed', () => {
+			this.#joiningBroadcasterPeers.delete(broadcasterPeer.id);
 			this.#broadcasterPeers.delete(broadcasterPeer.id);
 		});
 
 		broadcasterPeer.on('joined', () => {
+			this.#joiningBroadcasterPeers.delete(broadcasterPeer.id);
 			this.#broadcasterPeers.set(broadcasterPeer.id, broadcasterPeer);
 
 			const peers = this.getAllPeers();
+			const otherBroadcasterPeers =
+				this.getOtherBroadcasterPeers(broadcasterPeer);
 
-			for (const otherPeer of peers) {
-				otherPeer.notify('newPeer', { peer: broadcasterPeer.serialize() });
+			for (const peer of peers) {
+				peer.notify('newPeer', { peer: broadcasterPeer.serialize() });
 
-				for (const producer of otherPeer.getProducers()) {
+				for (const producer of peer.getProducers()) {
+					void broadcasterPeer.consume({
+						producer,
+					});
+				}
+			}
+
+			for (const otherBroadcasterPeer of otherBroadcasterPeers) {
+				for (const producer of otherBroadcasterPeer.getProducers()) {
 					void broadcasterPeer.consume({
 						producer,
 					});
@@ -561,52 +610,42 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			callback(this.#mediasoupRouter.rtpCapabilities);
 		});
 
-		// TODO
-		// broadcasterPeer.on(
-		// 	'create-plain-transport',
-		// 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		// 	async ({ direction, sctpCapabilities, forceTcp }, resolve, reject) => {
-		// 		try {
-		// 			const transport =
-		// 				await this.#mediasoupRouter.createWebRtcTransport<WebRtcTransportAppData>(
-		// 					{
-		// 						...clone(this.#config.mediasoup.webRtcTransportOptions),
-		// 						enableUdp: !forceTcp,
-		// 						enableTcp: true,
-		// 						webRtcServer: this.#mediasoupWebRtcServer,
-		// 						iceConsentTimeout: 20,
-		// 						enableSctp: Boolean(sctpCapabilities),
-		// 						numSctpStreams: sctpCapabilities?.numStreams,
-		// 						appData: { direction },
-		// 					}
-		// 				);
+		broadcasterPeer.on(
+			'create-plain-transport',
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			async ({ direction, comedia, rtcpMux }, resolve, reject) => {
+				try {
+					const transport =
+						await this.#mediasoupRouter.createPlainTransport<PlainTransportAppData>(
+							{
+								...clone(this.#config.mediasoup.plainTransportOptions),
+								comedia,
+								rtcpMux,
+								appData: { direction },
+							}
+						);
 
-		// 			const { maxIncomingBitrate } =
-		// 				this.#config.mediasoup.webRtcTransportOptions ?? {};
-
-		// 			if (maxIncomingBitrate) {
-		// 				transport.setMaxIncomingBitrate(maxIncomingBitrate).catch(error => {
-		// 					this.#logger.warn(
-		// 						`transport.setMaxIncomingBitrate() failed: ${error}`
-		// 					);
-		// 				});
-		// 			}
-
-		// 			resolve(transport);
-		// 		} catch (error) {
-		// 			reject(error as Error);
-		// 		}
-		// 	}
-		// );
+					resolve(transport);
+				} catch (error) {
+					reject(error as Error);
+				}
+			}
+		);
 
 		broadcasterPeer.on('new-producer', ({ producer }) => {
 			const peers = this.getAllPeers();
+			const otherBroadcasterPeers =
+				this.getOtherBroadcasterPeers(broadcasterPeer);
 
 			for (const peer of peers) {
 				void peer.consume({
 					producer,
 					consumerReplicas: this.#consumerReplicas,
 				});
+			}
+
+			for (const otherBroadcasterPeer of otherBroadcasterPeers) {
+				void otherBroadcasterPeer.consume({ producer });
 			}
 
 			if (producer.kind === 'audio') {
@@ -690,9 +729,16 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				break;
 			}
 
-			case 'join': {
+			case 'createBroadcasterPeer': {
 				const { peerId, remoteAddress, displayName, device, rtpCapabilities } =
 					data;
+
+				this.closeExistingPeer(peerId);
+
+				this.#logger.debug(
+					'handleApiRequestToRoom() | creating a new BroadcasterPeer [peerId:%o]',
+					peerId
+				);
 
 				const broadcasterPeer = BroadcasterPeer.create({
 					peerId,
@@ -702,13 +748,11 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					rtpCapabilities,
 				});
 
-				this.handleBroadcasterPeer(broadcasterPeer);
+				// NOTE: The BroadcasterPeer is not yet joined. It will once it sends
+				// 'join' request.
+				this.#joiningBroadcasterPeers.set(broadcasterPeer.id, broadcasterPeer);
 
-				// NOTE: Here we invoke the 'joined' event on the new BroadcasterPeer
-				// to keep the events based logic consistent.
-				// NOTE: Take into account that BroadcasterPeers are always joined
-				// once created.
-				broadcasterPeer.emit('joined');
+				this.handleBroadcasterPeer(broadcasterPeer);
 
 				accept();
 

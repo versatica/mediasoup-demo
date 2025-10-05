@@ -131,13 +131,16 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 			async (req: ApiServerExpressRequest, res, next) => {
 				try {
 					const { peerId, displayName, device, rtpCapabilities } = req.body;
-					const responseData = await req.room!.processApiRequestToRoom('join', {
-						peerId,
-						remoteAddress: req.ip ?? req.ips[0]!,
-						displayName,
-						device,
-						rtpCapabilities,
-					});
+					const responseData = await req.room!.processApiRequestToRoom(
+						'createBroadcasterPeer',
+						{
+							peerId,
+							remoteAddress: req.ip ?? req.ips[0]!,
+							displayName,
+							device,
+							rtpCapabilities,
+						}
+					);
 
 					res.status(200).json(responseData);
 				} catch (error) {
@@ -172,18 +175,22 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 			'/rooms/:roomId/broadcasters/:peerId/transports',
 			async (req: ApiServerExpressRequest, res, next) => {
 				const { peerId } = req.params;
-				const { type, rtcpMux, comedia } = req.body;
+				const { direction, comedia, rtcpMux } = req.body;
 
 				try {
-					// TODO
-					// const data = await req.room.createBroadcasterTransport({
-					// 	peerId,
-					// 	type,
-					// 	rtcpMux,
-					// 	comedia,
-					// });
-					//
-					// res.status(200).json(data);
+					await req.room!.processApiRequestToBroadcasterPeer(
+						peerId!,
+						'createPlainTransport',
+						{
+							comedia,
+							rtcpMux,
+							appData: {
+								direction,
+							},
+						}
+					);
+
+					res.status(200).send('broadcaster deleted');
 				} catch (error) {
 					next(error);
 				}

@@ -69,9 +69,9 @@ export class Bot {
 		peer: Peer;
 	}): Promise<void> {
 		logger.debug(
-			'consumeData() [dataProducerId:%o, peerId:%o]',
-			dataProducer.id,
-			peer.id
+			'consumeData() [peerId:%o, dataProducerId:%o]',
+			peer.id,
+			dataProducer.id
 		);
 
 		let dataConsumer: mediasoupTypes.DataConsumer<DataConsumerAppData>;

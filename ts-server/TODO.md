@@ -1,7 +1,7 @@
 # TODO
 
 - Verify that when peers or broadcasters join before or later and they produce, all peers (and broadcasters capable of it) consume.
-- In `BroadcasterPeer`... we are emitting 'joined' **before** the client creates the consumer plain transport so problems...
+- In `BroadcasterPeer`... we are emitting 'joined' **before** the client creates the consumer plain transport so problems. Solution could be that the broadcaster sends a "join" post after creating the transports.
 - Delete `tmp` folder.
 - Delete this `TODO.md`.
 - `ApiServer` and adapt broadcaster scripts.

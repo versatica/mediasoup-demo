@@ -258,7 +258,8 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		consumerReplicas: number;
 	}): Promise<void> {
 		this.#logger.debug(
-			'consume() [producerId:%o, source:%o]',
+			'consume() [peerId:%o, producerId:%o, source:%o]',
+			producer.appData.peerId,
 			producer.id,
 			producer.appData.source
 		);
@@ -284,7 +285,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		);
 
 		if (!canConsume) {
-			this.#logger.debug('consumeData() | cannot consume');
+			this.#logger.debug('consume() | cannot consume');
 
 			return;
 		}
@@ -372,7 +373,10 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		>;
 	}): Promise<void> {
 		this.#logger.debug(
-			'consumeData() [dataProducerId:%o, channel:%o]',
+			'consumeData() [peerId:%o, dataProducerId:%o, channel:%o]',
+			'peerId' in dataProducer.appData
+				? dataProducer.appData.peerId
+				: undefined,
 			dataProducer.id,
 			dataProducer.appData.channel
 		);
@@ -583,42 +587,51 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			}
 		});
 
-		this.#protooPeer.on('notification', notification => {
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		this.#protooPeer.on('notification', async notification => {
 			this.#logger.debug('<·· notification [name:%o]', notification.method);
 
-			this.handleProtooNotification(
-				notification as TypedProtooNotificationFromPeer
-			).catch(error => {
+			try {
+				await this.handleProtooNotification(
+					notification as TypedProtooNotificationFromPeer
+				);
+			} catch (error) {
 				this.#logger.warn(
 					'protoo notification processing failed [method:%o]:',
 					notification.method,
 					error
 				);
-			});
+			}
 		});
 
-		this.#protooPeer.on('request', (request, accept, reject) => {
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		this.#protooPeer.on('request', async (request, accept, reject) => {
 			this.#logger.debug('<== request [name:%o]', request.method);
 
-			this.handleProtooRequest({
-				...request,
-				// NOTE: Here we could just pass `accept`, but we pass this wrapper to
-				// log that a success response was received.
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				accept: (responseData: any) => {
-					this.#logger.debug('--> success response [name:%o]', request.method);
+			try {
+				await this.handleProtooRequest({
+					...request,
+					// NOTE: Here we could just pass `accept`, but we pass this wrapper to
+					// log that a success response was received.
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					accept: (responseData: any) => {
+						this.#logger.debug(
+							'--> success response [name:%o]',
+							request.method
+						);
 
-					accept(responseData);
-				},
-				reject,
-			} as TypedProtooRequestFromPeer).catch(error => {
+						accept(responseData);
+					},
+					reject,
+				} as TypedProtooRequestFromPeer);
+			} catch (error) {
 				this.#logger.warn(
 					`<-- error response [name:%o]: ${error}`,
 					request.method
 				);
 
-				reject(error);
-			});
+				reject(error as Error);
+			}
 		});
 	}
 

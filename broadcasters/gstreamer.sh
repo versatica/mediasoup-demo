@@ -108,6 +108,7 @@ echo ">>> creating mediasoup PlainTransport for producing audio..."
 
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
+	direction="producer" \
 	comedia:=true \
 	rtcpMux:=false \
 	2> /dev/null)
@@ -116,7 +117,7 @@ res=$(${HTTPIE_COMMAND} \
 # Parse JSON response into Shell variables and extract the PlainTransport id,
 # IP, port and RTCP port.
 #
-eval "$(echo ${res} | jq -r '@sh "audioTransportId=\(.id) audioTransportIp=\(.ip) audioTransportPort=\(.port) audioTransportRtcpPort=\(.rtcpPort)"')"
+eval "$(echo ${res} | jq -r '@sh "audioTransportId=\(.transportId) audioTransportIp=\(.ip) audioTransportPort=\(.port) audioTransportRtcpPort=\(.rtcpPort)"')"
 
 #
 # Create a PlainTransport in the mediasoup to send our video using plain RTP
@@ -127,6 +128,7 @@ echo ">>> creating mediasoup PlainTransport for producing video..."
 
 res=$(${HTTPIE_COMMAND} \
 	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports \
+	direction="producer" \
 	comedia:=true \
 	rtcpMux:=false \
 	2> /dev/null)
@@ -135,7 +137,7 @@ res=$(${HTTPIE_COMMAND} \
 # Parse JSON response into Shell variables and extract the PlainTransport id,
 # IP, port and RTCP port.
 #
-eval "$(echo ${res} | jq -r '@sh "videoTransportId=\(.id) videoTransportIp=\(.ip) videoTransportPort=\(.port) videoTransportRtcpPort=\(.rtcpPort)"')"
+eval "$(echo ${res} | jq -r '@sh "videoTransportId=\(.transportId) videoTransportIp=\(.ip) videoTransportPort=\(.port) videoTransportRtcpPort=\(.rtcpPort)"')"
 
 #
 # Create a mediasoup Producer to send audio by sending our RTP parameters via a

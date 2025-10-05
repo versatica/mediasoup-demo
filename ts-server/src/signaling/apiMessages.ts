@@ -6,6 +6,7 @@ import type {
 	PeerDevice,
 	SerializedPeer,
 	TransportDirection,
+	PlainTransportAppData,
 	PeerProducerAppData,
 	ConsumerAppData,
 } from '../types';
@@ -25,10 +26,9 @@ type RequestFromBroadcasterPeerToRoom =
 			};
 	  }
 	| {
-			name: 'join';
+			name: 'createBroadcasterPeer';
 			data: {
 				peerId: PeerId;
-				// NOTE: Field introduced by ApiServer.
 				remoteAddress: string;
 				displayName: string;
 				device: PeerDevice;
@@ -64,26 +64,24 @@ export type TypedApiRequestFromBroadcasterPeerToRoom = {
  * - Those requests are intended for the `BroadcastPeer` instance.
  * - The field `responseData` becomes the HTTP response body (if any).
  */
-type RequestFromBroadcasterPeer = {
-	name: 'close';
-};
-// TODO
-// | {
-// 		name: 'createPlainTransport';
-// 		data: {
-// 			// TODO
-// 			direction: TransportDirection;
-// 			sctpCapabilities?: mediasoupTypes.SctpCapabilities;
-// 			forceTcp: boolean;
-// 		};
-// 		responseData: {
-// 			transportId: string;
-// 			iceParameters: mediasoupTypes.IceParameters;
-// 			iceCandidates: mediasoupTypes.IceCandidate[];
-// 			dtlsParameters: mediasoupTypes.DtlsParameters;
-// 			sctpParameters?: mediasoupTypes.SctpParameters;
-// 		};
-//   }
+type RequestFromBroadcasterPeer =
+	| {
+			name: 'close';
+	  }
+	| {
+			name: 'createPlainTransport';
+			data: {
+				comedia?: boolean;
+				rtcpMux?: boolean;
+				appData: PlainTransportAppData;
+			};
+			responseData: {
+				transportId: string;
+				ip: string;
+				port: number;
+				rtcpPort?: number;
+			};
+	  };
 // | {
 // 		name: 'connectPlainTransport';
 // 		data: {

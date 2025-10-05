@@ -53,6 +53,7 @@ export type BroadcasterPeerEvents = {
 	 * isses.
 	 *
 	 * @remarks
+	 * - 'disconnected' is only emitted if the BroadcasterPeer was joined.
 	 * - 'disconnected' is guaranteed to be emitted after 'closed'.
 	 */
 	disconnected: [];
@@ -70,6 +71,8 @@ export type BroadcasterPeerEvents = {
 	'create-plain-transport': [
 		{
 			direction: TransportDirection;
+			comedia?: boolean;
+			rtcpMux?: boolean;
 		},
 		resolve: (
 			transport: mediasoupTypes.PlainTransport<PlainTransportAppData>
@@ -99,8 +102,11 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 	readonly #displayName: string;
 	readonly #device: PeerDevice;
 	readonly #rtpCapabilities?: mediasoupTypes.RtpCapabilities;
-	#producerTransport?: mediasoupTypes.WebRtcTransport<PlainTransportAppData>;
-	#consumerTransport?: mediasoupTypes.WebRtcTransport<PlainTransportAppData>;
+	#joined: boolean = false;
+	readonly #transports: Map<
+		string,
+		mediasoupTypes.PlainTransport<PlainTransportAppData>
+	> = new Map();
 	readonly #producers: Map<string, mediasoupTypes.Producer<ProducerAppData>> =
 		new Map();
 	readonly #consumers: Map<string, mediasoupTypes.Consumer<ConsumerAppData>> =
@@ -117,7 +123,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		staticLogger.debug('create() [peerId:%o]', peerId);
 
 		const logger = new Logger(`[peerId:${peerId}]`, staticLogger);
-		const peer = new BroadcasterPeer({
+		const broadcasterPeer = new BroadcasterPeer({
 			logger,
 			peerId,
 			remoteAddress,
@@ -126,7 +132,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 			rtpCapabilities,
 		});
 
-		return peer;
+		return broadcasterPeer;
 	}
 
 	private constructor({
@@ -167,13 +173,16 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 
 		this.#closed = true;
 
-		this.#producerTransport?.close();
-		this.#consumerTransport?.close();
+		for (const transport of this.#transports.values()) {
+			transport.close();
+		}
 
 		this.emit('closed');
 	}
 
 	serialize(): SerializedPeer {
+		this.assertJoined();
+
 		return {
 			peerId: this.#peerId,
 			displayName: this.#displayName,
@@ -191,7 +200,22 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 	}: {
 		producer: mediasoupTypes.Producer<ProducerAppData>;
 	}): Promise<void> {
-		this.#logger.debug('consume() [producerId:%o]', producer.id);
+		this.#logger.debug(
+			'consume() [peerId:%o, producerId:%o, source:%o]',
+			producer.appData.peerId,
+			producer.id,
+			producer.appData.source
+		);
+
+		const transport = this.getConsumerPlainTransport();
+
+		if (!transport) {
+			this.#logger.debug(
+				'consume() | no consumer PlainTransport, cannot consume'
+			);
+
+			return;
+		}
 
 		let canConsume = false;
 
@@ -204,12 +228,10 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		);
 
 		if (!canConsume) {
+			this.#logger.debug('consume() | cannot consume');
+
 			return;
 		}
-
-		const transport = this.assertAndGetPlainTransport({
-			direction: 'consumer',
-		});
 
 		let consumer: mediasoupTypes.Consumer<ConsumerAppData>;
 
@@ -259,45 +281,41 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		});
 	}
 
+	private getConsumerPlainTransport():
+		| mediasoupTypes.PlainTransport<PlainTransportAppData>
+		| undefined {
+		return Array.from(this.#transports.values()).find(
+			transport => transport.appData.direction === 'consumer'
+		);
+	}
+
 	private assertNotClosed(): void {
 		if (this.#closed) {
-			throw new InvalidStateError('Peer closed');
+			throw new InvalidStateError('BroadcasterPeer closed');
 		}
 	}
 
-	private assertAndGetPlainTransport({
-		direction,
-	}: {
-		direction: TransportDirection;
-	}): mediasoupTypes.WebRtcTransport<PlainTransportAppData> {
-		switch (direction) {
-			case 'producer': {
-				if (!this.#producerTransport) {
-					throw new InvalidStateError('no producer WebRtcTransport');
-				}
-
-				return this.#producerTransport;
-			}
-
-			case 'consumer': {
-				if (!this.#consumerTransport) {
-					throw new InvalidStateError('no consumer WebRtcTransport');
-				}
-
-				return this.#consumerTransport;
-			}
-
-			default: {
-				assertUnreachable('invalid WebRtcTransport direction', direction);
-			}
+	private assertJoined(): void {
+		if (!this.#joined) {
+			throw new InvalidStateError('BroadcasterPeer not joined');
 		}
 	}
 
-	private assertAndGetProducer({
-		producerId,
-	}: {
-		producerId: string;
-	}): mediasoupTypes.Producer<ProducerAppData> {
+	private assertAndGetPlainTransport(
+		transportId: string
+	): mediasoupTypes.PlainTransport<PlainTransportAppData> {
+		const transport = this.#transports.get(transportId);
+
+		if (!transport) {
+			throw new InvalidStateError(`PlainTransport '${transportId}' not found`);
+		}
+
+		return transport;
+	}
+
+	private assertAndGetProducer(
+		producerId: string
+	): mediasoupTypes.Producer<ProducerAppData> {
 		const producer = this.#producers.get(producerId);
 
 		if (!producer) {
@@ -307,11 +325,9 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		return producer;
 	}
 
-	private assertAndGetConsumer({
-		consumerId,
-	}: {
-		consumerId: string;
-	}): mediasoupTypes.Consumer<ConsumerAppData> {
+	private assertAndGetConsumer(
+		consumerId: string
+	): mediasoupTypes.Consumer<ConsumerAppData> {
 		const consumer = this.#consumers.get(consumerId);
 
 		if (!consumer) {
@@ -337,7 +353,6 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		});
 	}
 
-	// eslint-disable-next-line @typescript-eslint/require-await
 	private async handleApiRequest(
 		request: TypedApiRequestFromBroadcasterPeer
 	): Promise<void> {
@@ -346,9 +361,41 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		switch (name) {
 			case 'close': {
 				this.close();
-				this.emit('disconnected');
+
+				if (this.#joined) {
+					this.emit('disconnected');
+				}
 
 				accept();
+
+				break;
+			}
+
+			case 'createPlainTransport': {
+				const { comedia, rtcpMux, appData } = data;
+				const { direction } = appData;
+
+				const transport = await new Promise<
+					mediasoupTypes.PlainTransport<PlainTransportAppData>
+				>((resolve, reject) => {
+					this.emit(
+						'create-plain-transport',
+						{ direction, comedia, rtcpMux },
+						resolve,
+						reject
+					);
+				});
+
+				this.#transports.set(transport.id, transport);
+
+				this.handleTransport(transport);
+
+				accept({
+					transportId: transport.id,
+					ip: transport.tuple.localAddress,
+					port: transport.tuple.localPort,
+					rtcpPort: transport.rtcpTuple?.localPort,
+				});
 
 				break;
 			}
@@ -357,5 +404,13 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 				assertUnreachable('request name', name);
 			}
 		}
+	}
+
+	private handleTransport(
+		transport: mediasoupTypes.PlainTransport<PlainTransportAppData>
+	): void {
+		transport.observer.on('close', () => {
+			this.#transports.delete(transport.id);
+		});
 	}
 }
