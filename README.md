@@ -156,4 +156,5 @@ $ MEDIASOUP_ANNOUNCED_IP=192.168.1.34 ./docker/run.sh
 
 ## License
 
-MIT
+[ISC](./LICENSE)
+

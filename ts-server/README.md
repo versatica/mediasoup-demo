@@ -74,4 +74,4 @@ You can support mediasoup by [sponsoring](https://mediasoup.org/sponsor) it. Tha
 
 ## License
 
-[ISC](./LICENSE)
+[ISC](../LICENSE)

@@ -7,7 +7,7 @@
     "Iñaki Baz Castillo <ibc@aliax.net> (https://inakibaz.me)",
     "José Luis Millán <jmillan@aliax.net> (https://github.com/jmillan)"
   ],
-  "license": "All Rights Reserved",
+  "license": "ISC",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "engines": {
