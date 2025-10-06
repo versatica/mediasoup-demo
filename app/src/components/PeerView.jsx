@@ -13,22 +13,24 @@ import EditableInput from './EditableInput';
 const logger = new Logger('PeerView');
 
 const tinyFaceDetectorOptions = new faceapi.TinyFaceDetectorOptions({
-	inputSize: 160,
-	scoreThreshold: 0.5,
+	inputSize      : 160,
+	scoreThreshold : 0.5
 });
 
-export default class PeerView extends React.Component {
-	constructor(props) {
+export default class PeerView extends React.Component 
+{
+	constructor(props) 
+{
 		super(props);
 
 		this.state = {
-			audioVolume: 0, // Integer from 0 to 10.,
-			showInfo: window.SHOW_INFO || false,
-			videoResolutionWidth: null,
-			videoResolutionHeight: null,
-			videoCanPlay: false,
-			videoElemPaused: false,
-			maxSpatialLayer: null,
+			audioVolume           : 0, // Integer from 0 to 10.,
+			showInfo              : window.SHOW_INFO || false,
+			videoResolutionWidth  : null,
+			videoResolutionHeight : null,
+			videoCanPlay          : false,
+			videoElemPaused       : false,
+			maxSpatialLayer       : null
 		};
 
 		this._audioElemRef = React.createRef();
@@ -54,7 +56,8 @@ export default class PeerView extends React.Component {
 		this._faceDetectionRequestAnimationFrame = null;
 	}
 
-	render() {
+	render() 
+{
 		const {
 			isMe,
 			peer,
@@ -82,7 +85,7 @@ export default class PeerView extends React.Component {
 			onChangeVideoPreferredLayers,
 			onChangeVideoPriority,
 			onRequestKeyFrame,
-			onStatsClick,
+			onStatsClick
 		} = this.props;
 
 		const {
@@ -92,13 +95,13 @@ export default class PeerView extends React.Component {
 			videoResolutionHeight,
 			videoCanPlay,
 			videoElemPaused,
-			maxSpatialLayer,
+			maxSpatialLayer
 		} = this.state;
 
 		return (
-			<div data-component="PeerView">
-				<div className="info">
-					<div className="icons">
+			<div data-component='PeerView'>
+				<div className='info'>
+					<div className='icons'>
 						<div
 							className={classnames('icon', 'info', { on: showInfo })}
 							onClick={() => this.setState({ showInfo: !showInfo })}
@@ -120,8 +123,8 @@ export default class PeerView extends React.Component {
 										<p>
 											{'id: '}
 											<span
-												className="copiable"
-												data-tip="Copy audio producer id to clipboard"
+												className='copiable'
+												data-tip='Copy audio producer id to clipboard'
 												onClick={() => clipboardCopy(`"${audioProducerId}"`)}
 											>
 												{audioProducerId}
@@ -129,8 +132,8 @@ export default class PeerView extends React.Component {
 										</p>
 
 										<ReactTooltip
-											type="light"
-											effect="solid"
+											type='light'
+											effect='solid'
 											delayShow={1500}
 											delayHide={50}
 										/>
@@ -142,8 +145,8 @@ export default class PeerView extends React.Component {
 										<p>
 											{'id: '}
 											<span
-												className="copiable"
-												data-tip="Copy video producer id to clipboard"
+												className='copiable'
+												data-tip='Copy video producer id to clipboard'
 												onClick={() => clipboardCopy(`"${audioConsumerId}"`)}
 											>
 												{audioConsumerId}
@@ -151,8 +154,8 @@ export default class PeerView extends React.Component {
 										</p>
 
 										<ReactTooltip
-											type="light"
-											effect="solid"
+											type='light'
+											effect='solid'
 											delayShow={1500}
 											delayHide={50}
 										/>
@@ -180,8 +183,8 @@ export default class PeerView extends React.Component {
 										<p>
 											{'id: '}
 											<span
-												className="copiable"
-												data-tip="Copy audio consumer id to clipboard"
+												className='copiable'
+												data-tip='Copy audio consumer id to clipboard'
 												onClick={() => clipboardCopy(`"${videoProducerId}"`)}
 											>
 												{videoProducerId}
@@ -189,8 +192,8 @@ export default class PeerView extends React.Component {
 										</p>
 
 										<ReactTooltip
-											type="light"
-											effect="solid"
+											type='light'
+											effect='solid'
 											delayShow={1500}
 											delayHide={50}
 										/>
@@ -202,8 +205,8 @@ export default class PeerView extends React.Component {
 										<p>
 											{'id: '}
 											<span
-												className="copiable"
-												data-tip="Copy video consumer id to clipboard"
+												className='copiable'
+												data-tip='Copy video consumer id to clipboard'
 												onClick={() => clipboardCopy(`"${videoConsumerId}"`)}
 											>
 												{videoConsumerId}
@@ -211,8 +214,8 @@ export default class PeerView extends React.Component {
 										</p>
 
 										<ReactTooltip
-											type="light"
-											effect="solid"
+											type='light'
+											effect='solid'
 											delayShow={1500}
 											delayHide={50}
 										/>
@@ -236,16 +239,17 @@ export default class PeerView extends React.Component {
 											<span> </span>
 											<span
 												className={classnames({
-													clickable: maxSpatialLayer > -1,
+													clickable : maxSpatialLayer > -1
 												})}
-												onClick={event => {
+												onClick={(event) => 
+{
 													event.stopPropagation();
 
 													const newMaxSpatialLayer = maxSpatialLayer - 1;
 
 													onChangeMaxSendingSpatialLayer(newMaxSpatialLayer);
 													this.setState({
-														maxSpatialLayer: newMaxSpatialLayer,
+														maxSpatialLayer : newMaxSpatialLayer
 													});
 												}}
 											>
@@ -254,18 +258,19 @@ export default class PeerView extends React.Component {
 											<span> </span>
 											<span
 												className={classnames({
-													clickable:
+													clickable :
 														maxSpatialLayer <
-														videoRtpParameters.encodings.length - 1,
+														videoRtpParameters.encodings.length - 1
 												})}
-												onClick={event => {
+												onClick={(event) => 
+{
 													event.stopPropagation();
 
 													const newMaxSpatialLayer = maxSpatialLayer + 1;
 
 													onChangeMaxSendingSpatialLayer(newMaxSpatialLayer);
 													this.setState({
-														maxSpatialLayer: newMaxSpatialLayer,
+														maxSpatialLayer : newMaxSpatialLayer
 													});
 												}}
 											>
@@ -283,18 +288,22 @@ export default class PeerView extends React.Component {
 											{`preferred spatial-temporal layers: ${consumerPreferredSpatialLayer} ${consumerPreferredTemporalLayer}`}
 											<span> </span>
 											<span
-												className="clickable"
-												onClick={event => {
+												className='clickable'
+												onClick={(event) => 
+{
 													event.stopPropagation();
 
 													let newPreferredSpatialLayer =
 														consumerPreferredSpatialLayer;
 													let newPreferredTemporalLayer;
 
-													if (consumerPreferredTemporalLayer > 0) {
+													if (consumerPreferredTemporalLayer > 0) 
+{
 														newPreferredTemporalLayer =
 															consumerPreferredTemporalLayer - 1;
-													} else {
+													}
+ else 
+{
 														if (consumerPreferredSpatialLayer > 0)
 															newPreferredSpatialLayer =
 																consumerPreferredSpatialLayer - 1;
@@ -316,8 +325,9 @@ export default class PeerView extends React.Component {
 											</span>
 											<span> </span>
 											<span
-												className="clickable"
-												onClick={event => {
+												className='clickable'
+												onClick={(event) => 
+{
 													event.stopPropagation();
 
 													let newPreferredSpatialLayer =
@@ -327,10 +337,13 @@ export default class PeerView extends React.Component {
 													if (
 														consumerPreferredTemporalLayer <
 														consumerTemporalLayers - 1
-													) {
+													) 
+{
 														newPreferredTemporalLayer =
 															consumerPreferredTemporalLayer + 1;
-													} else {
+													}
+ else 
+{
 														if (
 															consumerPreferredSpatialLayer <
 															consumerSpatialLayers - 1
@@ -360,9 +373,10 @@ export default class PeerView extends React.Component {
 										<span> </span>
 										<span
 											className={classnames({
-												clickable: consumerPriority > 1,
+												clickable : consumerPriority > 1
 											})}
-											onClick={event => {
+											onClick={(event) => 
+{
 												event.stopPropagation();
 
 												onChangeVideoPriority(consumerPriority - 1);
@@ -373,9 +387,10 @@ export default class PeerView extends React.Component {
 										<span> </span>
 										<span
 											className={classnames({
-												clickable: consumerPriority < 255,
+												clickable : consumerPriority < 255
 											})}
-											onClick={event => {
+											onClick={(event) => 
+{
 												event.stopPropagation();
 
 												onChangeVideoPriority(consumerPriority + 1);
@@ -389,8 +404,9 @@ export default class PeerView extends React.Component {
 								{!isMe && videoCodec && (
 									<p>
 										<span
-											className="clickable"
-											onClick={event => {
+											className='clickable'
+											onClick={(event) => 
+{
 												event.stopPropagation();
 
 												if (!onRequestKeyFrame) return;
@@ -418,25 +434,25 @@ export default class PeerView extends React.Component {
 						{isMe ? (
 							<EditableInput
 								value={peer.displayName}
-								propName="displayName"
-								className="display-name editable"
-								classLoading="loading"
-								classInvalid="invalid"
+								propName='displayName'
+								className='display-name editable'
+								classLoading='loading'
+								classInvalid='invalid'
 								shouldBlockWhileLoading
 								editProps={{
-									maxLength: 20,
-									autoCorrect: 'false',
-									spellCheck: 'false',
+									maxLength   : 20,
+									autoCorrect : 'false',
+									spellCheck  : 'false'
 								}}
 								onChange={({ displayName }) => onChangeDisplayName(displayName)}
 							/>
 						) : (
-							<span className="display-name">{peer.displayName}</span>
+							<span className='display-name'>{peer.displayName}</span>
 						)}
 
-						<div className="row">
+						<div className='row'>
 							<span className={classnames('device-icon', peer.device.flag)} />
-							<span className="device-version">
+							<span className='device-version'>
 								{peer.device.name} {peer.device.version || null}
 							</span>
 						</div>
@@ -446,12 +462,12 @@ export default class PeerView extends React.Component {
 				<video
 					ref={this._videoElemRef}
 					className={classnames({
-						'is-me': isMe,
-						hidden: !videoVisible || !videoCanPlay,
-						'network-error':
+						'is-me'         : isMe,
+						hidden          : !videoVisible || !videoCanPlay,
+						'network-error' :
 							videoVisible &&
 							videoMultiLayer &&
-							consumerCurrentSpatialLayer === null,
+							consumerCurrentSpatialLayer === null
 					})}
 					autoPlay
 					playsInline
@@ -471,28 +487,30 @@ export default class PeerView extends React.Component {
 					className={classnames('face-detection', { 'is-me': isMe })}
 				/>
 
-				<div className="volume-container">
+				<div className='volume-container'>
 					<div className={classnames('bar', `level${audioVolume}`)} />
 				</div>
 
 				{videoVisible && videoScore < 5 && (
-					<div className="spinner-container">
+					<div className='spinner-container'>
 						<Spinner />
 					</div>
 				)}
 
-				{videoElemPaused && <div className="video-elem-paused" />}
+				{videoElemPaused && <div className='video-elem-paused' />}
 			</div>
 		);
 	}
 
-	componentDidMount() {
+	componentDidMount() 
+{
 		const { audioTrack, videoTrack } = this.props;
 
 		this._setTracks(audioTrack, videoTrack);
 	}
 
-	componentWillUnmount() {
+	componentWillUnmount() 
+{
 		if (this._hark) this._hark.stop();
 
 		clearInterval(this._videoResolutionPeriodicTimer);
@@ -500,29 +518,35 @@ export default class PeerView extends React.Component {
 
 		const videoElem = this._videoElemRef.current;
 
-		if (videoElem) {
+		if (videoElem) 
+{
 			videoElem.oncanplay = null;
 			videoElem.onplay = null;
 			videoElem.onpause = null;
 		}
 	}
 
-	UNSAFE_componentWillUpdate() {
+	UNSAFE_componentWillUpdate() 
+{
 		const { isMe, audioTrack, videoTrack, videoRtpParameters } = this.props;
 		const { maxSpatialLayer } = this.state;
 
-		if (isMe && videoRtpParameters && maxSpatialLayer === null) {
+		if (isMe && videoRtpParameters && maxSpatialLayer === null) 
+{
 			this.setState({
-				maxSpatialLayer: videoRtpParameters.encodings.length - 1,
+				maxSpatialLayer : videoRtpParameters.encodings.length - 1
 			});
-		} else if (isMe && !videoRtpParameters && maxSpatialLayer !== null) {
+		}
+ else if (isMe && !videoRtpParameters && maxSpatialLayer !== null) 
+{
 			this.setState({ maxSpatialLayer: null });
 		}
 
 		this._setTracks(audioTrack, videoTrack);
 	}
 
-	_setTracks(audioTrack, videoTrack) {
+	_setTracks(audioTrack, videoTrack) 
+{
 		const { faceDetection } = this.props;
 
 		if (this._audioTrack === audioTrack && this._videoTrack === videoTrack)
@@ -540,7 +564,8 @@ export default class PeerView extends React.Component {
 		const audioElem = this._audioElemRef.current;
 		const videoElem = this._videoElemRef.current;
 
-		if (audioTrack) {
+		if (audioTrack) 
+{
 			const stream = new MediaStream();
 
 			stream.addTrack(audioTrack);
@@ -548,14 +573,17 @@ export default class PeerView extends React.Component {
 
 			audioElem
 				.play()
-				.catch(error => logger.warn('audioElem.play() failed:%o', error));
+				.catch((error) => logger.warn('audioElem.play() failed:%o', error));
 
 			this._runHark(stream);
-		} else {
+		}
+ else 
+{
 			audioElem.srcObject = null;
 		}
 
-		if (videoTrack) {
+		if (videoTrack) 
+{
 			const stream = new MediaStream();
 
 			stream.addTrack(videoTrack);
@@ -563,36 +591,41 @@ export default class PeerView extends React.Component {
 
 			videoElem.oncanplay = () => this.setState({ videoCanPlay: true });
 
-			videoElem.onplay = () => {
+			videoElem.onplay = () => 
+{
 				this.setState({ videoElemPaused: false });
 
 				audioElem
 					.play()
-					.catch(error => logger.warn('audioElem.play() failed:%o', error));
+					.catch((error) => logger.warn('audioElem.play() failed:%o', error));
 			};
 
 			videoElem.onpause = () => this.setState({ videoElemPaused: true });
 
 			videoElem
 				.play()
-				.catch(error => logger.warn('videoElem.play() failed:%o', error));
+				.catch((error) => logger.warn('videoElem.play() failed:%o', error));
 
 			this._startVideoResolution();
 
 			if (faceDetection) this._startFaceDetection();
-		} else {
+		}
+ else 
+{
 			videoElem.srcObject = null;
 		}
 	}
 
-	_runHark(stream) {
+	_runHark(stream) 
+{
 		if (!stream.getAudioTracks()[0])
 			throw new Error('_runHark() | given stream has no audio track');
 
 		this._hark = hark(stream, { play: false });
 
 		// eslint-disable-next-line no-unused-vars
-		this._hark.on('volume_change', (dBs, threshold) => {
+		this._hark.on('volume_change', (dBs, threshold) => 
+{
 			// The exact formula to convert from dBs (-100..0) to linear (0..1) is:
 			//   Math.pow(10, dBs / 20)
 			// However it does not produce a visually useful output, so let exagerate
@@ -607,40 +640,47 @@ export default class PeerView extends React.Component {
 		});
 	}
 
-	_startVideoResolution() {
-		this._videoResolutionPeriodicTimer = setInterval(() => {
+	_startVideoResolution() 
+{
+		this._videoResolutionPeriodicTimer = setInterval(() => 
+{
 			const { videoResolutionWidth, videoResolutionHeight } = this.state;
 			const videoElem = this._videoElemRef.current;
 
 			if (
 				videoElem.videoWidth !== videoResolutionWidth ||
 				videoElem.videoHeight !== videoResolutionHeight
-			) {
+			) 
+{
 				this.setState({
-					videoResolutionWidth: videoElem.videoWidth,
-					videoResolutionHeight: videoElem.videoHeight,
+					videoResolutionWidth  : videoElem.videoWidth,
+					videoResolutionHeight : videoElem.videoHeight
 				});
 			}
 		}, 500);
 	}
 
-	_stopVideoResolution() {
+	_stopVideoResolution() 
+{
 		clearInterval(this._videoResolutionPeriodicTimer);
 
 		this.setState({
-			videoResolutionWidth: null,
-			videoResolutionHeight: null,
+			videoResolutionWidth  : null,
+			videoResolutionHeight : null
 		});
 	}
 
-	_startFaceDetection() {
+	_startFaceDetection() 
+{
 		const videoElem = this._videoElemRef.current;
 		const canvasElem = this._canvasElemRef.current;
 
-		const step = async () => {
+		const step = async () => 
+{
 			// NOTE: Somehow this is critical. Otherwise the Promise returned by
 			// faceapi.detectSingleFace() never resolves or rejects.
-			if (!this._videoTrack || videoElem.readyState < 2) {
+			if (!this._videoTrack || videoElem.readyState < 2) 
+{
 				this._faceDetectionRequestAnimationFrame = requestAnimationFrame(step);
 
 				return;
@@ -651,7 +691,8 @@ export default class PeerView extends React.Component {
 				tinyFaceDetectorOptions
 			);
 
-			if (detection) {
+			if (detection) 
+{
 				const width = videoElem.offsetWidth;
 				const height = videoElem.offsetHeight;
 
@@ -661,11 +702,13 @@ export default class PeerView extends React.Component {
 				// const resizedDetection = detection.forSize(width, height);
 				const resizedDetections = faceapi.resizeResults(detection, {
 					width,
-					height,
+					height
 				});
 
 				faceapi.draw.drawDetections(canvasElem, resizedDetections);
-			} else {
+			}
+ else 
+{
 				// Trick to hide the canvas rectangle.
 				canvasElem.width = 0;
 				canvasElem.height = 0;
@@ -679,7 +722,8 @@ export default class PeerView extends React.Component {
 		step();
 	}
 
-	_stopFaceDetection() {
+	_stopFaceDetection() 
+{
 		cancelAnimationFrame(this._faceDetectionRequestAnimationFrame);
 
 		const canvasElem = this._canvasElemRef.current;
@@ -688,16 +732,18 @@ export default class PeerView extends React.Component {
 		canvasElem.height = 0;
 	}
 
-	_printProducerScore(id, score) {
-		const scores = Array.isArray(score) ? score : [score];
+	_printProducerScore(id, score) 
+{
+		const scores = Array.isArray(score) ? score : [ score ];
 
 		return (
 			<React.Fragment key={id}>
 				<p>streams:</p>
 
 				{scores
-					.filter(v => v)
-					.sort((a, b) => {
+					.filter((v) => v)
+					.sort((a, b) => 
+{
 						if (a.rid) return a.rid > b.rid ? 1 : -1;
 						else return a.ssrc > b.ssrc ? 1 : -1;
 					})
@@ -706,7 +752,7 @@ export default class PeerView extends React.Component {
 							{ ssrc, rid, score },
 							idx // eslint-disable-line no-shadow
 						) => (
-							<p key={idx} className="indent">
+							<p key={idx} className='indent'>
 								{rid !== undefined
 									? `rid:${rid}, ssrc:${ssrc}, score:${score}`
 									: `ssrc:${ssrc}, score:${score}`}
@@ -717,7 +763,8 @@ export default class PeerView extends React.Component {
 		);
 	}
 
-	_printConsumerScore(id, score) {
+	_printConsumerScore(id, score) 
+{
 		return (
 			<p key={id}>
 				{`score:${score.score}, producerScore:${score.producerScore}, producerScores:[${score.producerScores}]`}
@@ -727,35 +774,35 @@ export default class PeerView extends React.Component {
 }
 
 PeerView.propTypes = {
-	isMe: PropTypes.bool,
-	peer: PropTypes.oneOfType([appPropTypes.Me, appPropTypes.Peer]).isRequired,
-	audioProducerId: PropTypes.string,
-	videoProducerId: PropTypes.string,
-	audioConsumerId: PropTypes.string,
-	videoConsumerId: PropTypes.string,
-	audioRtpParameters: PropTypes.object,
-	videoRtpParameters: PropTypes.object,
-	consumerSpatialLayers: PropTypes.number,
-	consumerTemporalLayers: PropTypes.number,
-	consumerCurrentSpatialLayer: PropTypes.number,
-	consumerCurrentTemporalLayer: PropTypes.number,
-	consumerPreferredSpatialLayer: PropTypes.number,
-	consumerPreferredTemporalLayer: PropTypes.number,
-	consumerPriority: PropTypes.number,
-	audioTrack: PropTypes.any,
-	videoTrack: PropTypes.any,
-	audioMuted: PropTypes.bool,
-	videoVisible: PropTypes.bool.isRequired,
-	videoMultiLayer: PropTypes.bool,
-	audioCodec: PropTypes.string,
-	videoCodec: PropTypes.string,
-	audioScore: PropTypes.any,
-	videoScore: PropTypes.any,
-	faceDetection: PropTypes.bool.isRequired,
-	onChangeDisplayName: PropTypes.func,
-	onChangeMaxSendingSpatialLayer: PropTypes.func,
-	onChangeVideoPreferredLayers: PropTypes.func,
-	onChangeVideoPriority: PropTypes.func,
-	onRequestKeyFrame: PropTypes.func,
-	onStatsClick: PropTypes.func.isRequired,
+	isMe                           : PropTypes.bool,
+	peer                           : PropTypes.oneOfType([ appPropTypes.Me, appPropTypes.Peer ]).isRequired,
+	audioProducerId                : PropTypes.string,
+	videoProducerId                : PropTypes.string,
+	audioConsumerId                : PropTypes.string,
+	videoConsumerId                : PropTypes.string,
+	audioRtpParameters             : PropTypes.object,
+	videoRtpParameters             : PropTypes.object,
+	consumerSpatialLayers          : PropTypes.number,
+	consumerTemporalLayers         : PropTypes.number,
+	consumerCurrentSpatialLayer    : PropTypes.number,
+	consumerCurrentTemporalLayer   : PropTypes.number,
+	consumerPreferredSpatialLayer  : PropTypes.number,
+	consumerPreferredTemporalLayer : PropTypes.number,
+	consumerPriority               : PropTypes.number,
+	audioTrack                     : PropTypes.any,
+	videoTrack                     : PropTypes.any,
+	audioMuted                     : PropTypes.bool,
+	videoVisible                   : PropTypes.bool.isRequired,
+	videoMultiLayer                : PropTypes.bool,
+	audioCodec                     : PropTypes.string,
+	videoCodec                     : PropTypes.string,
+	audioScore                     : PropTypes.any,
+	videoScore                     : PropTypes.any,
+	faceDetection                  : PropTypes.bool.isRequired,
+	onChangeDisplayName            : PropTypes.func,
+	onChangeMaxSendingSpatialLayer : PropTypes.func,
+	onChangeVideoPreferredLayers   : PropTypes.func,
+	onChangeVideoPriority          : PropTypes.func,
+	onRequestKeyFrame              : PropTypes.func,
+	onStatsClick                   : PropTypes.func.isRequired
 };

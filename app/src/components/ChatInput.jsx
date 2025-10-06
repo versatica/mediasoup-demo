@@ -5,12 +5,14 @@ import { withRoomContext } from '../RoomContext';
 
 const BotMessageRegex = new RegExp('^@bot (.*)');
 
-class ChatInput extends React.Component {
-	constructor(props) {
+class ChatInput extends React.Component 
+{
+	constructor(props) 
+{
 		super(props);
 
 		this.state = {
-			text: '',
+			text : ''
 		};
 
 		// TextArea element got via React ref.
@@ -18,7 +20,8 @@ class ChatInput extends React.Component {
 		this._textareaElem = null;
 	}
 
-	render() {
+	render() 
+{
 		const { connected, chatDataProducer, botDataProducer } = this.props;
 
 		const { text } = this.state;
@@ -26,14 +29,15 @@ class ChatInput extends React.Component {
 		const disabled = !connected || (!chatDataProducer && !botDataProducer);
 
 		return (
-			<div data-component="ChatInput">
+			<div data-component='ChatInput'>
 				<textarea
-					ref={elem => {
+					ref={(elem) => 
+{
 						this._textareaElem = elem;
 					}}
 					placeholder={disabled ? 'Chat unavailable' : 'Write here...'}
-					dir="auto"
-					autoComplete="off"
+					dir='auto'
+					autoComplete='off'
 					disabled={disabled}
 					value={text}
 					onChange={this.handleChange.bind(this)}
@@ -43,13 +47,15 @@ class ChatInput extends React.Component {
 		);
 	}
 
-	handleChange(event) {
+	handleChange(event) 
+{
 		const text = event.target.value;
 
 		this.setState({ text });
 	}
 
-	handleKeyPress(event) {
+	handleKeyPress(event) 
+{
 		// If Shift + Enter do nothing.
 		if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey) return;
 
@@ -60,18 +66,21 @@ class ChatInput extends React.Component {
 
 		this.setState({ text: '' });
 
-		if (text) {
+		if (text) 
+{
 			const { roomClient } = this.props;
 			const match = BotMessageRegex.exec(text);
 
 			// Chat message.
-			if (!match) {
+			if (!match) 
+{
 				text = text.trim();
 
 				roomClient.sendChatMessage(text);
 			}
 			// Message to the bot.
-			else {
+			else 
+{
 				text = match[1].trim();
 
 				roomClient.sendBotMessage(text);
@@ -81,25 +90,26 @@ class ChatInput extends React.Component {
 }
 
 ChatInput.propTypes = {
-	roomClient: PropTypes.any.isRequired,
-	connected: PropTypes.bool.isRequired,
-	chatDataProducer: PropTypes.any,
-	botDataProducer: PropTypes.any,
+	roomClient       : PropTypes.any.isRequired,
+	connected        : PropTypes.bool.isRequired,
+	chatDataProducer : PropTypes.any,
+	botDataProducer  : PropTypes.any
 };
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => 
+{
 	const dataProducersArray = Object.values(state.dataProducers);
 	const chatDataProducer = dataProducersArray.find(
-		dataProducer => dataProducer.label === 'chat'
+		(dataProducer) => dataProducer.label === 'chat'
 	);
 	const botDataProducer = dataProducersArray.find(
-		dataProducer => dataProducer.label === 'bot'
+		(dataProducer) => dataProducer.label === 'bot'
 	);
 
 	return {
-		connected: state.room.state === 'connected',
+		connected : state.room.state === 'connected',
 		chatDataProducer,
-		botDataProducer,
+		botDataProducer
 	};
 };
 

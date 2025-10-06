@@ -6,16 +6,18 @@ import * as appPropTypes from './appPropTypes';
 import { Appear } from './transitions';
 import Peer from './Peer';
 
-const Peers = ({ peers, activeSpeakerId, speakingPeerIds }) => {
+const Peers = ({ peers, activeSpeakerId, speakingPeerIds }) => 
+{
 	return (
-		<div data-component="Peers">
-			{peers.map(peer => {
+		<div data-component='Peers'>
+			{peers.map((peer) => 
+{
 				return (
 					<Appear key={peer.id} duration={1000}>
 						<div
 							className={classnames('peer-container', {
-								'active-speaker': peer.id === activeSpeakerId,
-								speaking: speakingPeerIds.includes(peer.id),
+								'active-speaker' : peer.id === activeSpeakerId,
+								speaking         : speakingPeerIds.includes(peer.id)
 							})}
 						>
 							<Peer id={peer.id} />
@@ -28,29 +30,31 @@ const Peers = ({ peers, activeSpeakerId, speakingPeerIds }) => {
 };
 
 Peers.propTypes = {
-	peers: PropTypes.arrayOf(appPropTypes.Peer).isRequired,
-	activeSpeakerId: PropTypes.string,
-	speakingPeerIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+	peers           : PropTypes.arrayOf(appPropTypes.Peer).isRequired,
+	activeSpeakerId : PropTypes.string,
+	speakingPeerIds : PropTypes.arrayOf(PropTypes.string).isRequired
 };
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => 
+{
 	const peersArray = Object.values(state.peers);
 
 	return {
-		peers: peersArray,
-		activeSpeakerId: state.room.activeSpeakerId,
-		speakingPeerIds: state.room.speakingPeerIds,
+		peers           : peersArray,
+		activeSpeakerId : state.room.activeSpeakerId,
+		speakingPeerIds : state.room.speakingPeerIds
 	};
 };
 
 const PeersContainer = connect(mapStateToProps, null, null, {
-	areStatesEqual: (next, prev) => {
+	areStatesEqual : (next, prev) => 
+{
 		return (
 			prev.peers === next.peers &&
 			prev.room.activeSpeakerId === next.room.activeSpeakerId &&
 			prev.room.speakingPeerIds.length === next.room.speakingPeerIds.length
 		);
-	},
+	}
 })(Peers);
 
 export default PeersContainer;

@@ -6,24 +6,26 @@ import * as appPropTypes from './appPropTypes';
 import * as stateActions from '../redux/stateActions';
 import { Appear } from './transitions';
 
-const Notifications = ({ notifications, onClick }) => {
+const Notifications = ({ notifications, onClick }) => 
+{
 	return (
-		<div data-component="Notifications">
-			{notifications.map(notification => {
+		<div data-component='Notifications'>
+			{notifications.map((notification) => 
+{
 				return (
 					<Appear key={notification.id} duration={250}>
 						<div
 							className={classnames('notification', notification.type)}
 							onClick={() => onClick(notification.id)}
 						>
-							<div className="icon" />
+							<div className='icon' />
 
-							<div className="body">
+							<div className='body'>
 								{notification.title && (
-									<p className="title">{notification.title}</p>
+									<p className='title'>{notification.title}</p>
 								)}
 
-								<p className="text">{notification.text}</p>
+								<p className='text'>{notification.text}</p>
 							</div>
 						</div>
 					</Appear>
@@ -34,21 +36,24 @@ const Notifications = ({ notifications, onClick }) => {
 };
 
 Notifications.propTypes = {
-	notifications: PropTypes.arrayOf(appPropTypes.Notification).isRequired,
-	onClick: PropTypes.func.isRequired,
+	notifications : PropTypes.arrayOf(appPropTypes.Notification).isRequired,
+	onClick       : PropTypes.func.isRequired
 };
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => 
+{
 	const { notifications } = state;
 
 	return { notifications };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => 
+{
 	return {
-		onClick: notificationId => {
+		onClick : (notificationId) => 
+{
 			dispatch(stateActions.removeNotification(notificationId));
-		},
+		}
 	};
 };
 

@@ -1,6 +1,7 @@
 import * as pokemon from 'pokemon';
 
-export default function () {
+export default function() 
+{
 	const lang = detectLanguage();
 
 	return pokemon.random(lang);
@@ -10,7 +11,8 @@ export default function () {
 // so let's just use 'en'.
 //
 // https://github.com/versatica/mediasoup-demo/issues/45
-function detectLanguage() {
+function detectLanguage() 
+{
 	return 'en';
 
 	// const lang = (

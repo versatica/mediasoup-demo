@@ -6,7 +6,8 @@ import { withRoomContext } from '../RoomContext';
 import * as stateActions from '../redux/stateActions';
 import PeerView from './PeerView';
 
-const Peer = props => {
+const Peer = (props) => 
+{
 	const {
 		roomClient,
 		peer,
@@ -14,7 +15,7 @@ const Peer = props => {
 		videoConsumer,
 		audioMuted,
 		faceDetection,
-		onSetStatsPeerId,
+		onSetStatsPeerId
 	} = props;
 
 	const audioEnabled =
@@ -28,10 +29,10 @@ const Peer = props => {
 		!videoConsumer.remotelyPaused;
 
 	return (
-		<div data-component="Peer">
-			<div className="indicators">
-				{!audioEnabled && <div className="icon mic-off" />}
-				{!videoConsumer && <div className="icon webcam-off" />}
+		<div data-component='Peer'>
+			<div className='indicators'>
+				{!audioEnabled && <div className='icon mic-off' />}
+				{!videoConsumer && <div className='icon webcam-off' />}
 			</div>
 
 			<PeerView
@@ -69,17 +70,20 @@ const Peer = props => {
 				audioScore={audioConsumer ? audioConsumer.score : null}
 				videoScore={videoConsumer ? videoConsumer.score : null}
 				faceDetection={faceDetection}
-				onChangeVideoPreferredLayers={(spatialLayer, temporalLayer) => {
+				onChangeVideoPreferredLayers={(spatialLayer, temporalLayer) => 
+{
 					roomClient.setConsumerPreferredLayers(
 						videoConsumer.id,
 						spatialLayer,
 						temporalLayer
 					);
 				}}
-				onChangeVideoPriority={priority => {
+				onChangeVideoPriority={(priority) => 
+{
 					roomClient.setConsumerPriority(videoConsumer.id, priority);
 				}}
-				onRequestKeyFrame={() => {
+				onRequestKeyFrame={() => 
+{
 					roomClient.requestConsumerKeyFrame(videoConsumer.id);
 				}}
 				onStatsClick={onSetStatsPeerId}
@@ -89,41 +93,43 @@ const Peer = props => {
 };
 
 Peer.propTypes = {
-	roomClient: PropTypes.any.isRequired,
-	peer: appPropTypes.Peer.isRequired,
-	audioConsumer: appPropTypes.Consumer,
-	videoConsumer: appPropTypes.Consumer,
-	audioMuted: PropTypes.bool,
-	faceDetection: PropTypes.bool.isRequired,
-	onSetStatsPeerId: PropTypes.func.isRequired,
+	roomClient       : PropTypes.any.isRequired,
+	peer             : appPropTypes.Peer.isRequired,
+	audioConsumer    : appPropTypes.Consumer,
+	videoConsumer    : appPropTypes.Consumer,
+	audioMuted       : PropTypes.bool,
+	faceDetection    : PropTypes.bool.isRequired,
+	onSetStatsPeerId : PropTypes.func.isRequired
 };
 
-const mapStateToProps = (state, { id }) => {
+const mapStateToProps = (state, { id }) => 
+{
 	const me = state.me;
 	const peer = state.peers[id];
 	const consumersArray = peer.consumers.map(
-		consumerId => state.consumers[consumerId]
+		(consumerId) => state.consumers[consumerId]
 	);
 	const audioConsumer = consumersArray.find(
-		consumer => consumer.track.kind === 'audio'
+		(consumer) => consumer.track.kind === 'audio'
 	);
 	const videoConsumer = consumersArray.find(
-		consumer => consumer.track.kind === 'video'
+		(consumer) => consumer.track.kind === 'video'
 	);
 
 	return {
 		peer,
 		audioConsumer,
 		videoConsumer,
-		audioMuted: me.audioMuted,
-		faceDetection: state.room.faceDetection,
+		audioMuted    : me.audioMuted,
+		faceDetection : state.room.faceDetection
 	};
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => 
+{
 	return {
-		onSetStatsPeerId: peerId =>
-			dispatch(stateActions.setRoomStatsPeerId(peerId)),
+		onSetStatsPeerId : (peerId) =>
+			dispatch(stateActions.setRoomStatsPeerId(peerId))
 	};
 };
 

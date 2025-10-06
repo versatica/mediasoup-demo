@@ -45,9 +45,10 @@
 				color: variables.$COLOR_BG_1;
 			}
 
-			> .value {
+			> .text-value {
 				margin-left: 4px;
 				flex: 0 0 auto;
+				height: 100%;
 				width: 100px;
 				padding: 4px 8px;
 				font-size: 11px;
@@ -71,6 +72,28 @@
 					&::placeholder {
 						color: transparent;
 					}
+				}
+			}
+
+			> .checkbox-value {
+				margin-left: 4px;
+				flex: 0 0 auto;
+				height: 20px;
+				width: 20px;
+				margin-left: 80px;
+				background: rgba(#666, 0.1);
+				border-radius: 2px;
+				transition-property: opacity;
+				transition-duration: 0.1s;
+
+				border: 1px solid #666;
+
+				&:disabled {
+					opacity: 0.5;
+				}
+
+				&:checked {
+					background-color: #e9736e;
 				}
 			}
 		}

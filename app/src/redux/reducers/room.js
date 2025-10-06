@@ -1,17 +1,19 @@
 const initialState = {
-	url: null,
-	state: 'new', // new/connecting/connected/disconnected/closed,
-	mediasoupVersion: undefined,
-	mediasoupClientVersion: undefined,
-	mediasoupClientHandler: undefined,
-	activeSpeakerId: undefined,
-	speakingPeerIds: [],
-	statsPeerId: undefined,
-	faceDetection: false,
+	url                    : null,
+	state                  : 'new', // new/connecting/connected/disconnected/closed,
+	mediasoupVersion       : undefined,
+	mediasoupClientVersion : undefined,
+	mediasoupClientHandler : undefined,
+	activeSpeakerId        : undefined,
+	speakingPeerIds        : [],
+	statsPeerId            : undefined,
+	faceDetection          : false
 };
 
-const room = (state = initialState, action) => {
-	switch (action.type) {
+const room = (state = initialState, action) => 
+{
+	switch (action.type) 
+{
 		case 'SET_ROOM_URL': {
 			const { url } = action.payload;
 
@@ -25,10 +27,10 @@ const room = (state = initialState, action) => {
 			else
 				return {
 					...state,
-					state: roomState,
-					activeSpeakerId: undefined,
-					speakingPeerIds: [],
-					statsPeerId: undefined,
+					state           : roomState,
+					activeSpeakerId : undefined,
+					speakingPeerIds : [],
+					statsPeerId     : undefined
 				};
 		}
 
@@ -85,7 +87,7 @@ const room = (state = initialState, action) => {
 				newState.activeSpeakerId = undefined;
 
 			newState.speakingPeerIds = newState.speakingPeerIds.filter(
-				otherPeerId => otherPeerId !== peerId
+				(otherPeerId) => otherPeerId !== peerId
 			);
 
 			if (peerId && peerId === state.statsPeerId)

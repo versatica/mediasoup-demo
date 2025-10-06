@@ -731,8 +731,8 @@ export default class RoomClient {
 
 				case 'consumerLayersChanged': {
 					const { consumerId, layers } = notification.data;
-					const spatialLayer = layers?.spatialLayer ?? null;
-					const temporalLayer = layers?.temporalLayer ?? null;
+					const spatialLayer = (layers && layers.spatialLayer) ?? null;
+					const temporalLayer = (layers && layers.temporalLayer) ?? null;
 					const consumer = this._consumers.get(consumerId);
 
 					if (!consumer) break;
@@ -2009,22 +2009,26 @@ export default class RoomClient {
 		return consumer.getStats();
 	}
 
-	async applyNetworkThrottle({ uplink, downlink, rtt, secret, packetLoss }) {
+	async applyNetworkThrottle({ secret, up, down, rtt, packetLoss, localhost }) {
 		logger.debug(
-			'applyNetworkThrottle() [uplink:%s, downlink:%s, rtt:%s, packetLoss:%s]',
-			uplink,
-			downlink,
+			'applyNetworkThrottle() [up:%s, down:%s, rtt:%s, packetLoss:%s, localhost:%s]',
+			up,
+			down,
 			rtt,
-			packetLoss
+			packetLoss,
+			localhost
 		);
 
 		try {
 			await this._protoo.request('applyNetworkThrottle', {
 				secret,
-				uplink,
-				downlink,
-				rtt,
-				packetLoss,
+				options: {
+					up,
+					down,
+					rtt,
+					packetLoss,
+					localhost,
+				},
 			});
 		} catch (error) {
 			logger.error('applyNetworkThrottle() | failed:%o', error);
@@ -2038,14 +2042,14 @@ export default class RoomClient {
 		}
 	}
 
-	async resetNetworkThrottle({ silent = false, secret }) {
-		logger.debug('resetNetworkThrottle()');
+	async stopNetworkThrottle({ silent = false, secret }) {
+		logger.debug('stopNetworkThrottle()');
 
 		try {
-			await this._protoo.request('resetNetworkThrottle', { secret });
+			await this._protoo.request('stopNetworkThrottle', { secret });
 		} catch (error) {
 			if (!silent) {
-				logger.error('resetNetworkThrottle() | failed:%o', error);
+				logger.error('stopNetworkThrottle() | failed:%o', error);
 
 				store.dispatch(
 					requestActions.notify({

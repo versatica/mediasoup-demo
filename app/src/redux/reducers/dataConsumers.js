@@ -1,7 +1,9 @@
 const initialState = {};
 
-const dataConsumers = (state = initialState, action) => {
-	switch (action.type) {
+const dataConsumers = (state = initialState, action) => 
+{
+	switch (action.type) 
+{
 		case 'SET_ROOM_STATE': {
 			const roomState = action.payload.state;
 
