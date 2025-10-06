@@ -1,5 +1,6 @@
 import type * as mediasoupTypes from 'mediasoup/types';
 import type * as protooTypes from 'protoo-server';
+import type * as throttleTypes from '@sitespeed.io/throttle';
 
 import {
 	NotificationNameDataMap,
@@ -15,7 +16,6 @@ import type {
 	ConsumerAppData,
 	PeerDataProducerAppData,
 	DataConsumerAppData,
-	NetworkThrottleOptions,
 } from '../types';
 
 /**
@@ -191,16 +191,14 @@ type RequestFromPeer =
 			responseData: { stats: mediasoupTypes.DataConsumerStat[] };
 	  }
 	| {
-			// TODO: TBD.
 			name: 'applyNetworkThrottle';
 			data: {
 				secret: string;
-				options: NetworkThrottleOptions;
+				options: throttleTypes.ThrottleStartOptions;
 			};
 	  }
 	| {
-			// TODO: TBD.
-			name: 'resetNetworkThrottle';
+			name: 'stopNetworkThrottle';
 			data: {
 				secret: string;
 			};

@@ -4,7 +4,6 @@
 - Delete this `TODO.md`.
 - Edit `.gitignore` in root folder.
 - Edit `README` in app.
-- Throttle stuff.
 - CI stuff.
 - `npm run release` stuff. Really?
 - Aiortc client. Upps.

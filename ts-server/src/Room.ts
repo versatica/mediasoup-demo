@@ -1,6 +1,7 @@
 import type * as mediasoupTypes from 'mediasoup/types';
 import * as protoo from 'protoo-server';
 import type * as protooTypes from 'protoo-server';
+import type * as throttleTypes from '@sitespeed.io/throttle';
 
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
@@ -26,7 +27,6 @@ import type {
 	WebRtcTransportAppData,
 	PlainTransportAppData,
 	ProducerAppData,
-	NetworkThrottleOptions,
 } from './types';
 
 const staticLogger = new Logger('Room');
@@ -63,15 +63,15 @@ export type RoomEvents = {
 	'apply-network-throttle': [
 		{
 			secret: string;
-			options: NetworkThrottleOptions;
+			options: throttleTypes.ThrottleStartOptions;
 		},
 		resolve: () => void,
 		reject: (error: Error) => void,
 	];
 	/**
-	 * Emitted to reset network throttle.
+	 * Emitted to stop network throttle.
 	 */
-	'reset-network-throttle': [
+	'stop-network-throttle': [
 		{
 			secret: string;
 		},
@@ -558,8 +558,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			}
 		);
 
-		peer.on('reset-network-throttle', ({ secret }, resolve, reject) => {
-			this.emit('reset-network-throttle', { secret }, resolve, reject);
+		peer.on('stop-network-throttle', ({ secret }, resolve, reject) => {
+			this.emit('stop-network-throttle', { secret }, resolve, reject);
 		});
 	}
 

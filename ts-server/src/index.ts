@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import * as process from 'node:process';
+import process from 'node:process';
 import * as util from 'node:util';
 
 import { Logger } from './Logger';
@@ -14,6 +14,9 @@ const logger = new Logger();
 
 let server: Server | undefined;
 let terminalClient: TerminalClient | undefined;
+let delayedProcessExitStarted: boolean = false;
+
+handleProcess();
 
 void start();
 
@@ -21,6 +24,12 @@ async function start(): Promise<void> {
 	logger.info('start()');
 
 	try {
+		logger.info(
+			'start() | process [pid:%o, title:%o, args:%o]',
+			process.pid,
+			process.title,
+			process.argv.join(' ')
+		);
 		logger.info('start() | debug: %o', envs.getDebug());
 		logger.info('start() | terminal: %o', envs.getTerminal());
 		logger.info(
@@ -31,7 +40,7 @@ async function start(): Promise<void> {
 
 		const config = await getConfig();
 
-		logger.info(
+		logger.debug(
 			'start() | config:',
 			util.inspect(config, { depth: null, colors: true })
 		);
@@ -39,10 +48,10 @@ async function start(): Promise<void> {
 		// Start the interactive terminal server.
 		await TerminalServer.listen({
 			onQuit: () => {
-				exitGracefully();
+				void exitGracefully();
 			},
 			onForceQuit: () => {
-				exitWithError();
+				void exitWithError();
 			},
 		});
 
@@ -64,7 +73,7 @@ async function start(): Promise<void> {
 	} catch (error) {
 		logger.error('start() | failed:', error);
 
-		exitWithError();
+		void exitWithError();
 	}
 }
 
@@ -86,34 +95,78 @@ async function getConfig(): Promise<Config> {
 /**
  * Here we close everything that keeps the Node process alive.
  */
-function exitGracefully(): void {
+async function exitGracefully(): Promise<void> {
 	logger.info('exiting gracefully...');
 
-	TerminalServer.stop();
-	server?.close();
+	await terminateProcess();
 }
 
-function exitWithError(): void {
+async function exitWithError(): Promise<void> {
 	logger.error('exiting with error...');
 
 	try {
-		TerminalServer.stop();
-		server?.close();
+		await terminateProcess();
 	} catch (error) {}
 
 	process.exit(1);
 }
 
+async function terminateProcess(): Promise<void> {
+	if (delayedProcessExitStarted) {
+		logger.info(
+			`terminateProcess() | ignored (delayed process termination already started)`
+		);
+
+		return;
+	} else if (server?.isNetworkThrottleEnabled()) {
+		logger.info(
+			`terminateProcess() | stopping the Server and waiting for 3 seconds to give a chance to network throttle to stop...`
+		);
+
+		delayedProcessExitStarted = true;
+
+		server?.close();
+		TerminalServer.stop();
+
+		await new Promise(resolve => setTimeout(resolve, 3000));
+	} else {
+		server?.close();
+		TerminalServer.stop();
+	}
+}
+
+/**
+ * We want to catch all the exit ways to ensure that we always close the Server
+ * instance (if it still exists) so its closure will stop network throttle.
+ */
+function handleProcess(): void {
+	process.on('SIGINT', () => {
+		handleExitSignal();
+	});
+
+	process.on('SIGTERM', () => {
+		handleExitSignal();
+	});
+
+	function handleExitSignal(): void {
+		void exitGracefully();
+	}
+}
+
 function handleServer(): void {
+	server?.on('closed', () => {
+		server = undefined;
+	});
+
 	server?.on('died', () => {
 		logger.error('server died, exiting');
 
-		exitWithError();
+		void exitWithError();
 	});
 }
 
 function handleTerminalClient(): void {
 	terminalClient?.on('closed', () => {
-		exitGracefully();
+		void exitGracefully();
 	});
 }

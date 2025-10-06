@@ -39,6 +39,7 @@
 		"watch": "./npm-scripts.mjs watch"
 	},
 	"dependencies": {
+		"@sitespeed.io/throttle": "^5.0.1",
 		"awaitqueue": "^3.3.0",
 		"body-parser": "^2.2.0",
 		"debug": "^4.4.3",

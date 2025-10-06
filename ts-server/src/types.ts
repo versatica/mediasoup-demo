@@ -134,10 +134,3 @@ export type DataConsumerAppData = {
 	peerId?: PeerId;
 	channel: Channel;
 };
-
-export type NetworkThrottleOptions = {
-	uplink?: number;
-	downlink?: number;
-	rtt?: number;
-	packetLoss?: number;
-};

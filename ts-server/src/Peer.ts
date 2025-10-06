@@ -1,5 +1,6 @@
 import type * as mediasoupTypes from 'mediasoup/types';
 import type * as protooTypes from 'protoo-server';
+import type * as throttleTypes from '@sitespeed.io/throttle';
 
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
@@ -25,7 +26,6 @@ import type {
 	DataProducerAppData,
 	BotDataProducerAppData,
 	DataConsumerAppData,
-	NetworkThrottleOptions,
 } from './types';
 
 const JOIN_TIMEOUT_MS = 10000;
@@ -114,15 +114,15 @@ export type PeerEvents = {
 	'apply-network-throttle': [
 		{
 			secret: string;
-			options: NetworkThrottleOptions;
+			options: throttleTypes.ThrottleStartOptions;
 		},
 		resolve: () => void,
 		reject: (error: Error) => void,
 	];
 	/**
-	 * Emitted to reset network throttle.
+	 * Emitted to stop network throttle.
 	 */
-	'reset-network-throttle': [
+	'stop-network-throttle': [
 		{
 			secret: string;
 		},
@@ -938,10 +938,10 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				break;
 			}
 
-			case 'resetNetworkThrottle': {
+			case 'stopNetworkThrottle': {
 				const { secret } = data;
 
-				this.emit('reset-network-throttle', { secret }, accept, reject);
+				this.emit('stop-network-throttle', { secret }, accept, reject);
 
 				break;
 			}
