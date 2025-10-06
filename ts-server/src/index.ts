@@ -13,8 +13,8 @@ import { Config } from './types';
 const logger = new Logger();
 
 let server: Server | undefined;
-let terminalClient: TerminalClient | undefined;
-let delayedProcessExitStarted: boolean = false;
+let processTerminationStarted: boolean = false;
+let delayedProcessTerminationStarted: boolean = false;
 
 handleProcess();
 
@@ -66,9 +66,9 @@ async function start(): Promise<void> {
 
 		// Start the interactive terminal client if requested.
 		if (envs.getTerminal()) {
-			terminalClient = await TerminalClient.connect();
+			const terminalClient = await TerminalClient.connect();
 
-			handleTerminalClient();
+			handleTerminalClient(terminalClient);
 		}
 	} catch (error) {
 		logger.error('start() | failed:', error);
@@ -96,6 +96,12 @@ async function getConfig(): Promise<Config> {
  * Here we close everything that keeps the Node process alive.
  */
 async function exitGracefully(): Promise<void> {
+	if (processTerminationStarted) {
+		return;
+	}
+
+	processTerminationStarted = true;
+
 	logger.info('exiting gracefully...');
 
 	await terminateProcess();
@@ -112,7 +118,7 @@ async function exitWithError(): Promise<void> {
 }
 
 async function terminateProcess(): Promise<void> {
-	if (delayedProcessExitStarted) {
+	if (delayedProcessTerminationStarted) {
 		logger.info(
 			`terminateProcess() | ignored (delayed process termination already started)`
 		);
@@ -123,7 +129,7 @@ async function terminateProcess(): Promise<void> {
 			`terminateProcess() | stopping the Server and waiting for 3 seconds to give a chance to network throttle to stop...`
 		);
 
-		delayedProcessExitStarted = true;
+		delayedProcessTerminationStarted = true;
 
 		server?.close();
 		TerminalServer.stop();
@@ -165,8 +171,8 @@ function handleServer(): void {
 	});
 }
 
-function handleTerminalClient(): void {
-	terminalClient?.on('closed', () => {
+function handleTerminalClient(terminalClient: TerminalClient): void {
+	terminalClient.on('closed', () => {
 		void exitGracefully();
 	});
 }

@@ -274,7 +274,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			return;
 		}
 
-		let canConsume = false;
+		let canConsume: boolean = false;
 
 		this.emit(
 			'get-can-consume',

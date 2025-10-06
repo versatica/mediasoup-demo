@@ -352,7 +352,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 			) => {
 				if (error) {
 					let status: number;
-					let logErrorStack = false;
+					let logErrorStack: boolean = false;
 
 					if (
 						error instanceof RoomNotFound ||

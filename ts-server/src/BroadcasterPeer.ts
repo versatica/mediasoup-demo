@@ -399,7 +399,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 				const { transportId, producerId, paused, rtpCapabilities } = data;
 				const transport = this.assertAndGetPlainTransport(transportId);
 
-				let canConsume = false;
+				let canConsume: boolean = false;
 
 				this.emit(
 					'get-can-consume',
