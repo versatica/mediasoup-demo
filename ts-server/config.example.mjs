@@ -158,8 +158,13 @@ export const config = {
 			initialAvailableOutgoingBitrate: 1000000,
 			minimumAvailableOutgoingBitrate: 600000,
 			maxSctpMessageSize: 262144,
-			// Additional options that are not part of WebRtcTransportOptions.
-			maxIncomingBitrate: 1500000,
+		},
+		/**
+		 * Additional options that are not part of WebRtcTransportOptions but
+		 * instead used for function calls.
+		 */
+		additionalWebRtcTransportOptions: {
+			maxIncomingBitrate: undefined,
 		},
 		/**
 		 * mediasoup PlainTransport options for RTP endpoints (FFmpeg, GStreamer).

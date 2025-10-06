@@ -29,7 +29,12 @@ export type Config = {
 			initialAvailableOutgoingBitrate?: number;
 			minimumAvailableOutgoingBitrate?: number;
 			maxSctpMessageSize?: number;
-			// Additional options that are not part of WebRtcTransportOptions.
+		};
+		/**
+		 * Additional options that are not part of WebRtcTransportOptions but
+		 * instead used for function calls.
+		 */
+		additionalWebRtcTransportOptions?: {
 			maxIncomingBitrate?: number;
 		};
 		plainTransportOptions: {

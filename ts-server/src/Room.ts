@@ -462,7 +462,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 						);
 
 					const { maxIncomingBitrate } =
-						this.#config.mediasoup.webRtcTransportOptions ?? {};
+						this.#config.mediasoup.additionalWebRtcTransportOptions ?? {};
 
 					if (maxIncomingBitrate) {
 						transport.setMaxIncomingBitrate(maxIncomingBitrate).catch(error => {
