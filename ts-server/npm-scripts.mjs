@@ -13,7 +13,6 @@ const RELEASE_TASK_IMPLEMENTED = false;
 const ESLINT_PATHS = [
 	'eslint.config.mjs',
 	'npm-scripts.mjs',
-	'connect-terminal.mjs',
 	'config.example.mjs',
 	fs.existsSync('config.mjs') ? 'config.mjs' : undefined,
 	'src',
@@ -33,7 +32,6 @@ const PRETTIER_PATHS = [
 	'README.md',
 	'eslint.config.mjs',
 	'npm-scripts.mjs',
-	'connect-terminal.mjs',
 	'package.json',
 	'tsconfig.json',
 	'tsconfig.config.example.mjs.json',
@@ -157,10 +155,10 @@ function buildTypescript({ force }) {
 	// Give execution permission to lib/index.js.
 	if (process.platform !== 'win32') {
 		const indexPath = path.resolve('lib', 'index.js');
+		const connectTerminalPath = path.resolve('lib', 'connect-terminal.js');
 
-		if (process.platform !== 'win32') {
-			fs.chmodSync(indexPath, 0o755);
-		}
+		fs.chmodSync(indexPath, 0o755);
+		fs.chmodSync(connectTerminalPath, 0o755);
 	}
 }
 
@@ -184,11 +182,6 @@ function lint() {
 	);
 
 	executeCmd(`prettier --check ${PRETTIER_PATHS}`);
-
-	// Validate connect-terminal.mjs at TypeScript level.
-	executeCmd(
-		`tsc --project tsconfig.connect-terminal.mjs.json --noEmit ${taskArgs}`
-	);
 
 	// Validate config.example.mjs at TypeScript level.
 	executeCmd(

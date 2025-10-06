@@ -69,7 +69,7 @@ Some shell scripts are provided for convenience:
   - It detects the host IP and sets the `MEDIASOUP_LISTEN_IP` environment variable, useful if your `config.mjs` reads it.
   - It sets the `DEBUG` environment variable to activate **mediasoup** and **mediasoup-demo-server** logs.
   - It sets the `TERMINAL` environment variable to "true" if it was called with `--terminal` command line argument. This runs the server with an internative terminal client.
-  - Then it invokes `npm run watch` if `WATCH` environment variable is set, or `npm start` otherwise.
+  - Then it invokes `npm run watch` if `--watch` command line argument is given, or `npm start` otherwise.
 - `watch.sh` script is a shortcut of `start.sh --watch`, useful for development in case you are modifying TypeScript source code.
 - Notice that `start.sh` cannot be called with both `--terminal` and `--watch` command line arguments. Also notice that `watch.sh` cannot be called with `--terminal` command line argument. This is because, when in watch mode, **mediasoup-demo-server** is managed by [nodemon](https://nodemon.io/), which interferes with stdin, making it impossible to launch a terminal in the same process.
 
@@ -77,10 +77,17 @@ Alternatively, you can directly invoke `npm start` or `npm run watch` (see detai
 
 ## Connecting an interactive terminal to a running server
 
-The `connect-terminal.mjs` and `connect-terminal.mjs` scripts connect to the running **mediasoup-demo-server** process and provides you with an interactive terminal to interact with it.
+The `src/connect-terminal.mjs` scripts connects to the running **mediasoup-demo-server** process and provides you with an interactive terminal to interact with it.
 
-- `connect-terminal.mjs` requires that the project TypeScript source code already is transpiled to JavaScript.
-- For development (for example while running the server in watch mode with the `watch.sh` script or `npm run watch`), better use the `connect-terminal.ts` script which transpiles TypeScript code automatically by using [tsx](https://tsx.is).
+```sh
+./src/connect-terminal.ts`
+```
+
+```txt
+[TerminalClient] terminal connected
+[TerminalServer] opening Readline Command Console...
+[TerminalServer] type help to print available commands
+```
 
 ## Development
 
@@ -100,7 +107,7 @@ It runs the server in "production" mode. It requires that the TypeScript code is
 
 ### `npm run watch`
 
-It runs the server in "development" mode with [nodemon](https://nodemon.io/) and transpiles TypeScript to JavaScript automatically when changes are made (so the server is restarted).
+It runs the server in "development" (AKA "watch" mode) mode with [nodemon](https://nodemon.io/) and transpiles TypeScript to JavaScript automatically when changes are made (so the server is restarted).
 
 It cannot be used with the `TERMINAL` environment variable set to "true" as explained above (doing it will literally crash the server).
 
