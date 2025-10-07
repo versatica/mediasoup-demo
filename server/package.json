@@ -1,6 +1,6 @@
 {
 	"name": "mediasoup-demo-server",
-	"version": "4.0.0-alpha.0",
+	"version": "3.1.0",
 	"description": "mediasoup-demo server",
 	"author": "Iñaki Baz Castillo <ibc@aliax.net>",
 	"license": "ISC",
@@ -66,6 +66,6 @@
 		"prettier": "^3.6.2",
 		"tsx": "^4.20.6",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.45.0"
+		"typescript-eslint": "^8.46.0"
 	}
 }
