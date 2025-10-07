@@ -112,7 +112,7 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 				fs.unlinkSync(SOCKET_PATH);
 			} catch (error) {}
 
-			TerminalServer.#netServer?.listen(SOCKET_PATH, resolve);
+			TerminalServer.#netServer?.listen({ path: SOCKET_PATH }, resolve);
 		});
 
 		// Make maps global so they can be used during the REPL terminal.
