@@ -838,7 +838,7 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 					default: {
 						this.logErrorWithoutPrefix(`unknown command '${command}'`);
 						this.logInfoWithoutPrefix(
-							"press 'h' or 'help' to get the list of available commands"
+							`press 'h' or 'help' to get the list of available commands`
 						);
 					}
 				}

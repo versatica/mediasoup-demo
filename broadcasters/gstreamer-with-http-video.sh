@@ -184,6 +184,7 @@ ${HTTPIE_COMMAND} -v \
 #
 # NOTE: This is just to fetch and convert the file so must be run just once.
 # If the local video file already exists don't run this.
+#
 if [ ! -f "${LOCAL_VIDEO_PATH}" ] ; then
 	echo ">>> running ffmpeg..."
 

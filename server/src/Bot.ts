@@ -110,7 +110,7 @@ export class Bot {
 
 			// Create a message to send it back to all Peers in behalf of the sending
 			// Peer.
-			const messageBack = `${peer.displayName} told me: "${text}"`;
+			const messageBack = `${peer.displayName} told me: '${text}'`;
 
 			this.#dataProducer.send(messageBack);
 		});

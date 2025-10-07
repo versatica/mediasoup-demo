@@ -14,7 +14,14 @@ import {
 	RequestResponseDataFromServer,
 } from './signaling/protooMessages';
 import { assertUnreachable } from './utils';
-import { InvalidStateError } from './errors';
+import {
+	InvalidStateError,
+	TransportNotFound,
+	ProducerNotFound,
+	ConsumerNotFound,
+	DataProducerNotFound,
+	DataConsumerNotFound,
+} from './errors';
 import type {
 	PeerId,
 	PeerDevice,
@@ -285,7 +292,10 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		);
 
 		if (!canConsume) {
-			this.#logger.debug('consume() | cannot consume');
+			this.#logger.debug(
+				'consume() | cannot consume Producer [producerId:%o]',
+				producer.id
+			);
 
 			return;
 		}
@@ -520,7 +530,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		const transport = this.#transports.get(transportId);
 
 		if (!transport) {
-			throw new InvalidStateError(`WebRtcTransport '${transportId}' not found`);
+			throw new TransportNotFound(`WebRtcTransport '${transportId}' not found`);
 		}
 
 		return transport;
@@ -532,7 +542,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		const producer = this.#producers.get(producerId);
 
 		if (!producer) {
-			throw new InvalidStateError(`Producer '${producerId}' not found`);
+			throw new ProducerNotFound(`Producer '${producerId}' not found`);
 		}
 
 		return producer;
@@ -544,7 +554,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		const consumer = this.#consumers.get(consumerId);
 
 		if (!consumer) {
-			throw new InvalidStateError(`Consumer '${consumerId}' not found`);
+			throw new ConsumerNotFound(`Consumer '${consumerId}' not found`);
 		}
 
 		return consumer;
@@ -556,7 +566,9 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		const dataProducer = this.#dataProducers.get(dataProducerId);
 
 		if (!dataProducer) {
-			throw new InvalidStateError(`DataProducer '${dataProducerId}' not found`);
+			throw new DataProducerNotFound(
+				`DataProducer '${dataProducerId}' not found`
+			);
 		}
 
 		return dataProducer;
@@ -568,7 +580,9 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		const dataConsumer = this.#dataConsumers.get(dataConsumerId);
 
 		if (!dataConsumer) {
-			throw new InvalidStateError(`DataConsumer '${dataConsumerId}' not found`);
+			throw new DataConsumerNotFound(
+				`DataConsumer '${dataConsumerId}' not found`
+			);
 		}
 
 		return dataConsumer;
@@ -597,9 +611,8 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				);
 			} catch (error) {
 				this.#logger.warn(
-					'protoo notification processing failed [method:%o]:',
-					notification.method,
-					error
+					`protoo notification processing failed [method:%o]: ${error}`,
+					notification.method
 				);
 			}
 		});
@@ -948,7 +961,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 			default: {
 				// @ts-expect-error: Must be ready for this despite TS says it's ok.
-				reject(500, `unknown request method "${method}"`);
+				reject(500, `unknown request method '${method}'`);
 
 				assertUnreachable('protoo request method', method);
 			}

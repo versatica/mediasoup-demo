@@ -14,7 +14,7 @@ import { EnhancedEventEmitter } from './enhancedEvents';
 import { WsServer } from './WsServer';
 import { ApiServer } from './ApiServer';
 import { Room } from './Room';
-import { InvalidStateError, UnauthorizedError, RoomNotFound } from './errors';
+import { InvalidStateError, ForbiddenError, RoomNotFound } from './errors';
 import { clone } from './utils';
 import type { Config, RoomId, WorkerAppData } from './types';
 
@@ -367,7 +367,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			!secret ||
 			secret !== this.#networkThrottleSecret
 		) {
-			throw new UnauthorizedError('GO TO HELL 🖕🏼');
+			throw new ForbiddenError('GO TO HELL 🖕🏼');
 		}
 
 		await this.applyNetworkThrottleInternal(options);
@@ -385,7 +385,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			!secret ||
 			secret !== this.#networkThrottleSecret
 		) {
-			throw new UnauthorizedError('GO TO HELL 🖕🏼');
+			throw new ForbiddenError('GO TO HELL 🖕🏼');
 		}
 
 		await this.stopNetworkThrottleInternal();

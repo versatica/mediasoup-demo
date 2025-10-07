@@ -5,7 +5,7 @@ import * as bodyParser from 'body-parser';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Room } from './Room';
-import { UnauthorizedError, RoomNotFound, PeerNotFound } from './errors';
+import { ServerError } from './errors';
 import type { RoomId } from './types';
 
 const logger = new Logger('ApiServer');
@@ -354,11 +354,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 					let status: number;
 					let logErrorStack: boolean = false;
 
-					if (
-						error instanceof RoomNotFound ||
-						error instanceof UnauthorizedError ||
-						error instanceof PeerNotFound
-					) {
+					if (error instanceof ServerError) {
 						status = error.status;
 					} else if (error instanceof TypeError) {
 						status = 400;

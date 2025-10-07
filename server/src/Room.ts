@@ -265,9 +265,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				accept: resolve,
 			} as TypedApiRequestFromBroadcasterPeerToRoom).catch(error => {
 				this.#logger.warn(
-					'API request processing failed [name:%o]:',
-					name,
-					error
+					`API request processing failed [name:%o]: ${error}`,
+					name
 				);
 				reject(error as Error);
 			});

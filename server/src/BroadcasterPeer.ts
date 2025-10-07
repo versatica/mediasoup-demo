@@ -9,7 +9,13 @@ import {
 	TypedApiRequestFromBroadcasterPeer,
 } from './signaling/apiMessages';
 import { assertUnreachable } from './utils';
-import { InvalidStateError } from './errors';
+import {
+	InvalidStateError,
+	UnsupportedError,
+	TransportNotFound,
+	ProducerNotFound,
+	ConsumerNotFound,
+} from './errors';
 import type {
 	PeerId,
 	PeerDevice,
@@ -210,9 +216,8 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 				accept: resolve,
 			} as TypedApiRequestFromBroadcasterPeer).catch(error => {
 				this.#logger.warn(
-					'API request processing failed [name:%o]:',
-					name,
-					error
+					`API request processing failed [name:%o]: ${error}`,
+					name
 				);
 
 				reject(error as Error);
@@ -246,7 +251,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		const transport = this.#transports.get(transportId);
 
 		if (!transport) {
-			throw new InvalidStateError(`PlainTransport '${transportId}' not found`);
+			throw new TransportNotFound(`PlainTransport '${transportId}' not found`);
 		}
 
 		return transport;
@@ -258,7 +263,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		const producer = this.#producers.get(producerId);
 
 		if (!producer) {
-			throw new InvalidStateError(`Producer '${producerId}' not found`);
+			throw new ProducerNotFound(`Producer '${producerId}' not found`);
 		}
 
 		return producer;
@@ -270,7 +275,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		const consumer = this.#consumers.get(consumerId);
 
 		if (!consumer) {
-			throw new InvalidStateError(`Consumer '${consumerId}' not found`);
+			throw new ConsumerNotFound(`Consumer '${consumerId}' not found`);
 		}
 
 		return consumer;
@@ -410,9 +415,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 				);
 
 				if (!canConsume) {
-					throw new InvalidStateError(
-						`cannot consume Producer '${producerId}'`
-					);
+					throw new UnsupportedError(`cannot consume Producer '${producerId}'`);
 				}
 
 				let producer: mediasoupTypes.Producer<ProducerAppData> | undefined;
@@ -422,7 +425,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 				});
 
 				if (!producer) {
-					throw new InvalidStateError(`Producer '${producerId}' not found`);
+					throw new ProducerNotFound(`Producer '${producerId}' not found`);
 				}
 
 				const consumer = await transport.consume<ConsumerAppData>({
