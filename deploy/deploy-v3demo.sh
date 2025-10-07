@@ -26,9 +26,9 @@ fi
 if [ "$1" == "" ] || [ "$1" == "node" ]; then
 	rsync -avu --delete \
 		--exclude=/node_modules \
-		--exclude=/config.js \
+		--exclude=/config.mjs \
 		--filter='protect /node_modules' \
-		--filter='protect /config.js' \
+		--filter='protect /config.mjs' \
 		server/ deploy@vhost1-deploy:/var/www/v3demo.mediasoup.org/
 fi
 
