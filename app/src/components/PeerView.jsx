@@ -703,13 +703,13 @@ export default class PeerView extends React.Component {
 					})
 					.map(
 						(
-							{ ssrc, rid, score },
+							{ ssrc, rid, score: score2 },
 							idx // eslint-disable-line no-shadow
 						) => (
 							<p key={idx} className="indent">
 								{rid !== undefined
-									? `rid:${rid}, ssrc:${ssrc}, score:${score}`
-									: `ssrc:${ssrc}, score:${score}`}
+									? `rid:${rid}, ssrc:${ssrc}, score:${score2}`
+									: `ssrc:${ssrc}, score:${score2}`}
 							</p>
 						)
 					)}

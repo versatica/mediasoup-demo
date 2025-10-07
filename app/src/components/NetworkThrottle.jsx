@@ -111,7 +111,7 @@ class NetworkThrottle extends React.Component {
 								type="checkbox"
 								disabled={disabled}
 								checked={localhost}
-								onChange={event => {
+								onChange={() => {
 									this.setState({ localhost: !localhost });
 								}}
 							/>
@@ -145,7 +145,8 @@ class NetworkThrottle extends React.Component {
 
 	async _apply() {
 		const { roomClient, secret } = this.props;
-		let { up, down, rtt, packetLoss, localhost } = this.state;
+		const { localhost } = this.state;
+		let { up, down, rtt, packetLoss } = this.state;
 
 		up = Number(up) || 0;
 		down = Number(down) || 0;

@@ -731,8 +731,6 @@ export default class RoomClient {
 
 				case 'consumerLayersChanged': {
 					const { consumerId, layers } = notification.data;
-					const spatialLayer = (layers && layers.spatialLayer) ?? null;
-					const temporalLayer = (layers && layers.temporalLayer) ?? null;
 					const consumer = this._consumers.get(consumerId);
 
 					if (!consumer) break;
@@ -2145,14 +2143,14 @@ export default class RoomClient {
 				this._sendTransport.on(
 					'connect',
 					(
-						{ dtlsParameters },
+						{ dtlsParameters: dtlsParameters2 },
 						callback,
 						errback // eslint-disable-line no-shadow
 					) => {
 						this._protoo
 							.request('connectWebRtcTransport', {
 								transportId: this._sendTransport.id,
-								dtlsParameters,
+								dtlsParameters: dtlsParameters2,
 							})
 							.then(callback)
 							.catch(errback);
@@ -2256,14 +2254,14 @@ export default class RoomClient {
 				this._recvTransport.on(
 					'connect',
 					(
-						{ dtlsParameters },
+						{ dtlsParameters: dtlsParameters2 },
 						callback,
 						errback // eslint-disable-line no-shadow
 					) => {
 						this._protoo
 							.request('connectWebRtcTransport', {
 								transportId: this._recvTransport.id,
-								dtlsParameters,
+								dtlsParameters: dtlsParameters2,
 							})
 							.then(callback)
 							.catch(errback);
