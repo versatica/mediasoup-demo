@@ -1,3 +1,4 @@
+import * as mediasoup from 'mediasoup';
 import type * as mediasoupTypes from 'mediasoup/types';
 import type * as protooTypes from 'protoo-server';
 import type * as throttleTypes from '@sitespeed.io/throttle';
@@ -206,6 +207,9 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		}, JOIN_TIMEOUT_MS);
 
 		this.handleProtooPeer();
+
+		// Notify the endpoing with the mediasoup version.
+		this.notify('mediasoupVersion', { version: mediasoup.version });
 	}
 
 	get id(): PeerId {
