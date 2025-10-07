@@ -28,7 +28,9 @@ export class TerminalClient extends EnhancedEventEmitter<TerminalClientEvents> {
 
 		process.stdin.setRawMode(true);
 
-		const socket = net.connect(SOCKET_PATH);
+		logInfo(`connecting to socket '${SOCKET_PATH}'...`);
+
+		const socket = net.connect({ path: SOCKET_PATH });
 
 		process.stdin.pipe(socket);
 		socket.pipe(process.stdout);

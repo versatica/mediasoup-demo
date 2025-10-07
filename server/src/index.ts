@@ -114,6 +114,8 @@ async function exitWithError(): Promise<void> {
 		await terminateProcess();
 	} catch (error) {}
 
+	logger.warn('calling process.exit(1)...');
+
 	process.exit(1);
 }
 

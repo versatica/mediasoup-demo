@@ -38,15 +38,10 @@ declare global {
 	var rooms: Map<RoomId, Room>;
 }
 
-const SOCKET_PATH_UNIX = '/tmp/mediasoup-demo.sock';
-const SOCKET_PATH_WIN = path.join(
-	'\\\\?\\pipe',
-	process.cwd(),
-	'mediasoup-demo'
-);
-
 export const SOCKET_PATH =
-	os.platform() === 'win32' ? SOCKET_PATH_WIN : SOCKET_PATH_UNIX;
+	os.platform() === 'win32'
+		? path.join('\\\\?\\pipe', __dirname, '..', 'mediasoup-demo-terminal.sock')
+		: path.join(__dirname, '..', 'mediasoup-demo-terminal.sock');
 
 const logger = new Logger('TerminalServer');
 
@@ -113,6 +108,8 @@ export class TerminalServer extends EnhancedEventEmitter<TerminalServerEvents> {
 			} catch (error) {}
 
 			TerminalServer.#netServer?.listen({ path: SOCKET_PATH }, resolve);
+
+			logger.info('listen() | listening on %o', SOCKET_PATH);
 		});
 
 		// Make maps global so they can be used during the REPL terminal.

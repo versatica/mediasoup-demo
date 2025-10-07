@@ -79,7 +79,10 @@ Alternatively, you can directly invoke `npm start` or `npm run watch` (see detai
 
 The `src/connect-terminal.mjs` scripts connects to the running **mediasoup-demo-server** process and provides you with an interactive terminal to interact with it.
 
+You need to enter the `mediasoup-demo/server` folder to run it.
+
 ```sh
+cd /PATH_TO/mediasoup-demo/server
 ./src/connect-terminal.ts`
 ```
 

@@ -1,6 +1,9 @@
 /node_modules
 /lib
 
+# Terminal socket.
+/mediasoup-demo-terminal.sock
+
 # Local server configuration.
 /config.mjs
 
