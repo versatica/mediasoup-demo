@@ -16,7 +16,7 @@ const reducers = combineReducers({
 	peers,
 	consumers,
 	dataConsumers,
-	notifications
+	notifications,
 });
 
 export default reducers;

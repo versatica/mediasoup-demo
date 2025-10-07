@@ -1,9 +1,7 @@
 const initialState = {};
 
-const peers = (state = initialState, action) => 
-{
-	switch (action.type) 
-{
+const peers = (state = initialState, action) => {
+	switch (action.type) {
 		case 'SET_ROOM_STATE': {
 			const roomState = action.payload.state;
 
@@ -43,7 +41,7 @@ const peers = (state = initialState, action) =>
 
 			if (!peer) throw new Error('no Peer found for new Consumer');
 
-			const newConsumers = [ ...peer.consumers, consumer.id ];
+			const newConsumers = [...peer.consumers, consumer.id];
 			const newPeer = { ...peer, consumers: newConsumers };
 
 			return { ...state, [newPeer.id]: newPeer };
@@ -79,7 +77,7 @@ const peers = (state = initialState, action) =>
 
 			if (!peer) throw new Error('no Peer found for new DataConsumer');
 
-			const newDataConsumers = [ ...peer.dataConsumers, dataConsumer.id ];
+			const newDataConsumers = [...peer.dataConsumers, dataConsumer.id];
 			const newPeer = { ...peer, dataConsumers: newDataConsumers };
 
 			return { ...state, [newPeer.id]: newPeer };

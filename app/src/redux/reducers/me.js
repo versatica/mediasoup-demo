@@ -1,40 +1,35 @@
 const initialState = {
-	id                   : null,
-	displayName          : null,
-	displayNameSet       : false,
-	device               : null,
-	canSendMic           : false,
-	canSendWebcam        : false,
-	canChangeWebcam      : false,
-	webcamInProgress     : false,
-	shareInProgress      : false,
-	audioOnly            : false,
-	audioOnlyInProgress  : false,
-	audioMuted           : false,
-	restartIceInProgress : false
+	id: null,
+	displayName: null,
+	displayNameSet: false,
+	device: null,
+	canSendMic: false,
+	canSendWebcam: false,
+	canChangeWebcam: false,
+	webcamInProgress: false,
+	shareInProgress: false,
+	audioOnly: false,
+	audioOnlyInProgress: false,
+	audioMuted: false,
+	restartIceInProgress: false,
 };
 
-const me = (state = initialState, action) => 
-{
-	switch (action.type) 
-{
+const me = (state = initialState, action) => {
+	switch (action.type) {
 		case 'SET_ROOM_STATE': {
 			const roomState = action.payload.state;
 
-			if (roomState === 'closed') 
-{
+			if (roomState === 'closed') {
 				return {
 					...state,
-					webcamInProgress     : false,
-					shareInProgress      : false,
-					audioOnly            : false,
-					audioOnlyInProgress  : false,
-					audioMuted           : false,
-					restartIceInProgress : false
+					webcamInProgress: false,
+					shareInProgress: false,
+					audioOnly: false,
+					audioOnlyInProgress: false,
+					audioMuted: false,
+					restartIceInProgress: false,
 				};
-			}
- else 
-{
+			} else {
 				return state;
 			}
 		}

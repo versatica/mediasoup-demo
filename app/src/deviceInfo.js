@@ -3,8 +3,7 @@ import bowser from 'bowser';
 // TODO: For testing.
 window.BOWSER = bowser;
 
-export default function() 
-{
+export default function () {
 	const ua = navigator.userAgent;
 	const browser = bowser.getParser(ua);
 	let flag;
@@ -18,7 +17,7 @@ export default function()
 
 	return {
 		flag,
-		name    : browser.getBrowserName(),
-		version : browser.getBrowserVersion()
+		name: browser.getBrowserName(),
+		version: browser.getBrowserVersion(),
 	};
 }

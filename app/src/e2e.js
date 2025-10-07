@@ -11,32 +11,24 @@ const logger = new Logger('e2e');
 let e2eSupported = undefined;
 let worker = undefined;
 
-export function isSupported() 
-{
-	if (e2eSupported === undefined) 
-{
-		if (RTCRtpSender.prototype.createEncodedStreams) 
-{
-			try 
-{
+export function isSupported() {
+	if (e2eSupported === undefined) {
+		if (RTCRtpSender.prototype.createEncodedStreams) {
+			try {
 				const stream = new ReadableStream();
 
-				window.postMessage(stream, '*', [ stream ]);
+				window.postMessage(stream, '*', [stream]);
 				worker = new Worker('/js/e2e-worker.js', { name: 'e2e worker' });
 
 				logger.debug('isSupported() | supported');
 
 				e2eSupported = true;
-			}
- catch (error) 
-{
+			} catch (error) {
 				logger.debug(`isSupported() | not supported: ${error}`);
 
 				e2eSupported = false;
 			}
-		}
- else 
-{
+		} else {
 			logger.debug('isSupported() | not supported');
 
 			e2eSupported = false;
@@ -46,8 +38,7 @@ export function isSupported()
 	return e2eSupported;
 }
 
-export function setCryptoKey(operation, key, useCryptoOffset) 
-{
+export function setCryptoKey(operation, key, useCryptoOffset) {
 	logger.debug(
 		'setCryptoKey() [operation:%o, useCryptoOffset:%o]',
 		operation,
@@ -57,14 +48,13 @@ export function setCryptoKey(operation, key, useCryptoOffset)
 	assertSupported();
 
 	worker.postMessage({
-		operation        : operation,
-		currentCryptoKey : key,
-		useCryptoOffset  : useCryptoOffset
+		operation: operation,
+		currentCryptoKey: key,
+		useCryptoOffset: useCryptoOffset,
 	});
 }
 
-export function setupSenderTransform(sender) 
-{
+export function setupSenderTransform(sender) {
 	logger.debug('setupSenderTransform()');
 
 	assertSupported();
@@ -75,16 +65,15 @@ export function setupSenderTransform(sender)
 
 	worker.postMessage(
 		{
-			operation : 'encode',
+			operation: 'encode',
 			readableStream,
-			writableStream
+			writableStream,
 		},
-		[ readableStream, writableStream ]
+		[readableStream, writableStream]
 	);
 }
 
-export function setupReceiverTransform(receiver) 
-{
+export function setupReceiverTransform(receiver) {
 	logger.debug('setupReceiverTransform()');
 
 	assertSupported();
@@ -97,16 +86,15 @@ export function setupReceiverTransform(receiver)
 
 	worker.postMessage(
 		{
-			operation : 'decode',
+			operation: 'decode',
 			readableStream,
-			writableStream
+			writableStream,
 		},
-		[ readableStream, writableStream ]
+		[readableStream, writableStream]
 	);
 }
 
-function assertSupported() 
-{
+function assertSupported() {
 	if (e2eSupported === false) throw new Error('e2e not supported');
 	else if (e2eSupported === undefined)
 		throw new Error('e2e not initialized, must call isSupported() first');

@@ -1,9 +1,7 @@
 const initialState = {};
 
-const consumers = (state = initialState, action) => 
-{
-	switch (action.type) 
-{
+const consumers = (state = initialState, action) => {
+	switch (action.type) {
 		case 'SET_ROOM_STATE': {
 			const roomState = action.payload.state;
 
@@ -55,8 +53,8 @@ const consumers = (state = initialState, action) =>
 			const consumer = state[consumerId];
 			const newConsumer = {
 				...consumer,
-				currentSpatialLayer  : spatialLayer,
-				currentTemporalLayer : temporalLayer
+				currentSpatialLayer: spatialLayer,
+				currentTemporalLayer: temporalLayer,
 			};
 
 			return { ...state, [consumerId]: newConsumer };
@@ -67,8 +65,8 @@ const consumers = (state = initialState, action) =>
 			const consumer = state[consumerId];
 			const newConsumer = {
 				...consumer,
-				preferredSpatialLayer  : spatialLayer,
-				preferredTemporalLayer : temporalLayer
+				preferredSpatialLayer: spatialLayer,
+				preferredTemporalLayer: temporalLayer,
 			};
 
 			return { ...state, [consumerId]: newConsumer };

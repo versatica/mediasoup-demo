@@ -1,9 +1,7 @@
 const initialState = {};
 
-const producers = (state = initialState, action) => 
-{
-	switch (action.type) 
-{
+const producers = (state = initialState, action) => {
+	switch (action.type) {
 		case 'SET_ROOM_STATE': {
 			const roomState = action.payload.state;
 

@@ -6,36 +6,33 @@ import { Appear } from './transitions';
 import { withRoomContext } from '../RoomContext';
 import * as stateActions from '../redux/stateActions';
 
-class Stats extends React.Component 
-{
-	constructor(props) 
-{
+class Stats extends React.Component {
+	constructor(props) {
 		super(props);
 
 		this.state = {
-			sendTransportRemoteStats    : null,
-			sendTransportLocalStats     : null,
-			recvTransportRemoteStats    : null,
-			recvTransportLocalStats     : null,
-			audioProducerRemoteStats    : null,
-			audioProducerLocalStats     : null,
-			videoProducerRemoteStats    : null,
-			videoProducerLocalStats     : null,
-			chatDataProducerRemoteStats : null,
-			botDataProducerRemoteStats  : null,
-			audioConsumerRemoteStats    : null,
-			audioConsumerLocalStats     : null,
-			videoConsumerRemoteStats    : null,
-			videoConsumerLocalStats     : null,
-			chatDataConsumerRemoteStats : null,
-			botDataConsumerRemoteStats  : null
+			sendTransportRemoteStats: null,
+			sendTransportLocalStats: null,
+			recvTransportRemoteStats: null,
+			recvTransportLocalStats: null,
+			audioProducerRemoteStats: null,
+			audioProducerLocalStats: null,
+			videoProducerRemoteStats: null,
+			videoProducerLocalStats: null,
+			chatDataProducerRemoteStats: null,
+			botDataProducerRemoteStats: null,
+			audioConsumerRemoteStats: null,
+			audioConsumerLocalStats: null,
+			videoConsumerRemoteStats: null,
+			videoConsumerLocalStats: null,
+			chatDataConsumerRemoteStats: null,
+			botDataConsumerRemoteStats: null,
 		};
 
 		this._delayTimer = null;
 	}
 
-	render() 
-{
+	render() {
 		const { peerId, peerDisplayName, isMe, onClose } = this.props;
 
 		const {
@@ -54,113 +51,113 @@ class Stats extends React.Component
 			videoConsumerRemoteStats,
 			videoConsumerLocalStats,
 			chatDataConsumerRemoteStats,
-			botDataConsumerRemoteStats
+			botDataConsumerRemoteStats,
 		} = this.state;
 
 		return (
-			<div data-component='Stats'>
+			<div data-component="Stats">
 				<div className={classnames('content', { visible: peerId })}>
-					<div className='header'>
-						<div className='info'>
-							<div className='close-icon' onClick={onClose} />
+					<div className="header">
+						<div className="info">
+							<div className="close-icon" onClick={onClose} />
 
 							{isMe ? <h1>Your Stats</h1> : <h1>Stats of {peerDisplayName}</h1>}
 						</div>
 
-						<div className='list'>
+						<div className="list">
 							{(sendTransportRemoteStats || sendTransportLocalStats) && (
 								<p>
 									{'send transport stats: '}
-									<a href='#send-transport-remote-stats'>[remote]</a>
+									<a href="#send-transport-remote-stats">[remote]</a>
 									<span> </span>
-									<a href='#send-transport-local-stats'>[local]</a>
+									<a href="#send-transport-local-stats">[local]</a>
 								</p>
 							)}
 
 							{(recvTransportRemoteStats || recvTransportLocalStats) && (
 								<p>
 									{'recv transport stats: '}
-									<a href='#recv-transport-remote-stats'>[remote]</a>
+									<a href="#recv-transport-remote-stats">[remote]</a>
 									<span> </span>
-									<a href='#recv-transport-local-stats'>[local]</a>
+									<a href="#recv-transport-local-stats">[local]</a>
 								</p>
 							)}
 
 							{(audioProducerRemoteStats || audioProducerLocalStats) && (
 								<p>
 									{'audio producer stats: '}
-									<a href='#audio-producer-remote-stats'>[remote]</a>
+									<a href="#audio-producer-remote-stats">[remote]</a>
 									<span> </span>
-									<a href='#audio-producer-local-stats'>[local]</a>
+									<a href="#audio-producer-local-stats">[local]</a>
 								</p>
 							)}
 
 							{(videoProducerRemoteStats || videoProducerLocalStats) && (
 								<p>
 									{'video producer stats: '}
-									<a href='#video-producer-remote-stats'>[remote]</a>
+									<a href="#video-producer-remote-stats">[remote]</a>
 									<span> </span>
-									<a href='#video-producer-local-stats'>[local]</a>
+									<a href="#video-producer-local-stats">[local]</a>
 								</p>
 							)}
 
 							{chatDataProducerRemoteStats && (
 								<p>
 									{'chat dataproducer stats: '}
-									<a href='#chat-dataproducer-remote-stats'>[remote]</a>
+									<a href="#chat-dataproducer-remote-stats">[remote]</a>
 									<span> </span>
-									<a className='disabled'>[local]</a>
+									<a className="disabled">[local]</a>
 								</p>
 							)}
 
 							{botDataProducerRemoteStats && (
 								<p>
 									{'bot dataproducer stats: '}
-									<a href='#bot-dataproducer-remote-stats'>[remote]</a>
+									<a href="#bot-dataproducer-remote-stats">[remote]</a>
 									<span> </span>
-									<a className='disabled'>[local]</a>
+									<a className="disabled">[local]</a>
 								</p>
 							)}
 
 							{(audioConsumerRemoteStats || audioConsumerLocalStats) && (
 								<p>
 									{'audio consumer stats: '}
-									<a href='#audio-consumer-remote-stats'>[remote]</a>
+									<a href="#audio-consumer-remote-stats">[remote]</a>
 									<span> </span>
-									<a href='#audio-consumer-local-stats'>[local]</a>
+									<a href="#audio-consumer-local-stats">[local]</a>
 								</p>
 							)}
 
 							{(videoConsumerRemoteStats || videoConsumerLocalStats) && (
 								<p>
 									{'video consumer stats: '}
-									<a href='#video-consumer-remote-stats'>[remote]</a>
+									<a href="#video-consumer-remote-stats">[remote]</a>
 									<span> </span>
-									<a href='#video-consumer-local-stats'>[local]</a>
+									<a href="#video-consumer-local-stats">[local]</a>
 								</p>
 							)}
 
 							{chatDataConsumerRemoteStats && (
 								<p>
 									{'chat dataconsumer stats: '}
-									<a href='#chat-dataconsumer-remote-stats'>[remote]</a>
+									<a href="#chat-dataconsumer-remote-stats">[remote]</a>
 									<span> </span>
-									<a className='disabled'>[local]</a>
+									<a className="disabled">[local]</a>
 								</p>
 							)}
 
 							{botDataConsumerRemoteStats && (
 								<p>
 									{'bot dataconsumer stats: '}
-									<a href='#bot-dataconsumer-remote-stats'>[remote]</a>
+									<a href="#bot-dataconsumer-remote-stats">[remote]</a>
 									<span> </span>
-									<a className='disabled'>[local]</a>
+									<a className="disabled">[local]</a>
 								</p>
 							)}
 						</div>
 					</div>
 
-					<div className='stats'>
+					<div className="stats">
 						{sendTransportRemoteStats &&
 							this._printStats(
 								'send transport remote stats',
@@ -262,34 +259,27 @@ class Stats extends React.Component
 		);
 	}
 
-	componentDidUpdate(prevProps) 
-{
+	componentDidUpdate(prevProps) {
 		const { peerId } = this.props;
 
-		if (peerId && !prevProps.peerId) 
-{
+		if (peerId && !prevProps.peerId) {
 			this._delayTimer = setTimeout(() => this._start(), 250);
-		}
- else if (!peerId && prevProps.peerId) 
-{
+		} else if (!peerId && prevProps.peerId) {
 			this._stop();
-		}
- else if (peerId && prevProps.peerId && peerId !== prevProps.peerId) 
-{
+		} else if (peerId && prevProps.peerId && peerId !== prevProps.peerId) {
 			this._stop();
 			this._start();
 		}
 	}
 
-	async _start() 
-{
+	async _start() {
 		const {
 			roomClient,
 			isMe,
 			audioConsumerId,
 			videoConsumerId,
 			chatDataConsumerId,
-			botDataConsumerId
+			botDataConsumerId,
 		} = this.props;
 
 		let sendTransportRemoteStats = null;
@@ -309,8 +299,7 @@ class Stats extends React.Component
 		let chatDataConsumerRemoteStats = null;
 		let botDataConsumerRemoteStats = null;
 
-		if (isMe) 
-{
+		if (isMe) {
 			sendTransportRemoteStats = await roomClient
 				.getSendTransportRemoteStats()
 				.catch(() => {});
@@ -354,9 +343,7 @@ class Stats extends React.Component
 			botDataConsumerRemoteStats = await roomClient
 				.getDataConsumerRemoteStats(botDataConsumerId)
 				.catch(() => {});
-		}
- else 
-{
+		} else {
 			audioConsumerRemoteStats = await roomClient
 				.getConsumerRemoteStats(audioConsumerId)
 				.catch(() => {});
@@ -394,53 +381,51 @@ class Stats extends React.Component
 			videoConsumerRemoteStats,
 			videoConsumerLocalStats,
 			chatDataConsumerRemoteStats,
-			botDataConsumerRemoteStats
+			botDataConsumerRemoteStats,
 		});
 
 		this._delayTimer = setTimeout(() => this._start(), 2500);
 	}
 
-	_stop() 
-{
+	_stop() {
 		clearTimeout(this._delayTimer);
 
 		this.setState({
-			sendTransportRemoteStats    : null,
-			sendTransportLocalStats     : null,
-			recvTransportRemoteStats    : null,
-			recvTransportLocalStats     : null,
-			audioProducerRemoteStats    : null,
-			audioProducerLocalStats     : null,
-			videoProducerRemoteStats    : null,
-			videoProducerLocalStats     : null,
-			chatDataProducerRemoteStats : null,
-			botDataProducerRemoteStats  : null,
-			audioConsumerRemoteStats    : null,
-			audioConsumerLocalStats     : null,
-			videoConsumerRemoteStats    : null,
-			videoConsumerLocalStats     : null,
-			chatDataConsumerRemoteStats : null,
-			botDataConsumerRemoteStats  : null
+			sendTransportRemoteStats: null,
+			sendTransportLocalStats: null,
+			recvTransportRemoteStats: null,
+			recvTransportLocalStats: null,
+			audioProducerRemoteStats: null,
+			audioProducerLocalStats: null,
+			videoProducerRemoteStats: null,
+			videoProducerLocalStats: null,
+			chatDataProducerRemoteStats: null,
+			botDataProducerRemoteStats: null,
+			audioConsumerRemoteStats: null,
+			audioConsumerLocalStats: null,
+			videoConsumerRemoteStats: null,
+			videoConsumerLocalStats: null,
+			chatDataConsumerRemoteStats: null,
+			botDataConsumerRemoteStats: null,
 		});
 	}
 
-	_printStats(title, stats) 
-{
+	_printStats(title, stats) {
 		const anchor = title.replace(/[ ]+/g, '-');
 
 		if (typeof stats.values === 'function') stats = Array.from(stats.values());
 
 		return (
 			<Appear duration={150}>
-				<div className='items'>
+				<div className="items">
 					<h2 id={anchor}>{title}</h2>
 
 					{stats.map((item, idx) => (
-						<div className='item' key={idx}>
-							{Object.keys(item).map((key) => (
-								<div className='line' key={key}>
-									<p className='key'>{key}</p>
-									<div className='value'>
+						<div className="item" key={idx}>
+							{Object.keys(item).map(key => (
+								<div className="line" key={key}>
+									<p className="key">{key}</p>
+									<div className="value">
 										<pre>
 											{typeof item[key] === 'number'
 												? JSON.stringify(
@@ -462,19 +447,18 @@ class Stats extends React.Component
 }
 
 Stats.propTypes = {
-	roomClient         : PropTypes.any.isRequired,
-	peerId             : PropTypes.string,
-	peerDisplayName    : PropTypes.string,
-	isMe               : PropTypes.bool,
-	audioConsumerId    : PropTypes.string,
-	videoConsumerId    : PropTypes.string,
-	chatDataConsumerId : PropTypes.string,
-	botDataConsumerId  : PropTypes.string,
-	onClose            : PropTypes.func.isRequired
+	roomClient: PropTypes.any.isRequired,
+	peerId: PropTypes.string,
+	peerDisplayName: PropTypes.string,
+	isMe: PropTypes.bool,
+	audioConsumerId: PropTypes.string,
+	videoConsumerId: PropTypes.string,
+	chatDataConsumerId: PropTypes.string,
+	botDataConsumerId: PropTypes.string,
+	onClose: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = (state) => 
-{
+const mapStateToProps = state => {
 	const { room, me, peers, consumers, dataConsumers } = state;
 	const { statsPeerId } = room;
 
@@ -487,23 +471,17 @@ const mapStateToProps = (state) =>
 	let chatDataConsumerId;
 	let botDataConsumerId;
 
-	if (isMe) 
-{
-		for (const dataConsumerId of Object.keys(dataConsumers)) 
-{
+	if (isMe) {
+		for (const dataConsumerId of Object.keys(dataConsumers)) {
 			const dataConsumer = dataConsumers[dataConsumerId];
 
 			if (dataConsumer.label === 'bot') botDataConsumerId = dataConsumer.id;
 		}
-	}
- else 
-{
-		for (const consumerId of peer.consumers) 
-{
+	} else {
+		for (const consumerId of peer.consumers) {
 			const consumer = consumers[consumerId];
 
-			switch (consumer.track.kind) 
-{
+			switch (consumer.track.kind) {
 				case 'audio':
 					audioConsumerId = consumer.id;
 					break;
@@ -514,8 +492,7 @@ const mapStateToProps = (state) =>
 			}
 		}
 
-		for (const dataConsumerId of peer.dataConsumers) 
-{
+		for (const dataConsumerId of peer.dataConsumers) {
 			const dataConsumer = dataConsumers[dataConsumerId];
 
 			if (dataConsumer.label === 'chat') chatDataConsumerId = dataConsumer.id;
@@ -523,20 +500,19 @@ const mapStateToProps = (state) =>
 	}
 
 	return {
-		peerId          : peer.id,
-		peerDisplayName : peer.displayName,
+		peerId: peer.id,
+		peerDisplayName: peer.displayName,
 		isMe,
 		audioConsumerId,
 		videoConsumerId,
 		chatDataConsumerId,
-		botDataConsumerId
+		botDataConsumerId,
 	};
 };
 
-const mapDispatchToProps = (dispatch) => 
-{
+const mapDispatchToProps = dispatch => {
 	return {
-		onClose : () => dispatch(stateActions.setRoomStatsPeerId(null))
+		onClose: () => dispatch(stateActions.setRoomStatsPeerId(null)),
 	};
 };
 

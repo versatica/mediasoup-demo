@@ -1,7 +1,6 @@
 let mediaQueryDetectorElem;
 
-export function initialize() 
-{
+export function initialize() {
 	// Media query detector stuff.
 	mediaQueryDetectorElem = document.getElementById(
 		'mediasoup-demo-app-media-query-detector'
@@ -10,12 +9,10 @@ export function initialize()
 	return Promise.resolve();
 }
 
-export function isDesktop() 
-{
+export function isDesktop() {
 	return Boolean(mediaQueryDetectorElem.offsetParent);
 }
 
-export function isMobile() 
-{
+export function isMobile() {
 	return !mediaQueryDetectorElem.offsetParent;
 }
