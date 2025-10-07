@@ -79,7 +79,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 				return;
 			}
 
-			logger.debug(
+			logger.info(
 				'protoo WebSocket connection request [roomId:%o, peerId:%o, address:%o, origin:%o]',
 				roomId,
 				peerId,
