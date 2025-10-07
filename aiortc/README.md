@@ -1,6 +1,6 @@
 
 ## mediasoup-demo Node app using mediasoup-client-aiortc
 
-See [index.ts](./src/index.ts).
+**TODO:** This project must be rewritten in order to work with the new **mediasoup-demo-server**.
 
 

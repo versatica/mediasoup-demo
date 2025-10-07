@@ -1,8 +1,0 @@
-/node_modules
-/config.*
-!/config.example.js
-/public/
-/certs/
-/.vscode
-/.zed
-/mediasoup_valgrind_*
