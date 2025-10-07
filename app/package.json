@@ -19,7 +19,8 @@
     "local:h264": "cross-env LOCAL=1 DEV=h264 vite",
     "local:av1": "cross-env LOCAL=1 DEV=av1 vite",
     "build": "vite build",
-    "lint": "eslint --ext=.js,.jsx src && npx prettier --check src"
+    "lint": "eslint --ext=.js,.jsx src && npx prettier --check src",
+    "format": "eslint --fix --ext=.js,.jsx src && npx prettier --write src"
   },
   "dependencies": {
     "@babel/runtime": "7.26.10",
