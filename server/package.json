@@ -28,15 +28,15 @@
 		"nodejs"
 	],
 	"scripts": {
-		"prepare": "./npm-scripts.mjs prepare",
-		"typescript:build": "./npm-scripts.mjs typescript:build",
-		"typescript:watch": "./npm-scripts.mjs typescript:watch",
-		"lint": "./npm-scripts.mjs lint",
-		"format": "./npm-scripts.mjs format",
-		"release:check": "./npm-scripts.mjs release:check",
-		"release": "./npm-scripts.mjs release",
+		"prepare": "node npm-scripts.mjs prepare",
+		"typescript:build": "node npm-scripts.mjs typescript:build",
+		"typescript:watch": "node npm-scripts.mjs typescript:watch",
+		"lint": "node npm-scripts.mjs lint",
+		"format": "node npm-scripts.mjs format",
+		"release:check": "node npm-scripts.mjs release:check",
+		"release": "node npm-scripts.mjs release",
 		"start": "cross-env NODE_ENV=production ./lib/index.js",
-		"watch": "./npm-scripts.mjs watch"
+		"watch": "node npm-scripts.mjs watch"
 	},
 	"dependencies": {
 		"@sitespeed.io/throttle": "^5.0.1",
