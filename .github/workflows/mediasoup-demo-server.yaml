@@ -1,4 +1,4 @@
-name: mediasoup-client
+name: mediasoup-demo-server
 
 on:
   push:
