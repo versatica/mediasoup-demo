@@ -1,0 +1,11 @@
+/node_modules
+/lib
+
+# Local broadcaster configuration.
+/config.mjs
+
+# Locally generated stuff.
+/*.tgz
+/.vscode
+/.zed
+/mediasoup_valgrind_*
