@@ -384,7 +384,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 					res
 						.status(201)
 						.location(
-							`/rooms/${roomId}/broadcasters/${peerId}/transports/${transportId}/producers/${responseData.producerId}`
+							`/rooms/${roomId}/broadcasters/${peerId}/producers/${responseData.producerId}`
 						)
 						.json(responseData);
 				} catch (error) {
@@ -427,7 +427,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 					res
 						.status(201)
 						.location(
-							`/rooms/${roomId}/broadcasters/${peerId}/transports/${transportId}/consumers/${responseData.consumerId}`
+							`/rooms/${roomId}/broadcasters/${peerId}/consumers/${responseData.consumerId}`
 						)
 						.json(responseData);
 				} catch (error) {

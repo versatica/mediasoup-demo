@@ -16,7 +16,7 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"bin": {
-		"mediasoup-demo-server": "lib/index.js"
+		"mediasoup-demo-broadcaster": "bin/mediasoup-demo-broadcaster"
 	},
 	"engines": {
 		"node": ">=22"
@@ -28,30 +28,33 @@
 		"nodejs"
 	],
 	"scripts": {
-		"prepare": "./npm-scripts.mjs prepare",
-		"typescript:build": "./npm-scripts.mjs typescript:build",
-		"typescript:watch": "./npm-scripts.mjs typescript:watch",
-		"lint": "./npm-scripts.mjs lint",
-		"format": "./npm-scripts.mjs format",
-		"release:check": "./npm-scripts.mjs release:check",
-		"release": "./npm-scripts.mjs release",
-		"start": "cross-env NODE_ENV=production ./lib/index.js",
-		"watch": "./npm-scripts.mjs watch"
+		"prepare": "node ./npm-scripts.mjs prepare",
+		"typescript:build": "node ./npm-scripts.mjs typescript:build",
+		"typescript:watch": "node ./npm-scripts.mjs typescript:watch",
+		"lint": "node ./npm-scripts.mjs lint",
+		"format": "node ./npm-scripts.mjs format",
+		"release:check": "node ./npm-scripts.mjs release:check",
+		"release": "node ./npm-scripts.mjs release",
+		"start": "npx mediasoup-demo-broadcaster",
+		"dev": "node ./npm-scripts.mjs dev"
 	},
 	"dependencies": {
 		"debug": "^4.4.3",
-		"supports-color": "^10.2.2"
+		"mediasoup-client": "^3.16.7",
+		"supports-color": "^10.2.2",
+		"undici": "^7.16.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.37.0",
 		"@types/debug": "^4.1.12",
-		"@types/node": "^24.6.2",
+		"@types/node": "^24.7.0",
 		"eslint": "^9.37.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-prettier": "^5.5.4",
 		"globals": "^16.4.0",
 		"prettier": "^3.6.2",
+		"tsx": "^4.20.6",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.45.0"
+		"typescript-eslint": "^8.46.0"
 	}
 }

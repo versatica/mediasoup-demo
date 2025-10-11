@@ -95,6 +95,7 @@ AUDIO_LOCAL_PORT=10000
 AUDIO_LOCAL_RTCP_PORT=10001
 VIDEO_LOCAL_PORT=10002
 VIDEO_LOCAL_RTCP_PORT=10003
+FFMPEG_PID=""
 
 cat > /tmp/mediasoup-demo-ffmpeg-receiver.sdp <<EOF
 v=0
@@ -140,7 +141,7 @@ ${HTTPIE_COMMAND} \
 # Upon script termination delete the BroadcasterPeer in the server by sending a
 # HTTP DELETE.
 #
-trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID} Origin:${SERVER_URL} > /dev/null' EXIT
+trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID} Origin:${SERVER_URL} > /dev/null; [ -n "${FFMPEG_PID}" ] && kill -0 ${FFMPEG_PID} 2>/dev/null && kill ${FFMPEG_PID}' EXIT
 
 echo ">>> creating mediasoup PlainTransport for consuming audio..."
 
@@ -162,26 +163,6 @@ ${HTTPIE_COMMAND} -v \
 	ip="${LOCAL_IP}" \
 	port:=${AUDIO_LOCAL_PORT} \
 	rtcpPort:=${AUDIO_LOCAL_RTCP_PORT} \
-	> /dev/null
-
-#
-# Once transports are created, join the room.
-#
-echo ">>> joining the room..."
-
-${HTTPIE_COMMAND} -v \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/join \
-	Origin:${SERVER_URL} \
-	> /dev/null
-
-echo ">>> creating mediasoup audio Consumer..."
-
-${HTTPIE_COMMAND} \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${audioTransportId}/consume \
-	Origin:${SERVER_URL} \
-	producerId="${AUDIO_PRODUCER_ID}" \
-	paused:=false \
-	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"audio\", \"mimeType\":\"audio/opus\", \"preferredPayloadType\":${AUDIO_CONSUMER_PT}, \"clockRate\": 48000, \"channels\": 2, \"parameters\": { \"useinbandfec\": 1 } }] }" \
 	> /dev/null
 
 echo ">>> creating mediasoup PlainTransport for consuming video..."
@@ -206,13 +187,35 @@ ${HTTPIE_COMMAND} -v \
 	rtcpPort:=${VIDEO_LOCAL_RTCP_PORT} \
 	2> /dev/null
 
+#
+# Once transports are created, join the room.
+#
+echo ">>> joining the room..."
+
+${HTTPIE_COMMAND} -v \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/join \
+	Origin:${SERVER_URL} \
+	> /dev/null
+
+echo ">>> creating mediasoup audio Consumer..."
+
+${HTTPIE_COMMAND} \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/consumers \
+	Origin:${SERVER_URL} \
+	transportId=${audioTransportId} \
+	producerId="${AUDIO_PRODUCER_ID}" \
+	paused:=false \
+	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"audio\", \"mimeType\":\"audio/opus\", \"preferredPayloadType\":${AUDIO_CONSUMER_PT}, \"clockRate\": 48000, \"channels\": 2, \"parameters\": { \"useinbandfec\": 1 } }] }" \
+	2> /dev/null
+
 eval "$(echo ${res} | jq -r '@sh "audioConsumerId=\(.consumerId)"')"
 
 echo ">>> creating mediasoup video Consumer..."
 
 res=$(${HTTPIE_COMMAND} \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/consume \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/consumers \
 	Origin:${SERVER_URL} \
+	transportId=${videoTransportId} \
 	producerId="${VIDEO_PRODUCER_ID}" \
 	paused:=true \
 	rtpCapabilities:="{ \"codecs\": [{ \"kind\": \"video\", \"mimeType\":\"video/VP8\", \"preferredPayloadType\":${VIDEO_CONSUMER_PT}, \"clockRate\": 90000, \"parameters\": {}, \"rtcpFeedback\": [{ \"type\": \"nack\" }] }] }" \
@@ -230,7 +233,8 @@ echo ">>> running ffmpeg..."
 # 	-i /tmp/mediasoup-demo-ffmpeg-receiver.sdp \
 # 	-f pulse -device default stream \
 # 	-f xv display &
-# ffmpeg_pid=$!
+#
+# FFMPEG_PID=$!
 
 # NOTE: This is for macOS with ffmpeg with sdl2 support (whatever it is).
 # NOTE: brew install ffmpeg --with-sdl2 (it fails, hehe).
@@ -241,7 +245,8 @@ echo ">>> running ffmpeg..."
 # 	-i /tmp/mediasoup-demo-ffmpeg-receiver.sdp \
 # 	-f audiotoolbox default \
 # 	-f sdl2 -
-# ffmpeg_pid=$!
+#
+# FFMPEG_PID=$!
 
 echo ">>> running ffplay..."
 
@@ -252,14 +257,15 @@ ffplay \
 	-probesize 5000000 \
 	-analyzeduration 10000000 \
 	-loglevel repeat+level+debug &
-ffmpeg_pid=$!
 
+FFMPEG_PID=$!
 sleep 2
 
 echo ">>> resuming video Consumer ${videoConsumerId}..."; \
 
 ${HTTPIE_COMMAND} -v \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/consumers/${videoConsumerId}/resume \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/consumers/${videoConsumerId}/resume \
+	Origin:${SERVER_URL} \
 	> /dev/null;
 
 wait ${ffmpeg_pid}

@@ -168,8 +168,9 @@ ${HTTPIE_COMMAND} -v \
 echo ">>> creating mediasoup audio Producer..."
 
 ${HTTPIE_COMMAND} -v \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${audioTransportId}/producers \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/producers \
 	Origin:${SERVER_URL} \
+	transportId=${audioTransportId} \
 	kind="audio" \
 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"audio/opus\", \"payloadType\":${AUDIO_PT}, \"clockRate\":48000, \"channels\":2, \"parameters\":{ \"sprop-stereo\":1 } }], \"encodings\": [{ \"ssrc\":${AUDIO_SSRC} }] }" \
 	appData:="{ \"source\": \"audio\" }" \
@@ -182,8 +183,9 @@ ${HTTPIE_COMMAND} -v \
 echo ">>> creating mediasoup video Producer..."
 
 ${HTTPIE_COMMAND} -v \
-	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/transports/${videoTransportId}/producers \
+	POST ${SERVER_URL}/rooms/${ROOM_ID}/broadcasters/${PEER_ID}/producers \
 	Origin:${SERVER_URL} \
+	transportId=${videoTransportId} \
 	kind="video" \
 	rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/h264\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000, \"parameters\":{ \"packetization-mode\":1, \"profile-level-id\":\"42e032\", \"level-asymmetry-allowed\":1 }, \"rtcpFeedback\": [{ \"type\":\"nack\" }, { \"type\":\"nack\", \"parameter\":\"pli\" }, { \"type\":\"ccm\", \"parameter\":\"fir\" }] }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
 	appData:="{ \"source\": \"video\" }" \
