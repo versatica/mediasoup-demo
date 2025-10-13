@@ -43,3 +43,19 @@ export function isHttpsUrl(url: string): boolean {
 		return false;
 	}
 }
+
+export function splitAndFlattenArgs(array: (string | string[])[]): string[] {
+	return array.flatMap(elem => {
+		if (Array.isArray(elem)) {
+			return splitAndFlattenArgs(elem);
+		} else if (typeof elem === 'string') {
+			return elem.split(' ').filter(Boolean);
+		} else {
+			return [String(elem)];
+		}
+	});
+}
+
+export function trimFinalNewline(str: string): string {
+	return str.replace(/(\r?\n)$/, '');
+}

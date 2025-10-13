@@ -37,6 +37,8 @@ export type PlainTransportRemoteData = {
 
 export type Source = 'audio' | 'video' | 'screensharing';
 
+export type MediaClientType = 'ffmpeg' | 'gstreamer';
+
 export type PlainTransportAppData = {
 	direction: TransportDirection;
 };

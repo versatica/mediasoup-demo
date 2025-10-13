@@ -13,6 +13,21 @@ export class BroadcasterError extends Error {
 	}
 }
 
+export class BroadcasterInvalidStateError extends BroadcasterError {
+	constructor(message: string) {
+		super(message);
+
+		this.name = 'BroadcasterInvalidStateError';
+
+		if (Error.hasOwnProperty('captureStackTrace')) {
+			// Just in V8.
+			Error.captureStackTrace(this, BroadcasterInvalidStateError);
+		} else {
+			this.stack = new Error(message).stack;
+		}
+	}
+}
+
 export class BroadcasterApiClientError extends BroadcasterError {
 	readonly #statusCode: number | undefined;
 
@@ -32,5 +47,20 @@ export class BroadcasterApiClientError extends BroadcasterError {
 
 	get statusCode(): number | undefined {
 		return this.#statusCode;
+	}
+}
+
+export class BroadcasterSpawnError extends BroadcasterError {
+	constructor(message: string) {
+		super(message);
+
+		this.name = 'BroadcasterSpawnError';
+
+		if (Error.hasOwnProperty('captureStackTrace')) {
+			// Just in V8.
+			Error.captureStackTrace(this, BroadcasterSpawnError);
+		} else {
+			this.stack = new Error(message).stack;
+		}
 	}
 }

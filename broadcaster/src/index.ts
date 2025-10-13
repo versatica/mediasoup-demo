@@ -39,17 +39,20 @@ async function run(): Promise<void> {
 			device,
 		});
 
-		// TODO: Hehe.
+		// TODO: Testing.
 		await broadcaster.produceMediaFile({
+			mediaClientType: 'ffmpeg',
 			mediaFile:
 				'/Users/ibc/src/mediasoup-demo/app/public/videos/video-audio-stereo.mp4',
 		});
 
-		void broadcaster.close();
+		await exitGracefully();
 	} catch (error) {
-		// Only log if error is of unknown type. Otherwise we know it was logged
+		// Only log full error is of unknown type. Otherwise we know it was logged
 		// already by other class.
-		if (!(error instanceof BroadcasterError)) {
+		if (error instanceof BroadcasterError) {
+			logger.error(`run() | failed: ${error}`);
+		} else {
 			logger.error('run() | failed:', error);
 		}
 

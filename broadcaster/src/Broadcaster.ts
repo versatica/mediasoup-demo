@@ -2,8 +2,11 @@ import type * as mediasoupTypes from 'mediasoup-client/types';
 
 import { Logger } from './Logger';
 import { ApiClient } from './ApiClient';
+import { MediaClient } from './MediaClient';
 import { FFmpeg } from './FFmpeg';
-import type { RoomId, PeerId, PeerDevice } from './types';
+import { BroadcasterInvalidStateError } from './errors';
+import * as utils from './utils';
+import type { RoomId, PeerId, PeerDevice, MediaClientType } from './types';
 
 const logger = new Logger('Broadcaster');
 
@@ -33,9 +36,8 @@ export class Broadcaster {
 	readonly #device: PeerDevice;
 	readonly #apiClient: ApiClient;
 	readonly #routerRtpCapabilities: mediasoupTypes.RtpCapabilities;
-	// TODO: Rename to generic / interface.
-	readonly #ffmpegs: Set<FFmpeg> = new Set();
-	#closed: boolean = false;
+	readonly #mediaClients: Set<MediaClient> = new Set();
+	#closePromise?: Promise<void>;
 
 	static async create({
 		baseUrl,
@@ -78,7 +80,7 @@ export class Broadcaster {
 			},
 		});
 
-		logger.info('create() | Broadcaster created in the room');
+		logger.info('create() | Broadcaster created in the Room');
 
 		await apiClient.request({
 			name: 'join',
@@ -86,7 +88,7 @@ export class Broadcaster {
 			path: ['rooms', { roomId }, 'broadcasters', { peerId }, 'join'],
 		});
 
-		logger.info('run() | Broadcaster joined the room');
+		logger.info('create() | Broadcaster joined the Room');
 
 		const broadcaster = new Broadcaster({
 			baseUrl,
@@ -124,38 +126,57 @@ export class Broadcaster {
 	async close(): Promise<void> {
 		logger.debug('close()');
 
-		if (this.#closed) {
-			return;
+		if (this.#closePromise) {
+			return this.#closePromise;
 		}
 
-		this.#closed = true;
+		const promises: Promise<void>[] = [];
 
-		for (const ffmpeg of this.#ffmpegs) {
-			ffmpeg.close();
+		promises.push(
+			this.#apiClient
+				.request({
+					name: 'disconnect',
+					method: 'DELETE',
+					path: [
+						'rooms',
+						{ roomId: this.#roomId },
+						'broadcasters',
+						{ peerId: this.#peerId },
+					],
+				})
+				.then(() => {
+					logger.info('close() | Broadcaster disconnected from the Room');
+				})
+				.catch(error => {
+					logger.info(
+						`close() | Broadcaster disconnected from the Room with error: ${(error as Error).message}`
+					);
+				})
+		);
+
+		for (const mediaClient of this.#mediaClients) {
+			promises.push(mediaClient.close());
 		}
 
-		try {
-			await this.#apiClient.request({
-				name: 'disconnect',
-				method: 'DELETE',
-				path: [
-					'rooms',
-					{ roomId: this.#roomId },
-					'broadcasters',
-					{ peerId: this.#peerId },
-				],
-			});
+		this.#closePromise = Promise.all(promises).then(() => undefined);
 
-			logger.info('close() | Broadcaster disconnected from the room');
-		} catch (error) {
-			logger.info(
-				`close() | Broadcaster disconnected from the room with error: ${(error as Error).message}`
-			);
-		}
+		return this.#closePromise;
 	}
 
-	async produceMediaFile({ mediaFile }: { mediaFile: string }): Promise<void> {
-		logger.debug('produceMediaFile() [mediaFile:%o]', mediaFile);
+	async produceMediaFile({
+		mediaClientType,
+		mediaFile,
+	}: {
+		mediaClientType: MediaClientType;
+		mediaFile: string;
+	}): Promise<void> {
+		logger.debug(
+			'produceMediaFile() [mediaClientType:%o, mediaFile:%o]',
+			mediaClientType,
+			mediaFile
+		);
+
+		this.assertNotClosed();
 
 		const audioPlainTransportRemoteData = await this.#apiClient.request({
 			name: 'createPlainTransport',
@@ -177,7 +198,6 @@ export class Broadcaster {
 		});
 
 		logger.info('produceMediaFile() | audio PlainTransport created');
-		console.log(audioPlainTransportRemoteData);
 
 		const videoPlainTransportRemoteData = await this.#apiClient.request({
 			name: 'createPlainTransport',
@@ -199,7 +219,6 @@ export class Broadcaster {
 		});
 
 		logger.info('produceMediaFile() | video PlainTransport created');
-		console.log(videoPlainTransportRemoteData);
 
 		const audioSsrc: number = 1111;
 		const audioPt: number = 101;
@@ -275,7 +294,29 @@ export class Broadcaster {
 
 		logger.info('produceMediaFile() | video Producer created');
 
-		const ffmpeg = FFmpeg.create({
+		let mediaClient: MediaClient;
+
+		switch (mediaClientType) {
+			case 'ffmpeg': {
+				mediaClient = new FFmpeg();
+
+				break;
+			}
+
+			case 'gstreamer': {
+				throw new Error('not implemented yet');
+			}
+
+			default: {
+				utils.assertUnreachable('mediaClientType', mediaClientType);
+			}
+		}
+
+		this.#mediaClients.add(mediaClient);
+
+		this.handleMediaClient(mediaClient);
+
+		await mediaClient.sendMediaFile({
 			mediaFile,
 			audioPlainTransportRemoteData,
 			videoPlainTransportRemoteData,
@@ -284,20 +325,17 @@ export class Broadcaster {
 			videoSsrc,
 			videoPt,
 		});
-
-		this.#ffmpegs.add(ffmpeg);
-
-		this.handleFFmpeg(ffmpeg);
-
-		await ffmpeg.run();
 	}
 
-	// TODO: Rename to generic / ingerface.
-	private handleFFmpeg(ffmpeg: FFmpeg): void {
-		ffmpeg.on('closed', () => {
-			logger.debug('FFpeg closed');
-
-			this.#ffmpegs.delete(ffmpeg);
+	private handleMediaClient(mediaClient: MediaClient): void {
+		mediaClient.on('closed', () => {
+			this.#mediaClients.delete(mediaClient);
 		});
+	}
+
+	private assertNotClosed(): void {
+		if (this.#closePromise) {
+			throw new BroadcasterInvalidStateError('FFmpeg closed');
+		}
 	}
 }
