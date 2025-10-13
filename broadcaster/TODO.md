@@ -1,5 +1,3 @@
 # TODO mediasoup-demo-broadcaster
 
-- Remove `index.ts` and entry point and instead move logic of `index.ts` to the binary and only expose `bin` in `package.json`.
-- Same in server...
-- Unify API messages so `server` and `mediasoup-demo-broadcaster` import them from same file somehow...
+- Unify API messages so `server` and `mediasoup-demo-broadcaster` import them from same file using npm workspaces.

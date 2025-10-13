@@ -77,7 +77,7 @@ export class Broadcaster {
 
 		logger.info('create() | Broadcaster created in the room');
 
-		const producerTransportRemoteData = await apiClient.request({
+		const audioProducerTransportRemoteData = await apiClient.request({
 			name: 'createPlainTransport',
 			method: 'POST',
 			path: ['rooms', { roomId }, 'broadcasters', { peerId }, 'transports'],
@@ -91,7 +91,7 @@ export class Broadcaster {
 		});
 
 		logger.info('create() | producer mediasoup PlainTransport created');
-		console.log(producerTransportRemoteData);
+		console.log(audioProducerTransportRemoteData);
 
 		console.log('TODO: Do more stuff, hehe');
 
