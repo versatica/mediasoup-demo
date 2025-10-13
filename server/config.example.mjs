@@ -11,7 +11,7 @@
 import * as os from 'node:os';
 
 /**
- * @type {import('./src/types.ts').Config}
+ * @type {import('./src/types.ts').ServerConfig}
  */
 export const config = {
 	/**

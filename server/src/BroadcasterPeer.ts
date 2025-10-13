@@ -4,8 +4,8 @@ import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import {
 	RequestNameForBroadcastPeer,
-	RequestApiHttpMethod,
-	RequestApiHttpPath,
+	RequestApiMethod,
+	RequestApiPath,
 	RequestData,
 	RequestInternalData,
 	RequestResponseData,
@@ -216,30 +216,30 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		? RequestInternalData<Name> extends undefined
 			? {
 					name: Name;
-					method: RequestApiHttpMethod<Name>;
-					path: RequestApiHttpPath<Name>;
+					method: RequestApiMethod<Name>;
+					path: RequestApiPath<Name>;
 					data?: undefined;
 					internalData?: undefined;
 				}
 			: {
 					name: Name;
-					method: RequestApiHttpMethod<Name>;
-					path: RequestApiHttpPath<Name>;
+					method: RequestApiMethod<Name>;
+					path: RequestApiPath<Name>;
 					data?: undefined;
 					internalData: RequestInternalData<Name>;
 				}
 		: RequestInternalData<Name> extends undefined
 			? {
 					name: Name;
-					method: RequestApiHttpMethod<Name>;
-					path: RequestApiHttpPath<Name>;
+					method: RequestApiMethod<Name>;
+					path: RequestApiPath<Name>;
 					data: RequestData<Name>;
 					internalData?: undefined;
 				}
 			: {
 					name: Name;
-					method: RequestApiHttpMethod<Name>;
-					path: RequestApiHttpPath<Name>;
+					method: RequestApiMethod<Name>;
+					path: RequestApiPath<Name>;
 					data: RequestData<Name>;
 					internalData: RequestInternalData<Name>;
 				}): Promise<RequestResponseData<Name>> {

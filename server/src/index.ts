@@ -6,7 +6,7 @@ import { Server } from './Server';
 import { TerminalServer } from './TerminalServer';
 import { TerminalClient } from './TerminalClient';
 import * as envs from './envs';
-import { Config } from './types';
+import { ServerConfig } from './types';
 
 const logger = new Logger();
 
@@ -34,12 +34,12 @@ async function start(): Promise<void> {
 			'start() | network throttle secret: %o',
 			envs.getNetworkThrottleSecret() ? '********' : undefined
 		);
-		logger.info('start() | config file: %o', envs.getConfigFile());
+		logger.info('start() | server config file: %o', envs.getConfigFile());
 
 		const config = await getConfig();
 
 		logger.debug(
-			'start() | config:',
+			'start() | server config:',
 			util.inspect(config, { depth: null, colors: true })
 		);
 
@@ -75,14 +75,14 @@ async function start(): Promise<void> {
 	}
 }
 
-async function getConfig(): Promise<Config> {
+async function getConfig(): Promise<ServerConfig> {
 	const configFile = envs.getConfigFile();
 
 	try {
 		return (await import(configFile)).config;
 	} catch (error) {
 		logger.error(
-			`start() | failed to read config file %o: ${error}`,
+			`start() | failed to read server config file %o: ${error}`,
 			configFile
 		);
 
@@ -112,11 +112,11 @@ async function exitWithError(): Promise<void> {
 
 	processTerminationStarted = true;
 
+	logger.error('exiting with error...');
+
 	try {
 		await terminateProcess();
 	} catch (error) {}
-
-	logger.error('exiting with error...');
 
 	process.exit(1);
 }

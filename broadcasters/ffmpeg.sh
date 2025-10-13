@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 function show_usage()
 {
 	echo

@@ -16,17 +16,22 @@ import { ApiServer } from './ApiServer';
 import { Room } from './Room';
 import { InvalidStateError, ForbiddenError, RoomNotFound } from './errors';
 import { clone } from './utils';
-import type { Config, RoomId, SerializedServer, WorkerAppData } from './types';
+import type {
+	ServerConfig,
+	RoomId,
+	SerializedServer,
+	WorkerAppData,
+} from './types';
 
 const logger = new Logger('Server');
 
 export type ServerCreateOptions = {
-	config: Config;
+	config: ServerConfig;
 	networkThrottleSecret?: string;
 };
 
 type ServerConstructorOptions = {
-	config: Config;
+	config: ServerConfig;
 	mediasoupWorkersAndWebRtcServers: MediasoupWorkersAndWebRtcServers;
 	httpServer: https.Server | http.Server;
 	wsServer: WsServer;
@@ -68,7 +73,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	public static readonly observer: EnhancedEventEmitter<ServerObserverEvents> =
 		new EnhancedEventEmitter();
 
-	readonly #config: Config;
+	readonly #config: ServerConfig;
 	readonly #roomCreationAwaitQueue: AwaitQueue = new AwaitQueue();
 	readonly #rooms: Map<string, Room> = new Map();
 	readonly #httpServer: https.Server | http.Server;
@@ -111,7 +116,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		return server;
 	}
 
-	private static computeHttpOriginHeader(config: Config): string {
+	private static computeHttpOriginHeader(config: ServerConfig): string {
 		const schema = config.http.tls ? 'https' : 'http';
 		const domain = config.domain;
 		const port = config.http.listenPort;
@@ -126,7 +131,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	}
 
 	private static async createMediasoupWorkersAndWebRtcServers(
-		config: Config
+		config: ServerConfig
 	): Promise<MediasoupWorkersAndWebRtcServers> {
 		logger.debug('createMediasoupWorkersAndWebRtcServers()');
 
@@ -181,7 +186,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	}
 
 	private static async createHttpServer(
-		config: Config
+		config: ServerConfig
 	): Promise<https.Server | http.Server> {
 		logger.debug('createHttpServer()');
 

@@ -2,6 +2,7 @@ import type * as mediasoupTypes from 'mediasoup-client/types';
 
 import { Logger } from './Logger';
 import { ApiClient } from './ApiClient';
+import { FFmpeg } from './FFmpeg';
 import type { RoomId, PeerId, PeerDevice } from './types';
 
 const logger = new Logger('Broadcaster');
@@ -32,6 +33,8 @@ export class Broadcaster {
 	readonly #device: PeerDevice;
 	readonly #apiClient: ApiClient;
 	readonly #routerRtpCapabilities: mediasoupTypes.RtpCapabilities;
+	// TODO: Rename to generic / interface.
+	readonly #ffmpegs: Set<FFmpeg> = new Set();
 	#closed: boolean = false;
 
 	static async create({
@@ -77,24 +80,6 @@ export class Broadcaster {
 
 		logger.info('create() | Broadcaster created in the room');
 
-		const audioProducerTransportRemoteData = await apiClient.request({
-			name: 'createPlainTransport',
-			method: 'POST',
-			path: ['rooms', { roomId }, 'broadcasters', { peerId }, 'transports'],
-			data: {
-				comedia: true,
-				rtcpMux: true,
-				appData: {
-					direction: 'producer',
-				},
-			},
-		});
-
-		logger.info('create() | producer mediasoup PlainTransport created');
-		console.log(audioProducerTransportRemoteData);
-
-		console.log('TODO: Do more stuff, hehe');
-
 		await apiClient.request({
 			name: 'join',
 			method: 'POST',
@@ -136,7 +121,7 @@ export class Broadcaster {
 		this.#routerRtpCapabilities = routerRtpCapabilities;
 	}
 
-	public async close(): Promise<void> {
+	async close(): Promise<void> {
 		logger.debug('close()');
 
 		if (this.#closed) {
@@ -144,6 +129,10 @@ export class Broadcaster {
 		}
 
 		this.#closed = true;
+
+		for (const ffmpeg of this.#ffmpegs) {
+			ffmpeg.close();
+		}
 
 		try {
 			await this.#apiClient.request({
@@ -163,5 +152,152 @@ export class Broadcaster {
 				`close() | Broadcaster disconnected from the room with error: ${(error as Error).message}`
 			);
 		}
+	}
+
+	async produceMediaFile({ mediaFile }: { mediaFile: string }): Promise<void> {
+		logger.debug('produceMediaFile() [mediaFile:%o]', mediaFile);
+
+		const audioPlainTransportRemoteData = await this.#apiClient.request({
+			name: 'createPlainTransport',
+			method: 'POST',
+			path: [
+				'rooms',
+				{ roomId: this.#roomId },
+				'broadcasters',
+				{ peerId: this.#peerId },
+				'transports',
+			],
+			data: {
+				comedia: true,
+				rtcpMux: false,
+				appData: {
+					direction: 'producer',
+				},
+			},
+		});
+
+		logger.info('produceMediaFile() | audio PlainTransport created');
+		console.log(audioPlainTransportRemoteData);
+
+		const videoPlainTransportRemoteData = await this.#apiClient.request({
+			name: 'createPlainTransport',
+			method: 'POST',
+			path: [
+				'rooms',
+				{ roomId: this.#roomId },
+				'broadcasters',
+				{ peerId: this.#peerId },
+				'transports',
+			],
+			data: {
+				comedia: true,
+				rtcpMux: false,
+				appData: {
+					direction: 'producer',
+				},
+			},
+		});
+
+		logger.info('produceMediaFile() | video PlainTransport created');
+		console.log(videoPlainTransportRemoteData);
+
+		const audioSsrc: number = 1111;
+		const audioPt: number = 101;
+		const videoSsrc: number = 2222;
+		const videoPt: number = 102;
+
+		await this.#apiClient.request({
+			name: 'produce',
+			method: 'POST',
+			path: [
+				'rooms',
+				{ roomId: this.#roomId },
+				'broadcasters',
+				{ peerId: this.#peerId },
+				'producers',
+			],
+			data: {
+				transportId: audioPlainTransportRemoteData.transportId,
+				kind: 'audio',
+				rtpParameters: {
+					codecs: [
+						{
+							mimeType: 'audio/opus',
+							payloadType: audioPt,
+							clockRate: 48000,
+							channels: 2,
+							parameters: { 'sprop-stereo': 1 },
+						},
+					],
+					encodings: [{ ssrc: audioSsrc }],
+				},
+				appData: {
+					source: 'audio',
+				},
+			},
+		});
+
+		logger.info('produceMediaFile() | audio Producer created');
+
+		await this.#apiClient.request({
+			name: 'produce',
+			method: 'POST',
+			path: [
+				'rooms',
+				{ roomId: this.#roomId },
+				'broadcasters',
+				{ peerId: this.#peerId },
+				'producers',
+			],
+			data: {
+				transportId: videoPlainTransportRemoteData.transportId,
+				kind: 'video',
+				rtpParameters: {
+					codecs: [
+						{
+							mimeType: 'video/vp8',
+							payloadType: videoPt,
+							clockRate: 90000,
+							rtcpFeedback: [
+								{ type: 'nack' },
+								{ type: 'nack', parameter: 'pli' },
+								{ type: 'ccm', parameter: 'fir' },
+							],
+						},
+					],
+					encodings: [{ ssrc: videoSsrc }],
+				},
+				appData: {
+					source: 'video',
+				},
+			},
+		});
+
+		logger.info('produceMediaFile() | video Producer created');
+
+		const ffmpeg = FFmpeg.create({
+			mediaFile,
+			audioPlainTransportRemoteData,
+			videoPlainTransportRemoteData,
+			audioSsrc,
+			audioPt,
+			videoSsrc,
+			videoPt,
+		});
+
+		this.#ffmpegs.add(ffmpeg);
+
+		this.handleFFmpeg(ffmpeg);
+
+		await ffmpeg.run();
+	}
+
+	// TODO: Rename to generic / ingerface.
+	private handleFFmpeg(ffmpeg: FFmpeg): void {
+		ffmpeg.on('closed', () => {
+			logger.debug('FFpeg closed');
+
+			this.#ffmpegs.delete(ffmpeg);
+		});
 	}
 }

@@ -4,8 +4,8 @@ import * as undiciTypes from 'undici';
 import { Logger } from './Logger';
 import {
 	RequestName,
-	RequestApiHttpMethod,
-	RequestApiHttpPath,
+	RequestApiMethod,
+	RequestApiPath,
 	RequestData,
 	RequestResponseData,
 	TypedApiRequest,
@@ -64,14 +64,14 @@ export class ApiClient {
 	}: RequestData<Name> extends undefined
 		? {
 				name: Name;
-				method: RequestApiHttpMethod<Name>;
-				path: RequestApiHttpPath<Name>;
+				method: RequestApiMethod<Name>;
+				path: RequestApiPath<Name>;
 				data?: undefined;
 			}
 		: {
 				name: Name;
-				method: RequestApiHttpMethod<Name>;
-				path: RequestApiHttpPath<Name>;
+				method: RequestApiMethod<Name>;
+				path: RequestApiPath<Name>;
 				data: RequestData<Name>;
 			}): Promise<RequestResponseData<Name>> {
 		return new Promise((resolve, reject) => {
@@ -189,7 +189,7 @@ export class ApiClient {
 		}
 	}
 
-	private serializePath(path: RequestApiHttpPath<RequestName>): string {
+	private serializePath(path: RequestApiPath<RequestName>): string {
 		let serializedPath: string = '';
 
 		for (const subpath of path) {

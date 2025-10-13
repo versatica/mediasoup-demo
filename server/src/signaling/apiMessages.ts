@@ -6,8 +6,9 @@ import type {
 	PlainTransportAppData,
 	PeerProducerAppData,
 	RoomId,
-	ApiHttpMethod,
-	ApiHttpPath,
+	ApiMethod,
+	ApiPath,
+	PlainTransportRemoteData,
 } from '../types';
 
 /**
@@ -66,12 +67,7 @@ type Request =
 				rtcpMux?: boolean;
 				appData: PlainTransportAppData;
 			};
-			responseData: {
-				transportId: string;
-				ip: string;
-				port: number;
-				rtcpPort?: number;
-			};
+			responseData: PlainTransportRemoteData;
 	  }
 	| {
 			name: 'connectPlainTransport';
@@ -141,16 +137,13 @@ type Request =
 			];
 	  };
 
-type RequestNameApiHttpMethodMap<
-	U extends { name: string; method: ApiHttpMethod },
-> = {
+type RequestNameApiMethodMap<U extends { name: string; method: ApiMethod }> = {
 	[K in U as K['name']]: K['method'];
 };
 
-type RequestNameApiHttpPathMap<U extends { name: string; path: ApiHttpPath }> =
-	{
-		[K in U as K['name']]: K['path'];
-	};
+type RequestNameApiPathMap<U extends { name: string; path: ApiPath }> = {
+	[K in U as K['name']]: K['path'];
+};
 
 type RequestNameDataMap<U extends { name: string }> = {
 	[K in U as K['name']]: K extends { data: infer D } ? D : undefined;
@@ -179,11 +172,11 @@ export type RequestNameForBroadcastPeer =
 	| 'consume'
 	| 'resumeConsumer';
 
-export type RequestApiHttpMethod<Name extends RequestName> =
-	RequestNameApiHttpMethodMap<Request>[Name];
+export type RequestApiMethod<Name extends RequestName> =
+	RequestNameApiMethodMap<Request>[Name];
 
-export type RequestApiHttpPath<Name extends RequestName> =
-	RequestNameApiHttpPathMap<Request>[Name];
+export type RequestApiPath<Name extends RequestName> =
+	RequestNameApiPathMap<Request>[Name];
 
 export type RequestData<Name extends RequestName> =
 	RequestNameDataMap<Request>[Name];
@@ -197,8 +190,8 @@ export type RequestResponseData<Name extends RequestName> =
 export type TypedApiRequest<Name extends RequestName> = {
 	[N in Name]: {
 		name: N;
-		method: RequestApiHttpMethod<N>;
-		path: RequestApiHttpPath<N>;
+		method: RequestApiMethod<N>;
+		path: RequestApiPath<N>;
 		data: RequestData<N>;
 		internalData: RequestInternalData<N>;
 		accept: RequestResponseData<N> extends undefined

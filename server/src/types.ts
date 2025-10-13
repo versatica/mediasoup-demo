@@ -1,6 +1,6 @@
 import type * as mediasoupTypes from 'mediasoup/types';
 
-export type Config = {
+export type ServerConfig = {
 	domain: string;
 	http: {
 		listenIp: string;
@@ -89,9 +89,9 @@ export type SerializedPeer = {
 	remoteAddress: string;
 };
 
-export type ApiHttpMethod = 'GET' | 'POST' | 'DELETE';
+export type ApiMethod = 'GET' | 'POST' | 'DELETE';
 
-export type ApiHttpPath = (
+export type ApiPath = (
 	| string
 	| {
 			[key: string]: string;
@@ -99,6 +99,13 @@ export type ApiHttpPath = (
 )[];
 
 export type TransportDirection = 'producer' | 'consumer';
+
+export type PlainTransportRemoteData = {
+	transportId: string;
+	ip: string;
+	port: number;
+	rtcpPort?: number;
+};
 
 export type Source = 'audio' | 'video' | 'screensharing';
 

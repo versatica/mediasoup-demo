@@ -17,9 +17,9 @@ export type PeerDevice = {
 	version?: string;
 };
 
-export type ApiHttpMethod = 'GET' | 'POST' | 'DELETE';
+export type ApiMethod = 'GET' | 'POST' | 'DELETE';
 
-export type ApiHttpPath = (
+export type ApiPath = (
 	| string
 	| {
 			[key: string]: string;
@@ -27,6 +27,13 @@ export type ApiHttpPath = (
 )[];
 
 export type TransportDirection = 'producer' | 'consumer';
+
+export type PlainTransportRemoteData = {
+	transportId: string;
+	ip: string;
+	port: number;
+	rtcpPort?: number;
+};
 
 export type Source = 'audio' | 'video' | 'screensharing';
 

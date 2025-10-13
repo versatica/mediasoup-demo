@@ -12,6 +12,7 @@ const logger = new Logger();
 
 let broadcaster: Broadcaster | undefined;
 let processTerminationStarted: boolean = false;
+let delayedProcessTerminationStarted: boolean = false;
 
 handleProcess();
 void run();
@@ -19,7 +20,8 @@ void run();
 async function run(): Promise<void> {
 	logger.debug('run()');
 
-	const baseUrl: string = 'https://local.aliax.net:4443';
+	// const baseUrl: string = 'https://local.aliax.net:4443';
+	const baseUrl: string = 'https://local.dev:4443';
 	const roomId: RoomId = 'dev';
 	const peerId: PeerId = utils.generateRandomString(8);
 	const displayName: string = 'Broadcaster';
@@ -37,7 +39,11 @@ async function run(): Promise<void> {
 			device,
 		});
 
-		console.log('TODO: Do more stuff, hehe');
+		// TODO: Hehe.
+		await broadcaster.produceMediaFile({
+			mediaFile:
+				'/Users/ibc/src/mediasoup-demo/app/public/videos/video-audio-stereo.mp4',
+		});
 
 		void broadcaster.close();
 	} catch (error) {
@@ -47,36 +53,50 @@ async function run(): Promise<void> {
 			logger.error('run() | failed:', error);
 		}
 
-		exitWithError();
+		void exitWithError();
 	}
 }
 
-function exitGracefully(): void {
+async function exitGracefully(): Promise<void> {
 	if (processTerminationStarted) {
 		return;
 	}
 
 	processTerminationStarted = true;
-
-	void broadcaster?.close();
 
 	logger.info('exiting gracefully...');
 
-	process.exit(0);
+	await terminateProcess();
 }
 
-function exitWithError(): void {
+async function exitWithError(): Promise<void> {
 	if (processTerminationStarted) {
 		return;
 	}
 
 	processTerminationStarted = true;
 
-	void broadcaster?.close();
-
 	logger.error('exiting with error...');
 
+	try {
+		await terminateProcess();
+	} catch (error) {}
+
 	process.exit(1);
+}
+
+async function terminateProcess(): Promise<void> {
+	if (delayedProcessTerminationStarted) {
+		logger.info(
+			`terminateProcess() | ignored (delayed process termination already started)`
+		);
+
+		return;
+	}
+
+	delayedProcessTerminationStarted = true;
+
+	await broadcaster?.close();
 }
 
 function handleProcess(): void {

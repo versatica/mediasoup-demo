@@ -10,8 +10,8 @@ import { Peer } from './Peer';
 import { BroadcasterPeer } from './BroadcasterPeer';
 import {
 	RequestNameForRoom,
-	RequestApiHttpMethod,
-	RequestApiHttpPath,
+	RequestApiMethod,
+	RequestApiPath,
 	RequestData,
 	RequestInternalData,
 	RequestResponseData,
@@ -19,7 +19,7 @@ import {
 } from './signaling/apiMessages';
 import { clone, assertUnreachable } from './utils';
 import type {
-	Config,
+	ServerConfig,
 	RoomId,
 	PeerId,
 	SerializedRoom,
@@ -33,7 +33,7 @@ const staticLogger = new Logger('Room');
 export type RoomCreateOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
-	config: Config;
+	config: ServerConfig;
 	mediasoupRouter: mediasoupTypes.Router;
 	mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
 };
@@ -42,7 +42,7 @@ type RoomConstructorOptions = {
 	logger: Logger;
 	roomId: RoomId;
 	consumerReplicas: number;
-	config: Config;
+	config: ServerConfig;
 	mediasoupRouter: mediasoupTypes.Router;
 	mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
 	mediasoupAudioLevelObserver: mediasoupTypes.AudioLevelObserver;
@@ -83,7 +83,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #logger: Logger;
 	readonly #roomId: RoomId;
 	readonly #consumerReplicas: number;
-	readonly #config: Config;
+	readonly #config: ServerConfig;
 	readonly #mediasoupRouter: mediasoupTypes.Router;
 	readonly #mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
 	readonly #mediasoupAudioLevelObserver: mediasoupTypes.AudioLevelObserver;
@@ -267,30 +267,30 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		? RequestInternalData<Name> extends undefined
 			? {
 					name: Name;
-					method: RequestApiHttpMethod<Name>;
-					path: RequestApiHttpPath<Name>;
+					method: RequestApiMethod<Name>;
+					path: RequestApiPath<Name>;
 					data?: undefined;
 					internalData?: undefined;
 				}
 			: {
 					name: Name;
-					method: RequestApiHttpMethod<Name>;
-					path: RequestApiHttpPath<Name>;
+					method: RequestApiMethod<Name>;
+					path: RequestApiPath<Name>;
 					data?: undefined;
 					internalData: RequestInternalData<Name>;
 				}
 		: RequestInternalData<Name> extends undefined
 			? {
 					name: Name;
-					method: RequestApiHttpMethod<Name>;
-					path: RequestApiHttpPath<Name>;
+					method: RequestApiMethod<Name>;
+					path: RequestApiPath<Name>;
 					data: RequestData<Name>;
 					internalData?: undefined;
 				}
 			: {
 					name: Name;
-					method: RequestApiHttpMethod<Name>;
-					path: RequestApiHttpPath<Name>;
+					method: RequestApiMethod<Name>;
+					path: RequestApiPath<Name>;
 					data: RequestData<Name>;
 					internalData: RequestInternalData<Name>;
 				}): Promise<RequestResponseData<Name>> {
