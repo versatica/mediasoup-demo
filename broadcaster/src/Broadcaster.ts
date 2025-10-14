@@ -4,6 +4,7 @@ import { Logger } from './Logger';
 import { ApiClient } from './ApiClient';
 import { MediaClient } from './MediaClient';
 import { FFmpeg } from './FFmpeg';
+import { GStreamer } from './GStreamer';
 import { BroadcasterInvalidStateError } from './errors';
 import * as utils from './utils';
 import type { RoomId, PeerId, PeerDevice, MediaClientType } from './types';
@@ -304,7 +305,9 @@ export class Broadcaster {
 			}
 
 			case 'gstreamer': {
-				throw new Error('not implemented yet');
+				mediaClient = new GStreamer();
+
+				break;
 			}
 
 			default: {
