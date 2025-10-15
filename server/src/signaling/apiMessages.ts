@@ -1,14 +1,15 @@
 import type * as mediasoupTypes from 'mediasoup/types';
 
 import type {
+	RoomId,
 	PeerId,
 	PeerDevice,
-	PlainTransportAppData,
-	PeerProducerAppData,
-	RoomId,
 	ApiMethod,
 	ApiPath,
+	PeerProducersInfo,
 	PlainTransportRemoteData,
+	PlainTransportAppData,
+	PeerProducerAppData,
 } from '../types';
 
 /**
@@ -106,6 +107,20 @@ type Request =
 			responseData: { producerId: string };
 	  }
 	| {
+			name: 'getPeerProducersInfos';
+			method: 'GET';
+			path: [
+				'rooms',
+				{ roomId: RoomId },
+				'broadcasters',
+				{ peerId: PeerId },
+				'peerProducersInfos',
+			];
+			responseData: {
+				peerProducersInfos: PeerProducersInfo[];
+			};
+	  }
+	| {
 			name: 'consume';
 			method: 'POST';
 			path: [
@@ -169,6 +184,7 @@ export type RequestNameForBroadcastPeer =
 	| 'createPlainTransport'
 	| 'connectPlainTransport'
 	| 'produce'
+	| 'getPeerProducersInfos'
 	| 'consume'
 	| 'resumeConsumer';
 

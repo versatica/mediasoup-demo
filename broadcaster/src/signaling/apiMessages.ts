@@ -6,6 +6,7 @@ import type {
 	PeerDevice,
 	ApiMethod,
 	ApiPath,
+	PeerProducersInfo,
 	PlainTransportRemoteData,
 	PlainTransportAppData,
 	PeerProducerAppData,
@@ -101,6 +102,20 @@ type Request =
 				appData: PeerProducerAppData;
 			};
 			responseData: { producerId: string };
+	  }
+	| {
+			name: 'getPeerProducersInfos';
+			method: 'GET';
+			path: [
+				'rooms',
+				{ roomId: RoomId },
+				'broadcasters',
+				{ peerId: PeerId },
+				'peerProducersInfos',
+			];
+			responseData: {
+				peerProducersInfos: PeerProducersInfo[];
+			};
 	  }
 	| {
 			name: 'consume';

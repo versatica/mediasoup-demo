@@ -1,3 +1,5 @@
+import type * as mediasoupTypes from 'mediasoup-client/types';
+
 export type RoomId = string;
 
 export type PeerId = string;
@@ -36,6 +38,16 @@ export type PlainTransportRemoteData = {
 };
 
 export type Source = 'audio' | 'video' | 'screensharing';
+
+export type PeerProducersInfo = {
+	peerId: PeerId;
+	producers: {
+		producerId: string;
+		kind: mediasoupTypes.MediaKind;
+		source: Source;
+		consumableCodecs: Omit<mediasoupTypes.RtpCodecParameters, 'rtcpFeedback'>[];
+	}[];
+};
 
 export type MediaClientType = 'ffmpeg' | 'gstreamer';
 

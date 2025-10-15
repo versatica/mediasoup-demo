@@ -23,6 +23,7 @@ import type {
 	RoomId,
 	PeerId,
 	SerializedRoom,
+	PeerProducersInfo,
 	WebRtcTransportAppData,
 	PlainTransportAppData,
 	ProducerAppData,
@@ -666,6 +667,55 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				}
 			}
 		);
+
+		broadcasterPeer.on('get-peer-producers-infos', callback => {
+			const peerProducersMap: Map<
+				PeerId,
+				mediasoupTypes.Producer<ProducerAppData>[]
+			> = new Map();
+
+			for (const producer of this.#observedProducers.values()) {
+				const { peerId } = producer.appData;
+				const producers = peerProducersMap.get(peerId);
+
+				if (producers) {
+					producers.push(producer);
+				} else {
+					peerProducersMap.set(peerId, [producer]);
+				}
+			}
+
+			const peerProducersInfos: PeerProducersInfo[] = [];
+
+			for (const [peerId, producers] of peerProducersMap) {
+				peerProducersInfos.push({
+					peerId,
+					producers: producers.map(producer => {
+						return {
+							producerId: producer.id,
+							kind: producer.kind,
+							source: producer.appData.source,
+							// NOTE: Remove rtcpFeedback from codecs.
+							// NOTE: Remove RTX codecs.
+							consumableCodecs: producer.consumableRtpParameters.codecs
+								.filter(
+									codec =>
+										codec.mimeType.toLowerCase() !== 'audio/rtx' &&
+										codec.mimeType.toLowerCase() !== 'video/rtx'
+								)
+								.map(codec => {
+									return {
+										...codec,
+										rtcpFeedback: undefined,
+									};
+								}),
+						};
+					}),
+				});
+			}
+
+			callback(peerProducersInfos);
+		});
 
 		broadcasterPeer.on('get-producer', ({ producerId }, callback) => {
 			const producer = this.#observedProducers.get(producerId);

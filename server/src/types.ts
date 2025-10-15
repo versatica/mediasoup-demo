@@ -111,6 +111,16 @@ export type Source = 'audio' | 'video' | 'screensharing';
 
 export type Channel = 'chat' | 'bot';
 
+export type PeerProducersInfo = {
+	peerId: PeerId;
+	producers: {
+		producerId: string;
+		kind: mediasoupTypes.MediaKind;
+		source: Source;
+		consumableCodecs: Omit<mediasoupTypes.RtpCodecParameters, 'rtcpFeedback'>[];
+	}[];
+};
+
 export type WorkerAppData = {
 	idx: number;
 };

@@ -40,7 +40,7 @@ async function start(): Promise<void> {
 
 		logger.debug(
 			'start() | server config:',
-			util.inspect(config, { depth: null, colors: true })
+			util.inspect(config, { depth: null, colors: true, compact: false })
 		);
 
 		// Start the interactive terminal server.

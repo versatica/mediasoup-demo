@@ -40,12 +40,14 @@ async function run(): Promise<void> {
 		});
 
 		// TODO: Testing.
-		await broadcaster.produceMediaFile({
-			// mediaClientType: 'ffmpeg',
-			mediaClientType: 'gstreamer',
-			mediaFile:
-				'/Users/ibc/src/mediasoup-demo/app/public/videos/video-audio-stereo.mp4',
-		});
+		// await broadcaster.produceMediaFile({
+		// 	mediaClientType: 'ffmpeg',
+		// 	// mediaClientType: 'gstreamer',
+		// 	mediaFile:
+		// 		'/Users/ibc/src/mediasoup-demo/app/public/videos/video-audio-stereo.mp4',
+		// });
+
+		await broadcaster.consume({ mediaClientType: 'ffmpeg' });
 
 		await exitGracefully();
 	} catch (error) {

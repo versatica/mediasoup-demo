@@ -28,6 +28,21 @@ export class BroadcasterInvalidStateError extends BroadcasterError {
 	}
 }
 
+export class BroadcasterNotImplementedError extends BroadcasterError {
+	constructor(message: string) {
+		super(message);
+
+		this.name = 'BroadcasterNotImplementedError';
+
+		if (Error.hasOwnProperty('captureStackTrace')) {
+			// Just in V8.
+			Error.captureStackTrace(this, BroadcasterNotImplementedError);
+		} else {
+			this.stack = new Error(message).stack;
+		}
+	}
+}
+
 export class BroadcasterApiClientError extends BroadcasterError {
 	readonly #statusCode: number | undefined;
 

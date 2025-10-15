@@ -1,10 +1,11 @@
+import * as util from 'node:util';
 import type * as mediasoupTypes from 'mediasoup-client/types';
 
 import { Logger } from './Logger';
 import { ApiClient } from './ApiClient';
 import { MediaClient } from './MediaClient';
-import { FFmpeg } from './FFmpeg';
-import { GStreamer } from './GStreamer';
+import { FFmpeg } from './mediaClients/FFmpeg';
+import { GStreamer } from './mediaClients/GStreamer';
 import { BroadcasterInvalidStateError } from './errors';
 import * as utils from './utils';
 import type { RoomId, PeerId, PeerDevice, MediaClientType } from './types';
@@ -68,7 +69,7 @@ export class Broadcaster {
 			path: ['rooms', { roomId }],
 		});
 
-		logger.info('create() | got mediasoup router RTP capabilities');
+		logger.info('create() | got mediasoup Router RTP capabilities');
 
 		await apiClient.request({
 			name: 'createBroadcasterPeer',
@@ -179,6 +180,8 @@ export class Broadcaster {
 
 		this.assertNotClosed();
 
+		const mediaClient = await this.createMediaClient({ mediaClientType });
+
 		const audioPlainTransportRemoteData = await this.#apiClient.request({
 			name: 'createPlainTransport',
 			method: 'POST',
@@ -225,6 +228,7 @@ export class Broadcaster {
 		const audioPt: number = 101;
 		const videoSsrc: number = 2222;
 		const videoPt: number = 102;
+		const cname: string = utils.generateRandomString(6);
 
 		await this.#apiClient.request({
 			name: 'produce',
@@ -250,6 +254,9 @@ export class Broadcaster {
 						},
 					],
 					encodings: [{ ssrc: audioSsrc }],
+					rtcp: {
+						cname,
+					},
 				},
 				appData: {
 					source: 'audio',
@@ -295,30 +302,13 @@ export class Broadcaster {
 
 		logger.info('produceMediaFile() | video Producer created');
 
-		let mediaClient: MediaClient;
-
-		switch (mediaClientType) {
-			case 'ffmpeg': {
-				mediaClient = new FFmpeg();
-
-				break;
-			}
-
-			case 'gstreamer': {
-				mediaClient = new GStreamer();
-
-				break;
-			}
-
-			default: {
-				utils.assertUnreachable('mediaClientType', mediaClientType);
-			}
-		}
-
 		this.#mediaClients.add(mediaClient);
 
 		this.handleMediaClient(mediaClient);
 
+		console.log(
+			'TODO: This method must receive a onSendingRtpParameters callback that the MediaClient has generated via ORTC and real RtpCapabilities and so on, and this method MUST NOT receive PRs and SSRCs'
+		);
 		await mediaClient.sendMediaFile({
 			mediaFile,
 			audioPlainTransportRemoteData,
@@ -328,6 +318,108 @@ export class Broadcaster {
 			videoSsrc,
 			videoPt,
 		});
+	}
+
+	async consume({
+		mediaClientType,
+	}: {
+		mediaClientType: MediaClientType;
+	}): Promise<void> {
+		logger.debug(
+			'consume() [mediaClientType:%o, mediaFile:%o]',
+			mediaClientType
+		);
+
+		this.assertNotClosed();
+
+		const mediaClient = await this.createMediaClient({ mediaClientType });
+
+		const audioPlainTransportRemoteData = await this.#apiClient.request({
+			name: 'createPlainTransport',
+			method: 'POST',
+			path: [
+				'rooms',
+				{ roomId: this.#roomId },
+				'broadcasters',
+				{ peerId: this.#peerId },
+				'transports',
+			],
+			data: {
+				comedia: false,
+				rtcpMux: false,
+				appData: {
+					direction: 'consumer',
+				},
+			},
+		});
+
+		logger.info('consume() | audio PlainTransport created');
+
+		const videoPlainTransportRemoteData = await this.#apiClient.request({
+			name: 'createPlainTransport',
+			method: 'POST',
+			path: [
+				'rooms',
+				{ roomId: this.#roomId },
+				'broadcasters',
+				{ peerId: this.#peerId },
+				'transports',
+			],
+			data: {
+				comedia: false,
+				rtcpMux: false,
+				appData: {
+					direction: 'consumer',
+				},
+			},
+		});
+
+		logger.info('consume() | video PlainTransport created');
+
+		const { peerProducersInfos } = await this.#apiClient.request({
+			name: 'getPeerProducersInfos',
+			method: 'GET',
+			path: [
+				'rooms',
+				{ roomId: this.#roomId },
+				'broadcasters',
+				{ peerId: this.#peerId },
+				'peerProducersInfos',
+			],
+		});
+
+		logger.info(
+			'consume() | got Peer Producers infos:',
+			util.inspect(peerProducersInfos, {
+				depth: null,
+				colors: true,
+				compact: false,
+			})
+		);
+	}
+
+	private async createMediaClient({
+		mediaClientType,
+	}: {
+		mediaClientType: MediaClientType;
+	}): Promise<MediaClient> {
+		switch (mediaClientType) {
+			case 'ffmpeg': {
+				return FFmpeg.create({
+					routerRtpCapabilities: this.#routerRtpCapabilities,
+				});
+			}
+
+			case 'gstreamer': {
+				return GStreamer.create({
+					routerRtpCapabilities: this.#routerRtpCapabilities,
+				});
+			}
+
+			default: {
+				utils.assertUnreachable('mediaClientType', mediaClientType);
+			}
+		}
 	}
 
 	private handleMediaClient(mediaClient: MediaClient): void {

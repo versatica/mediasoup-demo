@@ -1,3 +1,5 @@
+import type * as mediasoupTypes from 'mediasoup-client/types';
+
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { PlainTransportRemoteData } from './types';
 
@@ -23,9 +25,13 @@ export abstract class MediaClient extends EnhancedEventEmitter<MediaClientEvents
 		super();
 	}
 
+	abstract get rtpCapabilities(): mediasoupTypes.RtpCapabilities;
+
 	abstract close(): Promise<void>;
 
 	abstract sendMediaFile(
 		options: MediaClientProduceMediaFileOptions
 	): Promise<void>;
+
+	abstract consume(): Promise<void>;
 }

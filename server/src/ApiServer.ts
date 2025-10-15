@@ -394,6 +394,34 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		);
 
 		/**
+		 * GET API to obtain info about current Producers.
+		 */
+		this.#expressApp.get(
+			'/rooms/:roomId/broadcasters/:peerId/peerProducersInfos',
+			async (req: ApiServerExpressRequest, res, next) => {
+				const { roomId, peerId } = req.params;
+
+				try {
+					const responseData = await req.peer!.processApiRequest({
+						name: 'getPeerProducersInfos',
+						method: 'GET',
+						path: [
+							'rooms',
+							{ roomId: roomId! },
+							'broadcasters',
+							{ peerId: peerId! },
+							'peerProducersInfos',
+						],
+					});
+
+					res.status(200).json(responseData);
+				} catch (error) {
+					next(error);
+				}
+			}
+		);
+
+		/**
 		 * POST API to create a mediasoup Consumer associated to a BroadcasterPeer.
 		 * The exact Transport in which the Consumer must be created is signaled in
 		 * the URL path. Query parameters must include the desired producerId to

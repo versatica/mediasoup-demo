@@ -1,24 +1,40 @@
+import * as util from 'node:util';
 import * as childProcess from 'node:child_process';
 import * as streamTypes from 'node:stream';
+import * as ortc from 'mediasoup-client/ortc';
+import type * as mediasoupTypes from 'mediasoup-client/types';
 
-import { Logger } from './Logger';
-import { EnhancedEventEmitter } from './enhancedEvents';
+import { Logger } from '../Logger';
+import { EnhancedEventEmitter } from '../enhancedEvents';
 import {
 	MediaClient,
 	MediaClientEvents,
 	MediaClientProduceMediaFileOptions,
-} from './MediaClient';
-import { BroadcasterInvalidStateError, BroadcasterSpawnError } from './errors';
-import * as utils from './utils';
+} from '../MediaClient';
+import { BroadcasterInvalidStateError, BroadcasterSpawnError } from '../errors';
+import * as utils from '../utils';
 
 const logger = new Logger('FFmpeg');
 const spawnLogger = new Logger('FFmpeg:spawn');
+
+export type FFmpegCreateOptions = {
+	routerRtpCapabilities: mediasoupTypes.RtpCapabilities;
+};
+
+type FFmpegConstructorOptions = {
+	routerRtpCapabilities: mediasoupTypes.RtpCapabilities;
+	rtpCapabilities: mediasoupTypes.RtpCapabilities;
+	extendedRtpCapabilities: mediasoupTypes.ExtendedRtpCapabilities;
+};
 
 export class FFmpeg
 	extends EnhancedEventEmitter<MediaClientEvents>
 	implements MediaClient
 {
-	#subprocessAbortControllers: Map<
+	readonly #routerRtpCapabilities: mediasoupTypes.RtpCapabilities;
+	readonly #rtpCapabilities: mediasoupTypes.RtpCapabilities;
+	readonly #extendedRtpCapabilities: mediasoupTypes.ExtendedRtpCapabilities;
+	readonly #subprocessAbortControllers: Map<
 		childProcess.ChildProcessByStdio<
 			null,
 			streamTypes.Readable,
@@ -28,10 +44,107 @@ export class FFmpeg
 	> = new Map();
 	#closed: boolean = false;
 
-	constructor() {
+	static async create({
+		routerRtpCapabilities,
+	}: FFmpegCreateOptions): Promise<FFmpeg> {
+		logger.debug('create()');
+
+		// TODO: This must be properly created based on real RTP capabilities of the
+		// FFmpeg in the system. Wow...
+		const nativeRtpCapabilities: mediasoupTypes.RtpCapabilities = {
+			codecs: [
+				{
+					kind: 'audio',
+					mimeType: 'audio/opus',
+					preferredPayloadType: 90,
+					clockRate: 48000,
+					channels: 2,
+					rtcpFeedback: [],
+				},
+				{
+					kind: 'video',
+					mimeType: 'video/VP8',
+					preferredPayloadType: 91,
+					clockRate: 90000,
+					rtcpFeedback: [
+						{ type: 'nack' },
+						{ type: 'nack', parameter: 'pli' },
+						{ type: 'ccm', parameter: 'fir' },
+					],
+				},
+			],
+			headerExtensions: [],
+		};
+
+		logger.debug(
+			'create() | native RtpCapabilities generated:',
+			util.inspect(nativeRtpCapabilities, {
+				depth: null,
+				colors: true,
+				compact: false,
+			})
+		);
+
+		// This may throw.
+		ortc.validateAndNormalizeRtpCapabilities(nativeRtpCapabilities);
+
+		const extendedRtpCapabilities: mediasoupTypes.ExtendedRtpCapabilities =
+			ortc.getExtendedRtpCapabilities(
+				nativeRtpCapabilities,
+				routerRtpCapabilities,
+				/* preferLocalCodecsOrder */ false
+			);
+
+		logger.debug(
+			'create() | ExtendedRtpCapabilities generated:',
+			util.inspect(extendedRtpCapabilities, {
+				depth: null,
+				colors: true,
+				compact: false,
+			})
+		);
+
+		const rtpCapabilities = ortc.getRecvRtpCapabilities(
+			extendedRtpCapabilities
+		);
+
+		// This may throw.
+		ortc.validateAndNormalizeRtpCapabilities(rtpCapabilities);
+
+		logger.debug(
+			'create() | RtpCapabilities generated:',
+			util.inspect(rtpCapabilities, {
+				depth: null,
+				colors: true,
+				compact: false,
+			})
+		);
+
+		const ffmpeg = new FFmpeg({
+			routerRtpCapabilities,
+			rtpCapabilities,
+			extendedRtpCapabilities,
+		});
+
+		return ffmpeg;
+	}
+
+	private constructor({
+		routerRtpCapabilities,
+		rtpCapabilities,
+		extendedRtpCapabilities,
+	}: FFmpegConstructorOptions) {
 		super();
 
 		logger.debug('constructor()');
+
+		this.#routerRtpCapabilities = routerRtpCapabilities;
+		this.#rtpCapabilities = rtpCapabilities;
+		this.#extendedRtpCapabilities = extendedRtpCapabilities;
+	}
+
+	get rtpCapabilities(): mediasoupTypes.RtpCapabilities {
+		return this.#rtpCapabilities;
 	}
 
 	async close(): Promise<void> {
@@ -155,6 +268,12 @@ export class FFmpeg
 
 			throw new BroadcasterSpawnError(String((error as Error).message));
 		}
+	}
+
+	async consume(): Promise<void> {
+		logger.debug('consume()');
+
+		this.assertNotClosed();
 	}
 
 	private assertNotClosed(): void {

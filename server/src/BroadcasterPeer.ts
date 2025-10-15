@@ -24,6 +24,7 @@ import type {
 	PeerDevice,
 	SerializedPeer,
 	TransportDirection,
+	PeerProducersInfo,
 	PlainTransportAppData,
 	ProducerAppData,
 	ConsumerAppData,
@@ -99,6 +100,13 @@ export type BroadcasterPeerEvents = {
 			rtpCapabilities?: mediasoupTypes.RtpCapabilities;
 		},
 		callback: (canConsume: boolean) => void,
+	];
+	/**
+	 * Emitted to obtain info about current Peers/BroadcasterPeers and their
+	 * Producers.
+	 */
+	'get-peer-producers-infos': [
+		callback: (peerProducersInfos: PeerProducersInfo[]) => void,
 	];
 	/**
 	 * Emitted to obtain a Producer.
@@ -432,6 +440,16 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 				this.emit('new-producer', { producer });
 
 				accept({ producerId: producer.id });
+
+				break;
+			}
+
+			case 'getPeerProducersInfos': {
+				this.assertJoined();
+
+				this.emit('get-peer-producers-infos', peerProducersInfos => {
+					accept({ peerProducersInfos });
+				});
 
 				break;
 			}

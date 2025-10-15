@@ -1,24 +1,44 @@
+import * as util from 'node:util';
 import * as childProcess from 'node:child_process';
 import * as streamTypes from 'node:stream';
+import * as ortc from 'mediasoup-client/ortc';
+import type * as mediasoupTypes from 'mediasoup-client/types';
 
-import { Logger } from './Logger';
-import { EnhancedEventEmitter } from './enhancedEvents';
+import { Logger } from '../Logger';
+import { EnhancedEventEmitter } from '../enhancedEvents';
 import {
 	MediaClient,
 	MediaClientEvents,
 	MediaClientProduceMediaFileOptions,
-} from './MediaClient';
-import { BroadcasterInvalidStateError, BroadcasterSpawnError } from './errors';
-import * as utils from './utils';
+} from '../MediaClient';
+import {
+	BroadcasterInvalidStateError,
+	BroadcasterNotImplementedError,
+	BroadcasterSpawnError,
+} from '../errors';
+import * as utils from '../utils';
 
 const logger = new Logger('GStreamer');
 const spawnLogger = new Logger('GStreamer:spawn');
+
+export type GStreamerCreateOptions = {
+	routerRtpCapabilities: mediasoupTypes.RtpCapabilities;
+};
+
+type GStreamerConstructorOptions = {
+	routerRtpCapabilities: mediasoupTypes.RtpCapabilities;
+	rtpCapabilities: mediasoupTypes.RtpCapabilities;
+	extendedRtpCapabilities: mediasoupTypes.ExtendedRtpCapabilities;
+};
 
 export class GStreamer
 	extends EnhancedEventEmitter<MediaClientEvents>
 	implements MediaClient
 {
-	#subprocessAbortControllers: Map<
+	readonly #routerRtpCapabilities: mediasoupTypes.RtpCapabilities;
+	readonly #rtpCapabilities: mediasoupTypes.RtpCapabilities;
+	readonly #extendedRtpCapabilities: mediasoupTypes.ExtendedRtpCapabilities;
+	readonly #subprocessAbortControllers: Map<
 		childProcess.ChildProcessByStdio<
 			null,
 			streamTypes.Readable,
@@ -28,10 +48,68 @@ export class GStreamer
 	> = new Map();
 	#closed: boolean = false;
 
-	constructor() {
+	static async create({
+		routerRtpCapabilities,
+	}: GStreamerCreateOptions): Promise<GStreamer> {
+		logger.debug('create()');
+
+		// TODO: This must be properly created based on real RTP capabilities of the
+		// GStreamer in the system. Wow...
+		const rtpCapabilities: mediasoupTypes.RtpCapabilities = {
+			codecs: [],
+			headerExtensions: [],
+		};
+
+		logger.debug(
+			'create() | local RtpCapabilities generated:',
+			util.inspect(rtpCapabilities, {
+				depth: null,
+				colors: true,
+				compact: false,
+			})
+		);
+
+		const extendedRtpCapabilities: mediasoupTypes.ExtendedRtpCapabilities =
+			ortc.getExtendedRtpCapabilities(
+				rtpCapabilities,
+				routerRtpCapabilities,
+				/*preferLocalCodecsOrder*/ true
+			);
+
+		logger.debug(
+			'create() | local ExtendedRtpCapabilities generated:',
+			util.inspect(extendedRtpCapabilities, {
+				depth: null,
+				colors: true,
+				compact: false,
+			})
+		);
+
+		const gstreamer = new GStreamer({
+			routerRtpCapabilities,
+			rtpCapabilities,
+			extendedRtpCapabilities,
+		});
+
+		return gstreamer;
+	}
+
+	private constructor({
+		routerRtpCapabilities,
+		rtpCapabilities,
+		extendedRtpCapabilities,
+	}: GStreamerConstructorOptions) {
 		super();
 
 		logger.debug('constructor()');
+
+		this.#routerRtpCapabilities = routerRtpCapabilities;
+		this.#rtpCapabilities = rtpCapabilities;
+		this.#extendedRtpCapabilities = extendedRtpCapabilities;
+	}
+
+	get rtpCapabilities(): mediasoupTypes.RtpCapabilities {
+		return this.#rtpCapabilities;
 	}
 
 	async close(): Promise<void> {
@@ -59,6 +137,12 @@ export class GStreamer
 		await Promise.all(promises);
 
 		this.emit('closed');
+	}
+
+	getRtpCapabilities(): mediasoupTypes.RtpCapabilities {
+		throw new BroadcasterNotImplementedError(
+			`getRtpCapabilities() not implemented in ${this.constructor.name}`
+		);
 	}
 
 	async sendMediaFile({
@@ -165,6 +249,16 @@ export class GStreamer
 
 			throw new BroadcasterSpawnError(String((error as Error).message));
 		}
+	}
+
+	async consume(): Promise<void> {
+		logger.debug('consume()');
+
+		this.assertNotClosed();
+
+		throw new BroadcasterNotImplementedError(
+			`consume() not implemented in ${this.constructor.name}`
+		);
 	}
 
 	private assertNotClosed(): void {
