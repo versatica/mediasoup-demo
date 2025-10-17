@@ -27,7 +27,7 @@ export type WsServerEvents = {
 	 * Emitted to create or get an existing Room.
 	 */
 	'get-or-create-room': [
-		{ roomId: RoomId; consumerReplicas: number },
+		{ roomId: RoomId; consumerReplicas: number; usePipeTransports: boolean },
 		resolve: (room: Room) => void,
 		reject: (error: Error) => void,
 	];
@@ -49,6 +49,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 			fragmentOutgoingMessages: true,
 			fragmentationThreshold: 960000,
 		});
+
 		const wsServer = new WsServer({ protooServer, httpOriginHeader });
 
 		return wsServer;
@@ -95,6 +96,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 			const roomId = params.get('roomId');
 			const peerId = params.get('peerId');
 			const consumerReplicas = Number(params.get('consumerReplicas') ?? 0);
+			const usePipeTransports = params.get('usePipeTransports') === 'true';
 
 			if (!roomId || !peerId) {
 				reject(400, 'Missing roomId and/or peerId');
@@ -115,7 +117,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 				const room = await new Promise<Room>((resolve, reject) => {
 					this.emit(
 						'get-or-create-room',
-						{ roomId, consumerReplicas },
+						{ roomId, consumerReplicas, usePipeTransports },
 						resolve,
 						reject
 					);

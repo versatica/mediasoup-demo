@@ -34,20 +34,26 @@ const staticLogger = new Logger('Room');
 export type RoomCreateOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
+	usePipeTransports: boolean;
 	config: ServerConfig;
-	mediasoupRouter: mediasoupTypes.Router;
-	mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
+	producerRouter: mediasoupTypes.Router;
+	consumerRouter: mediasoupTypes.Router;
+	producerWebRtcServer: mediasoupTypes.WebRtcServer;
+	consumerWebRtcServer: mediasoupTypes.WebRtcServer;
 };
 
 type RoomConstructorOptions = {
 	logger: Logger;
 	roomId: RoomId;
 	consumerReplicas: number;
+	usePipeTransports: boolean;
 	config: ServerConfig;
-	mediasoupRouter: mediasoupTypes.Router;
-	mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
-	mediasoupAudioLevelObserver: mediasoupTypes.AudioLevelObserver;
-	mediasoupActiveSpeakerObserver: mediasoupTypes.ActiveSpeakerObserver;
+	producerRouter: mediasoupTypes.Router;
+	consumerRouter: mediasoupTypes.Router;
+	producerWebRtcServer: mediasoupTypes.WebRtcServer;
+	consumerWebRtcServer: mediasoupTypes.WebRtcServer;
+	audioLevelObserver: mediasoupTypes.AudioLevelObserver;
+	activeSpeakerObserver: mediasoupTypes.ActiveSpeakerObserver;
 	protooRoom: protooTypes.Room;
 	bot: Bot;
 };
@@ -84,11 +90,14 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #logger: Logger;
 	readonly #roomId: RoomId;
 	readonly #consumerReplicas: number;
+	readonly #usePipeTransports: boolean;
 	readonly #config: ServerConfig;
-	readonly #mediasoupRouter: mediasoupTypes.Router;
-	readonly #mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
-	readonly #mediasoupAudioLevelObserver: mediasoupTypes.AudioLevelObserver;
-	readonly #mediasoupActiveSpeakerObserver: mediasoupTypes.ActiveSpeakerObserver;
+	readonly #producerRouter: mediasoupTypes.Router;
+	readonly #consumerRouter: mediasoupTypes.Router;
+	readonly #producerWebRtcServer: mediasoupTypes.WebRtcServer;
+	readonly #consumerWebRtcServer: mediasoupTypes.WebRtcServer;
+	readonly #audioLevelObserver: mediasoupTypes.AudioLevelObserver;
+	readonly #activeSpeakerObserver: mediasoupTypes.ActiveSpeakerObserver;
 	readonly #observedProducers: Map<
 		string,
 		mediasoupTypes.Producer<ProducerAppData>
@@ -105,32 +114,50 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	static async create({
 		roomId,
 		consumerReplicas,
+		usePipeTransports,
 		config,
-		mediasoupRouter,
-		mediasoupWebRtcServer,
+		producerRouter,
+		consumerRouter,
+		producerWebRtcServer,
+		consumerWebRtcServer,
 	}: RoomCreateOptions): Promise<Room> {
-		staticLogger.debug('create() [roomId:%o]', roomId);
+		staticLogger.debug(
+			'create() [roomId:%o, usePipeTransports:%o]',
+			roomId,
+			usePipeTransports
+		);
 
 		const logger = new Logger(`[roomId:${roomId}]`, staticLogger);
-		const mediasoupAudioLevelObserver =
-			await mediasoupRouter.createAudioLevelObserver({
-				maxEntries: 10,
-				threshold: -80,
-				interval: 800,
-			});
-		const mediasoupActiveSpeakerObserver =
-			await mediasoupRouter.createActiveSpeakerObserver();
+
+		const audioLevelObserver = await producerRouter.createAudioLevelObserver({
+			maxEntries: 10,
+			threshold: -80,
+			interval: 800,
+		});
+
+		const activeSpeakerObserver =
+			await producerRouter.createActiveSpeakerObserver();
+
 		const protooRoom = new protoo.Room();
-		const bot = await Bot.create({ mediasoupRouter });
+
+		const bot = await Bot.create({
+			usePipeTransports,
+			producerRouter,
+			consumerRouter,
+		});
+
 		const room = new Room({
 			logger,
 			roomId,
 			consumerReplicas,
+			usePipeTransports,
 			config,
-			mediasoupRouter,
-			mediasoupWebRtcServer,
-			mediasoupAudioLevelObserver,
-			mediasoupActiveSpeakerObserver,
+			producerRouter,
+			consumerRouter,
+			producerWebRtcServer,
+			consumerWebRtcServer,
+			audioLevelObserver,
+			activeSpeakerObserver,
 			protooRoom,
 			bot,
 		});
@@ -142,11 +169,14 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		logger,
 		roomId,
 		consumerReplicas,
+		usePipeTransports,
 		config,
-		mediasoupRouter,
-		mediasoupWebRtcServer,
-		mediasoupAudioLevelObserver,
-		mediasoupActiveSpeakerObserver,
+		producerRouter,
+		consumerRouter,
+		producerWebRtcServer,
+		consumerWebRtcServer,
+		audioLevelObserver,
+		activeSpeakerObserver,
 		protooRoom,
 		bot,
 	}: RoomConstructorOptions) {
@@ -158,19 +188,24 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		this.#roomId = roomId;
 		this.#consumerReplicas = consumerReplicas;
+		this.#usePipeTransports = usePipeTransports;
 		this.#config = config;
-		this.#mediasoupRouter = mediasoupRouter;
-		this.#mediasoupWebRtcServer = mediasoupWebRtcServer;
-		this.#mediasoupAudioLevelObserver = mediasoupAudioLevelObserver;
-		this.#mediasoupActiveSpeakerObserver = mediasoupActiveSpeakerObserver;
+		this.#producerRouter = producerRouter;
+		this.#consumerRouter = consumerRouter;
+		this.#producerWebRtcServer = producerWebRtcServer;
+		this.#consumerWebRtcServer = consumerWebRtcServer;
+		this.#audioLevelObserver = audioLevelObserver;
+		this.#activeSpeakerObserver = activeSpeakerObserver;
 		this.#protooRoom = protooRoom;
 		this.#bot = bot;
 		this.#createdAt = new Date();
 
-		this.handleMediasoupRouter();
-		this.handleMediasoupWebRtcServer();
-		this.handleMediasoupAudioLevelObserver();
-		this.handleMediasoupActiveSpeakerObserver();
+		this.handleProducerRouter();
+		this.handleConsumerRouter();
+		this.handleProducerWebRtcServer();
+		this.handleConsumerWebRtcServer();
+		this.handleAudioLevelObserver();
+		this.handleActiveSpeakerObserver();
 	}
 
 	get id(): RoomId {
@@ -204,7 +239,9 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		this.#protooRoom.close();
 
-		this.#mediasoupRouter.close();
+		this.#producerRouter.close();
+
+		this.#consumerRouter.close();
 
 		this.emit('closed');
 	}
@@ -459,7 +496,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		});
 
 		peer.on('get-router-rtp-capabilities', callback => {
-			callback(this.#mediasoupRouter.rtpCapabilities);
+			callback(this.#consumerRouter.rtpCapabilities);
 		});
 
 		peer.on(
@@ -467,13 +504,36 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async ({ direction, sctpCapabilities, forceTcp }, resolve, reject) => {
 				try {
+					let mediasoupRouter: mediasoupTypes.Router;
+					let mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
+
+					switch (direction) {
+						case 'producer': {
+							mediasoupRouter = this.#producerRouter;
+							mediasoupWebRtcServer = this.#producerWebRtcServer;
+
+							break;
+						}
+
+						case 'consumer': {
+							mediasoupRouter = this.#consumerRouter;
+							mediasoupWebRtcServer = this.#consumerWebRtcServer;
+
+							break;
+						}
+
+						default: {
+							assertUnreachable('invalid transport direction', direction);
+						}
+					}
+
 					const transport =
-						await this.#mediasoupRouter.createWebRtcTransport<WebRtcTransportAppData>(
+						await mediasoupRouter.createWebRtcTransport<WebRtcTransportAppData>(
 							{
 								...clone(this.#config.mediasoup.webRtcTransportOptions),
 								enableUdp: !forceTcp,
 								enableTcp: true,
-								webRtcServer: this.#mediasoupWebRtcServer,
+								webRtcServer: mediasoupWebRtcServer,
 								iceConsentTimeout: 20,
 								enableSctp: Boolean(sctpCapabilities),
 								numSctpStreams: sctpCapabilities?.numStreams,
@@ -499,7 +559,15 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			}
 		);
 
-		peer.on('new-producer', ({ producer }) => {
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		peer.on('new-producer', async ({ producer }) => {
+			if (this.#usePipeTransports) {
+				await this.#producerRouter.pipeToRouter({
+					producerId: producer.id,
+					router: this.#consumerRouter,
+				});
+			}
+
 			const otherPeers = this.getOtherPeers(peer);
 
 			for (const otherPeer of otherPeers) {
@@ -510,21 +578,29 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			}
 
 			if (producer.kind === 'audio') {
-				this.#mediasoupAudioLevelObserver
+				this.#audioLevelObserver
 					.addProducer({ producerId: producer.id })
 					.catch(() => {});
 
-				this.#mediasoupActiveSpeakerObserver
+				this.#activeSpeakerObserver
 					.addProducer({ producerId: producer.id })
 					.catch(() => {});
 			}
 		});
 
-		peer.on('new-data-producer', ({ dataProducer }) => {
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		peer.on('new-data-producer', async ({ dataProducer }) => {
 			const { channel } = dataProducer.appData;
 
 			switch (channel) {
 				case 'chat': {
+					if (this.#usePipeTransports) {
+						await this.#producerRouter.pipeToRouter({
+							dataProducerId: dataProducer.id,
+							router: this.#consumerRouter,
+						});
+					}
+
 					const otherPeers = this.getOtherPeers(peer);
 
 					for (const otherPeer of otherPeers) {
@@ -547,7 +623,10 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		peer.on('get-can-consume', ({ producerId, rtpCapabilities }, callback) => {
 			if (rtpCapabilities) {
 				callback(
-					this.#mediasoupRouter.canConsume({ producerId, rtpCapabilities })
+					this.#consumerRouter.canConsume({
+						producerId,
+						rtpCapabilities,
+					})
 				);
 			} else {
 				callback(false);
@@ -609,7 +688,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		});
 
 		broadcasterPeer.on('get-router-rtp-capabilities', callback => {
-			callback(this.#mediasoupRouter.rtpCapabilities);
+			callback(this.#consumerRouter.rtpCapabilities);
 		});
 
 		broadcasterPeer.on(
@@ -617,15 +696,33 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async ({ direction, comedia, rtcpMux }, resolve, reject) => {
 				try {
+					let mediasoupRouter: mediasoupTypes.Router;
+
+					switch (direction) {
+						case 'producer': {
+							mediasoupRouter = this.#producerRouter;
+
+							break;
+						}
+
+						case 'consumer': {
+							mediasoupRouter = this.#consumerRouter;
+
+							break;
+						}
+
+						default: {
+							assertUnreachable('invalid transport direction', direction);
+						}
+					}
+
 					const transport =
-						await this.#mediasoupRouter.createPlainTransport<PlainTransportAppData>(
-							{
-								...clone(this.#config.mediasoup.plainTransportOptions),
-								comedia,
-								rtcpMux,
-								appData: { direction },
-							}
-						);
+						await mediasoupRouter.createPlainTransport<PlainTransportAppData>({
+							...clone(this.#config.mediasoup.plainTransportOptions),
+							comedia,
+							rtcpMux,
+							appData: { direction },
+						});
 
 					resolve(transport);
 				} catch (error) {
@@ -634,7 +731,15 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			}
 		);
 
-		broadcasterPeer.on('new-producer', ({ producer }) => {
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		broadcasterPeer.on('new-producer', async ({ producer }) => {
+			if (this.#usePipeTransports) {
+				await this.#producerRouter.pipeToRouter({
+					producerId: producer.id,
+					router: this.#consumerRouter,
+				});
+			}
+
 			const peers = this.getAllPeers();
 
 			for (const peer of peers) {
@@ -645,11 +750,11 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			}
 
 			if (producer.kind === 'audio') {
-				this.#mediasoupAudioLevelObserver
+				this.#audioLevelObserver
 					.addProducer({ producerId: producer.id })
 					.catch(() => {});
 
-				this.#mediasoupActiveSpeakerObserver
+				this.#activeSpeakerObserver
 					.addProducer({ producerId: producer.id })
 					.catch(() => {});
 			}
@@ -660,7 +765,10 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			({ producerId, rtpCapabilities }, callback) => {
 				if (rtpCapabilities) {
 					callback(
-						this.#mediasoupRouter.canConsume({ producerId, rtpCapabilities })
+						this.#consumerRouter.canConsume({
+							producerId,
+							rtpCapabilities,
+						})
 					);
 				} else {
 					callback(false);
@@ -724,12 +832,12 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		});
 	}
 
-	private handleMediasoupRouter(): void {
-		this.#mediasoupRouter.observer.on('close', () => {
+	private handleProducerRouter(): void {
+		this.#producerRouter.observer.on('close', () => {
 			this.close();
 		});
 
-		this.#mediasoupRouter.observer.on('newtransport', transport => {
+		this.#producerRouter.observer.on('newtransport', transport => {
 			transport.observer.on('newproducer', producer => {
 				this.#observedProducers.set(
 					producer.id,
@@ -743,14 +851,26 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		});
 	}
 
-	private handleMediasoupWebRtcServer(): void {
-		this.#mediasoupWebRtcServer.observer.on('close', () => {
+	private handleConsumerRouter(): void {
+		this.#consumerRouter.observer.on('close', () => {
 			this.close();
 		});
 	}
 
-	private handleMediasoupAudioLevelObserver(): void {
-		this.#mediasoupAudioLevelObserver.on('volumes', volumes => {
+	private handleProducerWebRtcServer(): void {
+		this.#producerWebRtcServer.observer.on('close', () => {
+			this.close();
+		});
+	}
+
+	private handleConsumerWebRtcServer(): void {
+		this.#producerWebRtcServer.observer.on('close', () => {
+			this.close();
+		});
+	}
+
+	private handleAudioLevelObserver(): void {
+		this.#audioLevelObserver.on('volumes', volumes => {
 			const allPeers = this.getAllPeers();
 			const peerVolumes = volumes.map(({ producer, volume }) => {
 				const { peerId } = producer.appData as ProducerAppData;
@@ -766,7 +886,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			}
 		});
 
-		this.#mediasoupAudioLevelObserver.on('silence', () => {
+		this.#audioLevelObserver.on('silence', () => {
 			const allPeers = this.getAllPeers();
 
 			for (const peer of allPeers) {
@@ -776,18 +896,15 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		});
 	}
 
-	private handleMediasoupActiveSpeakerObserver(): void {
-		this.#mediasoupActiveSpeakerObserver.on(
-			'dominantspeaker',
-			({ producer }) => {
-				const { peerId } = producer.appData as ProducerAppData;
-				const allPeers = this.getAllPeers();
+	private handleActiveSpeakerObserver(): void {
+		this.#activeSpeakerObserver.on('dominantspeaker', ({ producer }) => {
+			const { peerId } = producer.appData as ProducerAppData;
+			const allPeers = this.getAllPeers();
 
-				for (const peer of allPeers) {
-					peer.notify('activeSpeaker', { peerId });
-				}
+			for (const peer of allPeers) {
+				peer.notify('activeSpeaker', { peerId });
 			}
-		);
+		});
 	}
 
 	// eslint-disable-next-line @typescript-eslint/require-await
@@ -799,7 +916,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		switch (name) {
 			case 'getRouterRtpCapabilities': {
 				accept({
-					routerRtpCapabilities: this.#mediasoupRouter.rtpCapabilities,
+					routerRtpCapabilities: this.#consumerRouter.rtpCapabilities,
 				});
 
 				break;

@@ -44,6 +44,7 @@ export class ApiServer extends EnhancedEventEmitter<ApiServerEvents> {
 		logger.debug('create()');
 
 		const expressApp = ApiServer.createExpressApp();
+
 		const apiServer = new ApiServer({ expressApp, httpOriginHeader });
 
 		return apiServer;

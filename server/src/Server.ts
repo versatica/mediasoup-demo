@@ -32,14 +32,14 @@ export type ServerCreateOptions = {
 
 type ServerConstructorOptions = {
 	config: ServerConfig;
-	mediasoupWorkersAndWebRtcServers: MediasoupWorkersAndWebRtcServers;
+	workersAndWebRtcServers: WorkersAndWebRtcServers;
 	httpServer: https.Server | http.Server;
 	wsServer: WsServer;
 	apiServer: ApiServer;
 	networkThrottleSecret?: string;
 };
 
-type MediasoupWorkersAndWebRtcServers = Map<
+type WorkersAndWebRtcServers = Map<
 	number,
 	{
 		worker: mediasoupTypes.Worker<WorkerAppData>;
@@ -80,9 +80,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	readonly #httpConnections: Set<net.Socket> = new Set();
 	readonly #wsServer: WsServer;
 	readonly #apiServer: ApiServer;
-	readonly #mediasoupWorkersAndWebRtcServers: MediasoupWorkersAndWebRtcServers =
-		new Map();
-	#nextMediasoupWorkerIdx: number = 0;
+	readonly #workersAndWebRtcServers: WorkersAndWebRtcServers = new Map();
+	#nextWorkerIdx: number = 0;
 	readonly #networkThrottleSecret?: string;
 	#networkThrottleEnabled: boolean = false;
 	#networkThrottleEnabledByRoomId?: RoomId;
@@ -97,14 +96,14 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		logger.debug('create()');
 
 		const httpOriginHeader = Server.computeHttpOriginHeader(config);
-		const mediasoupWorkersAndWebRtcServers =
-			await Server.createMediasoupWorkersAndWebRtcServers(config);
+		const workersAndWebRtcServers =
+			await Server.createWorkersAndWebRtcServers(config);
 		const httpServer = await Server.createHttpServer(config);
 		const wsServer = WsServer.create({ httpServer, httpOriginHeader });
 		const apiServer = ApiServer.create({ httpOriginHeader });
 		const server = new Server({
 			config,
-			mediasoupWorkersAndWebRtcServers,
+			workersAndWebRtcServers,
 			httpServer,
 			wsServer,
 			apiServer,
@@ -130,19 +129,18 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		return httpOriginHeader;
 	}
 
-	private static async createMediasoupWorkersAndWebRtcServers(
+	private static async createWorkersAndWebRtcServers(
 		config: ServerConfig
-	): Promise<MediasoupWorkersAndWebRtcServers> {
-		logger.debug('createMediasoupWorkersAndWebRtcServers()');
+	): Promise<WorkersAndWebRtcServers> {
+		logger.debug('createWorkersAndWebRtcServers()');
 
 		try {
-			const mediasoupWorkersAndWebRtcServers: MediasoupWorkersAndWebRtcServers =
-				new Map();
+			const workersAndWebRtcServers: WorkersAndWebRtcServers = new Map();
 			const { numWorkers, workerSettings, webRtcServerOptions } =
 				config.mediasoup;
 
 			logger.info(
-				`createMediasoupWorkersAndWebRtcServers() | launching ${numWorkers} mediasoup ${numWorkers === 1 ? 'Worker' : 'Workers'}...`
+				`createWorkersAndWebRtcServers() | launching ${numWorkers} mediasoup ${numWorkers === 1 ? 'Worker' : 'Workers'}...`
 			);
 
 			for (let idx = 0; idx < numWorkers; ++idx) {
@@ -162,7 +160,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 				// share the same listening port. Hence we increase the port for each
 				// Worker.
 				const clonnedWebRtcServerOptions = clone(webRtcServerOptions);
-				const portIncrement = mediasoupWorkersAndWebRtcServers.size - 1;
+				const portIncrement = workersAndWebRtcServers.size - 1;
 
 				for (const listenInfo of clonnedWebRtcServerOptions.listenInfos) {
 					listenInfo.port! += portIncrement;
@@ -172,14 +170,12 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 					clonnedWebRtcServerOptions
 				);
 
-				mediasoupWorkersAndWebRtcServers.set(idx, { worker, webRtcServer });
+				workersAndWebRtcServers.set(idx, { worker, webRtcServer });
 			}
 
-			return mediasoupWorkersAndWebRtcServers;
+			return workersAndWebRtcServers;
 		} catch (error) {
-			logger.error(
-				`createMediasoupWorkersAndWebRtcServers() | failed: ${error}`
-			);
+			logger.error(`createWorkersAndWebRtcServers() | failed: ${error}`);
 
 			throw error;
 		}
@@ -227,7 +223,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 
 	private constructor({
 		config,
-		mediasoupWorkersAndWebRtcServers,
+		workersAndWebRtcServers,
 		httpServer,
 		wsServer,
 		apiServer,
@@ -238,7 +234,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		logger.debug('constructor()');
 
 		this.#config = config;
-		this.#mediasoupWorkersAndWebRtcServers = mediasoupWorkersAndWebRtcServers;
+		this.#workersAndWebRtcServers = workersAndWebRtcServers;
 		this.#httpServer = httpServer;
 		this.#wsServer = wsServer;
 		this.#apiServer = apiServer;
@@ -248,14 +244,14 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		// We need to verify that all mediasoup Workers are alive at this point
 		// (just in case they died for whatever reason before reaching this
 		// constructor).
-		for (const { worker } of this.#mediasoupWorkersAndWebRtcServers.values()) {
+		for (const { worker } of this.#workersAndWebRtcServers.values()) {
 			if (worker.closed) {
 				throw new InvalidStateError(
 					`mediasoup Worker is closed [pid:${worker.pid}, died:${worker.died}]`
 				);
 			}
 
-			this.handleMediasoupWorker(worker);
+			this.handleWorker(worker);
 		}
 
 		this.handleHttpServer();
@@ -282,7 +278,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			room.close();
 		}
 
-		for (const { worker } of this.#mediasoupWorkersAndWebRtcServers.values()) {
+		for (const { worker } of this.#workersAndWebRtcServers.values()) {
 			worker.close();
 		}
 
@@ -307,7 +303,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	serialize(): SerializedServer {
 		return {
 			createdAt: this.#createdAt,
-			numMediasoupWorkers: this.#mediasoupWorkersAndWebRtcServers.size,
+			numWorkers: this.#workersAndWebRtcServers.size,
 			networkThrottleEnabled: this.#networkThrottleEnabled,
 			numRooms: this.#rooms.size,
 			rooms: Array.from(this.#rooms.values()).map(room => room.serialize()),
@@ -324,10 +320,18 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	private async getOrCreateRoom({
 		roomId,
 		consumerReplicas = 0,
+		usePipeTransports = false,
 	}: {
 		roomId: RoomId;
 		consumerReplicas?: number;
+		usePipeTransports?: boolean;
 	}): Promise<Room> {
+		if (usePipeTransports && this.#config.mediasoup.numWorkers < 2) {
+			throw new InvalidStateError(
+				'at least 2 mediasoup Workers are needed to create a Room with usePipeTransports option'
+			);
+		}
+
 		// Enqueue it to avoid race conditions when multiple users join at the same
 		// time requesting the same `roomId`.
 		return this.#roomCreationAwaitQueue.push<Room>(async () => {
@@ -338,23 +342,43 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			}
 
 			logger.info(
-				'getOrCreateRoom() | creating a new Room [roomId:%o]',
-				roomId
+				'getOrCreateRoom() | creating a new Room [roomId:%o, usePipeTransports:%o]',
+				roomId,
+				usePipeTransports
 			);
 
-			const { worker: mediasoupWorker, webRtcServer: mediasoupWebRtcServer } =
-				this.getNextMediasoupWorkerAndWebRtcServer();
+			const { worker: producerWorker, webRtcServer: producerWebRtcServer } =
+				this.getNextWorkerAndWebRtcServer();
+
+			const { worker: consumerWorker, webRtcServer: consumerWebRtcServer } =
+				usePipeTransports
+					? this.getNextWorkerAndWebRtcServer()
+					: {
+							worker: producerWorker,
+							webRtcServer: producerWebRtcServer,
+						};
+
 			const { mediaCodecs } = this.#config.mediasoup.routerOptions;
-			const mediasoupRouter = await mediasoupWorker.createRouter({
+
+			const producerRouter = await producerWorker.createRouter({
 				mediaCodecs,
 			});
+
+			const consumerRouter = usePipeTransports
+				? await consumerWorker.createRouter({
+						mediaCodecs,
+					})
+				: producerRouter;
 
 			room = await Room.create({
 				roomId,
 				consumerReplicas,
+				usePipeTransports,
 				config: this.#config,
-				mediasoupRouter,
-				mediasoupWebRtcServer,
+				producerRouter,
+				consumerRouter,
+				producerWebRtcServer,
+				consumerWebRtcServer,
 			});
 
 			this.#rooms.set(room.id, room);
@@ -367,19 +391,16 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		}, 'getOrCreateRoom()');
 	}
 
-	private getNextMediasoupWorkerAndWebRtcServer(): {
+	private getNextWorkerAndWebRtcServer(): {
 		worker: mediasoupTypes.Worker<WorkerAppData>;
 		webRtcServer: mediasoupTypes.WebRtcServer;
 	} {
-		const { worker, webRtcServer } = this.#mediasoupWorkersAndWebRtcServers.get(
-			this.#nextMediasoupWorkerIdx
+		const { worker, webRtcServer } = this.#workersAndWebRtcServers.get(
+			this.#nextWorkerIdx
 		)!;
 
-		if (
-			++this.#nextMediasoupWorkerIdx ===
-			this.#mediasoupWorkersAndWebRtcServers.size
-		) {
-			this.#nextMediasoupWorkerIdx = 0;
+		if (++this.#nextWorkerIdx === this.#workersAndWebRtcServers.size) {
+			this.#nextWorkerIdx = 0;
 		}
 
 		return { worker, webRtcServer };
@@ -506,9 +527,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		}, 'stopNetworkThrottleInternal()');
 	}
 
-	private handleMediasoupWorker(
-		worker: mediasoupTypes.Worker<WorkerAppData>
-	): void {
+	private handleWorker(worker: mediasoupTypes.Worker<WorkerAppData>): void {
 		worker.on('died', () => {
 			logger.error('mediasoup Worker died [pid:%o]', worker.pid);
 
@@ -517,7 +536,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		});
 
 		worker.observer.on('close', () => {
-			this.#mediasoupWorkersAndWebRtcServers.delete(worker.appData.idx);
+			this.#workersAndWebRtcServers.delete(worker.appData.idx);
 
 			// Ignore if Server is closed or if the Worker died since then its 'died'
 			// event fired already.
@@ -549,8 +568,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	private handleWsServer(): void {
 		this.#wsServer.on(
 			'get-or-create-room',
-			({ roomId, consumerReplicas }, resolve, reject) => {
-				this.getOrCreateRoom({ roomId, consumerReplicas })
+			({ roomId, consumerReplicas, usePipeTransports }, resolve, reject) => {
+				this.getOrCreateRoom({ roomId, consumerReplicas, usePipeTransports })
 					.then(resolve)
 					.catch(reject);
 			}

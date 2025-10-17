@@ -176,6 +176,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		staticLogger.debug('create() [peerId:%o]', peerId);
 
 		const logger = new Logger(`[peerId:${peerId}]`, staticLogger);
+
 		const peer = new Peer({ logger, peerId, protooPeer, remoteAddress });
 
 		return peer;

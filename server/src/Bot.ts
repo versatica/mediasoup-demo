@@ -11,11 +11,13 @@ import type {
 const logger = new Logger('Bot');
 
 export type BotCreateOptions = {
-	mediasoupRouter: mediasoupTypes.Router;
+	usePipeTransports: boolean;
+	producerRouter: mediasoupTypes.Router;
+	consumerRouter: mediasoupTypes.Router;
 };
 
 type BotConstructorOptions = {
-	directTransport: mediasoupTypes.DirectTransport;
+	consumerDirectTransport: mediasoupTypes.DirectTransport;
 	dataProducer: mediasoupTypes.DataProducer<BotDataProducerAppData>;
 };
 
@@ -25,35 +27,56 @@ type BotConstructorOptions = {
  *   mediasoup Router is closed.
  */
 export class Bot {
-	readonly #directTransport: mediasoupTypes.DirectTransport;
+	readonly #consumerDirectTransport: mediasoupTypes.DirectTransport;
 	readonly #dataProducer: mediasoupTypes.DataProducer<BotDataProducerAppData>;
 
-	static async create({ mediasoupRouter }: BotCreateOptions): Promise<Bot> {
+	static async create({
+		usePipeTransports,
+		producerRouter,
+		consumerRouter,
+	}: BotCreateOptions): Promise<Bot> {
 		logger.debug('create()');
 
-		const directTransport = await mediasoupRouter.createDirectTransport({
+		const producerDirectTransport = await producerRouter.createDirectTransport({
 			maxMessageSize: 512,
 		});
+
+		const consumerDirectTransport = usePipeTransports
+			? await producerRouter.createDirectTransport({
+					maxMessageSize: 512,
+				})
+			: producerDirectTransport;
+
 		const dataProducer =
-			await directTransport.produceData<BotDataProducerAppData>({
+			await producerDirectTransport.produceData<BotDataProducerAppData>({
 				label: 'bot',
 				appData: {
 					channel: 'bot',
 				},
 			});
 
-		const bot = new Bot({ directTransport, dataProducer });
+		if (usePipeTransports) {
+			await producerRouter.pipeToRouter({
+				dataProducerId: dataProducer.id,
+				router: consumerRouter,
+			});
+		}
+
+		const bot = new Bot({
+			consumerDirectTransport,
+			dataProducer,
+		});
 
 		return bot;
 	}
 
 	private constructor({
-		directTransport,
+		consumerDirectTransport,
 		dataProducer,
 	}: BotConstructorOptions) {
 		logger.debug('constructor()');
 
-		this.#directTransport = directTransport;
+		this.#consumerDirectTransport = consumerDirectTransport;
 		this.#dataProducer = dataProducer;
 	}
 
@@ -78,7 +101,7 @@ export class Bot {
 
 		try {
 			dataConsumer =
-				await this.#directTransport.consumeData<DataConsumerAppData>({
+				await this.#consumerDirectTransport.consumeData<DataConsumerAppData>({
 					dataProducerId: dataProducer.id,
 					appData: {
 						peerId: undefined,

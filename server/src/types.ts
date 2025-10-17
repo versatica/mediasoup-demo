@@ -65,7 +65,7 @@ export type PeerDevice = {
 
 export type SerializedServer = {
 	createdAt: Date;
-	numMediasoupWorkers: number;
+	numWorkers: number;
 	networkThrottleEnabled: boolean;
 	numRooms: number;
 	rooms: SerializedRoom[];

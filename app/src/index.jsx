@@ -96,6 +96,7 @@ async function run() {
 	const throttleSecret = urlParser.query.throttleSecret;
 	const e2eKey = urlParser.query.e2eKey;
 	const consumerReplicas = urlParser.query.consumerReplicas;
+	const usePipeTransports = urlParser.query.usePipeTransports === 'true';
 
 	// Enable face detection on demand.
 	if (faceDetection)
@@ -150,7 +151,8 @@ async function run() {
 			case 'externalVideo':
 			case 'throttleSecret':
 			case 'e2eKey':
-			case 'consumerReplicas': {
+			case 'consumerReplicas':
+			case 'usePipeTransports': {
 				break;
 			}
 
@@ -212,6 +214,7 @@ async function run() {
 		externalVideo,
 		e2eKey,
 		consumerReplicas,
+		usePipeTransports,
 		stats,
 	});
 

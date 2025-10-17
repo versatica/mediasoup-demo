@@ -145,6 +145,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 		staticLogger.debug('create() [peerId:%o]', peerId);
 
 		const logger = new Logger(`[peerId:${peerId}]`, staticLogger);
+
 		const broadcasterPeer = new BroadcasterPeer({
 			logger,
 			peerId,

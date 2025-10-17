@@ -58,6 +58,7 @@ export default class RoomClient {
 		externalVideo,
 		e2eKey,
 		consumerReplicas,
+		usePipeTransports,
 		stats,
 	}) {
 		logger.debug(
@@ -188,7 +189,12 @@ export default class RoomClient {
 
 		// Protoo URL.
 		// @type {String}
-		this._protooUrl = getProtooUrl({ roomId, peerId, consumerReplicas });
+		this._protooUrl = getProtooUrl({
+			roomId,
+			peerId,
+			consumerReplicas,
+			usePipeTransports,
+		});
 
 		// protoo-client Peer instance.
 		// @type {protooClient.Peer}
