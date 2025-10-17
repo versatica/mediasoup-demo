@@ -337,19 +337,33 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 				roomId
 			);
 
-			const { worker: mediasoupWorker, webRtcServer: mediasoupWebRtcServer } =
-				this.getNextMediasoupWorkerAndWebRtcServer();
+			const {
+				worker: mediasoupWorkerProducer,
+				webRtcServer: mediasoupWebRtcServerProducer,
+			} = this.getNextMediasoupWorkerAndWebRtcServer();
+			const {
+				worker: mediasoupWorkerConsumer,
+				webRtcServer: mediasoupWebRtcServerConsumer,
+			} = this.getNextMediasoupWorkerAndWebRtcServer();
 			const { mediaCodecs } = this.#config.mediasoup.routerOptions;
-			const mediasoupRouter = await mediasoupWorker.createRouter({
-				mediaCodecs,
-			});
+			const mediasoupRouters = await Promise.all([
+				mediasoupWorkerProducer.createRouter({
+					mediaCodecs,
+				}),
+				mediasoupWorkerConsumer.createRouter({
+					mediaCodecs,
+				}),
+			]);
 
 			room = await Room.create({
 				roomId,
 				consumerReplicas,
 				config: this.#config,
-				mediasoupRouter,
-				mediasoupWebRtcServer,
+				mediasoupRouters,
+				mediasoupWebRtcServers: [
+					mediasoupWebRtcServerProducer,
+					mediasoupWebRtcServerConsumer,
+				],
 			});
 
 			this.#rooms.set(room.id, room);
