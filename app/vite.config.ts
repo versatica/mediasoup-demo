@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react';
 import waitPort from 'wait-port';
 import qs from 'qs';
 import openBrowser from 'react-dev-utils/openBrowser';
-
+import { pathToFileURL } from 'node:url';
 import * as envs from './src/envs';
 
 export default defineConfig(async () => {
@@ -16,7 +16,8 @@ export default defineConfig(async () => {
   let configFile = envs.getConfigFile();
 
   try {
-    const { config } = await import(configFile);
+    const configFileUrl = pathToFileURL(configFile).href;
+    const { config } = await import(configFileUrl);
 
     host = config.domain;
     cert = readTls(config.http.tls?.cert);

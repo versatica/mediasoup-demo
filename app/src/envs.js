@@ -7,6 +7,6 @@ import * as path from 'node:path';
 export function getConfigFile() {
 	return (
 		process.env['CONFIG_FILE'] ||
-		path.join(__dirname, '..', '..', 'server', 'config.mjs')
+		path.join(__dirname, '..', '..', 'server', 'config.example.mjs')
 	);
 }
