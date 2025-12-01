@@ -45,7 +45,7 @@
 		"awaitqueue": "^3.3.0",
 		"body-parser": "^2.2.1",
 		"debug": "^4.4.3",
-		"express": "^5.1.0",
+		"express": "^5.2.0",
 		"mediasoup": "^3.19.12",
 		"picocolors": "^1.1.1",
 		"pidusage": "^4.0.1",
