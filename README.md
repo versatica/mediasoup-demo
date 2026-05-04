@@ -49,6 +49,7 @@ By adding query parameters into the URL you can set certain settings of the appl
 | `e2eKey`           | String | Key for media E2E encryption/decryption (just works with some OPUS and VP8 codecs) | |
 | `consumerReplicas` | Number | Create artificial replicas of yourself and receive their audio and video (not displayed in the UI) | 0 |
 | `usePipeTransports` | Boolean | If `true`, each room will use separate mediasoup routers to produce and consume and will communicate them with pipe transports | `false` |
+| `rtcstatsUrl`      | String  | If present, Websocket URL to connect to an [rtcstats-server], including token | |
 
 
 ## Installation
@@ -83,3 +84,4 @@ npm install --legacy-peer-deps
 
 [github-actions-shield-mediasoup-demo-server]: https://github.com/versatica/mediasoup-demo/actions/workflows/mediasoup-demo-server.yaml/badge.svg?branch=v3
 [github-actions-mediasoup-demo-server]: https://github.com/versatica/mediasoup-demo/actions/workflows/mediasoup-demo-server.yaml?query=branch%3Av3
+[rtcstats-server]: https://github.com/rtcstats/rtcstats

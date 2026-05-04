@@ -21,6 +21,7 @@ import * as stateActions from './redux/stateActions';
 import reducers from './redux/reducers';
 import Room from './components/Room';
 import './scss/index.scss';
+import { wrapRTCStatsWithDefaultOptions } from '@rtcstats/rtcstats-js';
 
 const logger = new Logger();
 const reduxMiddlewares = [thunk];
@@ -46,6 +47,7 @@ domready(async () => {
 
 window.RUN = run;
 
+let rtcstatsTrace;
 async function run() {
 	logger.debug('run() [environment:%s]', process.env.NODE_ENV);
 
@@ -195,6 +197,11 @@ async function run() {
 	store.dispatch(
 		stateActions.setMe({ peerId, displayName, displayNameSet, device })
 	);
+	const rtcstatsUrl = urlParser.query.rtcstatsUrl;
+	if (rtcstatsUrl) {
+		rtcstatsTrace = wrapRTCStatsWithDefaultOptions();
+		rtcstatsTrace.connect(rtcstatsUrl);
+	}
 
 	roomClient = new RoomClient({
 		roomId,
