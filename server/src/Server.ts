@@ -643,5 +643,9 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		room.on('stop-network-throttle', ({ secret }, resolve, reject) => {
 			this.stopNetworkThrottle({ secret }).then(resolve).catch(reject);
 		});
+
+		room.on('get-rtcstats-url', resolve => {
+			resolve(this.#config.providers?.rtcstatsUrl);
+		});
 	}
 }

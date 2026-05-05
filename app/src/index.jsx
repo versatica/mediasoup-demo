@@ -10,7 +10,6 @@ import {
 import thunk from 'redux-thunk';
 import randomString from 'random-string';
 import * as faceapi from 'face-api.js';
-import { wrapRTCStatsWithDefaultOptions } from '@rtcstats/rtcstats-js';
 import Logger from './Logger';
 import * as utils from './utils';
 import randomName from './randomName';
@@ -103,7 +102,6 @@ async function run() {
 	const e2eKey = urlParser.query.e2eKey;
 	const consumerReplicas = urlParser.query.consumerReplicas;
 	const usePipeTransports = urlParser.query.usePipeTransports === 'true';
-	const rtcstatsUrl = urlParser.query.rtcstatsUrl;
 
 	// Enable face detection on demand.
 	if (faceDetection)
@@ -197,12 +195,6 @@ async function run() {
 	store.dispatch(
 		stateActions.setMe({ peerId, displayName, displayNameSet, device })
 	);
-
-	if (rtcstatsUrl) {
-		const rtcstatsTrace = wrapRTCStatsWithDefaultOptions();
-
-		rtcstatsTrace.connect(rtcstatsUrl);
-	}
 
 	roomClient = new RoomClient({
 		roomId,

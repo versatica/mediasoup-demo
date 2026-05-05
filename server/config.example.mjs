@@ -187,4 +187,12 @@ export const config = {
 			maxSctpMessageSize: 262144,
 		},
 	},
+	providers: {
+		/**
+		 * URL to connect to rtcstats server from client.
+		 *
+		 * @see https://www.npmjs.com/package/@rtcstats/rtcstats-js.
+		 */
+		rtcstatsUrl: undefined,
+	},
 };

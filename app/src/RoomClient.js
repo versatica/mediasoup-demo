@@ -1,6 +1,7 @@
 import protooClient from 'protoo-client';
 import * as mediasoupClient from 'mediasoup-client';
 import { AwaitQueue } from 'awaitqueue';
+import { wrapRTCStatsWithDefaultOptions } from '@rtcstats/rtcstats-js';
 import Logger from './Logger';
 import { getProtooUrl } from './urlFactory';
 import * as cookiesManager from './cookiesManager';
@@ -200,6 +201,10 @@ export default class RoomClient {
 		// AwaitQueue to control received messages about Consumers and DataConsumers.
 		this._consumingAwaitQueue = new AwaitQueue();
 
+		// rtcstats-js tracer.
+		// See https://github.com/rtcstats/rtcstats-js
+		this._rtcstatsTrace = null;
+
 		if (externalVideo) {
 			this._externalVideo = document.createElement('video');
 
@@ -291,6 +296,11 @@ export default class RoomClient {
 		this._closed = true;
 
 		logger.debug('close()');
+
+		// Close rtcstats-js client.
+		if (this._rtcstatsTrace) {
+			this._rtcstatsTrace.close();
+		}
 
 		// Close protoo Peer
 		this._protoo.close();
@@ -2262,6 +2272,15 @@ export default class RoomClient {
 				)
 			);
 
+			const { rtcstatsUrl } = await this._protoo.request('getRtcStatsUrl');
+
+			if (rtcstatsUrl) {
+				logger.debug('_joinRoom() | got rtcstatsUrl: %o', rtcstatsUrl);
+
+				this._rtcstatsTrace = wrapRTCStatsWithDefaultOptions();
+				this._rtcstatsTrace.connect(rtcstatsUrl);
+			}
+
 			const { routerRtpCapabilities } = await this._protoo.request(
 				'getRouterRtpCapabilities'
 			);
@@ -2285,6 +2304,7 @@ export default class RoomClient {
 
 				setTimeout(() => audioTrack.stop(), 120000);
 			}
+
 			// Create mediasoup Transport for sending (unless we don't want to produce).
 			if (this._produce) {
 				const transportInfo = await this._protoo.request(

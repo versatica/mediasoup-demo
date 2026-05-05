@@ -84,6 +84,10 @@ export type RoomEvents = {
 		resolve: () => void,
 		reject: (error: Error) => void,
 	];
+	/**
+	 * Emitted to obtain the rtcstats server URL.
+	 */
+	'get-rtcstats-url': [callback: (rtcstatsUrl?: string) => void];
 };
 
 export class Room extends EnhancedEventEmitter<RoomEvents> {
@@ -499,6 +503,12 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			if (direction == 'consumer') {
 				void peer.sendMessage(`Welcome ${peer.displayName}! ☺️`);
 			}
+		});
+
+		peer.on('get-rtcstats-url', callback => {
+			this.emit('get-rtcstats-url', rtcstatsUrl => {
+				callback(rtcstatsUrl);
+			});
 		});
 
 		peer.on('get-router-rtp-capabilities', callback => {

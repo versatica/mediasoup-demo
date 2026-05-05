@@ -42,6 +42,9 @@ export type ServerConfig = {
 			maxSctpMessageSize?: number;
 		};
 	};
+	providers?: {
+		rtcstatsUrl?: string;
+	};
 };
 
 export type RoomId = string;

@@ -107,6 +107,12 @@ export type TypedProtooNotificationFromPeer = {
  */
 type RequestFromPeer =
 	| {
+			name: 'getRtcStatsUrl';
+			responseData: {
+				rtcstatsUrl?: string;
+			};
+	  }
+	| {
 			name: 'getRouterRtpCapabilities';
 			responseData: {
 				routerRtpCapabilities: mediasoupTypes.RouterRtpCapabilities;

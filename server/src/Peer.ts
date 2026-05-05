@@ -75,6 +75,10 @@ export type PeerEvents = {
 	 */
 	'sctp-connected': [direction: TransportDirection];
 	/**
+	 * Emitted to obtain the rtcstats server URL.
+	 */
+	'get-rtcstats-url': [callback: (rtcstatsUrl?: string) => void];
+	/**
 	 * Emitted to obtain the mediasoup Router RTP capabilities.
 	 */
 	'get-router-rtp-capabilities': [
@@ -777,6 +781,14 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 		const { method, data, accept, reject } = request;
 
 		switch (method) {
+			case 'getRtcStatsUrl': {
+				this.emit('get-rtcstats-url', rtcstatsUrl => {
+					accept({ rtcstatsUrl });
+				});
+
+				break;
+			}
+
 			case 'getRouterRtpCapabilities': {
 				this.emit('get-router-rtp-capabilities', routerRtpCapabilities => {
 					accept({ routerRtpCapabilities });
