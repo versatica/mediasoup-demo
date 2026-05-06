@@ -102,6 +102,7 @@ async function run() {
 	const e2eKey = urlParser.query.e2eKey;
 	const consumerReplicas = urlParser.query.consumerReplicas;
 	const usePipeTransports = urlParser.query.usePipeTransports === 'true';
+	const rtcstatsUrl = urlParser.query.rtcstatsUrl;
 
 	// Enable face detection on demand.
 	if (faceDetection)
@@ -227,6 +228,7 @@ async function run() {
 		consumerReplicas,
 		usePipeTransports,
 		stats,
+		rtcstatsUrl,
 	});
 
 	// NOTE: For debugging.

@@ -72,6 +72,7 @@ export default class RoomClient {
 		consumerReplicas,
 		usePipeTransports,
 		stats,
+		rtcstatsUrl,
 	}) {
 		logger.debug(
 			'constructor() [roomId:"%s", peerId:"%s", displayName:"%s", device:%s]',
@@ -204,6 +205,10 @@ export default class RoomClient {
 		// rtcstats-js tracer.
 		// See https://github.com/rtcstats/rtcstats-js
 		this._rtcstatsTrace = null;
+
+		// rtcstats server URL (if given via app query param or retrived from
+		// server).
+		this._rtcstatsUrl = rtcstatsUrl;
 
 		if (externalVideo) {
 			this._externalVideo = document.createElement('video');
@@ -2272,7 +2277,13 @@ export default class RoomClient {
 				)
 			);
 
-			const { rtcstatsUrl } = await this._protoo.request('getRtcStatsUrl');
+			let rtcstatsUrl;
+
+			if (this._rtcstatsUrl) {
+				rtcstatsUrl = this._rtcstatsUrl;
+			} else {
+				({ rtcstatsUrl } = await this._protoo.request('getRtcStatsUrl'));
+			}
 
 			if (rtcstatsUrl) {
 				logger.debug('_joinRoom() | got rtcstatsUrl: %o', rtcstatsUrl);
