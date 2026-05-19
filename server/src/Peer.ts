@@ -238,11 +238,11 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 		this.#closed = true;
 
+		this.#protooPeer.close();
+
 		for (const transport of this.#transports.values()) {
 			transport.close();
 		}
-
-		this.#protooPeer.close();
 
 		clearTimeout(this.#joinTimer);
 

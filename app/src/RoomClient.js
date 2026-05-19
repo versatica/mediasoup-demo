@@ -296,7 +296,9 @@ export default class RoomClient {
 	}
 
 	close() {
-		if (this._closed) return;
+		if (this._closed) {
+			return;
+		}
 
 		this._closed = true;
 
@@ -356,24 +358,15 @@ export default class RoomClient {
 				})
 			);
 
-			// Close mediasoup Transports.
-			// if (this._sendTransport) {
-			// 	this._sendTransport.close();
-			// 	this._sendTransport = null;
-			// }
-
-			// if (this._recvTransport) {
-			// 	this._recvTransport.close();
-			// 	this._recvTransport = null;
-			// }
-
 			store.dispatch(stateActions.setRoomState('closed'));
 		});
 
 		this._protoo.on('close', () => {
-			if (this._closed) return;
+			if (this._closed) {
+				return;
+			}
 
-			// this.close();
+			this.close();
 		});
 
 		// eslint-disable-next-line no-unused-vars
@@ -1867,6 +1860,10 @@ export default class RoomClient {
 			});
 
 			this._chatDataProducer.on('close', () => {
+				if (this.closed) {
+					return;
+				}
+
 				logger.error('chat DataProducer "close" event');
 
 				this._chatDataProducer = null;
@@ -1880,6 +1877,10 @@ export default class RoomClient {
 			});
 
 			this._chatDataProducer.on('error', error => {
+				if (this.closed) {
+					return;
+				}
+
 				logger.error('chat DataProducer "error" event:%o', error);
 
 				store.dispatch(
@@ -1946,6 +1947,10 @@ export default class RoomClient {
 			});
 
 			this._botDataProducer.on('close', () => {
+				if (this.closed) {
+					return;
+				}
+
 				logger.error('bot DataProducer "close" event');
 
 				this._botDataProducer = null;
@@ -1959,6 +1964,10 @@ export default class RoomClient {
 			});
 
 			this._botDataProducer.on('error', error => {
+				if (this.closed) {
+					return;
+				}
+
 				logger.error('bot DataProducer "error" event:%o', error);
 
 				store.dispatch(
