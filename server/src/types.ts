@@ -18,6 +18,7 @@ export type ServerConfig = {
 			logLevel: mediasoupTypes.WorkerLogLevel;
 			logTags: mediasoupTypes.WorkerLogTag[];
 			disableLiburing?: boolean;
+			useBuiltInSctpStack?: boolean;
 		};
 		routerOptions: {
 			mediaCodecs: mediasoupTypes.RouterRtpCodecCapability[];
@@ -29,6 +30,7 @@ export type ServerConfig = {
 			initialAvailableOutgoingBitrate?: number;
 			minimumAvailableOutgoingBitrate?: number;
 			maxSctpMessageSize?: number;
+			sctpSendBufferSize?: number;
 		};
 		/**
 		 * Additional options that are not part of WebRtcTransportOptions but
@@ -40,6 +42,7 @@ export type ServerConfig = {
 		plainTransportOptions: {
 			listenInfo: mediasoupTypes.TransportListenInfo;
 			maxSctpMessageSize?: number;
+			sctpSendBufferSize?: number;
 		};
 	};
 	providers?: {

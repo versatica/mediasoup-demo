@@ -63,6 +63,7 @@ export const config = {
 				'sctp',
 			],
 			disableLiburing: false,
+			useBuiltInSctpStack: false,
 		},
 		/**
 		 * mediasoup Router options.

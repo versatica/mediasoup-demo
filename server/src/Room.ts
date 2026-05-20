@@ -502,6 +502,11 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		peer.on('sctp-connected', direction => {
 			if (direction == 'consumer') {
 				void peer.sendMessage(`Welcome ${peer.displayName}! ☺️`);
+
+				// TODO: REMOVE. Testing sending of a super large message.
+				// const longMessageLength = 5_000_000;
+				// const longMessage = 'A-' + 'x'.repeat(longMessageLength - 4) + '-Z';
+				// void peer.sendMessage(longMessage);
 			}
 		});
 
