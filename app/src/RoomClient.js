@@ -290,6 +290,9 @@ export default class RoomClient {
 			resolution: 'hd',
 		};
 
+		// To check byte length of DataChannel string messages.
+		this._textEncoder = new TextEncoder();
+
 		if (this._e2eKey && e2e.isSupported()) {
 			e2e.setCryptoKey('setCryptoKey', this._e2eKey, true);
 		}
@@ -562,9 +565,24 @@ export default class RoomClient {
 							});
 
 							dataConsumer.on('message', message => {
+								let messageLength;
+
+								if (typeof message === 'string') {
+									messageLength = this._textEncoder.encode(message).length;
+								} else if (message instanceof ArrayBuffer) {
+									messageLength = message.byteLength;
+								} else if (ArrayBuffer.isView(message)) {
+									messageLength = message.byteLength;
+								} else if (message instanceof Blob) {
+									messageLength = message.size;
+								} else {
+									messageLength = 'N/A';
+								}
+
 								logger.debug(
-									'DataConsumer "message" event [streamId:%d]',
-									dataConsumer.sctpStreamParameters.streamId
+									'DataConsumer "message" event [streamId:%d, length:%s]',
+									dataConsumer.sctpStreamParameters.streamId,
+									messageLength
 								);
 
 								if (message instanceof ArrayBuffer) {
@@ -593,6 +611,10 @@ export default class RoomClient {
 									logger.warn('ignoring DataConsumer "message" (not a string)');
 
 									return;
+								}
+
+								if (messageLength > 200) {
+									message = `${message.slice(0, 40)} ... ${message.slice(-40)}`;
 								}
 
 								switch (dataConsumer.label) {
@@ -1996,7 +2018,9 @@ export default class RoomClient {
 	}
 
 	async sendChatMessage(text) {
-		logger.debug('sendChatMessage() [text:"%s]', text);
+		const messageLength = this._textEncoder.encode(text).length;
+
+		logger.debug('sendChatMessage() [length:%s]', messageLength);
 
 		if (!this._chatDataProducer) {
 			store.dispatch(
@@ -2024,7 +2048,9 @@ export default class RoomClient {
 	}
 
 	async sendBotMessage(text) {
-		logger.debug('sendBotMessage() [text:"%s]', text);
+		const messageLength = this._textEncoder.encode(text).length;
+
+		logger.debug('sendBotMessage() [length:%s]', messageLength);
 
 		if (!this._botDataProducer) {
 			store.dispatch(

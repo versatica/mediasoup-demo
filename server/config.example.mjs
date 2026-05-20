@@ -159,6 +159,7 @@ export const config = {
 			initialAvailableOutgoingBitrate: 1000000,
 			minimumAvailableOutgoingBitrate: 600000,
 			maxSctpMessageSize: 262144,
+			sctpSendBufferSize: 262144,
 		},
 		/**
 		 * Additional options that are not part of WebRtcTransportOptions but
@@ -185,6 +186,7 @@ export const config = {
 				// recvBufferSize: 2000000,
 			},
 			maxSctpMessageSize: 262144,
+			sctpSendBufferSize: 262144,
 		},
 	},
 	providers: {
