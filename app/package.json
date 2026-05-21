@@ -34,7 +34,7 @@
 		"domready": "1.0.8",
 		"face-api.js": "0.21.0",
 		"hark": "1.2.3",
-		"js-cookie": "2.2.1",
+		"js-cookie": "3.0.7",
 		"mediasoup-client": "github:versatica/mediasoup-client#v3",
 		"pokemon": "2.0.2",
 		"prop-types": "15.8.1",
