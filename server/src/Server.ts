@@ -327,8 +327,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		disableBwe = false,
 	}: {
 		roomId: RoomId;
-		consumerReplicas?: number;
-		usePipeTransports?: boolean;
+		consumerReplicas: number;
+		usePipeTransports: boolean;
 		disableBwe: boolean;
 	}): Promise<Room> {
 		if (usePipeTransports && this.#config.mediasoup.numWorkers < 2) {
