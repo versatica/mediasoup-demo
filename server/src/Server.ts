@@ -324,10 +324,12 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		roomId,
 		consumerReplicas = 0,
 		usePipeTransports = false,
+		disableBwe = false,
 	}: {
 		roomId: RoomId;
 		consumerReplicas?: number;
 		usePipeTransports?: boolean;
+		disableBwe: boolean;
 	}): Promise<Room> {
 		if (usePipeTransports && this.#config.mediasoup.numWorkers < 2) {
 			throw new InvalidStateError(
@@ -392,6 +394,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 				roomId,
 				consumerReplicas,
 				usePipeTransports,
+				disableBwe,
 				config: this.#config,
 				producerRouter,
 				consumerRouter,
@@ -586,8 +589,17 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	private handleWsServer(): void {
 		this.#wsServer.on(
 			'get-or-create-room',
-			({ roomId, consumerReplicas, usePipeTransports }, resolve, reject) => {
-				this.getOrCreateRoom({ roomId, consumerReplicas, usePipeTransports })
+			(
+				{ roomId, consumerReplicas, usePipeTransports, disableBwe },
+				resolve,
+				reject
+			) => {
+				this.getOrCreateRoom({
+					roomId,
+					consumerReplicas,
+					usePipeTransports,
+					disableBwe,
+				})
 					.then(resolve)
 					.catch(reject);
 			}
