@@ -211,7 +211,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#createdAt = new Date();
 
 		if (disableBwe) {
-			this.#consumerRouterRtpCapabilities = this.disableTccRtpExtensions();
+			this.#consumerRouterRtpCapabilities = this.disableBweRtpExtensions();
 		} else {
 			this.#consumerRouterRtpCapabilities =
 				this.#consumerRouter.rtpCapabilities;
@@ -998,10 +998,10 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		}
 	}
 
-	private disableTccRtpExtensions(): mediasoupTypes.RtpCapabilities {
+	private disableBweRtpExtensions(): mediasoupTypes.RtpCapabilities {
 		const rtpCapabilities = clone(this.#consumerRouter.rtpCapabilities);
 
-		// Disable TCC-related extensions
+		// Disable BWE related extensions.
 		const tccRtpExtensions = [
 			'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01',
 			'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time',
