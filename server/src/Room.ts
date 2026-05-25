@@ -100,7 +100,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #config: ServerConfig;
 	readonly #producerRouter: mediasoupTypes.Router;
 	readonly #consumerRouter: mediasoupTypes.Router;
-	readonly #consumerRouterRtpCapabilities: mediasoupTypes.RtpCapabilities;
+	readonly #consumerRouterRtpCapabilities: mediasoupTypes.RouterRtpCapabilities;
 	readonly #producerWebRtcServer: mediasoupTypes.WebRtcServer;
 	readonly #consumerWebRtcServer: mediasoupTypes.WebRtcServer;
 	readonly #audioLevelObserver: mediasoupTypes.AudioLevelObserver;
@@ -998,7 +998,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		}
 	}
 
-	private disableBweRtpExtensions(): mediasoupTypes.RtpCapabilities {
+	private disableBweRtpExtensions(): mediasoupTypes.RouterRtpCapabilities {
 		const rtpCapabilities = clone(this.#consumerRouter.rtpCapabilities);
 
 		// Disable BWE related extensions.
