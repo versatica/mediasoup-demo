@@ -322,9 +322,9 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	 */
 	private async getOrCreateRoom({
 		roomId,
-		consumerReplicas = 0,
-		usePipeTransports = false,
-		disableBwe = false,
+		consumerReplicas,
+		usePipeTransports,
+		disableBwe,
 	}: {
 		roomId: RoomId;
 		consumerReplicas: number;
