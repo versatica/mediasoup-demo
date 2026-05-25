@@ -100,7 +100,9 @@ async function run() {
 	const externalVideo = urlParser.query.externalVideo === 'true';
 	const throttleSecret = urlParser.query.throttleSecret;
 	const e2eKey = urlParser.query.e2eKey;
-	const consumerReplicas = urlParser.query.consumerReplicas;
+	const consumerReplicas = urlParser.query.consumerReplicas
+		? Number(urlParser.query.consumerReplicas)
+		: 0;
 	const usePipeTransports = urlParser.query.usePipeTransports === 'true';
 	const disableBwe = urlParser.query.disableBwe === 'true';
 	const rtcstatsUrl = urlParser.query.rtcstatsUrl;
