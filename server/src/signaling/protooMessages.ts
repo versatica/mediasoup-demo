@@ -124,7 +124,6 @@ type RequestFromPeer =
 				displayName: string;
 				device: PeerDevice;
 				rtpCapabilities?: mediasoupTypes.RtpCapabilities;
-				sctpCapabilities?: mediasoupTypes.SctpCapabilities;
 			};
 			responseData: {
 				peers: SerializedPeer[];
@@ -133,7 +132,6 @@ type RequestFromPeer =
 	| {
 			name: 'createWebRtcTransport';
 			data: {
-				sctpCapabilities?: mediasoupTypes.SctpCapabilities;
 				forceTcp: boolean;
 				appData: WebRtcTransportAppData;
 			};

@@ -280,6 +280,10 @@ window.__startDataChannelTest = function () {
 			view.setUint32(0, number++);
 			roomClient.sendChatMessage(buffer);
 		}
+
+		if (number === Math.pow(2, 32) - 1) {
+			clearInterval(dataChannelTestInterval);
+		}
 	}, 100);
 };
 
@@ -295,28 +299,36 @@ window.__stopDataChannelTest = function () {
 	}
 };
 
-window.__testSctp = async function ({ timeout = 100, bot = false } = {}) {
+window.__testSctp = async function ({ timeout = 250, bot = false } = {}) {
 	let dp;
 
 	if (!bot) {
-		await window.CLIENT.enableChatDataProducer();
-
 		dp = window.CLIENT._chatDataProducer;
 	} else {
-		await window.CLIENT.enableBotDataProducer();
-
 		dp = window.CLIENT._botDataProducer;
 	}
 
 	logger.debug(
-		'__testSctp() | DataProducer created [bot:%s, streamId:%d, readyState:%s]',
+		'__testSctp() | DataProducer selected [bot:%s, streamId:%d, readyState:%s]',
 		bot ? 'true' : 'false',
 		dp.sctpStreamParameters.streamId,
 		dp.readyState
 	);
 
+	let msgIdx = 0;
+
 	function send() {
-		dp.send(`I am streamId ${dp.sctpStreamParameters.streamId}`);
+		msgIdx++;
+
+		logger.debug('__testSctp() >>> sending message [idx:%o]', msgIdx);
+
+		dp.send(
+			`message idx ${msgIdx} [streamId:${dp.sctpStreamParameters.streamId}]`
+		);
+
+		setTimeout(() => {
+			send();
+		}, timeout);
 	}
 
 	if (dp.readyState === 'open') {
@@ -331,8 +343,6 @@ window.__testSctp = async function ({ timeout = 100, bot = false } = {}) {
 			send();
 		});
 	}
-
-	setTimeout(() => window.__testSctp({ timeout, bot }), timeout);
 };
 
 setInterval(() => {
