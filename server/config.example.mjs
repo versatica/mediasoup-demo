@@ -63,7 +63,6 @@ export const config = {
 				'sctp',
 			],
 			disableLiburing: false,
-			useBuiltInSctpStack: false,
 		},
 		/**
 		 * mediasoup Router options.
@@ -159,8 +158,11 @@ export const config = {
 		webRtcTransportOptions: {
 			initialAvailableOutgoingBitrate: 1000000,
 			minimumAvailableOutgoingBitrate: 600000,
-			maxSctpMessageSize: 262144,
-			sctpSendBufferSize: 262144,
+			maxSendMessageSize: 5000000,
+			sctpSendBufferSize: 7000000,
+			sctpPerStreamSendQueueLimit: 5000000,
+			maxReceiveMessageSize: 5000000,
+			sctpMaxReceiverWindowBufferSize: 7000000,
 		},
 		/**
 		 * Additional options that are not part of WebRtcTransportOptions but
@@ -186,8 +188,11 @@ export const config = {
 				// sendBufferSize: 2000000,
 				// recvBufferSize: 2000000,
 			},
-			maxSctpMessageSize: 262144,
-			sctpSendBufferSize: 262144,
+			maxSendMessageSize: 5000000,
+			sctpSendBufferSize: 7000000,
+			sctpPerStreamSendQueueLimit: 5000000,
+			maxReceiveMessageSize: 5000000,
+			sctpMaxReceiverWindowBufferSize: 7000000,
 		},
 	},
 	providers: {

@@ -92,7 +92,6 @@ export type PeerEvents = {
 	'create-webrtc-transport': [
 		{
 			direction: TransportDirection;
-			sctpCapabilities?: mediasoupTypes.SctpCapabilities;
 			forceTcp?: boolean;
 		},
 		resolve: (
@@ -157,7 +156,6 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	#displayName?: string;
 	#device?: PeerDevice;
 	#rtpCapabilities?: mediasoupTypes.RtpCapabilities;
-	#sctpCapabilities?: mediasoupTypes.SctpCapabilities;
 	readonly #transports: Map<
 		string,
 		mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>
@@ -403,14 +401,6 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			dataProducer.id,
 			dataProducer.appData.channel
 		);
-
-		if (!this.#sctpCapabilities) {
-			this.#logger.debug(
-				'consumeData() | no SCTP capabilities, cannot consume data'
-			);
-
-			return;
-		}
 
 		const transport = this.getConsumerWebRtcTransport();
 
@@ -806,13 +796,12 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 					throw new InvalidStateError('Peer already joined');
 				}
 
-				const { displayName, device, rtpCapabilities, sctpCapabilities } = data;
+				const { displayName, device, rtpCapabilities } = data;
 
 				this.#joined = true;
 				this.#displayName = displayName;
 				this.#device = device;
 				this.#rtpCapabilities = rtpCapabilities;
-				this.#sctpCapabilities = sctpCapabilities;
 
 				clearTimeout(this.#joinTimer);
 
@@ -824,7 +813,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			}
 
 			case 'createWebRtcTransport': {
-				const { sctpCapabilities, forceTcp, appData } = data;
+				const { forceTcp, appData } = data;
 				const { direction } = appData;
 				const transport = await new Promise<
 					mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>
@@ -832,7 +821,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				>((resolve, reject) => {
 					this.emit(
 						'create-webrtc-transport',
-						{ direction, sctpCapabilities, forceTcp },
+						{ direction, forceTcp },
 						resolve,
 						reject
 					);

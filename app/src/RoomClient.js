@@ -382,314 +382,328 @@ export default class RoomClient {
 				request.data
 			);
 
-			switch (request.method) {
-				case 'newConsumer': {
-					await this._consumingAwaitQueue.push(async () => {
-						if (!this._consume) {
-							reject(403, 'I do not want to consume');
+			try {
+				switch (request.method) {
+					case 'newConsumer': {
+						await this._consumingAwaitQueue.push(async () => {
+							if (!this._consume) {
+								reject(403, 'I do not want to consume');
 
-							return;
-						}
+								return;
+							}
 
-						const {
-							peerId,
-							// NOTE: We don't need this since we will use our recv transport
-							// anyway.
-							// transportId,
-							consumerId,
-							producerId,
-							kind,
-							rtpParameters,
-							type,
-							producerPaused,
-							consumerScore,
-							appData,
-						} = request.data;
-
-						try {
-							const consumer = await this._recvTransport.consume({
-								id: consumerId,
+							const {
+								peerId,
+								// NOTE: We don't need this since we will use our recv transport
+								// anyway.
+								// transportId,
+								consumerId,
 								producerId,
 								kind,
 								rtpParameters,
-								// NOTE: Force streamId to be same in mic and webcam and different
-								// in screen sharing so libwebrtc will just try to sync mic and
-								// webcam streams from the same remote peer.
-								streamId: `${peerId}-${appData.source === 'screensharing' ? 'screensharing' : 'audio-video'}`,
-								appData: { ...appData, peerId },
-							});
+								type,
+								producerPaused,
+								consumerScore,
+								appData,
+							} = request.data;
 
-							if (this._e2eKey && e2e.isSupported()) {
-								e2e.setupReceiverTransform(consumer.rtpReceiver);
-							}
+							try {
+								const consumer = await this._recvTransport.consume({
+									id: consumerId,
+									producerId,
+									kind,
+									rtpParameters,
+									// NOTE: Force streamId to be same in mic and webcam and different
+									// in screen sharing so libwebrtc will just try to sync mic and
+									// webcam streams from the same remote peer.
+									streamId: `${peerId}-${appData.source === 'screensharing' ? 'screensharing' : 'audio-video'}`,
+									appData: { ...appData, peerId },
+								});
 
-							// Store in the map.
-							this._consumers.set(consumer.id, consumer);
+								if (this._e2eKey && e2e.isSupported()) {
+									e2e.setupReceiverTransform(consumer.rtpReceiver);
+								}
 
-							consumer.on('transportclose', () => {
-								this._consumers.delete(consumer.id);
-							});
+								// Store in the map.
+								this._consumers.set(consumer.id, consumer);
 
-							const { spatialLayers, temporalLayers } =
-								mediasoupClient.parseScalabilityMode(
-									consumer.rtpParameters.encodings[0].scalabilityMode
+								consumer.on('transportclose', () => {
+									this._consumers.delete(consumer.id);
+								});
+
+								const { spatialLayers, temporalLayers } =
+									mediasoupClient.parseScalabilityMode(
+										consumer.rtpParameters.encodings[0].scalabilityMode
+									);
+
+								store.dispatch(
+									stateActions.addConsumer(
+										{
+											id: consumer.id,
+											type: type,
+											locallyPaused: false,
+											remotelyPaused: producerPaused,
+											rtpParameters: consumer.rtpParameters,
+											spatialLayers: spatialLayers,
+											temporalLayers: temporalLayers,
+											preferredSpatialLayer: spatialLayers - 1,
+											preferredTemporalLayer: temporalLayers - 1,
+											priority: 1,
+											codec:
+												consumer.rtpParameters.codecs[0].mimeType.split('/')[1],
+											track: consumer.track,
+										},
+										peerId
+									)
 								);
 
-							store.dispatch(
-								stateActions.addConsumer(
-									{
-										id: consumer.id,
-										type: type,
-										locallyPaused: false,
-										remotelyPaused: producerPaused,
-										rtpParameters: consumer.rtpParameters,
-										spatialLayers: spatialLayers,
-										temporalLayers: temporalLayers,
-										preferredSpatialLayer: spatialLayers - 1,
-										preferredTemporalLayer: temporalLayers - 1,
-										priority: 1,
-										codec:
-											consumer.rtpParameters.codecs[0].mimeType.split('/')[1],
-										track: consumer.track,
-									},
-									peerId
-								)
-							);
+								store.dispatch(
+									stateActions.setConsumerScore(consumerId, consumerScore)
+								);
 
-							store.dispatch(
-								stateActions.setConsumerScore(consumerId, consumerScore)
-							);
+								// We are ready. Answer the protoo request so the server will
+								// resume this Consumer (which was paused for now if video).
+								accept();
 
-							// We are ready. Answer the protoo request so the server will
-							// resume this Consumer (which was paused for now if video).
-							accept();
-
-							// If audio-only mode is enabled, pause it.
-							if (consumer.kind === 'video' && store.getState().me.audioOnly)
-								this._pauseConsumer(consumer);
-						} catch (error) {
-							logger.error('"newConsumer" request failed:%o', error);
-
-							store.dispatch(
-								requestActions.notify({
-									type: 'error',
-									text: `Error creating a Consumer: ${error}`,
-								})
-							);
-
-							throw error;
-						}
-					});
-
-					break;
-				}
-
-				case 'newDataConsumer': {
-					await this._consumingAwaitQueue.push(async () => {
-						if (!this._consume) {
-							reject(403, 'I do not want to data consume');
-
-							return;
-						}
-
-						if (!this._useDataChannel) {
-							reject(403, 'I do not want DataChannels');
-
-							return;
-						}
-
-						const {
-							// NOTE: Undefined if bot.
-							peerId,
-							// NOTE: We don't need this since we will use our recv transport
-							// anyway.
-							// transportId,
-							dataConsumerId,
-							dataProducerId,
-							sctpStreamParameters,
-							label,
-							protocol,
-							appData,
-						} = request.data;
-
-						try {
-							const dataConsumer = await this._recvTransport.consumeData({
-								id: dataConsumerId,
-								dataProducerId,
-								sctpStreamParameters,
-								label,
-								protocol,
-								appData: { ...appData, peerId },
-							});
-
-							switch (appData.channel) {
-								case 'chat': {
-									// TODO: For debugging.
-									window.CHAT_DATA_CONSUMER = dataConsumer;
-
-									break;
-								}
-
-								case 'bot': {
-									// TODO: For debugging.
-									window.BOT_DATA_CONSUMER = dataConsumer;
-
-									break;
-								}
-							}
-
-							// Store in the map.
-							this._dataConsumers.set(dataConsumer.id, dataConsumer);
-
-							dataConsumer.on('transportclose', () => {
-								this._dataConsumers.delete(dataConsumer.id);
-							});
-
-							dataConsumer.on('open', () => {
-								logger.debug('DataConsumer "open" event');
-							});
-
-							dataConsumer.on('close', () => {
-								logger.warn('DataConsumer "close" event');
-
-								this._dataConsumers.delete(dataConsumer.id);
-							});
-
-							dataConsumer.on('error', error => {
-								logger.error('DataConsumer "error" event:%o', error);
+								// If audio-only mode is enabled, pause it.
+								if (consumer.kind === 'video' && store.getState().me.audioOnly)
+									this._pauseConsumer(consumer);
+							} catch (error) {
+								logger.error('"newConsumer" request failed:%o', error);
 
 								store.dispatch(
 									requestActions.notify({
 										type: 'error',
-										text: `DataConsumer error: ${error}`,
+										text: `Error creating a Consumer: ${error}`,
 									})
 								);
-							});
 
-							dataConsumer.on('message', message => {
-								let messageLength;
+								throw error;
+							}
+						});
 
-								if (typeof message === 'string') {
-									messageLength = this._textEncoder.encode(message).length;
-								} else if (message instanceof ArrayBuffer) {
-									messageLength = message.byteLength;
-								} else if (ArrayBuffer.isView(message)) {
-									messageLength = message.byteLength;
-								} else if (message instanceof Blob) {
-									messageLength = message.size;
-								} else {
-									messageLength = 'N/A';
-								}
+						break;
+					}
 
-								logger.debug(
-									'DataConsumer "message" event [streamId:%d, length:%s]',
-									dataConsumer.sctpStreamParameters.streamId,
-									messageLength
-								);
+					case 'newDataConsumer': {
+						await this._consumingAwaitQueue.push(async () => {
+							if (!this._consume) {
+								reject(403, 'I do not want to data consume');
 
-								if (message instanceof ArrayBuffer) {
-									const view = new DataView(message);
-									const number = view.getUint32();
+								return;
+							}
 
-									if (number == Math.pow(2, 32) - 1) {
-										logger.warn('dataChannelTest finished!');
+							if (!this._useDataChannel) {
+								reject(403, 'I do not want DataChannels');
 
-										this._nextDataChannelTestNumber = 0;
+								return;
+							}
 
-										return;
-									}
+							const {
+								// NOTE: Undefined if bot.
+								peerId,
+								// NOTE: We don't need this since we will use our recv transport
+								// anyway.
+								// transportId,
+								dataConsumerId,
+								dataProducerId,
+								sctpStreamParameters,
+								label,
+								protocol,
+								appData,
+							} = request.data;
 
-									if (number > this._nextDataChannelTestNumber) {
-										logger.warn(
-											'dataChannelTest: %s packets missing',
-											number - this._nextDataChannelTestNumber
-										);
-									}
+							try {
+								const dataConsumer = await this._recvTransport.consumeData({
+									id: dataConsumerId,
+									dataProducerId,
+									sctpStreamParameters,
+									label,
+									protocol,
+									appData: { ...appData, peerId },
+								});
 
-									this._nextDataChannelTestNumber = number + 1;
-
-									return;
-								} else if (typeof message !== 'string') {
-									logger.warn('ignoring DataConsumer "message" (not a string)');
-
-									return;
-								}
-
-								if (messageLength > 200) {
-									message = `${message.slice(0, 40)} ... ${message.slice(-40)}`;
-								}
-
-								switch (dataConsumer.label) {
+								switch (appData.channel) {
 									case 'chat': {
-										const { peers } = store.getState();
-										const peersArray = Object.keys(peers).map(
-											_peerId => peers[_peerId]
-										);
-										const sendingPeer = peersArray.find(peer =>
-											peer.dataConsumers.includes(dataConsumer.id)
-										);
-
-										if (!sendingPeer) {
-											logger.warn('DataConsumer "message" from unknown peer');
-
-											break;
-										}
-
-										store.dispatch(
-											requestActions.notify({
-												title: `${sendingPeer.displayName} says:`,
-												text: message,
-												timeout: 5000,
-											})
-										);
+										// TODO: For debugging.
+										window.CHAT_DATA_CONSUMER = dataConsumer;
 
 										break;
 									}
 
 									case 'bot': {
-										store.dispatch(
-											requestActions.notify({
-												title: 'Message from Bot:',
-												text: message,
-												timeout: 5000,
-											})
-										);
+										// TODO: For debugging.
+										window.BOT_DATA_CONSUMER = dataConsumer;
 
 										break;
 									}
 								}
-							});
 
-							store.dispatch(
-								stateActions.addDataConsumer(
-									{
-										id: dataConsumer.id,
-										sctpStreamParameters: dataConsumer.sctpStreamParameters,
-										label: dataConsumer.label,
-										protocol: dataConsumer.protocol,
-									},
-									peerId
-								)
-							);
+								// Store in the map.
+								this._dataConsumers.set(dataConsumer.id, dataConsumer);
 
-							// We are ready. Answer the protoo request.
-							accept();
-						} catch (error) {
-							logger.error('"newDataConsumer" request failed:%o', error);
+								dataConsumer.on('transportclose', () => {
+									this._dataConsumers.delete(dataConsumer.id);
+								});
 
-							store.dispatch(
-								requestActions.notify({
-									type: 'error',
-									text: `Error creating a DataConsumer: ${error}`,
-								})
-							);
+								dataConsumer.on('open', () => {
+									logger.debug('DataConsumer "open" event');
+								});
 
-							throw error;
-						}
-					});
+								dataConsumer.on('close', () => {
+									logger.warn('DataConsumer "close" event');
 
-					break;
+									this._dataConsumers.delete(dataConsumer.id);
+								});
+
+								dataConsumer.on('error', error => {
+									logger.error('DataConsumer "error" event:%o', error);
+
+									store.dispatch(
+										requestActions.notify({
+											type: 'error',
+											text: `DataConsumer error: ${error}`,
+										})
+									);
+								});
+
+								dataConsumer.on('message', message => {
+									let messageLength;
+
+									if (typeof message === 'string') {
+										messageLength = this._textEncoder.encode(message).length;
+									} else if (message instanceof ArrayBuffer) {
+										messageLength = message.byteLength;
+									} else if (ArrayBuffer.isView(message)) {
+										messageLength = message.byteLength;
+									} else if (message instanceof Blob) {
+										messageLength = message.size;
+									} else {
+										messageLength = 'N/A';
+									}
+
+									logger.debug(
+										'DataConsumer "message" event [streamId:%d, length:%s]',
+										dataConsumer.sctpStreamParameters.streamId,
+										messageLength
+									);
+
+									if (message instanceof ArrayBuffer) {
+										const view = new DataView(message);
+										const number = view.getUint32();
+
+										if (number == Math.pow(2, 32) - 1) {
+											logger.debug('dataChannelTest finished!');
+
+											this._nextDataChannelTestNumber = 0;
+
+											return;
+										}
+
+										if (number > this._nextDataChannelTestNumber) {
+											logger.warn(
+												'dataChannelTest: %s packets missing',
+												number - this._nextDataChannelTestNumber
+											);
+										}
+
+										logger.debug('dataChannelTest: received packet %o', number);
+
+										this._nextDataChannelTestNumber = number + 1;
+
+										return;
+									} else if (typeof message !== 'string') {
+										logger.warn(
+											'ignoring DataConsumer "message" (not a string)'
+										);
+
+										return;
+									}
+
+									if (messageLength > 200) {
+										message = `${message.slice(0, 40)} ... ${message.slice(-40)}`;
+									}
+
+									switch (dataConsumer.label) {
+										case 'chat': {
+											const { peers } = store.getState();
+											const peersArray = Object.keys(peers).map(
+												_peerId => peers[_peerId]
+											);
+											const sendingPeer = peersArray.find(peer =>
+												peer.dataConsumers.includes(dataConsumer.id)
+											);
+
+											if (!sendingPeer) {
+												logger.warn('DataConsumer "message" from unknown peer');
+
+												break;
+											}
+
+											store.dispatch(
+												requestActions.notify({
+													title: `${sendingPeer.displayName} says:`,
+													text: message,
+													timeout: 5000,
+												})
+											);
+
+											break;
+										}
+
+										case 'bot': {
+											store.dispatch(
+												requestActions.notify({
+													title: 'Message from Bot:',
+													text: message,
+													timeout: 5000,
+												})
+											);
+
+											break;
+										}
+									}
+								});
+
+								store.dispatch(
+									stateActions.addDataConsumer(
+										{
+											id: dataConsumer.id,
+											sctpStreamParameters: dataConsumer.sctpStreamParameters,
+											label: dataConsumer.label,
+											protocol: dataConsumer.protocol,
+										},
+										peerId
+									)
+								);
+
+								// We are ready. Answer the protoo request.
+								accept();
+							} catch (error) {
+								logger.error('"newDataConsumer" request failed:%o', error);
+
+								store.dispatch(
+									requestActions.notify({
+										type: 'error',
+										text: `Error creating a DataConsumer: ${error}`,
+									})
+								);
+
+								throw error;
+							}
+						});
+
+						break;
+					}
 				}
+			} catch (error) {
+				logger.error(
+					'failed to process "%s" request:%o',
+					request.method,
+					error
+				);
+
+				reject(error);
 			}
 		});
 
@@ -2358,9 +2372,6 @@ export default class RoomClient {
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
 					{
-						sctpCapabilities: this._useDataChannel
-							? this._mediasoupDevice.sctpCapabilities
-							: undefined,
 						forceTcp: this._forceTcp,
 						appData: {
 							direction: 'producer',
@@ -2470,9 +2481,6 @@ export default class RoomClient {
 				const transportInfo = await this._protoo.request(
 					'createWebRtcTransport',
 					{
-						sctpCapabilities: this._useDataChannel
-							? this._mediasoupDevice.sctpCapabilities
-							: undefined,
 						forceTcp: this._forceTcp,
 						appData: {
 							direction: 'consumer',
@@ -2532,10 +2540,6 @@ export default class RoomClient {
 				rtpCapabilities: this._consume
 					? this._mediasoupDevice.rtpCapabilities
 					: undefined,
-				sctpCapabilities:
-					this._useDataChannel && this._consume
-						? this._mediasoupDevice.sctpCapabilities
-						: undefined,
 			});
 
 			store.dispatch(stateActions.setRoomState('connected'));

@@ -38,12 +38,14 @@ export class Bot {
 		logger.debug('create()');
 
 		const producerDirectTransport = await producerRouter.createDirectTransport({
-			maxMessageSize: 4000000,
+			maxSendMessageSize: 4000000,
+			maxReceiveMessageSize: 4000000,
 		});
 
 		const consumerDirectTransport = usePipeTransports
 			? await producerRouter.createDirectTransport({
-					maxMessageSize: 4000000,
+					maxSendMessageSize: 4000000,
+					maxReceiveMessageSize: 4000000,
 				})
 			: producerDirectTransport;
 
