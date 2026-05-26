@@ -50,6 +50,7 @@ By adding query parameters into the URL you can set certain settings of the appl
 | `consumerReplicas` | Number | Create artificial replicas of yourself and receive their audio and video (not displayed in the UI) | 0 |
 | `usePipeTransports` | Boolean | If `true`, each room will use separate mediasoup routers to produce and consume and will communicate them with pipe transports | `false` |
 | `rtcstatsUrl`      | String  | If present, Websocket URL to connect to an [rtcstats-server](https://github.com/rtcstats/rtcstats), including token (it overrides the `providers.rtcstatsUrl` value in `config.mjs` in the server)  | |
+| `disableBwe`       | Boolean | Disable Bandwidth Estimation (BWE). If `true`, no BWE logic will be run in mediasoup-worker. | `false` |
 
 
 ## Installation

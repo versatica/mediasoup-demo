@@ -71,6 +71,7 @@ export default class RoomClient {
 		e2eKey,
 		consumerReplicas,
 		usePipeTransports,
+		disableBwe,
 		stats,
 		rtcstatsUrl,
 	}) {
@@ -231,6 +232,7 @@ export default class RoomClient {
 			peerId,
 			consumerReplicas,
 			usePipeTransports,
+			disableBwe,
 		});
 
 		// protoo-client Peer instance.

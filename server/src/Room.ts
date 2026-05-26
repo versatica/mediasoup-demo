@@ -35,6 +35,7 @@ export type RoomCreateOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
 	usePipeTransports: boolean;
+	disableBwe: boolean;
 	config: ServerConfig;
 	producerRouter: mediasoupTypes.Router;
 	consumerRouter: mediasoupTypes.Router;
@@ -47,6 +48,7 @@ type RoomConstructorOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
 	usePipeTransports: boolean;
+	disableBwe: boolean;
 	config: ServerConfig;
 	producerRouter: mediasoupTypes.Router;
 	consumerRouter: mediasoupTypes.Router;
@@ -98,6 +100,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #config: ServerConfig;
 	readonly #producerRouter: mediasoupTypes.Router;
 	readonly #consumerRouter: mediasoupTypes.Router;
+	readonly #consumerRouterRtpCapabilities: mediasoupTypes.RouterRtpCapabilities;
 	readonly #producerWebRtcServer: mediasoupTypes.WebRtcServer;
 	readonly #consumerWebRtcServer: mediasoupTypes.WebRtcServer;
 	readonly #audioLevelObserver: mediasoupTypes.AudioLevelObserver;
@@ -119,6 +122,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		roomId,
 		consumerReplicas,
 		usePipeTransports,
+		disableBwe,
 		config,
 		producerRouter,
 		consumerRouter,
@@ -155,6 +159,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			roomId,
 			consumerReplicas,
 			usePipeTransports,
+			disableBwe,
 			config,
 			producerRouter,
 			consumerRouter,
@@ -174,6 +179,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		roomId,
 		consumerReplicas,
 		usePipeTransports,
+		disableBwe,
 		config,
 		producerRouter,
 		consumerRouter,
@@ -203,6 +209,13 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#protooRoom = protooRoom;
 		this.#bot = bot;
 		this.#createdAt = new Date();
+
+		if (disableBwe) {
+			this.#consumerRouterRtpCapabilities = this.disableBweRtpExtensions();
+		} else {
+			this.#consumerRouterRtpCapabilities =
+				this.#consumerRouter.rtpCapabilities;
+		}
 
 		this.handleProducerRouter();
 		this.handleConsumerRouter();
@@ -517,7 +530,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		});
 
 		peer.on('get-router-rtp-capabilities', callback => {
-			callback(this.#consumerRouter.rtpCapabilities);
+			callback(this.#consumerRouterRtpCapabilities);
 		});
 
 		peer.on(
@@ -708,7 +721,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		});
 
 		broadcasterPeer.on('get-router-rtp-capabilities', callback => {
-			callback(this.#consumerRouter.rtpCapabilities);
+			callback(this.#consumerRouterRtpCapabilities);
 		});
 
 		broadcasterPeer.on(
@@ -936,7 +949,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		switch (name) {
 			case 'getRouterRtpCapabilities': {
 				accept({
-					routerRtpCapabilities: this.#consumerRouter.rtpCapabilities,
+					routerRtpCapabilities: this.#consumerRouterRtpCapabilities,
 				});
 
 				break;
@@ -975,5 +988,23 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				assertUnreachable('request name', name);
 			}
 		}
+	}
+
+	private disableBweRtpExtensions(): mediasoupTypes.RouterRtpCapabilities {
+		const rtpCapabilities = clone(this.#consumerRouter.rtpCapabilities);
+
+		// Disable BWE related extensions.
+		const tccRtpExtensions = [
+			'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01',
+			'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time',
+		];
+
+		for (const extension of rtpCapabilities.headerExtensions || []) {
+			if (tccRtpExtensions.includes(extension.uri)) {
+				extension.direction = 'recvonly';
+			}
+		}
+
+		return rtpCapabilities;
 	}
 }
