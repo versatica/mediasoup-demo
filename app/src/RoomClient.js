@@ -993,7 +993,9 @@ export default class RoomClient {
 			};
 
 			const headerExtensionOptions = {
-				absCaptureTime: true,
+				// TODO: Enable it when https://issues.webrtc.org/issues/503013383 is
+				// fixed.
+				// absCaptureTime: true,
 			};
 
 			if (this._forcePCMA) {
@@ -1160,7 +1162,9 @@ export default class RoomClient {
 			};
 
 			const headerExtensionOptions = {
-				absCaptureTime: true,
+				// TODO: Enable it when https://issues.webrtc.org/issues/503013383 is
+				// fixed.
+				// absCaptureTime: true,
 			};
 
 			if (this._forceVP8) {
