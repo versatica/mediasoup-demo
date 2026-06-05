@@ -467,8 +467,12 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			dataConsumer => dataConsumer.appData.channel === 'bot'
 		);
 
+		if (!botDataConsumer) {
+			return;
+		}
+
 		try {
-			await botDataConsumer?.send(message);
+			await botDataConsumer.send(message);
 		} catch (error) {
 			this.#logger.warn(`sendMessage() | failed to send message: ${error}`);
 		}
