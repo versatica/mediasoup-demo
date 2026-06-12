@@ -54,7 +54,7 @@
 		"globals": "^17.6.0",
 		"mediasoup-client": "^3.20.0",
 		"prettier": "^3.8.3",
-		"tsx": "^4.21.0",
+		"tsx": "^4.22.4",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.59.2"
 	}
