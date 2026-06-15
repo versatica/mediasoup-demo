@@ -43,10 +43,10 @@
 	"dependencies": {
 		"@sitespeed.io/throttle": "^6.0.0",
 		"awaitqueue": "^3.3.0",
-		"body-parser": "^2.2.2",
+		"body-parser": "^2.3.0",
 		"debug": "^4.4.3",
 		"express": "^5.2.1",
-		"mediasoup": "^3.20.5",
+		"mediasoup": "^3.20.6",
 		"picocolors": "^1.1.1",
 		"pidusage": "^4.0.1",
 		"protoo-server": "^4.0.8",
@@ -59,14 +59,14 @@
 		"@types/node": "^24.10.1",
 		"@types/pidusage": "^2.0.5",
 		"@types/protoo-server": "^4.0.6",
-		"eslint": "^10.4.1",
+		"eslint": "^10.5.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-prettier": "^5.5.6",
 		"globals": "^17.6.0",
 		"nodemon": "^3.1.14",
-		"prettier": "^3.8.3",
+		"prettier": "^3.8.4",
 		"tsx": "^4.22.4",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.60.1"
+		"typescript-eslint": "^8.61.0"
 	}
 }
