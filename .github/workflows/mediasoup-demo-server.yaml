@@ -22,13 +22,13 @@ jobs:
           - os: ubuntu-24.04
             node: 24
           - os: ubuntu-26.04
-            node: 24
+            node: 26
           - os: macos-14
             node: 22
           - os: macos-15
             node: 24
           - os: windows-2025
-            node: 24
+            node: 26
 
     runs-on: ${{ matrix.ci.os }}
 
