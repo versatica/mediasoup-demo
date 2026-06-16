@@ -67,15 +67,20 @@ Additionally you can open an interactive terminal client from any other terminal
 
 Some shell scripts are provided for convenience:
 
-- The `start.sh` script:
-  - It detects the host IP and sets the `MEDIASOUP_LISTEN_IP` environment variable, useful if your `config.mjs` reads it.
-  - It sets the `DEBUG` environment variable to activate **mediasoup** and **mediasoup-demo-server** logs.
-  - It sets the `TERMINAL` environment variable to "true" if it was called with `--terminal` command line argument. This runs the server with an interactive terminal client.
-  - Then it invokes `npm run watch` if `--watch` command line argument is given, or `npm start` otherwise.
-- `watch.sh` script is a shortcut of `start.sh --watch`, useful for development in case you are modifying TypeScript source code.
-- Notice that `start.sh` cannot be called with both `--terminal` and `--watch` command line arguments. Also notice that `watch.sh` cannot be called with `--terminal` command line argument. This is because, when in watch mode, **mediasoup-demo-server** is managed by [nodemon](https://nodemon.io/), which interferes with stdin, making it impossible to launch a terminal in the same process.
+The `start.sh` script:
+
+- It detects the host IP and sets the `MEDIASOUP_LISTEN_IP` environment variable, useful if your `config.mjs` reads it.
+- It sets the `DEBUG` environment variable to activate **mediasoup** and **mediasoup-demo-server** logs.
+- It sets the `TERMINAL` environment variable to "true" if it was called with `--terminal` command line argument. This runs the server with an interactive terminal client.
+- Then it invokes `npm run watch` if `--watch` command line argument is given, or `npm start` otherwise.
+
+The `watch.sh` script is a shortcut of `start.sh --watch`, useful for development in case you are modifying TypeScript source code.
+
+Notice that `start.sh` cannot be called with both `--terminal` and `--watch` command line arguments. Also notice that `watch.sh` cannot be called with `--terminal` command line argument. This is because, when in watch mode, **mediasoup-demo-server** is managed by [nodemon](https://nodemon.io/), which interferes with stdin, making it impossible to launch a terminal in the same process.
 
 Alternatively, you can directly invoke `npm start` or `npm run watch` (see details below).
+
+**NOTE:** `npm start` and `start.sh` do **not** transpile TypeScript code to JavaScript, so before running them you may want to run `npm run typescript:build`.
 
 ## Connecting an interactive terminal to a running server
 
