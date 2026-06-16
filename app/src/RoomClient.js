@@ -786,7 +786,7 @@ export default class RoomClient {
 						const consumer = this._consumers.get(consumerId);
 
 						if (!consumer) {
-							logger.warn(
+							logger.debug(
 								`'consumerClosed' notification for unknown consumerId %o`,
 								consumerId
 							);
@@ -905,7 +905,7 @@ export default class RoomClient {
 						const dataConsumer = this._dataConsumers.get(dataConsumerId);
 
 						if (!dataConsumer) {
-							logger.warn(
+							logger.debug(
 								`'dataConsumerClosed' notification for unknown dataConsumerId %o`,
 								dataConsumerId
 							);
