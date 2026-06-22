@@ -1,0 +1,75 @@
+name: update-mediasoup
+
+# Triggered (via workflow_dispatch) by the mediasoup repository once a new
+# mediasoup version has been published to NPM and its mediasoup-worker prebuilt
+# binaries have been uploaded to the GitHub release. It bumps the mediasoup
+# dependency in server/package.json and server/package-lock.json and commits the
+# change to the default branch.
+#
+# It can also be triggered manually from the Actions tab, optionally entering the
+# version to update to (empty means "latest published on NPM").
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'mediasoup version to update to (defaults to the latest published on NPM if empty)'
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26
+
+      # Resolve the target version: use the given input or, if empty, the latest
+      # mediasoup version published on NPM.
+      - name: Resolve mediasoup version
+        id: resolve
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${INPUT_VERSION}"
+          if [ -z "${version}" ]; then
+            version=$(npm view mediasoup version)
+          fi
+          echo "Updating mediasoup to ${version}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      # Update mediasoup in server/package.json and server/package-lock.json.
+      # Since the mediasoup-worker prebuilt binary for this version already exists
+      # in the GitHub release, this install downloads it instead of compiling the
+      # worker, so it is fast.
+      - name: Update mediasoup dependency
+        run: npm install mediasoup@${{ steps.resolve.outputs.version }} --save --prefix server
+
+      # Commit and push only if something actually changed. The commit message
+      # includes the version ("update mediasoup to X.Y.Z").
+      - name: Commit and push
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet -- server/package.json server/package-lock.json; then
+            echo "mediasoup is already at ${VERSION}, nothing to commit"
+            exit 0
+          fi
+          git add server/package.json server/package-lock.json
+          git commit -m "update mediasoup to ${VERSION}"
+          git push
