@@ -58,3 +58,7 @@ jobs:
 
       - name: npm run lint --prefix server
         run: npm run lint --prefix server
+
+      - name: npm run typescript:build --prefix server
+        run: npm run typescript:build --prefix server
+
