@@ -2,9 +2,9 @@ name: demo-redeploy
 
 # Triggers a redeploy of the demo server (https://v3demo.mediasoup.org) by
 # opening an SSH connection to it. No command is sent: the server runs the
-# forced command configured in the `deploy` user's authorized_keys
-# (the /home/deploy/update-mediasoup-demo-v3.sh script), which pulls the latest
-# v3 branch, installs deps, transpiles and restarts the PM2 service.
+# forced command configured in the SSH user's `.ssh/authorized_keys`, which
+# pulls the latest v3 branch, installs deps, transpiles and restarts the PM2
+# service.
 #
 # It runs automatically once the mediasoup-demo-server workflow completes
 # successfully on v3, so we never redeploy on a broken build nor on pull
@@ -50,7 +50,7 @@ jobs:
           printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" >> "$HOME/.ssh/known_hosts"
 
           # No command is given on purpose: the server enforces the forced
-          # `command="...update-mediasoup-demo-v3.sh"` in authorized_keys, so
+          # `command="...update-mediasoup-demo-v3.sh"` in .ssh/authorized_keys, so
           # that script is what actually runs. Its stdout/stderr is streamed
           # back here and shown in the Actions logs.
           ssh -i "$HOME/.ssh/deploy_key" \
