@@ -52,11 +52,16 @@ jobs:
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
       # Update mediasoup in server/package.json and server/package-lock.json.
-      # Since the mediasoup-worker prebuilt binary for this version already exists
-      # in the GitHub release, this install downloads it instead of compiling the
-      # worker, so it is fast.
+      # --ignore-scripts is important: this workflow only needs to bump the
+      # manifest files and commit them, not build anything. Without it, npm would
+      # run mediasoup's postinstall (compiling the worker from source when no
+      # prebuilt binary exists for the requested version, which can take minutes
+      # and stall here) and the server's own `prepare` script (which runs `tsc`
+      # and may fail for an incompatible mediasoup version). All that validation
+      # belongs to the mediasoup-demo-server CI workflow that runs afterwards,
+      # not here.
       - name: Update mediasoup dependency
-        run: npm install mediasoup@${{ steps.resolve.outputs.version }} --save --prefix server
+        run: npm install mediasoup@${{ steps.resolve.outputs.version }} --save --ignore-scripts --foreground-scripts --prefix server
 
       # Commit and push only if something actually changed. The commit message
       # includes the version ("update mediasoup to X.Y.Z").
@@ -82,8 +87,8 @@ jobs:
       # A push made with the default GITHUB_TOKEN does NOT trigger other
       # workflows, so dispatch the mediasoup-demo-server CI workflow explicitly
       # (only if we actually pushed a bump). On success it triggers the
-      # demo-redeploy workflow, so the bump is validated by CI before deploying.
-      - name: Trigger mediasoup-demo-server CI
+      # demo-redeploy workflow, so the bump is validated before deploying.
+      - name: Trigger mediasoup-demo-server CI workflow
         if: steps.commit.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
