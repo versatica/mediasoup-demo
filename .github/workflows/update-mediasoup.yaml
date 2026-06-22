@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-26.04
     permissions:
       contents: write
+      # Needed to dispatch the redeploy workflow once the bump is pushed.
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -59,6 +61,7 @@ jobs:
       # Commit and push only if something actually changed. The commit message
       # includes the version ("update mediasoup to X.Y.Z").
       - name: Commit and push
+        id: commit
         env:
           VERSION: ${{ steps.resolve.outputs.version }}
         shell: bash
@@ -68,8 +71,19 @@ jobs:
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           if git diff --quiet -- server/package.json server/package-lock.json; then
             echo "mediasoup is already at ${VERSION}, nothing to commit"
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
           git add server/package.json server/package-lock.json
           git commit -m "update mediasoup to ${VERSION}"
           git push
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
+      # A push made with the default GITHUB_TOKEN does NOT trigger other
+      # workflows, so dispatch the redeploy workflow explicitly (only if we
+      # actually pushed a bump).
+      - name: Trigger redeploy
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run redeploy.yaml --ref v3

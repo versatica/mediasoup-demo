@@ -1,0 +1,47 @@
+name: redeploy
+
+# Triggers a redeploy of the demo server (https://v3demo.mediasoup.org) by
+# opening an SSH connection to it. No command is sent: the server runs the
+# forced command configured in the `deploy` user's authorized_keys
+# (the /home/deploy/update-mediasoup-demo-v3.sh script), which pulls the latest
+# v3 branch, installs deps, transpiles and restarts the PM2 service.
+#
+# It runs automatically on every push to v3 (including the bump committed by the
+# update-mediasoup workflow) and can also be triggered manually from the Actions
+# tab.
+on:
+  push:
+    branches: [v3]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  redeploy:
+    name: Trigger redeploy on the demo server
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Trigger redeploy via SSH
+        run: |
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          install -m 600 /dev/null "$HOME/.ssh/deploy_key"
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > "$HOME/.ssh/deploy_key"
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" >> "$HOME/.ssh/known_hosts"
+
+          # No command is given on purpose: the server enforces the forced
+          # `command="...update-mediasoup-demo-v3.sh"` in authorized_keys, so
+          # that script is what actually runs. Its stdout/stderr is streamed
+          # back here and shown in the Actions logs.
+          ssh -i "$HOME/.ssh/deploy_key" \
+              -p "${{ secrets.SSH_PORT }}" \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
