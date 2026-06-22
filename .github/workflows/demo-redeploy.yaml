@@ -6,12 +6,15 @@ name: demo-redeploy
 # (the /home/deploy/update-mediasoup-demo-v3.sh script), which pulls the latest
 # v3 branch, installs deps, transpiles and restarts the PM2 service.
 #
-# It runs automatically on every push to v3 (including the bump committed by the
-# update-mediasoup workflow) and can also be triggered manually from the Actions
-# tab.
+# It runs automatically once the mediasoup-demo-server workflow completes
+# successfully for a push to v3, so we never redeploy on a broken build nor on
+# pull requests. It is also triggered (via workflow_dispatch) by the
+# update-mediasoup workflow right after it commits a mediasoup bump, and can be
+# triggered manually from the Actions tab.
 on:
-  push:
-    branches: [v3]
+  workflow_run:
+    workflows: [mediasoup-demo-server]
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -25,6 +28,14 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+    # Run on a manual/automated dispatch (e.g. from update-mediasoup), or only
+    # when the triggering mediasoup-demo-server run succeeded for a push to the
+    # v3 branch (not for pull requests).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'v3')
 
     steps:
       - name: Trigger mediasoup-demo application redeploy via SSH
