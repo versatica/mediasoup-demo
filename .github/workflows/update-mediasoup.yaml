@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-26.04
     permissions:
       contents: write
-      # Needed to dispatch the redeploy workflow once the bump is pushed.
+      # Needed to dispatch the demo-redeploy workflow once the bump is pushed.
       actions: write
     steps:
       - name: Checkout
@@ -80,10 +80,10 @@ jobs:
           echo "changed=true" >> "${GITHUB_OUTPUT}"
 
       # A push made with the default GITHUB_TOKEN does NOT trigger other
-      # workflows, so dispatch the redeploy workflow explicitly (only if we
-      # actually pushed a bump).
-      - name: Trigger redeploy
+      # workflows, so dispatch the demo-redeploy workflow explicitly (only if
+      # we actually pushed a bump).
+      - name: Trigger demo-redeploy
         if: steps.commit.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run redeploy.yaml --ref v3
+        run: gh workflow run demo-redeploy.yaml --ref v3

@@ -1,4 +1,4 @@
-name: redeploy
+name: demo-redeploy
 
 # Triggers a redeploy of the demo server (https://v3demo.mediasoup.org) by
 # opening an SSH connection to it. No command is sent: the server runs the
@@ -20,14 +20,14 @@ concurrency:
 
 jobs:
   redeploy:
-    name: Trigger redeploy on the demo server
+    name: Trigger redeploy on the mediasoup-demo application
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
       contents: read
 
     steps:
-      - name: Trigger redeploy via SSH
+      - name: Trigger mediasoup-demo application redeploy via SSH
         run: |
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
