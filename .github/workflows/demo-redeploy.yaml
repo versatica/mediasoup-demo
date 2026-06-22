@@ -7,10 +7,11 @@ name: demo-redeploy
 # v3 branch, installs deps, transpiles and restarts the PM2 service.
 #
 # It runs automatically once the mediasoup-demo-server workflow completes
-# successfully for a push to v3, so we never redeploy on a broken build nor on
-# pull requests. It is also triggered (via workflow_dispatch) by the
-# update-mediasoup workflow right after it commits a mediasoup bump, and can be
-# triggered manually from the Actions tab.
+# successfully on v3, so we never redeploy on a broken build nor on pull
+# requests. This covers both a push to v3 (a human merge/commit) and a manual or
+# CI-dispatched run on v3 (the update-mediasoup workflow dispatches
+# mediasoup-demo-server after committing a bump, so the bump is validated by CI
+# before deploying). It can also be triggered manually from the Actions tab.
 on:
   workflow_run:
     workflows: [mediasoup-demo-server]
@@ -28,14 +29,16 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    # Run on a manual/automated dispatch (e.g. from update-mediasoup), or only
-    # when the triggering mediasoup-demo-server run succeeded for a push to the
-    # v3 branch (not for pull requests).
+    # Run on a manual dispatch, or only when the triggering mediasoup-demo-server
+    # run succeeded on the v3 branch. We accept both 'push' (a human merge/commit
+    # to v3) and 'workflow_dispatch' (the run that update-mediasoup dispatches, or
+    # a manual CI run on v3); pull request runs are excluded.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push' &&
-       github.event.workflow_run.head_branch == 'v3')
+       github.event.workflow_run.head_branch == 'v3' &&
+       (github.event.workflow_run.event == 'push' ||
+        github.event.workflow_run.event == 'workflow_dispatch'))
 
     steps:
       - name: Trigger mediasoup-demo application redeploy via SSH

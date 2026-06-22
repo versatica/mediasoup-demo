@@ -80,10 +80,11 @@ jobs:
           echo "changed=true" >> "${GITHUB_OUTPUT}"
 
       # A push made with the default GITHUB_TOKEN does NOT trigger other
-      # workflows, so dispatch the demo-redeploy workflow explicitly (only if
-      # we actually pushed a bump).
-      - name: Trigger demo-redeploy
+      # workflows, so dispatch the mediasoup-demo-server CI workflow explicitly
+      # (only if we actually pushed a bump). On success it triggers the
+      # demo-redeploy workflow, so the bump is validated by CI before deploying.
+      - name: Trigger mediasoup-demo-server CI
         if: steps.commit.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run demo-redeploy.yaml --ref v3
+        run: gh workflow run mediasoup-demo-server.yaml --ref v3
