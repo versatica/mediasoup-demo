@@ -2,7 +2,7 @@
 
 [![][github-actions-shield-mediasoup-demo-server]][github-actions-mediasoup-demo-server]
 [![][github-actions-shield-update-mediasoup]][github-actions-update-mediasoup]
-[![][github-actions-shield-demo-redeploy]][github-actions-demo-redeploy]
+[![][github-actions-shield-demo-deploy]][github-actions-demo-deploy]
 
 mediasoup-demo SFU server written in TypeScript.
 
@@ -155,5 +155,5 @@ You can support **mediasoup** by [sponsoring](https://mediasoup.org/sponsor) it.
 [github-actions-mediasoup-demo-server]: https://github.com/versatica/mediasoup-demo/actions/workflows/mediasoup-demo-server.yaml?query=branch%3Av3
 [github-actions-shield-update-mediasoup]: https://github.com/versatica/mediasoup-demo/actions/workflows/update-mediasoup.yaml/badge.svg?branch=v3
 [github-actions-update-mediasoup]: https://github.com/versatica/mediasoup-demo/actions/workflows/update-mediasoup.yaml?query=branch%3Av3
-[github-actions-shield-demo-redeploy]: https://github.com/versatica/mediasoup-demo/actions/workflows/demo-redeploy.yaml/badge.svg?branch=v3
-[github-actions-demo-redeploy]: https://github.com/versatica/mediasoup-demo/actions/workflows/demo-redeploy.yaml?query=branch%3Av3
+[github-actions-shield-demo-deploy]: https://github.com/versatica/mediasoup-demo/actions/workflows/demo-deploy.yaml/badge.svg?branch=v3
+[github-actions-demo-deploy]: https://github.com/versatica/mediasoup-demo/actions/workflows/demo-deploy.yaml?query=branch%3Av3

@@ -1,8 +1,13 @@
 #/bin/bash
 
 #
-# This script must be placed into any subdirectory in the mediasoup-demo
-# project and must be executed from the root folder.
+# This script builds mediasoup-demo application and uploads it to our
+# server.
+#
+# It builds the frontend app using the local mediasoup-client code instead
+# of the one in the NPM registry.
+#
+# This script must be executed from the root folder.
 #
 
 set -e
@@ -32,4 +37,4 @@ if [ "$1" == "" ] || [ "$1" == "node" ]; then
 		server/ deploy@vhost1-deploy:/var/www/test.mediasoup.org/
 fi
 
-# And then ssh v2 with "deploy" user and run ./update-mediasoup-demo-server.sh.
+# And then run deploy-mediasoup-demo-test.sh in the server.
