@@ -1,13 +1,13 @@
-name: demo-redeploy
+name: demo-deploy
 
-# Triggers a redeploy of the demo server (https://v3demo.mediasoup.org) by
+# Triggers a deploy of the demo server (https://v3demo.mediasoup.org) by
 # opening an SSH connection to it. No command is sent: the server runs the
 # forced command configured in the SSH user's `.ssh/authorized_keys`, which
 # pulls the latest v3 branch, installs deps, transpiles and restarts the PM2
 # service.
 #
 # It runs automatically once the mediasoup-demo-server workflow completes
-# successfully for a push to v3 (a human merge/commit), so we never redeploy on a
+# successfully for a push to v3 (a human merge/commit), so we never deploy on a
 # broken build nor on pull requests. It is also dispatched directly by the
 # update-mediasoup workflow, which validates the mediasoup bump before
 # dispatching. It can also be triggered manually from the Actions tab.
@@ -22,8 +22,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  redeploy:
-    name: Trigger redeploy on the mediasoup-demo application
+  deploy:
+    name: Trigger deploy on the mediasoup-demo application
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
@@ -39,7 +39,7 @@ jobs:
        github.event.workflow_run.head_branch == 'v3')
 
     steps:
-      - name: Trigger mediasoup-demo application redeploy via SSH
+      - name: Trigger mediasoup-demo application deploy via SSH
         run: |
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
@@ -48,9 +48,11 @@ jobs:
           printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" >> "$HOME/.ssh/known_hosts"
 
           # No command is given on purpose: the server enforces the forced
-          # `command="...update-mediasoup-demo-v3.sh"` in .ssh/authorized_keys, so
-          # that script is what actually runs. Its stdout/stderr is streamed
-          # back here and shown in the Actions logs.
+          # `command="...deploy/deploy-demo.sh"` in .ssh/authorized_keys, so
+          # that script is what actually runs. The install path and PM2 service
+          # name are injected by the same authorized_keys entry via `environment=`
+          # options, so they never appear in this repo. Its stdout/stderr is
+          # streamed back here and shown in the Actions logs.
           ssh -i "$HOME/.ssh/deploy_key" \
               -p "${{ secrets.SSH_PORT }}" \
               -o IdentitiesOnly=yes \
