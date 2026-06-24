@@ -3,7 +3,13 @@ name: mediasoup-demo-server
 on:
   push:
     branches: [v3]
+    paths:
+      - 'server/**'
+      - '.github/workflows/mediasoup-demo-server.yaml'
   pull_request:
+    paths:
+      - 'server/**'
+      - '.github/workflows/mediasoup-demo-server.yaml'
   workflow_dispatch:
 
 concurrency:
