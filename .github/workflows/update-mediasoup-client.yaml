@@ -1,0 +1,113 @@
+name: update-mediasoup-client
+
+# Triggered (via workflow_dispatch) by the mediasoup-client repository once a new
+# mediasoup-client version has been published to NPM. It bumps the
+# mediasoup-client dependency in app/package.json and app/package-lock.json,
+# validates the bump, commits it to the default branch (v3) and triggers the
+# demo-deploy workflow.
+#
+# It can also be triggered manually from the Actions tab, optionally entering the
+# version to update to (empty means "latest published on NPM").
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'mediasoup-client version to update to (defaults to the latest published on NPM if empty)'
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+      # Needed to dispatch the demo-deploy workflow once the bump is validated.
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26
+
+      # Resolve the target version: use the given input or, if empty, the latest
+      # mediasoup-client version published on NPM.
+      - name: Resolve mediasoup-client version
+        id: resolve
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${INPUT_VERSION}"
+          if [ -z "${version}" ]; then
+            version=$(npm view mediasoup-client version)
+          fi
+          echo "Updating mediasoup-client to ${version}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      # Bump mediasoup-client in app/package.json and app/package-lock.json.
+      # --ignore-scripts keeps this fast and side-effect free: it only rewrites
+      # the manifest files. The actual build and validation happen in the
+      # "Validate the bump" step below. --legacy-peer-deps is required because
+      # otherwise npm install fails on the app's peer dependency conflicts.
+      - name: Bump mediasoup-client dependency
+        run: npm install mediasoup-client@${{ steps.resolve.outputs.version }} --save --ignore-scripts --foreground-scripts --legacy-peer-deps --prefix app
+
+      # Detect whether the bump actually changed the package.json file. If
+      # mediasoup-client was already at the requested version there is nothing
+      # else to do.
+      - name: Check for changes
+        id: changes
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- app/package.json app/package-lock.json; then
+            echo "mediasoup-client is already at ${VERSION}, nothing to do"
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      # Validate the bump BEFORE committing it, by installing the locked
+      # dependencies and building the app. An incompatible mediasoup-client
+      # version fails here, so a broken bump never lands on v3 nor reaches the
+      # demo server. --legacy-peer-deps is required (see above).
+      - name: Validate the bump
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          npm ci --prefix app --foreground-scripts --legacy-peer-deps
+          npm run build --prefix app
+
+      # Commit and push the (now validated) bump. The commit message includes the
+      # version ("update mediasoup-client to X.Y.Z").
+      - name: Commit and push
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add app/package.json app/package-lock.json
+          git commit -m "update mediasoup-client to ${VERSION}"
+          git push
+
+      # Trigger the demo-deploy workflow directly. We dispatch it (instead of
+      # relying on the push above to trigger it) because a push made with the
+      # default GITHUB_TOKEN does NOT trigger other workflows; workflow_dispatch
+      # is the documented exception that DOES work with the GITHUB_TOKEN. The bump
+      # was already validated above, so deploying it is safe.
+      - name: Trigger demo-deploy
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run demo-deploy.yaml --ref v3
