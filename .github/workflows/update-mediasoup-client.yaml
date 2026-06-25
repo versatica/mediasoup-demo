@@ -83,6 +83,9 @@ jobs:
       - name: Validate the bump
         if: steps.changes.outputs.changed == 'true'
         run: |
+          # The app's vite.config.ts imports server/config.mjs, which is not
+          # committed to the repo, so provide it from the example config.
+          cp server/config.example.mjs server/config.mjs
           npm ci --prefix app --foreground-scripts --legacy-peer-deps
           npm run build --prefix app
 
