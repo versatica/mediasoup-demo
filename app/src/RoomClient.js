@@ -1934,7 +1934,11 @@ export default class RoomClient {
 			});
 
 			this._chatDataProducer.on('bufferedamountlow', () => {
-				logger.debug('chat DataProducer "bufferedamountlow" event');
+				logger.debug(
+					'chat DataProducer "bufferedamountlow" event [bufferedAmountLowThreshold:%o, bufferedAmount:%o]',
+					this._chatDataProducer.bufferedAmountLowThreshold,
+					this._chatDataProducer.bufferedAmount
+				);
 			});
 		} catch (error) {
 			logger.error('enableChatDataProducer() | failed:%o', error);
@@ -2021,7 +2025,11 @@ export default class RoomClient {
 			});
 
 			this._botDataProducer.on('bufferedamountlow', () => {
-				logger.debug('bot DataProducer "bufferedamountlow" event');
+				logger.debug(
+					'bot DataProducer "bufferedamountlow" event [bufferedAmountLowThreshold:%o, bufferedAmount:%o]',
+					this._botDataProducer.bufferedAmountLowThreshold,
+					this._botDataProducer.bufferedAmount
+				);
 			});
 		} catch (error) {
 			logger.error('enableBotDataProducer() | failed:%o', error);
