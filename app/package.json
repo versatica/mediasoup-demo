@@ -64,7 +64,7 @@
 		"eslint": "8.56.0",
 		"eslint-plugin-import": "2.32.0",
 		"eslint-plugin-react": "7.37.5",
-		"postcss": "8.5.8",
+		"postcss": "8.5.25",
 		"postcss-load-config": "6.0.1",
 		"prettier": "3.8.1",
 		"react-dev-utils": "12.0.1",
