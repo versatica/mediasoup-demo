@@ -41,7 +41,7 @@
 		"connect-terminal": "npx mediasoup-demo-server-connect-terminal"
 	},
 	"dependencies": {
-		"@sitespeed.io/throttle": "^6.0.0",
+		"@sitespeed.io/throttle": "^6.0.1",
 		"awaitqueue": "^3.3.1",
 		"body-parser": "^2.3.0",
 		"debug": "^4.4.3",
@@ -50,23 +50,31 @@
 		"picocolors": "^1.1.1",
 		"pidusage": "^4.0.1",
 		"protoo-server": "^4.0.8",
-		"supports-color": "^10.2.2"
+		"supports-color": "^11.0.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@types/debug": "^4.1.13",
 		"@types/express": "^5.0.6",
-		"@types/node": "^26.0.0",
+		"@types/node": "^26.1.2",
 		"@types/pidusage": "^2.0.5",
 		"@types/protoo-server": "^4.0.6",
-		"eslint": "^10.5.0",
+		"eslint": "^10.8.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-prettier": "^5.5.6",
-		"globals": "^17.6.0",
+		"globals": "^17.9.0",
 		"nodemon": "^3.1.14",
-		"prettier": "^3.8.4",
-		"tsx": "^4.22.4",
+		"prettier": "^3.9.6",
+		"tsx": "^4.23.5",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.61.1"
+		"typescript-eslint": "^8.66.0"
+	},
+	"allowScripts": {
+		"mediasoup@3.24.0": true,
+		"bufferutil@4.0.9": true,
+		"utf-8-validate@5.0.10": true,
+		"fsevents@2.3.3": true,
+		"esbuild@0.28.1": true,
+		"es5-ext@0.10.64": true
 	}
 }

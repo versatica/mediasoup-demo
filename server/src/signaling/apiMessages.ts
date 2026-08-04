@@ -175,8 +175,7 @@ type RequestNameResponseDataMap<U extends { name: string }> = {
 type RequestName = Request['name'];
 
 export type RequestNameForRoom =
-	| 'getRouterRtpCapabilities'
-	| 'createBroadcasterPeer';
+	'getRouterRtpCapabilities' | 'createBroadcasterPeer';
 
 export type RequestNameForBroadcastPeer =
 	| 'join'

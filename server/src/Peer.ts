@@ -529,8 +529,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 	}
 
 	private getConsumerWebRtcTransport():
-		| mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>
-		| undefined {
+		mediasoupTypes.WebRtcTransport<WebRtcTransportAppData> | undefined {
 		return Array.from(this.#transports.values()).find(
 			transport => transport.appData.direction === 'consumer'
 		);
