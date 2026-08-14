@@ -72,8 +72,10 @@ export default class RoomClient {
 		consumerReplicas,
 		usePipeTransports,
 		disableBwe,
-		stats,
+		absCaptureTimeForAudio,
+		absCaptureTimeForVideo,
 		rtcstatsUrl,
+		stats,
 	}) {
 		logger.debug(
 			'constructor() [roomId:"%s", peerId:"%s", displayName:"%s", device:%s]',
@@ -189,6 +191,16 @@ export default class RoomClient {
 		// Enabled end-to-end encryption.
 		this._e2eKey = e2eKey;
 
+		// Enable abs-capture-time RTP extension for audio.
+		this._absCaptureTimeForAudio = absCaptureTimeForAudio;
+
+		// Enable abs-capture-time RTP extension for video.
+		this._absCaptureTimeForVideo = absCaptureTimeForVideo;
+
+		// rtcstats server URL (if given via app query param or retrived from
+		// server).
+		this._rtcstatsUrl = rtcstatsUrl;
+
 		// Show WebRTC stats.
 		this._stats = stats;
 
@@ -206,10 +218,6 @@ export default class RoomClient {
 		// rtcstats-js tracer.
 		// See https://github.com/rtcstats/rtcstats-js
 		this._rtcstatsTrace = null;
-
-		// rtcstats server URL (if given via app query param or retrived from
-		// server).
-		this._rtcstatsUrl = rtcstatsUrl;
 
 		if (externalVideo) {
 			this._externalVideo = document.createElement('video');
@@ -993,9 +1001,7 @@ export default class RoomClient {
 			};
 
 			const headerExtensionOptions = {
-				// TODO: Enable it when https://issues.webrtc.org/issues/503013383 is
-				// fixed.
-				// absCaptureTime: true,
+				absCaptureTime: this._absCaptureTimeForAudio,
 			};
 
 			if (this._forcePCMA) {
@@ -1162,9 +1168,7 @@ export default class RoomClient {
 			};
 
 			const headerExtensionOptions = {
-				// TODO: Enable it when https://issues.webrtc.org/issues/503013383 is
-				// fixed.
-				// absCaptureTime: true,
+				absCaptureTime: this._absCaptureTimeForVideo,
 			};
 
 			if (this._forceVP8) {
@@ -1515,8 +1519,13 @@ export default class RoomClient {
 
 			let encodings;
 			let codec;
+
 			const codecOptions = {
 				videoGoogleStartBitrate: 1000,
+			};
+
+			const headerExtensionOptions = {
+				absCaptureTime: this._absCaptureTimeForVideo,
 			};
 
 			if (this._forceVP8) {
@@ -1630,6 +1639,7 @@ export default class RoomClient {
 				track,
 				encodings,
 				codecOptions,
+				headerExtensionOptions,
 				codec,
 				appData: {
 					source: 'screensharing',
