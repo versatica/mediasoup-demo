@@ -105,10 +105,12 @@ async function run() {
 		: 0;
 	const usePipeTransports = urlParser.query.usePipeTransports === 'true';
 	const disableBwe = urlParser.query.disableBwe === 'true';
-	const absCaptureTimeForAudio =
-		urlParser.query.absCaptureTimeForAudio === 'true';
-	const absCaptureTimeForVideo =
-		urlParser.query.absCaptureTimeForVideo === 'true';
+	const enableAbsCaptureTime =
+		urlParser.query.enableAbsCaptureTime === 'true'
+			? true
+			: urlParser.query.enableAbsCaptureTime === 'false'
+				? false
+				: undefined;
 	const rtcstatsUrl = urlParser.query.rtcstatsUrl;
 
 	// Enable face detection on demand.
@@ -235,8 +237,7 @@ async function run() {
 		consumerReplicas,
 		usePipeTransports,
 		disableBwe,
-		absCaptureTimeForAudio,
-		absCaptureTimeForVideo,
+		enableAbsCaptureTime,
 		rtcstatsUrl,
 		stats,
 	});

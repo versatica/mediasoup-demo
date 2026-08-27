@@ -72,8 +72,7 @@ export default class RoomClient {
 		consumerReplicas,
 		usePipeTransports,
 		disableBwe,
-		absCaptureTimeForAudio,
-		absCaptureTimeForVideo,
+		enableAbsCaptureTime,
 		rtcstatsUrl,
 		stats,
 	}) {
@@ -191,11 +190,8 @@ export default class RoomClient {
 		// Enabled end-to-end encryption.
 		this._e2eKey = e2eKey;
 
-		// Enable abs-capture-time RTP extension for audio.
-		this._absCaptureTimeForAudio = absCaptureTimeForAudio;
-
-		// Enable abs-capture-time RTP extension for video.
-		this._absCaptureTimeForVideo = absCaptureTimeForVideo;
+		// Enable abs-capture-time RTP extension.
+		this._enableAbsCaptureTime = enableAbsCaptureTime;
 
 		// rtcstats server URL (if given via app query param or retrived from
 		// server).
@@ -1000,12 +996,8 @@ export default class RoomClient {
 				opusNack: true,
 			};
 
-			const headerExtensionOptions = {
-				absCaptureTime: this._absCaptureTimeForAudio,
-			};
-
 			if (this._forcePCMA) {
-				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+				codec = this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 					c => c.mimeType.toLowerCase() === 'audio/pcma'
 				);
 
@@ -1019,7 +1011,6 @@ export default class RoomClient {
 			this._micProducer = await this._sendTransport.produce({
 				track,
 				codecOptions,
-				headerExtensionOptions,
 				codec,
 				appData: {
 					source: 'audio',
@@ -1167,12 +1158,8 @@ export default class RoomClient {
 				videoGoogleStartBitrate: 1000,
 			};
 
-			const headerExtensionOptions = {
-				absCaptureTime: this._absCaptureTimeForVideo,
-			};
-
 			if (this._forceVP8) {
-				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+				codec = this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 					c => c.mimeType.toLowerCase() === 'video/vp8'
 				);
 
@@ -1180,7 +1167,7 @@ export default class RoomClient {
 					throw new Error('desired VP8 codec+configuration is not supported');
 				}
 			} else if (this._forceH264) {
-				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+				codec = this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 					c => c.mimeType.toLowerCase() === 'video/h264'
 				);
 
@@ -1188,7 +1175,7 @@ export default class RoomClient {
 					throw new Error('desired H264 codec+configuration is not supported');
 				}
 			} else if (this._forceVP9) {
-				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+				codec = this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 					c => c.mimeType.toLowerCase() === 'video/vp9'
 				);
 
@@ -1196,7 +1183,7 @@ export default class RoomClient {
 					throw new Error('desired VP9 codec+configuration is not supported');
 				}
 			} else if (this._forceAV1) {
-				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+				codec = this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 					c => c.mimeType.toLowerCase() === 'video/av1'
 				);
 
@@ -1208,7 +1195,7 @@ export default class RoomClient {
 			if (this._enableWebcamLayers) {
 				// If VP9 is the only available video codec then use SVC.
 				const firstVideoCodec =
-					this._mediasoupDevice.rtpCapabilities.codecs.find(
+					this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 						c => c.kind === 'video'
 					);
 
@@ -1267,7 +1254,6 @@ export default class RoomClient {
 				track,
 				encodings,
 				codecOptions,
-				headerExtensionOptions,
 				codec,
 				appData: {
 					source: 'video',
@@ -1524,12 +1510,8 @@ export default class RoomClient {
 				videoGoogleStartBitrate: 1000,
 			};
 
-			const headerExtensionOptions = {
-				absCaptureTime: this._absCaptureTimeForVideo,
-			};
-
 			if (this._forceVP8) {
-				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+				codec = this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 					c => c.mimeType.toLowerCase() === 'video/vp8'
 				);
 
@@ -1537,7 +1519,7 @@ export default class RoomClient {
 					throw new Error('desired VP8 codec+configuration is not supported');
 				}
 			} else if (this._forceH264) {
-				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+				codec = this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 					c => c.mimeType.toLowerCase() === 'video/h264'
 				);
 
@@ -1545,7 +1527,7 @@ export default class RoomClient {
 					throw new Error('desired H264 codec+configuration is not supported');
 				}
 			} else if (this._forceVP9) {
-				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+				codec = this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 					c => c.mimeType.toLowerCase() === 'video/vp9'
 				);
 
@@ -1553,7 +1535,7 @@ export default class RoomClient {
 					throw new Error('desired VP9 codec+configuration is not supported');
 				}
 			} else if (this._forceAV1) {
-				codec = this._mediasoupDevice.rtpCapabilities.codecs.find(
+				codec = this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 					c => c.mimeType.toLowerCase() === 'video/av1'
 				);
 
@@ -1566,7 +1548,7 @@ export default class RoomClient {
 			if (this._enableSharingLayers) {
 				// If VP9 is the only available video codec then use SVC.
 				const firstVideoCodec =
-					this._mediasoupDevice.rtpCapabilities.codecs.find(
+					this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 						c => c.kind === 'video'
 					);
 
@@ -1639,7 +1621,6 @@ export default class RoomClient {
 				track,
 				encodings,
 				codecOptions,
-				headerExtensionOptions,
 				codec,
 				appData: {
 					source: 'screensharing',
@@ -2342,6 +2323,10 @@ export default class RoomClient {
 
 			this._mediasoupDevice = await mediasoupClient.Device.factory({
 				handlerName: this._handlerName,
+				forcedRtpExtensions: {
+					'http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time':
+						this._enableAbsCaptureTime,
+				},
 			});
 
 			store.dispatch(
@@ -2560,7 +2545,7 @@ export default class RoomClient {
 				displayName: this._displayName,
 				device: this._device,
 				rtpCapabilities: this._consume
-					? this._mediasoupDevice.rtpCapabilities
+					? this._mediasoupDevice.recvRtpCapabilities
 					: undefined,
 			});
 
