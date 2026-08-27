@@ -2319,8 +2319,6 @@ export default class RoomClient {
 		logger.debug('_joinRoom()');
 
 		try {
-			logger.debug('_joinRoom() | using mediasoupClient.Device.factory()');
-
 			this._mediasoupDevice = await mediasoupClient.Device.factory({
 				handlerName: this._handlerName,
 				forcedRtpExtensions: {
