@@ -35,7 +35,7 @@
 		"face-api.js": "0.21.0",
 		"hark": "1.2.3",
 		"js-cookie": "2.2.1",
-		"mediasoup-client": "^3.22.0",
+		"mediasoup-client": "^3.23.0",
 		"pokemon": "2.0.2",
 		"prop-types": "15.8.1",
 		"protoo-client": "4.0.8",
