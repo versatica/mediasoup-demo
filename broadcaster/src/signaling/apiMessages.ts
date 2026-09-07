@@ -8,7 +8,7 @@ import type {
 	ApiPath,
 	PeerProducersInfo,
 	PlainTransportRemoteData,
-	PlainTransportAppData,
+	TransportDirection,
 	PeerProducerAppData,
 } from '../types';
 
@@ -61,9 +61,9 @@ type Request =
 				'transports',
 			];
 			data: {
+				direction: TransportDirection;
 				comedia?: boolean;
 				rtcpMux?: boolean;
-				appData: PlainTransportAppData;
 			};
 			responseData: PlainTransportRemoteData;
 	  }
