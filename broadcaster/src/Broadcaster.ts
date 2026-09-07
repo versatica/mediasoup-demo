@@ -193,11 +193,9 @@ export class Broadcaster {
 				'transports',
 			],
 			data: {
+				direction: 'producer',
 				comedia: true,
 				rtcpMux: false,
-				appData: {
-					direction: 'producer',
-				},
 			},
 		});
 
@@ -214,11 +212,9 @@ export class Broadcaster {
 				'transports',
 			],
 			data: {
+				direction: 'producer',
 				comedia: true,
 				rtcpMux: false,
-				appData: {
-					direction: 'producer',
-				},
 			},
 		});
 
@@ -345,11 +341,9 @@ export class Broadcaster {
 				'transports',
 			],
 			data: {
+				direction: 'consumer',
 				comedia: false,
 				rtcpMux: false,
-				appData: {
-					direction: 'consumer',
-				},
 			},
 		});
 
@@ -366,11 +360,9 @@ export class Broadcaster {
 				'transports',
 			],
 			data: {
+				direction: 'consumer',
 				comedia: false,
 				rtcpMux: false,
-				appData: {
-					direction: 'consumer',
-				},
 			},
 		});
 
