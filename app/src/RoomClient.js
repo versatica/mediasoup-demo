@@ -2418,6 +2418,11 @@ export default class RoomClient {
 						callback,
 						errback // eslint-disable-line no-shadow
 					) => {
+						logger.debug(
+							'send transport "connect" event: [dtlsParameters:%o]',
+							dtlsParameters2
+						);
+
 						this._protoo
 							.request('connectWebRtcTransport', {
 								transportId: this._sendTransport.id,
@@ -2431,6 +2436,13 @@ export default class RoomClient {
 				this._sendTransport.on(
 					'produce',
 					async ({ kind, rtpParameters, appData }, callback, errback) => {
+						logger.debug(
+							'send transport "produce" event: [kind:%o, rtpParameters:%o, appData:%o]',
+							kind,
+							rtpParameters,
+							appData
+						);
+
 						try {
 							// eslint-disable-next-line no-shadow
 							const { producerId } = await this._protoo.request('produce', {
@@ -2455,7 +2467,7 @@ export default class RoomClient {
 						errback
 					) => {
 						logger.debug(
-							'"producedata" event: [sctpStreamParameters:%o, appData:%o]',
+							'send transport  "producedata" event: [sctpStreamParameters:%o, appData:%o]',
 							sctpStreamParameters,
 							appData
 						);
@@ -2526,6 +2538,11 @@ export default class RoomClient {
 						callback,
 						errback // eslint-disable-line no-shadow
 					) => {
+						logger.debug(
+							'recv transport "connect" event: [dtlsParameters:%o]',
+							dtlsParameters2
+						);
+
 						this._protoo
 							.request('connectWebRtcTransport', {
 								transportId: this._recvTransport.id,
