@@ -698,13 +698,13 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			}
 
 			this.#networkThrottleEnabledByRoomId = undefined;
+		});
 
-			if (!room.unlimitedRoom) {
-				this.#limitedRooms.set(
-					room.id,
-					Date.now() + EXPIRED_LIMITED_ROOMS_UNBLOCK_AFTER_SEC * 1000
-				);
-			}
+		room.on('max-duration-exceeded', () => {
+			this.#limitedRooms.set(
+				room.id,
+				Date.now() + EXPIRED_LIMITED_ROOMS_UNBLOCK_AFTER_SEC * 1000
+			);
 		});
 
 		room.on(

@@ -71,6 +71,11 @@ export type RoomEvents = {
 	 */
 	closed: [];
 	/**
+	 * Emitted when the Room max duration is exceeded. The Room will be closed
+	 * after it.
+	 */
+	'max-duration-exceeded': [];
+	/**
 	 * Emitted to apply network throttle.
 	 */
 	'apply-network-throttle': [
@@ -238,6 +243,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					void peer.sendMessage(`The room's maximum time has been exceeded 😬`);
 				}
 
+				this.emit('max-duration-exceeded');
+
 				this.close();
 			}, MAX_ROOM_DURATION_SEC * 1000);
 		}
@@ -252,10 +259,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 	get id(): RoomId {
 		return this.#roomId;
-	}
-
-	get unlimitedRoom(): boolean {
-		return this.#unlimitedRoom;
 	}
 
 	close(): void {
