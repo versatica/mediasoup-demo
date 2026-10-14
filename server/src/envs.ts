@@ -16,3 +16,7 @@ export function getTerminal(): boolean {
 export function getNetworkThrottleSecret(): string | undefined {
 	return process.env['NETWORK_THROTTLE_SECRET'];
 }
+
+export function getUnlimitedRoomSecret(): string | undefined {
+	return process.env['UNLIMITED_ROOM_SECRET'];
+}

@@ -69,6 +69,7 @@ export default class RoomClient {
 		forceAV1,
 		externalVideo,
 		e2eKey,
+		unlimitedRoomSecret,
 		consumerReplicas,
 		usePipeTransports,
 		disableBwe,
@@ -237,6 +238,7 @@ export default class RoomClient {
 			consumerReplicas,
 			usePipeTransports,
 			disableBwe,
+			unlimitedRoomSecret,
 		});
 
 		// protoo-client Peer instance.
@@ -1897,7 +1899,7 @@ export default class RoomClient {
 					return;
 				}
 
-				logger.error('chat DataProducer "close" event');
+				logger.debug('chat DataProducer "close" event');
 
 				this._chatDataProducer = null;
 
@@ -1907,6 +1909,8 @@ export default class RoomClient {
 						text: 'Chat DataProducer closed',
 					})
 				);
+
+				this.close();
 			});
 
 			this._chatDataProducer.on('error', error => {
@@ -1988,7 +1992,7 @@ export default class RoomClient {
 					return;
 				}
 
-				logger.error('bot DataProducer "close" event');
+				logger.debug('bot DataProducer "close" event');
 
 				this._botDataProducer = null;
 
@@ -1998,6 +2002,8 @@ export default class RoomClient {
 						text: 'Bot DataProducer closed',
 					})
 				);
+
+				this.close();
 			});
 
 			this._botDataProducer.on('error', error => {

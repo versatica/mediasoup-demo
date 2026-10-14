@@ -98,6 +98,26 @@ export class RoomNotFound extends ServerError {
 	}
 }
 
+export class RoomBlocked extends ServerError {
+	constructor(message: string) {
+		super(message);
+
+		this.name = 'RoomBlocked';
+
+		if (Error.hasOwnProperty('captureStackTrace')) {
+			// Just in V8.
+			Error.captureStackTrace(this, RoomBlocked);
+		} else {
+			this.stack = new Error(message).stack;
+		}
+	}
+
+	override get status(): number {
+		// HTTP 404 Not Found.
+		return 404;
+	}
+}
+
 export class PeerNotFound extends ServerError {
 	constructor(message: string) {
 		super(message);

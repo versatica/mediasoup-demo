@@ -56,6 +56,7 @@ async function start(): Promise<void> {
 		server = await Server.create({
 			config,
 			networkThrottleSecret: envs.getNetworkThrottleSecret(),
+			unlimitedRoomSecret: envs.getUnlimitedRoomSecret(),
 		});
 
 		logger.info('start() | Server started');

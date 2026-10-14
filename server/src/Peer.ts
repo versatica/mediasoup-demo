@@ -238,9 +238,13 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 
 		this.#protooPeer.close();
 
-		for (const transport of this.#transports.values()) {
-			transport.close();
-		}
+		// Close mediasoup Transports a bit later to avoid race condition between
+		// WebSocket closure and DTLS closure.
+		setTimeout(() => {
+			for (const transport of this.#transports.values()) {
+				transport.close();
+			}
+		}, 1000);
 
 		clearTimeout(this.#joinTimer);
 

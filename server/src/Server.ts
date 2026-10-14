@@ -14,7 +14,12 @@ import { EnhancedEventEmitter } from './enhancedEvents';
 import { WsServer } from './WsServer';
 import { ApiServer } from './ApiServer';
 import { Room } from './Room';
-import { InvalidStateError, ForbiddenError, RoomNotFound } from './errors';
+import {
+	InvalidStateError,
+	ForbiddenError,
+	RoomNotFound,
+	RoomBlocked,
+} from './errors';
 import { clone } from './utils';
 import type {
 	ServerConfig,
@@ -23,11 +28,14 @@ import type {
 	WorkerAppData,
 } from './types';
 
+const EXPIRED_LIMITED_ROOMS_UNBLOCK_AFTER_SEC = 5 * 60;
+
 const logger = new Logger('Server');
 
 export type ServerCreateOptions = {
 	config: ServerConfig;
 	networkThrottleSecret?: string;
+	unlimitedRoomSecret?: string;
 };
 
 type ServerConstructorOptions = {
@@ -37,6 +45,7 @@ type ServerConstructorOptions = {
 	wsServer: WsServer;
 	apiServer: ApiServer;
 	networkThrottleSecret?: string;
+	unlimitedRoomSecret?: string;
 };
 
 type WorkersAndWebRtcServers = Map<
@@ -87,15 +96,22 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 	#nextWorkerIdx: number = 0;
 	readonly #roomQueues: Map<RoomId, RoomData> = new Map();
 	readonly #networkThrottleSecret?: string;
+	readonly #unlimitedRoomSecret?: string;
 	#networkThrottleEnabled: boolean = false;
 	#networkThrottleEnabledByRoomId?: RoomId;
 	readonly #networkThrottleAwaitQueue: AwaitQueue = new AwaitQueue();
 	readonly #createdAt: Date;
+	// Map to hold expired limited rooms. Key is the room id and value is the
+	// time (in ms) in which the same room id will be unblocked so can be used
+	// again for a new room.
+	readonly #limitedRooms: Map<RoomId, number> = new Map();
+	readonly #expiredLimitedRoomsUnblockTimer: ReturnType<typeof setTimeout>;
 	#closed: boolean = false;
 
 	static async create({
 		config,
 		networkThrottleSecret,
+		unlimitedRoomSecret,
 	}: ServerCreateOptions): Promise<Server> {
 		logger.debug('create()');
 
@@ -112,6 +128,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			wsServer,
 			apiServer,
 			networkThrottleSecret,
+			unlimitedRoomSecret,
 		});
 
 		Server.observer.emit('new-server', server);
@@ -228,6 +245,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		wsServer,
 		apiServer,
 		networkThrottleSecret,
+		unlimitedRoomSecret,
 	}: ServerConstructorOptions) {
 		super();
 
@@ -239,6 +257,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		this.#wsServer = wsServer;
 		this.#apiServer = apiServer;
 		this.#networkThrottleSecret = networkThrottleSecret;
+		this.#unlimitedRoomSecret = unlimitedRoomSecret;
 		this.#createdAt = new Date();
 
 		// We need to verify that all mediasoup Workers are alive at this point
@@ -261,6 +280,20 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		if (this.#networkThrottleSecret) {
 			process.env['LOG_THROTTLE'] = 'true';
 		}
+
+		this.#expiredLimitedRoomsUnblockTimer = setInterval(() => {
+			const now = Date.now();
+
+			for (const [roomId, unblockAt] of this.#limitedRooms) {
+				if (now >= unblockAt) {
+					logger.debug(`unblocking expired limited room [roomId:${roomId}]`);
+
+					this.#limitedRooms.delete(roomId);
+				} else {
+					break;
+				}
+			}
+		}, 5000);
 	}
 
 	close(): void {
@@ -294,6 +327,8 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			this.stopNetworkThrottleInternal().catch(() => {});
 		}
 
+		clearTimeout(this.#expiredLimitedRoomsUnblockTimer);
+
 		// NOTE: We don't stop this.#networkThrottleAwaitQueue on purpose.
 
 		this.emit('closed');
@@ -325,11 +360,13 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		consumerReplicas,
 		usePipeTransports,
 		disableBwe,
+		unlimitedRoomSecret,
 	}: {
 		roomId: RoomId;
 		consumerReplicas: number;
 		usePipeTransports: boolean;
 		disableBwe: boolean;
+		unlimitedRoomSecret?: string;
 	}): Promise<Room> {
 		if (usePipeTransports && this.#config.mediasoup.numWorkers < 2) {
 			throw new InvalidStateError(
@@ -354,11 +391,27 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			// Verify that the room was not removed just before this task execution
 			// begins.
 			if (!this.#roomQueues.get(roomId)) {
-				throw new InvalidStateError(`Room with id '${roomId}' has been closed`);
+				throw new InvalidStateError(`room with id '${roomId}' has been closed`);
 			}
 
 			if (roomData.room) {
 				return roomData.room;
+			}
+
+			const unlimitedRoom = unlimitedRoomSecret === this.#unlimitedRoomSecret;
+
+			if (unlimitedRoom) {
+				// Just in case.
+				this.#limitedRooms.delete(roomId);
+			} else if (this.#limitedRooms.has(roomId)) {
+				logger.info(
+					'getOrCreateRoom() | rejecting new room that is bloked due to recent time limit expiration [roomId:%o]',
+					roomId
+				);
+
+				throw new RoomBlocked(
+					`room with id '${roomId}' is blocked due to time limit`
+				);
 			}
 
 			logger.info(
@@ -395,6 +448,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 				consumerReplicas,
 				usePipeTransports,
 				disableBwe,
+				unlimitedRoom,
 				config: this.#config,
 				producerRouter,
 				consumerRouter,
@@ -590,7 +644,13 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		this.#wsServer.on(
 			'get-or-create-room',
 			(
-				{ roomId, consumerReplicas, usePipeTransports, disableBwe },
+				{
+					roomId,
+					consumerReplicas,
+					usePipeTransports,
+					disableBwe,
+					unlimitedRoomSecret,
+				},
 				resolve,
 				reject
 			) => {
@@ -599,6 +659,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 					consumerReplicas,
 					usePipeTransports,
 					disableBwe,
+					unlimitedRoomSecret,
 				})
 					.then(resolve)
 					.catch(reject);
@@ -637,6 +698,13 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 			}
 
 			this.#networkThrottleEnabledByRoomId = undefined;
+
+			if (!room.unlimitedRoom) {
+				this.#limitedRooms.set(
+					room.id,
+					Date.now() + EXPIRED_LIMITED_ROOMS_UNBLOCK_AFTER_SEC * 1000
+				);
+			}
 		});
 
 		room.on(

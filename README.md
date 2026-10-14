@@ -50,6 +50,8 @@ By adding query parameters into the URL you can set certain settings of the appl
 | `faceDetection`    | Boolean | Run face detection | `false` |
 | `externalVideo`    | Boolean | Send an external video instead of local webcam | `false` |
 | `e2eKey`           | String | Key for media E2E encryption/decryption (just works with some OPUS and VP8 codecs) | |
+| `throttleSecret`   | String | Secret to enable network throttling (the server must run with a `NETWORK_THROTTLE_SECRET` environment variable with same value | |
+| `unlimitedRoomSecret` | String | Secret to enable unlimited room (otherwise rooms are limited to 10 minutes, the server must run with a `UNLIMITED_ROOM_SECRET` environment variable with same value | |
 | `consumerReplicas` | Number | Create artificial replicas of yourself and receive their audio and video (not displayed in the UI) | 0 |
 | `usePipeTransports` | Boolean | If `true`, each room will use separate mediasoup routers to produce and consume and will communicate them with pipe transports | `false` |
 | `disableBwe`       | Boolean | Disable Bandwidth Estimation (BWE). If `true`, no BWE logic will be run in mediasoup-worker. | `false` |

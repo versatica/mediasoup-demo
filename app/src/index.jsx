@@ -98,8 +98,9 @@ async function run() {
 	const stats = urlParser.query.stats === 'true';
 	const faceDetection = urlParser.query.faceDetection === 'true';
 	const externalVideo = urlParser.query.externalVideo === 'true';
-	const throttleSecret = urlParser.query.throttleSecret;
 	const e2eKey = urlParser.query.e2eKey;
+	const throttleSecret = urlParser.query.throttleSecret;
+	const unlimitedRoomSecret = urlParser.query.unlimitedRoomSecret;
 	const consumerReplicas = urlParser.query.consumerReplicas
 		? Number(urlParser.query.consumerReplicas)
 		: 0;
@@ -167,8 +168,9 @@ async function run() {
 			case 'stats':
 			case 'faceDetection':
 			case 'externalVideo':
-			case 'throttleSecret':
 			case 'e2eKey':
+			case 'throttleSecret':
+			case 'unlimitedRoomSecret':
 			case 'consumerReplicas':
 			case 'usePipeTransports': {
 				break;
@@ -234,6 +236,7 @@ async function run() {
 		screenSharing4K,
 		externalVideo,
 		e2eKey,
+		unlimitedRoomSecret,
 		consumerReplicas,
 		usePipeTransports,
 		disableBwe,
