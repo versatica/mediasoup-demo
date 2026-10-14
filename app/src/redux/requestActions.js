@@ -6,10 +6,10 @@ export const notify = ({ type = 'info', text, title, timeout }) => {
 	if (!timeout) {
 		switch (type) {
 			case 'info':
-				timeout = 3000;
+				timeout = 5000;
 				break;
 			case 'error':
-				timeout = 5000;
+				timeout = 8000;
 				break;
 		}
 	}

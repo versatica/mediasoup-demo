@@ -7,6 +7,7 @@ import type * as protooTypes from 'protoo-server';
 import { Logger } from './Logger';
 import { EnhancedEventEmitter } from './enhancedEvents';
 import { Room } from './Room';
+import { ForbiddenError, RoomNotFound, RoomBlocked } from './errors';
 import * as utils from './utils';
 import type { RoomId } from './types';
 
@@ -32,6 +33,7 @@ export type WsServerEvents = {
 			consumerReplicas: number;
 			usePipeTransports: boolean;
 			disableBwe: boolean;
+			unlimitedRoomSecret?: string;
 		},
 		resolve: (room: Room) => void,
 		reject: (error: Error) => void,
@@ -103,6 +105,8 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 			const consumerReplicas = Number(params.get('consumerReplicas') ?? 0);
 			const usePipeTransports = params.get('usePipeTransports') === 'true';
 			const disableBwe = params.get('disableBwe') === 'true';
+			const unlimitedRoomSecret =
+				params.get('unlimitedRoomSecret') ?? undefined;
 
 			if (!roomId || !peerId) {
 				reject(400, 'Missing roomId and/or peerId');
@@ -123,7 +127,13 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 				const room = await new Promise<Room>((resolve, reject) => {
 					this.emit(
 						'get-or-create-room',
-						{ roomId, consumerReplicas, usePipeTransports, disableBwe },
+						{
+							roomId,
+							consumerReplicas,
+							usePipeTransports,
+							disableBwe,
+							unlimitedRoomSecret,
+						},
 						resolve,
 						reject
 					);
@@ -139,7 +149,15 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 					remoteAddress: info.socket.remoteAddress!,
 				});
 			} catch (error) {
-				logger.error('Room creation or Room joining failed:', error);
+				if (
+					error instanceof ForbiddenError ||
+					error instanceof RoomNotFound ||
+					error instanceof RoomBlocked
+				) {
+					logger.debug('Room creation or Room joining failed:', String(error));
+				} else {
+					logger.error('Room creation or Room joining failed:', String(error));
+				}
 
 				reject(error as Error);
 

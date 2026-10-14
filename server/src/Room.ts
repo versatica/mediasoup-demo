@@ -29,6 +29,9 @@ import type {
 	ProducerAppData,
 } from './types';
 
+// Max duration (in seconds) for unlimited rooms.
+const MAX_ROOM_DURATION_SEC = 10 * 60;
+
 const staticLogger = new Logger('Room');
 
 export type RoomCreateOptions = {
@@ -36,6 +39,7 @@ export type RoomCreateOptions = {
 	consumerReplicas: number;
 	usePipeTransports: boolean;
 	disableBwe: boolean;
+	unlimitedRoom: boolean;
 	config: ServerConfig;
 	producerRouter: mediasoupTypes.Router;
 	consumerRouter: mediasoupTypes.Router;
@@ -49,6 +53,7 @@ type RoomConstructorOptions = {
 	consumerReplicas: number;
 	usePipeTransports: boolean;
 	disableBwe: boolean;
+	unlimitedRoom: boolean;
 	config: ServerConfig;
 	producerRouter: mediasoupTypes.Router;
 	consumerRouter: mediasoupTypes.Router;
@@ -116,6 +121,8 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #joiningBroadcasterPeers: Map<string, BroadcasterPeer> = new Map();
 	readonly #broadcasterPeers: Map<string, BroadcasterPeer> = new Map();
 	readonly #createdAt: Date;
+	readonly #unlimitedRoom: boolean;
+	readonly #roomLimitTimer?: ReturnType<typeof setTimeout>;
 	#closed: boolean = false;
 
 	static async create({
@@ -123,6 +130,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		consumerReplicas,
 		usePipeTransports,
 		disableBwe,
+		unlimitedRoom,
 		config,
 		producerRouter,
 		consumerRouter,
@@ -160,6 +168,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			consumerReplicas,
 			usePipeTransports,
 			disableBwe,
+			unlimitedRoom,
 			config,
 			producerRouter,
 			consumerRouter,
@@ -180,6 +189,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		consumerReplicas,
 		usePipeTransports,
 		disableBwe,
+		unlimitedRoom,
 		config,
 		producerRouter,
 		consumerRouter,
@@ -209,12 +219,27 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#protooRoom = protooRoom;
 		this.#bot = bot;
 		this.#createdAt = new Date();
+		this.#unlimitedRoom = unlimitedRoom;
 
 		if (disableBwe) {
 			this.#consumerRouterRtpCapabilities = this.disableBweRtpExtensions();
 		} else {
 			this.#consumerRouterRtpCapabilities =
 				this.#consumerRouter.rtpCapabilities;
+		}
+
+		if (this.#unlimitedRoom) {
+			this.#logger.info('constructor() | time unlimited room');
+		} else {
+			this.#roomLimitTimer = setTimeout(() => {
+				this.#logger.info('closing time limited room');
+
+				for (const peer of this.#peers.values()) {
+					void peer.sendMessage(`The room's maximum time has been exceeded 😬`);
+				}
+
+				this.close();
+			}, MAX_ROOM_DURATION_SEC * 1000);
 		}
 
 		this.handleProducerRouter();
@@ -227,6 +252,10 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 	get id(): RoomId {
 		return this.#roomId;
+	}
+
+	get unlimitedRoom(): boolean {
+		return this.#unlimitedRoom;
 	}
 
 	close(): void {
@@ -256,9 +285,15 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 
 		this.#protooRoom.close();
 
-		this.#producerRouter.close();
+		// Close mediasoup Routers a bit later to avoid race condition between
+		// WebSocket closure and DTLS closure.
+		setTimeout(() => {
+			this.#producerRouter.close();
 
-		this.#consumerRouter.close();
+			this.#consumerRouter.close();
+		}, 1000);
+
+		clearTimeout(this.#roomLimitTimer);
 
 		this.emit('closed');
 	}
