@@ -46,7 +46,7 @@
 		"body-parser": "^2.3.0",
 		"debug": "^4.4.3",
 		"express": "^5.3.0",
-		"mediasoup": "^3.30.0",
+		"mediasoup": "^3.30.1",
 		"picocolors": "^1.1.1",
 		"pidusage": "^4.1.0",
 		"protoo-server": "^4.0.8",
