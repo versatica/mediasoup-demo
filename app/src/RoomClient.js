@@ -1195,7 +1195,7 @@ export default class RoomClient {
 			}
 
 			if (this._enableWebcamLayers) {
-				// If VP9 is the only available video codec then use SVC.
+				// If VP9 or AV1 is the only available video codec then use SVC.
 				const firstVideoCodec =
 					this._mediasoupDevice.sendRtpCapabilities.codecs.find(
 						c => c.kind === 'video'
@@ -1241,6 +1241,14 @@ export default class RoomClient {
 						});
 					}
 				}
+			} else {
+				encodings = [
+					{
+						scaleResolutionDownBy: 1,
+						maxBitrate: 5000000,
+						scalabilityMode: this._webcamScalabilityMode,
+					},
+				];
 			}
 
 			if (this._videoContentHint) {
@@ -1565,7 +1573,6 @@ export default class RoomClient {
 						{
 							maxBitrate: 5000000,
 							scalabilityMode: this._sharingScalabilityMode || 'L3T3',
-							dtx: true,
 						},
 					];
 				}
@@ -1576,7 +1583,6 @@ export default class RoomClient {
 							scaleResolutionDownBy: 1,
 							maxBitrate: 5000000,
 							scalabilityMode: this._sharingScalabilityMode || 'L1T3',
-							dtx: true,
 						},
 					];
 
@@ -1585,7 +1591,6 @@ export default class RoomClient {
 							scaleResolutionDownBy: 2,
 							maxBitrate: 1000000,
 							scalabilityMode: this._sharingScalabilityMode || 'L1T3',
-							dtx: true,
 						});
 					}
 
@@ -1594,7 +1599,6 @@ export default class RoomClient {
 							scaleResolutionDownBy: 4,
 							maxBitrate: 500000,
 							scalabilityMode: this._sharingScalabilityMode || 'L1T3',
-							dtx: true,
 						});
 					}
 				}
@@ -1605,7 +1609,6 @@ export default class RoomClient {
 					{
 						scaleResolutionDownBy: 1,
 						maxBitrate: 5000000,
-						dtx: true,
 					},
 				];
 			}
