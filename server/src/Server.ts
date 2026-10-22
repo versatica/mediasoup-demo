@@ -359,13 +359,11 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		roomId,
 		consumerReplicas,
 		usePipeTransports,
-		disableBwe,
 		unlimitedRoomSecret,
 	}: {
 		roomId: RoomId;
 		consumerReplicas: number;
 		usePipeTransports: boolean;
-		disableBwe: boolean;
 		unlimitedRoomSecret?: string;
 	}): Promise<Room> {
 		if (usePipeTransports && this.#config.mediasoup.numWorkers < 2) {
@@ -447,7 +445,6 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 				roomId,
 				consumerReplicas,
 				usePipeTransports,
-				disableBwe,
 				unlimitedRoom,
 				config: this.#config,
 				producerRouter,
@@ -644,13 +641,7 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		this.#wsServer.on(
 			'get-or-create-room',
 			(
-				{
-					roomId,
-					consumerReplicas,
-					usePipeTransports,
-					disableBwe,
-					unlimitedRoomSecret,
-				},
+				{ roomId, consumerReplicas, usePipeTransports, unlimitedRoomSecret },
 				resolve,
 				reject
 			) => {
@@ -658,7 +649,6 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 					roomId,
 					consumerReplicas,
 					usePipeTransports,
-					disableBwe,
 					unlimitedRoomSecret,
 				})
 					.then(resolve)

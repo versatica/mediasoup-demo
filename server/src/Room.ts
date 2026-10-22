@@ -38,7 +38,6 @@ export type RoomCreateOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
 	usePipeTransports: boolean;
-	disableBwe: boolean;
 	unlimitedRoom: boolean;
 	config: ServerConfig;
 	producerRouter: mediasoupTypes.Router;
@@ -52,7 +51,6 @@ type RoomConstructorOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
 	usePipeTransports: boolean;
-	disableBwe: boolean;
 	unlimitedRoom: boolean;
 	config: ServerConfig;
 	producerRouter: mediasoupTypes.Router;
@@ -107,7 +105,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 	readonly #roomId: RoomId;
 	readonly #consumerReplicas: number;
 	readonly #usePipeTransports: boolean;
-	readonly #disableBwe: boolean;
 	readonly #config: ServerConfig;
 	readonly #producerRouter: mediasoupTypes.Router;
 	readonly #consumerRouter: mediasoupTypes.Router;
@@ -135,7 +132,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		roomId,
 		consumerReplicas,
 		usePipeTransports,
-		disableBwe,
 		unlimitedRoom,
 		config,
 		producerRouter,
@@ -173,7 +169,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			roomId,
 			consumerReplicas,
 			usePipeTransports,
-			disableBwe,
 			unlimitedRoom,
 			config,
 			producerRouter,
@@ -194,7 +189,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		roomId,
 		consumerReplicas,
 		usePipeTransports,
-		disableBwe,
 		unlimitedRoom,
 		config,
 		producerRouter,
@@ -215,7 +209,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#roomId = roomId;
 		this.#consumerReplicas = consumerReplicas;
 		this.#usePipeTransports = usePipeTransports;
-		this.#disableBwe = disableBwe;
 		this.#config = config;
 		this.#producerRouter = producerRouter;
 		this.#consumerRouter = consumerRouter;
@@ -570,7 +563,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		peer.on(
 			'create-webrtc-transport',
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			async ({ direction, forceTcp }, resolve, reject) => {
+			async ({ direction, forceTcp, disableBwe }, resolve, reject) => {
 				try {
 					let mediasoupRouter: mediasoupTypes.Router;
 					let mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
@@ -603,7 +596,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 								enableTcp: true,
 								webRtcServer: mediasoupWebRtcServer,
 								iceConsentTimeout: 20,
-								enableBwe: !this.#disableBwe,
+								enableBwe: !disableBwe,
 								enableSctp: true,
 								appData: { direction },
 							}
@@ -762,7 +755,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		broadcasterPeer.on(
 			'create-plain-transport',
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			async ({ direction, comedia, rtcpMux }, resolve, reject) => {
+			async ({ direction, comedia, rtcpMux, disableBwe }, resolve, reject) => {
 				try {
 					let mediasoupRouter: mediasoupTypes.Router;
 
@@ -787,7 +780,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					const transport =
 						await mediasoupRouter.createPlainTransport<PlainTransportAppData>({
 							...clone(this.#config.mediasoup.plainTransportOptions),
-							enableBwe: !this.#disableBwe,
+							enableBwe: !disableBwe,
 							comedia,
 							rtcpMux,
 							appData: { direction },

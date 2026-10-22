@@ -64,6 +64,7 @@ type Request =
 				direction: TransportDirection;
 				comedia?: boolean;
 				rtcpMux?: boolean;
+				disableBwe?: boolean;
 			};
 			responseData: PlainTransportRemoteData;
 	  }

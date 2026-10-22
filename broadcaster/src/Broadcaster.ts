@@ -196,6 +196,7 @@ export class Broadcaster {
 				direction: 'producer',
 				comedia: true,
 				rtcpMux: false,
+				disableBwe: false,
 			},
 		});
 
@@ -215,6 +216,7 @@ export class Broadcaster {
 				direction: 'producer',
 				comedia: true,
 				rtcpMux: false,
+				disableBwe: false,
 			},
 		});
 
@@ -344,6 +346,7 @@ export class Broadcaster {
 				direction: 'consumer',
 				comedia: false,
 				rtcpMux: false,
+				disableBwe: false,
 			},
 		});
 
@@ -363,6 +366,7 @@ export class Broadcaster {
 				direction: 'consumer',
 				comedia: false,
 				rtcpMux: false,
+				disableBwe: false,
 			},
 		});
 
