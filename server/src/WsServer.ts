@@ -156,7 +156,7 @@ export class WsServer extends EnhancedEventEmitter<WsServerEvents> {
 				) {
 					logger.debug('Room creation or Room joining failed:', String(error));
 				} else {
-					logger.error('Room creation or Room joining failed:', String(error));
+					logger.error('Room creation or Room joining failed:', error);
 				}
 
 				reject(error as Error);
