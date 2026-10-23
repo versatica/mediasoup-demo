@@ -93,6 +93,7 @@ export type PeerEvents = {
 		{
 			direction: TransportDirection;
 			forceTcp?: boolean;
+			disableBwe?: boolean;
 		},
 		resolve: (
 			transport: mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>
@@ -820,7 +821,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 			}
 
 			case 'createWebRtcTransport': {
-				const { forceTcp, appData } = data;
+				const { forceTcp, disableBwe, appData } = data;
 				const { direction } = appData;
 				const transport = await new Promise<
 					mediasoupTypes.WebRtcTransport<WebRtcTransportAppData>
@@ -828,7 +829,7 @@ export class Peer extends EnhancedEventEmitter<PeerEvents> {
 				>((resolve, reject) => {
 					this.emit(
 						'create-webrtc-transport',
-						{ direction, forceTcp },
+						{ direction, forceTcp, disableBwe },
 						resolve,
 						reject
 					);

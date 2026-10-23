@@ -81,6 +81,7 @@ export type BroadcasterPeerEvents = {
 			direction: TransportDirection;
 			comedia?: boolean;
 			rtcpMux?: boolean;
+			disableBwe?: boolean;
 		},
 		resolve: (
 			transport: mediasoupTypes.PlainTransport<PlainTransportAppData>

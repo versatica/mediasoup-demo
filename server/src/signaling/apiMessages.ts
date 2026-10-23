@@ -66,6 +66,7 @@ type Request =
 			data: {
 				comedia?: boolean;
 				rtcpMux?: boolean;
+				disableBwe?: boolean;
 				appData: PlainTransportAppData;
 			};
 			responseData: PlainTransportRemoteData;
