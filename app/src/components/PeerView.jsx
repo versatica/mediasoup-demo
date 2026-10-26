@@ -244,6 +244,7 @@ export default class PeerView extends React.Component {
 											<span
 												className={classnames({
 													clickable: maxSpatialLayer > -1,
+													unclickable: maxSpatialLayer <= -1,
 												})}
 												onClick={event => {
 													event.stopPropagation();
@@ -263,6 +264,9 @@ export default class PeerView extends React.Component {
 												className={classnames({
 													clickable:
 														maxSpatialLayer <
+														videoRtpParameters.encodings.length - 1,
+													unclickable:
+														maxSpatialLayer >=
 														videoRtpParameters.encodings.length - 1,
 												})}
 												onClick={event => {
@@ -290,32 +294,20 @@ export default class PeerView extends React.Component {
 											{`preferred spatial-temporal layers: ${consumerPreferredSpatialLayer} ${consumerPreferredTemporalLayer}`}
 											<span> </span>
 											<span
-												className="clickable"
+												className={classnames({
+													clickable: consumerPreferredSpatialLayer > 0,
+													unclickable: consumerPreferredSpatialLayer <= 0,
+												})}
 												onClick={event => {
 													event.stopPropagation();
 
-													let newPreferredSpatialLayer =
-														consumerPreferredSpatialLayer;
-													let newPreferredTemporalLayer;
-
-													if (consumerPreferredTemporalLayer > 0) {
-														newPreferredTemporalLayer =
-															consumerPreferredTemporalLayer - 1;
-													} else {
-														if (consumerPreferredSpatialLayer > 0)
-															newPreferredSpatialLayer =
-																consumerPreferredSpatialLayer - 1;
-														else
-															newPreferredSpatialLayer =
-																consumerSpatialLayers - 1;
-
-														newPreferredTemporalLayer =
-															consumerTemporalLayers - 1;
+													if (consumerPreferredSpatialLayer <= 0) {
+														return;
 													}
 
 													onChangeVideoPreferredLayers(
-														newPreferredSpatialLayer,
-														newPreferredTemporalLayer
+														consumerPreferredSpatialLayer - 1,
+														consumerPreferredTemporalLayer
 													);
 												}}
 											>
@@ -323,35 +315,76 @@ export default class PeerView extends React.Component {
 											</span>
 											<span> </span>
 											<span
-												className="clickable"
+												className={classnames({
+													clickable:
+														consumerPreferredSpatialLayer <
+														consumerSpatialLayers - 1,
+													unclickable:
+														consumerPreferredSpatialLayer >=
+														consumerSpatialLayers - 1,
+												})}
 												onClick={event => {
 													event.stopPropagation();
 
-													let newPreferredSpatialLayer =
-														consumerPreferredSpatialLayer;
-													let newPreferredTemporalLayer;
-
 													if (
-														consumerPreferredTemporalLayer <
-														consumerTemporalLayers - 1
+														consumerPreferredSpatialLayer >=
+														consumerSpatialLayers - 1
 													) {
-														newPreferredTemporalLayer =
-															consumerPreferredTemporalLayer + 1;
-													} else {
-														if (
-															consumerPreferredSpatialLayer <
-															consumerSpatialLayers - 1
-														)
-															newPreferredSpatialLayer =
-																consumerPreferredSpatialLayer + 1;
-														else newPreferredSpatialLayer = 0;
-
-														newPreferredTemporalLayer = 0;
+														return;
 													}
 
 													onChangeVideoPreferredLayers(
-														newPreferredSpatialLayer,
-														newPreferredTemporalLayer
+														consumerPreferredSpatialLayer + 1,
+														consumerPreferredTemporalLayer
+													);
+												}}
+											>
+												{'[ up ]'}
+											</span>
+											<span> </span>
+											<span
+												className={classnames({
+													clickable: consumerPreferredTemporalLayer > 0,
+													unclickable: consumerPreferredTemporalLayer <= 0,
+												})}
+												onClick={event => {
+													event.stopPropagation();
+
+													if (consumerPreferredTemporalLayer <= 0) {
+														return;
+													}
+
+													onChangeVideoPreferredLayers(
+														consumerPreferredSpatialLayer,
+														consumerPreferredTemporalLayer - 1
+													);
+												}}
+											>
+												{'[ down ]'}
+											</span>
+											<span> </span>
+											<span
+												className={classnames({
+													clickable:
+														consumerPreferredTemporalLayer <
+														consumerTemporalLayers - 1,
+													unclickable:
+														consumerPreferredTemporalLayer >=
+														consumerTemporalLayers - 1,
+												})}
+												onClick={event => {
+													event.stopPropagation();
+
+													if (
+														consumerPreferredTemporalLayer >=
+														consumerTemporalLayers - 1
+													) {
+														return;
+													}
+
+													onChangeVideoPreferredLayers(
+														consumerPreferredSpatialLayer,
+														consumerPreferredTemporalLayer + 1
 													);
 												}}
 											>
@@ -368,6 +401,7 @@ export default class PeerView extends React.Component {
 										<span
 											className={classnames({
 												clickable: consumerPriority > 1,
+												unclickable: consumerPriority <= 1,
 											})}
 											onClick={event => {
 												event.stopPropagation();
@@ -381,6 +415,7 @@ export default class PeerView extends React.Component {
 										<span
 											className={classnames({
 												clickable: consumerPriority < 255,
+												unclickable: consumerPriority >= 255,
 											})}
 											onClick={event => {
 												event.stopPropagation();

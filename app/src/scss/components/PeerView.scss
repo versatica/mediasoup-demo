@@ -146,6 +146,10 @@
 					}
 				}
 
+				.unclickable {
+					user-select: none;
+				}
+
 				&.copiable,
 				.copiable {
 					pointer-events: auto;
