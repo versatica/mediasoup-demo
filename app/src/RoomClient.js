@@ -68,6 +68,7 @@ export default class RoomClient {
 		forceVP9,
 		forceAV1,
 		disableBwe,
+		removeBweExtensions,
 		externalVideo,
 		e2eKey,
 		unlimitedRoomSecret,
@@ -154,6 +155,12 @@ export default class RoomClient {
 		// Diable BWE.
 		// @type {Boolean}
 		this._disableBwe = Boolean(disableBwe);
+
+		// Remove BWE related RTP header extensions (transport-wide-cc-01 and
+		// abs-send-time) and RTCP feedback (transport-cc and goog-remb) from
+		// router RTP capabilities.
+		// @type {Boolean}
+		this._removeBweExtensions = Boolean(removeBweExtensions);
 
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
@@ -2363,6 +2370,27 @@ export default class RoomClient {
 			const { routerRtpCapabilities } = await this._protoo.request(
 				'getRouterRtpCapabilities'
 			);
+
+			if (this._removeBweExtensions) {
+				routerRtpCapabilities.headerExtensions =
+					routerRtpCapabilities.headerExtensions.filter(
+						ext =>
+							ext.uri !==
+								'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01' &&
+							ext.uri !==
+								'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time'
+					);
+
+				for (const codec of routerRtpCapabilities.codecs) {
+					if (!codec.rtcpFeedback) {
+						continue;
+					}
+
+					codec.rtcpFeedback = codec.rtcpFeedback.filter(
+						fb => fb.type !== 'transport-cc' && fb.type !== 'goog-remb'
+					);
+				}
+			}
 
 			await this._mediasoupDevice.load({
 				routerRtpCapabilities,

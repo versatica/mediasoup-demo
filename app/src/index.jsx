@@ -83,6 +83,7 @@ async function run() {
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
 	const forceAV1 = urlParser.query.forceAV1 === 'true';
 	const disableBwe = urlParser.query.disableBwe === 'true';
+	const removeBweExtensions = urlParser.query.removeBweExtensions === 'true';
 	const enableWebcamLayers = urlParser.query.enableWebcamLayers !== 'false';
 	const enableSharingLayers = urlParser.query.enableSharingLayers !== 'false';
 	const webcamScalabilityMode = urlParser.query.webcamScalabilityMode;
@@ -157,6 +158,7 @@ async function run() {
 			case 'forceVP9':
 			case 'forceAV1':
 			case 'disableBwe':
+			case 'removeBweExtensions':
 			case 'enableWebcamLayers':
 			case 'enableSharingLayers':
 			case 'webcamScalabilityMode':
@@ -228,6 +230,7 @@ async function run() {
 		forceVP9,
 		forceAV1,
 		disableBwe,
+		removeBweExtensions,
 		enableWebcamLayers,
 		enableSharingLayers,
 		webcamScalabilityMode,
