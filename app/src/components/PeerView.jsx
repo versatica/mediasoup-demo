@@ -514,7 +514,7 @@ export default class PeerView extends React.Component {
 		}
 	}
 
-	UNSAFE_componentWillUpdate() {
+	componentDidUpdate() {
 		const { isMe, audioTrack, videoTrack, videoRtpParameters } = this.props;
 		const { maxSpatialLayer } = this.state;
 
