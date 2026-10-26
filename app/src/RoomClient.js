@@ -67,12 +67,13 @@ export default class RoomClient {
 		forceH264,
 		forceVP9,
 		forceAV1,
+		disableBwe,
+		removeBweExtensions,
 		externalVideo,
 		e2eKey,
 		unlimitedRoomSecret,
 		consumerReplicas,
 		usePipeTransports,
-		disableBwe,
 		enableAbsCaptureTime,
 		rtcstatsUrl,
 		stats,
@@ -150,6 +151,16 @@ export default class RoomClient {
 		// Force AV1 codec for sending.
 		// @type {Boolean}
 		this._forceAV1 = Boolean(forceAV1);
+
+		// Diable BWE.
+		// @type {Boolean}
+		this._disableBwe = Boolean(disableBwe);
+
+		// Remove BWE related RTP header extensions (transport-wide-cc-01 and
+		// abs-send-time) and RTCP feedback (transport-cc and goog-remb) from
+		// router RTP capabilities.
+		// @type {Boolean}
+		this._removeBweExtensions = Boolean(removeBweExtensions);
 
 		// Whether simulcast or SVC should be used for webcam.
 		// @type {Boolean}
@@ -237,7 +248,6 @@ export default class RoomClient {
 			peerId,
 			consumerReplicas,
 			usePipeTransports,
-			disableBwe,
 			unlimitedRoomSecret,
 		});
 
@@ -2361,6 +2371,27 @@ export default class RoomClient {
 				'getRouterRtpCapabilities'
 			);
 
+			if (this._removeBweExtensions) {
+				routerRtpCapabilities.headerExtensions =
+					routerRtpCapabilities.headerExtensions.filter(
+						ext =>
+							ext.uri !==
+								'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01' &&
+							ext.uri !==
+								'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time'
+					);
+
+				for (const codec of routerRtpCapabilities.codecs) {
+					if (!codec.rtcpFeedback) {
+						continue;
+					}
+
+					codec.rtcpFeedback = codec.rtcpFeedback.filter(
+						fb => fb.type !== 'transport-cc' && fb.type !== 'goog-remb'
+					);
+				}
+			}
+
 			await this._mediasoupDevice.load({
 				routerRtpCapabilities,
 				preferLocalCodecsOrder: this._preferLocalCodecsOrder,
@@ -2387,6 +2418,7 @@ export default class RoomClient {
 					'createWebRtcTransport',
 					{
 						forceTcp: this._forceTcp,
+						disableBwe: this._disableBwe,
 						appData: {
 							direction: 'producer',
 						},
@@ -2508,6 +2540,7 @@ export default class RoomClient {
 					'createWebRtcTransport',
 					{
 						forceTcp: this._forceTcp,
+						disableBwe: this._disableBwe,
 						appData: {
 							direction: 'consumer',
 						},

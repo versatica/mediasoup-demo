@@ -38,7 +38,6 @@ export type RoomCreateOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
 	usePipeTransports: boolean;
-	disableBwe: boolean;
 	unlimitedRoom: boolean;
 	config: ServerConfig;
 	producerRouter: mediasoupTypes.Router;
@@ -52,7 +51,6 @@ type RoomConstructorOptions = {
 	roomId: RoomId;
 	consumerReplicas: number;
 	usePipeTransports: boolean;
-	disableBwe: boolean;
 	unlimitedRoom: boolean;
 	config: ServerConfig;
 	producerRouter: mediasoupTypes.Router;
@@ -134,7 +132,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		roomId,
 		consumerReplicas,
 		usePipeTransports,
-		disableBwe,
 		unlimitedRoom,
 		config,
 		producerRouter,
@@ -172,7 +169,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 			roomId,
 			consumerReplicas,
 			usePipeTransports,
-			disableBwe,
 			unlimitedRoom,
 			config,
 			producerRouter,
@@ -193,7 +189,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		roomId,
 		consumerReplicas,
 		usePipeTransports,
-		disableBwe,
 		unlimitedRoom,
 		config,
 		producerRouter,
@@ -217,6 +212,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#config = config;
 		this.#producerRouter = producerRouter;
 		this.#consumerRouter = consumerRouter;
+		this.#consumerRouterRtpCapabilities = this.#consumerRouter.rtpCapabilities;
 		this.#producerWebRtcServer = producerWebRtcServer;
 		this.#consumerWebRtcServer = consumerWebRtcServer;
 		this.#audioLevelObserver = audioLevelObserver;
@@ -225,13 +221,6 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		this.#bot = bot;
 		this.#createdAt = new Date();
 		this.#unlimitedRoom = unlimitedRoom;
-
-		if (disableBwe) {
-			this.#consumerRouterRtpCapabilities = this.disableBweRtpExtensions();
-		} else {
-			this.#consumerRouterRtpCapabilities =
-				this.#consumerRouter.rtpCapabilities;
-		}
 
 		if (this.#unlimitedRoom) {
 			this.#logger.info('constructor() | time unlimited room');
@@ -574,7 +563,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		peer.on(
 			'create-webrtc-transport',
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			async ({ direction, forceTcp }, resolve, reject) => {
+			async ({ direction, forceTcp, disableBwe }, resolve, reject) => {
 				try {
 					let mediasoupRouter: mediasoupTypes.Router;
 					let mediasoupWebRtcServer: mediasoupTypes.WebRtcServer;
@@ -607,6 +596,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 								enableTcp: true,
 								webRtcServer: mediasoupWebRtcServer,
 								iceConsentTimeout: 20,
+								enableBwe: !disableBwe,
 								enableSctp: true,
 								appData: { direction },
 							}
@@ -765,7 +755,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 		broadcasterPeer.on(
 			'create-plain-transport',
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			async ({ direction, comedia, rtcpMux }, resolve, reject) => {
+			async ({ direction, comedia, rtcpMux, disableBwe }, resolve, reject) => {
 				try {
 					let mediasoupRouter: mediasoupTypes.Router;
 
@@ -790,6 +780,7 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 					const transport =
 						await mediasoupRouter.createPlainTransport<PlainTransportAppData>({
 							...clone(this.#config.mediasoup.plainTransportOptions),
+							enableBwe: !disableBwe,
 							comedia,
 							rtcpMux,
 							appData: { direction },
@@ -1026,23 +1017,5 @@ export class Room extends EnhancedEventEmitter<RoomEvents> {
 				assertUnreachable('request name', name);
 			}
 		}
-	}
-
-	private disableBweRtpExtensions(): mediasoupTypes.RouterRtpCapabilities {
-		const rtpCapabilities = clone(this.#consumerRouter.rtpCapabilities);
-
-		// Disable BWE related extensions.
-		const tccRtpExtensions = [
-			'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01',
-			'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time',
-		];
-
-		for (const extension of rtpCapabilities.headerExtensions || []) {
-			if (tccRtpExtensions.includes(extension.uri)) {
-				extension.direction = 'recvonly';
-			}
-		}
-
-		return rtpCapabilities;
 	}
 }

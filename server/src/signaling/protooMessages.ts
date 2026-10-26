@@ -133,6 +133,7 @@ type RequestFromPeer =
 			name: 'createWebRtcTransport';
 			data: {
 				forceTcp: boolean;
+				disableBwe: boolean;
 				appData: WebRtcTransportAppData;
 			};
 			responseData: {

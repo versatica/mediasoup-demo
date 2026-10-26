@@ -82,6 +82,8 @@ async function run() {
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
 	const forceAV1 = urlParser.query.forceAV1 === 'true';
+	const disableBwe = urlParser.query.disableBwe === 'true';
+	const removeBweExtensions = urlParser.query.removeBweExtensions === 'true';
 	const enableWebcamLayers = urlParser.query.enableWebcamLayers !== 'false';
 	const enableSharingLayers = urlParser.query.enableSharingLayers !== 'false';
 	const webcamScalabilityMode = urlParser.query.webcamScalabilityMode;
@@ -105,7 +107,6 @@ async function run() {
 		? Number(urlParser.query.consumerReplicas)
 		: 0;
 	const usePipeTransports = urlParser.query.usePipeTransports === 'true';
-	const disableBwe = urlParser.query.disableBwe === 'true';
 	const enableAbsCaptureTime =
 		urlParser.query.enableAbsCaptureTime === 'true'
 			? true
@@ -156,6 +157,8 @@ async function run() {
 			case 'forceH264':
 			case 'forceVP9':
 			case 'forceAV1':
+			case 'disableBwe':
+			case 'removeBweExtensions':
 			case 'enableWebcamLayers':
 			case 'enableSharingLayers':
 			case 'webcamScalabilityMode':
@@ -226,6 +229,8 @@ async function run() {
 		forceH264,
 		forceVP9,
 		forceAV1,
+		disableBwe,
+		removeBweExtensions,
 		enableWebcamLayers,
 		enableSharingLayers,
 		webcamScalabilityMode,
@@ -239,7 +244,6 @@ async function run() {
 		unlimitedRoomSecret,
 		consumerReplicas,
 		usePipeTransports,
-		disableBwe,
 		enableAbsCaptureTime,
 		rtcstatsUrl,
 		stats,
