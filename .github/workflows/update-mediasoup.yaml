@@ -5,7 +5,8 @@ name: update-mediasoup
 # binaries have been uploaded to the GitHub release. It bumps the mediasoup
 # dependency in server/package.json and server/package-lock.json, validates the
 # bump, commits it to the default branch (v3) and triggers the demo-deploy
-# workflow.
+# workflow with the `server` target (rebuilds the server and restarts it, the
+# app is not rebuilt).
 #
 # It can also be triggered manually from the Actions tab, optionally entering the
 # version to update to (empty means "latest published on NPM").
@@ -105,9 +106,10 @@ jobs:
       # relying on the push above to trigger it) because a push made with the
       # default GITHUB_TOKEN does NOT trigger other workflows; workflow_dispatch
       # is the documented exception that DOES work with the GITHUB_TOKEN. The bump
-      # was already validated above, so deploying it is safe.
+      # was already validated above, so deploying it is safe. The bump is in the
+      # server, so deploy the `server` target.
       - name: Trigger demo-deploy
         if: steps.changes.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run demo-deploy.yaml --ref v3
+        run: gh workflow run demo-deploy.yaml --ref v3 -f target=server
