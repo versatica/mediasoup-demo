@@ -273,8 +273,7 @@ export class BroadcasterPeer extends EnhancedEventEmitter<BroadcasterPeerEvents>
 	}
 
 	private getConsumerPlainTransport():
-		| mediasoupTypes.PlainTransport<PlainTransportAppData>
-		| undefined {
+		mediasoupTypes.PlainTransport<PlainTransportAppData> | undefined {
 		return Array.from(this.#transports.values()).find(
 			transport => transport.appData.direction === 'consumer'
 		);
