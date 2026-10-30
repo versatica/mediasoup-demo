@@ -113,6 +113,7 @@ async function run() {
 			: urlParser.query.enableAbsCaptureTime === 'false'
 				? false
 				: undefined;
+	const disableDD = urlParser.query.disableDD === 'true';
 	const rtcstatsUrl = urlParser.query.rtcstatsUrl;
 
 	// Enable face detection on demand.
@@ -245,6 +246,7 @@ async function run() {
 		consumerReplicas,
 		usePipeTransports,
 		enableAbsCaptureTime,
+		disableDD,
 		rtcstatsUrl,
 		stats,
 	});

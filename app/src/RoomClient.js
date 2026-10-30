@@ -75,6 +75,7 @@ export default class RoomClient {
 		consumerReplicas,
 		usePipeTransports,
 		enableAbsCaptureTime,
+		disableDD,
 		rtcstatsUrl,
 		stats,
 	}) {
@@ -204,6 +205,11 @@ export default class RoomClient {
 
 		// Enable abs-capture-time RTP extension.
 		this._enableAbsCaptureTime = enableAbsCaptureTime;
+
+		// Remove Dependency Descriptor RTP header extension from router RTP
+		// capabilities.
+		// @type {Boolean}
+		this._disableDD = Boolean(disableDD);
 
 		// rtcstats server URL (if given via app query param or retrived from
 		// server).
@@ -2390,6 +2396,15 @@ export default class RoomClient {
 						fb => fb.type !== 'transport-cc' && fb.type !== 'goog-remb'
 					);
 				}
+			}
+
+			if (this._disableDD) {
+				routerRtpCapabilities.headerExtensions =
+					routerRtpCapabilities.headerExtensions.filter(
+						ext =>
+							ext.uri !==
+							'https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension'
+					);
 			}
 
 			await this._mediasoupDevice.load({

@@ -57,6 +57,7 @@ By adding query parameters into the URL you can set certain settings of the appl
 | `disableBwe`       | Boolean | Disable Bandwidth Estimation (BWE). If `true`, no BWE logic will be run in mediasoup-worker. | `false` |
 | `removeBweExtensions` | Boolean | Remove "transport-wide-cc-01" and "abs-send-time" RTP header extensions and "transport-cc" and "goog-remb" RTCP feedback from router RTP capabilities before loading the mediasoup-client `Device` | `false` |
 | `enableAbsCaptureTime` | Boolean | Enable "abs-capture-time" RTP extension | `false` |
+| `disableDD`        | Boolean | Remove "dependency-descriptor" RTP header extension from router RTP capabilities before loading the mediasoup-client `Device` | `false` |
 | `rtcstatsUrl`      | String  | If present, Websocket URL to connect to an [rtcstats-server](https://github.com/rtcstats/rtcstats), including token (it overrides the `providers.rtcstatsUrl` value in `config.mjs` in the server)  | |
 
 ## Installation
