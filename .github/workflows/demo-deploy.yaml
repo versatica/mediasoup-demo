@@ -1,25 +1,43 @@
 name: demo-deploy
 
 # Triggers a deploy of the demo server (https://v3demo.mediasoup.org) by
-# opening an SSH connection to it. No command is sent: the server runs the
-# forced command configured in the SSH user's `.ssh/authorized_keys`, which
-# pulls the latest v3 branch, installs deps, transpiles and restarts the PM2
-# service.
+# opening an SSH connection to it. The server runs the forced command configured
+# in the SSH user's `.ssh/authorized_keys`, which pulls the latest v3 branch and
+# deploys the given target. The target is sent as the SSH command, which the
+# server does not execute but exposes to the forced command in
+# SSH_ORIGINAL_COMMAND:
 #
-# It runs automatically once the mediasoup-demo-server workflow completes
-# successfully for a push to v3 (a human merge/commit), so we never deploy on a
-# broken build nor on pull requests. It is also dispatched directly by the
-# update-mediasoup workflow, which validates the mediasoup bump before
-# dispatching. It can also be triggered manually from the Actions tab.
+# - `app`: builds the browser client app (app/) into server/public. The server
+#   is not rebuilt nor restarted.
+# - `server`: builds the server and restarts the PM2 service. The app is not
+#   rebuilt.
+#
+# Each trigger sets the target explicitly:
+#
+# - A push to v3 that changes app/ (a human merge/commit) deploys `app`.
+# - Once the mediasoup-demo-server workflow completes successfully for a push to
+#   v3 (a human merge/commit) it deploys `server`, so we never deploy on a
+#   broken build nor on pull requests.
+# - The update-mediasoup workflow dispatches it with `server` and the
+#   update-mediasoup-client workflow with `app`, both after validating the bump.
+# - It can also be triggered manually from the Actions tab, choosing the target.
 on:
+  push:
+    branches: [v3]
+    paths:
+      - 'app/**'
   workflow_run:
     workflows: [mediasoup-demo-server]
     types: [completed]
   workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}
-  cancel-in-progress: false
+    inputs:
+      target:
+        description: 'What to deploy'
+        type: choice
+        required: true
+        options:
+          - app
+          - server
 
 jobs:
   deploy:
@@ -28,11 +46,25 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    # Run on a manual/automated dispatch (the update-mediasoup workflow dispatches
-    # this after validating a bump), or only when the triggering
-    # mediasoup-demo-server run succeeded for a push to v3 (a human merge/commit);
-    # pull request runs are excluded.
+    # One group per target. A group keeps a single pending run and a newer one
+    # replaces it, which is fine within a target (the newer run deploys the
+    # latest v3 anyway) but must never let a `server` run drop a pending `app`
+    # run or vice versa. A mediasoup-demo-server run that does not deploy (it
+    # failed, or it was not for a push to v3, e.g. a pull request) gets a group
+    # of its own (its run id), so it can never drop a pending `server` run either,
+    # whether or not GitHub enters a job skipped by the `if` below into its
+    # group. The conditions are the same as in that `if`. Runs of both targets
+    # may run at once, so deploy-demo.sh serializes them on the server.
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event_name == 'push' && 'app' || github.event_name == 'workflow_dispatch' && inputs.target || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'v3') && 'server' || github.run_id }}
+      cancel-in-progress: false
+    # Run on a push to v3 that changes app/, on a manual/automated dispatch (the
+    # update-mediasoup and update-mediasoup-client workflows dispatch this after
+    # validating a bump), or only when the triggering mediasoup-demo-server run
+    # succeeded for a push to v3 (a human merge/commit); pull request runs are
+    # excluded.
     if: >-
+      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
@@ -40,22 +72,39 @@ jobs:
 
     steps:
       - name: Trigger mediasoup-demo application deploy via SSH
+        env:
+          # A push to v3 that changes app/ deploys `app`, a successful
+          # mediasoup-demo-server run deploys `server` and a dispatch deploys the
+          # chosen target.
+          TARGET: ${{ github.event_name == 'push' && 'app' || github.event_name == 'workflow_run' && 'server' || inputs.target }}
         run: |
+          case "${TARGET}" in
+            app|server)
+              echo "Deploying target: ${TARGET}"
+              ;;
+            *)
+              echo "ERROR: invalid deploy target '${TARGET}'" >&2
+              exit 1
+              ;;
+          esac
+
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
           install -m 600 /dev/null "$HOME/.ssh/deploy_key"
           printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > "$HOME/.ssh/deploy_key"
           printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" >> "$HOME/.ssh/known_hosts"
 
-          # No command is given on purpose: the server enforces the forced
-          # `command="...deploy/deploy-demo.sh"` in .ssh/authorized_keys, so
-          # that script is what actually runs. The install path and PM2 service
-          # name are injected by the same authorized_keys entry via `environment=`
-          # options, so they never appear in this repo. Its stdout/stderr is
-          # streamed back here and shown in the Actions logs.
+          # The server enforces the forced `command="...deploy/deploy-demo.sh"`
+          # in .ssh/authorized_keys, so that script is what actually runs. The
+          # command given here (the target) is NOT executed: the server exposes
+          # it to that script in SSH_ORIGINAL_COMMAND. The install path and PM2
+          # service name are injected by the same authorized_keys entry via
+          # `environment=` options, so they never appear in this repo. Its
+          # stdout/stderr is streamed back here and shown in the Actions logs.
           ssh -i "$HOME/.ssh/deploy_key" \
               -p "${{ secrets.SSH_PORT }}" \
               -o IdentitiesOnly=yes \
               -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+              "${TARGET}"
