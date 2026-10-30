@@ -137,7 +137,7 @@ async function run() {
 		window.history.pushState('', '', urlParser.toString());
 	}
 
-	// Get the effective/shareable Room URL.
+	// Get the effective and shareable Room URL.
 	const roomUrlParser = new UrlParse(window.location.href, true);
 
 	for (const key of Object.keys(roomUrlParser.query)) {
