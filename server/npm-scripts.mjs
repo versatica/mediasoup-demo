@@ -1,4 +1,4 @@
-import * as process from 'node:process';
+import process from 'node:process';
 import * as fs from 'node:fs';
 import { execSync } from 'node:child_process';
 import pkg from './package.json' with { type: 'json' };
@@ -249,12 +249,41 @@ function executeCmd(command) {
 function executeInteractiveCmd(command) {
 	logInfo(`executeInteractiveCmd(): ${command}`);
 
+	// SIGINT (Ctrl+C) and SIGTERM are delivered to the whole foreground
+	// process group, so the child receives them anyway. Ignore them here so
+	// this process does not exit before the child has finished closing
+	// gracefully. Otherwise the shell takes back the terminal while the child
+	// is still running and reading from it, which fails with EIO.
+	const ignoreSignal = () => {};
+
+	process.on('SIGINT', ignoreSignal);
+	process.on('SIGTERM', ignoreSignal);
+
+	let exitSignal;
+
 	try {
 		execSync(command, { stdio: 'inherit', env: process.env });
 	} catch (error) {
-		logError(`executeInteractiveCmd() failed, exiting: ${error}`);
+		// The child was stopped by SIGINT or SIGTERM, either killed by the signal
+		// or exiting with 128 + signal number (as nodemon does). That's not a
+		// failure.
+		exitSignal =
+			error.signal ?? { 130: 'SIGINT', 143: 'SIGTERM' }[error.status];
 
-		exitWithError();
+		if (!exitSignal) {
+			logError(`executeInteractiveCmd() failed, exiting: ${error}`);
+
+			exitWithError();
+		}
+	} finally {
+		process.off('SIGINT', ignoreSignal);
+		process.off('SIGTERM', ignoreSignal);
+	}
+
+	// Terminate with the same signal so the parent (npm, shell) sees that the
+	// command was interrupted rather than failed or successfully completed.
+	if (exitSignal) {
+		process.kill(process.pid, exitSignal);
 	}
 }
 
