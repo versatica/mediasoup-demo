@@ -366,6 +366,10 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 		usePipeTransports: boolean;
 		unlimitedRoomSecret?: string;
 	}): Promise<Room> {
+		if (this.#closed) {
+			throw new InvalidStateError('Server closed');
+		}
+
 		if (usePipeTransports && this.#config.mediasoup.numWorkers < 2) {
 			throw new InvalidStateError(
 				'at least 2 mediasoup Workers are needed to create a Room with usePipeTransports option'
@@ -441,6 +445,16 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 					})
 				: producerRouter;
 
+			// The Server may have been closed while the Routers were being created.
+			// NOTE: AwaitQueue.stop() rejects the running task but doesn't stop its
+			// execution.
+			if (this.#closed) {
+				producerRouter.close();
+				consumerRouter.close();
+
+				throw new InvalidStateError('Server closed');
+			}
+
 			const room = await Room.create({
 				roomId,
 				consumerReplicas,
@@ -452,6 +466,13 @@ export class Server extends EnhancedEventEmitter<ServerEvents> {
 				producerWebRtcServer,
 				consumerWebRtcServer,
 			});
+
+			// The Server may have been closed while the Room was being created.
+			if (this.#closed) {
+				room.close();
+
+				throw new InvalidStateError('Server closed');
+			}
 
 			roomData.room = room;
 
