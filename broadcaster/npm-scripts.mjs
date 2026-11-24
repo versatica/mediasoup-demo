@@ -29,6 +29,7 @@ const ESLINT_IGNORE_PATTERN_ARGS = []
 // Paths for Prettier to check/write. Converted to string for convenience.
 // NOTE: Prettier ignores paths in .gitignore.
 const PRETTIER_PATHS = [
+	'../.github',
 	'README.md',
 	'eslint.config.mjs',
 	'npm-scripts.mjs',

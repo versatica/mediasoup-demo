@@ -4,7 +4,6 @@ about: Use this option to report an issue in mediasoup-demo
 title: ''
 labels: ''
 assignees: ''
-
 ---
 
 **IMPORTANT:** We primarily use GitHub as an issue tracker. Just open an issue here if you have encountered a real bug in the mediasoup-demo project.

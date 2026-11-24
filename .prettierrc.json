@@ -1,0 +1,24 @@
+{
+	"useTabs": true,
+	"tabWidth": 2,
+	"arrowParens": "avoid",
+	"bracketSpacing": true,
+	"semi": true,
+	"singleQuote": true,
+	"trailingComma": "es5",
+	"endOfLine": "auto",
+	"overrides": [
+		{
+			"files": "*.md",
+			"options": {
+				"useTabs": false
+			}
+		},
+		{
+			"files": "*.{yml,yaml}",
+			"options": {
+				"useTabs": false
+			}
+		}
+	]
+}
