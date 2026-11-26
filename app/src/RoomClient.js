@@ -53,8 +53,10 @@ export default class RoomClient {
 		mic,
 		webcam,
 		datachannel,
-		enableWebcamLayers,
-		enableSharingLayers,
+		enableWebcamSimulcast,
+		enableSharingSimulcast,
+		enableWebcamSvc,
+		enableSharingSvc,
 		webcamScalabilityMode,
 		sharingScalabilityMode,
 		numWebcamSimulcastStreams,
@@ -163,13 +165,25 @@ export default class RoomClient {
 		// @type {Boolean}
 		this._removeBweExtensions = Boolean(removeBweExtensions);
 
-		// Whether simulcast or SVC should be used for webcam.
-		// @type {Boolean}
-		this._enableWebcamLayers = Boolean(enableWebcamLayers);
+		// Whether simulcast should be used for webcam. If `undefined` it's used
+		// when SVC is not, if `true` it's used even for SVC capable codecs, and
+		// if `false` a single stream is sent.
+		// @type {Boolean | undefined}
+		this._enableWebcamSimulcast = enableWebcamSimulcast;
 
-		// Whether simulcast or SVC should be used in desktop sharing.
+		// Whether simulcast should be used in desktop sharing. Same semantics as
+		// `_enableWebcamSimulcast`.
+		// @type {Boolean | undefined}
+		this._enableSharingSimulcast = enableSharingSimulcast;
+
+		// Whether SVC should be used for webcam (if the codec supports it).
 		// @type {Boolean}
-		this._enableSharingLayers = Boolean(enableSharingLayers);
+		this._enableWebcamSvc = Boolean(enableWebcamSvc);
+
+		// Whether SVC should be used in desktop sharing (if the codec supports
+		// it).
+		// @type {Boolean}
+		this._enableSharingSvc = Boolean(enableSharingSvc);
 
 		// Scalability mode for webcam.
 		// @type {String}
@@ -1210,54 +1224,59 @@ export default class RoomClient {
 				}
 			}
 
-			if (this._enableWebcamLayers) {
-				// If VP9 or AV1 is the only available video codec then use SVC.
-				const firstVideoCodec =
-					this._mediasoupDevice.sendRtpCapabilities.codecs.find(
-						c => c.kind === 'video'
-					);
+			const firstVideoCodec =
+				this._mediasoupDevice.sendRtpCapabilities.codecs.find(
+					c => c.kind === 'video'
+				);
 
-				// VP9 or AV1 with SVC.
-				if (
-					((this._forceVP9 || this._forceAV1) && codec) ||
-					['video/vp9', 'video/av1'].includes(
-						firstVideoCodec.mimeType.toLowerCase()
-					)
-				) {
-					encodings = [
-						{
-							maxBitrate: 5000000,
-							scalabilityMode: this._webcamScalabilityMode || 'L3T3_KEY',
-						},
-					];
+			// Whether the codec to be used supports SVC.
+			const svcCapableCodec =
+				((this._forceVP9 || this._forceAV1) && codec) ||
+				['video/vp9', 'video/av1'].includes(
+					firstVideoCodec.mimeType.toLowerCase()
+				);
+
+			// VP9 or AV1 with SVC, unless simulcast is explicitly requested.
+			if (
+				this._enableWebcamSvc &&
+				svcCapableCodec &&
+				this._enableWebcamSimulcast !== true
+			) {
+				encodings = [
+					{
+						maxBitrate: 5000000,
+						scalabilityMode: this._webcamScalabilityMode || 'L3T3_KEY',
+					},
+				];
+			}
+			// Any codec with simulcast.
+			else if (this._enableWebcamSimulcast !== false) {
+				encodings = [
+					{
+						scaleResolutionDownBy: 1,
+						maxBitrate: 5000000,
+						scalabilityMode: this._webcamScalabilityMode || 'L1T3',
+					},
+				];
+
+				if (this._numWebcamSimulcastStreams > 1) {
+					encodings.unshift({
+						scaleResolutionDownBy: 2,
+						maxBitrate: 1000000,
+						scalabilityMode: this._webcamScalabilityMode || 'L1T3',
+					});
 				}
-				// VP8 or H264 with simulcast.
-				else {
-					encodings = [
-						{
-							scaleResolutionDownBy: 1,
-							maxBitrate: 5000000,
-							scalabilityMode: this._webcamScalabilityMode || 'L1T3',
-						},
-					];
 
-					if (this._numWebcamSimulcastStreams > 1) {
-						encodings.unshift({
-							scaleResolutionDownBy: 2,
-							maxBitrate: 1000000,
-							scalabilityMode: this._webcamScalabilityMode || 'L1T3',
-						});
-					}
-
-					if (this._numWebcamSimulcastStreams > 2) {
-						encodings.unshift({
-							scaleResolutionDownBy: 4,
-							maxBitrate: 500000,
-							scalabilityMode: this._webcamScalabilityMode || 'L1T3',
-						});
-					}
+				if (this._numWebcamSimulcastStreams > 2) {
+					encodings.unshift({
+						scaleResolutionDownBy: 4,
+						maxBitrate: 500000,
+						scalabilityMode: this._webcamScalabilityMode || 'L1T3',
+					});
 				}
-			} else {
+			}
+			// Single stream.
+			else {
 				encodings = [
 					{
 						scaleResolutionDownBy: 1,
@@ -1570,61 +1589,64 @@ export default class RoomClient {
 				}
 			}
 
-			// Simulcast or SVC enabled.
-			if (this._enableSharingLayers) {
-				// If VP9 is the only available video codec then use SVC.
-				const firstVideoCodec =
-					this._mediasoupDevice.sendRtpCapabilities.codecs.find(
-						c => c.kind === 'video'
-					);
+			const firstVideoCodec =
+				this._mediasoupDevice.sendRtpCapabilities.codecs.find(
+					c => c.kind === 'video'
+				);
 
-				// VP9 or AV1 with SVC.
-				if (
-					((this._forceVP9 || this._forceAV1) && codec) ||
-					['video/vp9', 'video/av1'].includes(
-						firstVideoCodec.mimeType.toLowerCase()
-					)
-				) {
-					encodings = [
-						{
-							maxBitrate: 5000000,
-							scalabilityMode: this._sharingScalabilityMode || 'L3T3',
-						},
-					];
+			// Whether the codec to be used supports SVC.
+			const svcCapableCodec =
+				((this._forceVP9 || this._forceAV1) && codec) ||
+				['video/vp9', 'video/av1'].includes(
+					firstVideoCodec.mimeType.toLowerCase()
+				);
+
+			// VP9 or AV1 with SVC, unless simulcast is explicitly requested.
+			if (
+				this._enableSharingSvc &&
+				svcCapableCodec &&
+				this._enableSharingSimulcast !== true
+			) {
+				encodings = [
+					{
+						maxBitrate: 5000000,
+						scalabilityMode: this._sharingScalabilityMode || 'L3T3',
+					},
+				];
+			}
+			// Any codec with simulcast.
+			else if (this._enableSharingSimulcast !== false) {
+				encodings = [
+					{
+						scaleResolutionDownBy: 1,
+						maxBitrate: 5000000,
+						scalabilityMode: this._sharingScalabilityMode || 'L1T3',
+					},
+				];
+
+				if (this._numSharingSimulcastStreams > 1) {
+					encodings.unshift({
+						scaleResolutionDownBy: 2,
+						maxBitrate: 1000000,
+						scalabilityMode: this._sharingScalabilityMode || 'L1T3',
+					});
 				}
-				// VP8 or H264 with simulcast.
-				else {
-					encodings = [
-						{
-							scaleResolutionDownBy: 1,
-							maxBitrate: 5000000,
-							scalabilityMode: this._sharingScalabilityMode || 'L1T3',
-						},
-					];
 
-					if (this._numSharingSimulcastStreams > 1) {
-						encodings.unshift({
-							scaleResolutionDownBy: 2,
-							maxBitrate: 1000000,
-							scalabilityMode: this._sharingScalabilityMode || 'L1T3',
-						});
-					}
-
-					if (this._numSharingSimulcastStreams > 2) {
-						encodings.unshift({
-							scaleResolutionDownBy: 4,
-							maxBitrate: 500000,
-							scalabilityMode: this._sharingScalabilityMode || 'L1T3',
-						});
-					}
+				if (this._numSharingSimulcastStreams > 2) {
+					encodings.unshift({
+						scaleResolutionDownBy: 4,
+						maxBitrate: 500000,
+						scalabilityMode: this._sharingScalabilityMode || 'L1T3',
+					});
 				}
 			}
-			// No simulcast or SVC enabled.
+			// Single stream.
 			else {
 				encodings = [
 					{
 						scaleResolutionDownBy: 1,
 						maxBitrate: 5000000,
+						scalabilityMode: this._sharingScalabilityMode,
 					},
 				];
 			}
