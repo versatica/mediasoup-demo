@@ -84,8 +84,20 @@ async function run() {
 	const forceAV1 = urlParser.query.forceAV1 === 'true';
 	const disableBwe = urlParser.query.disableBwe === 'true';
 	const removeBweExtensions = urlParser.query.removeBweExtensions === 'true';
-	const enableWebcamLayers = urlParser.query.enableWebcamLayers !== 'false';
-	const enableSharingLayers = urlParser.query.enableSharingLayers !== 'false';
+	const enableWebcamSimulcast =
+		urlParser.query.enableWebcamSimulcast === 'true'
+			? true
+			: urlParser.query.enableWebcamSimulcast === 'false'
+				? false
+				: undefined;
+	const enableSharingSimulcast =
+		urlParser.query.enableSharingSimulcast === 'true'
+			? true
+			: urlParser.query.enableSharingSimulcast === 'false'
+				? false
+				: undefined;
+	const enableWebcamSvc = urlParser.query.enableWebcamSvc !== 'false';
+	const enableSharingSvc = urlParser.query.enableSharingSvc !== 'false';
 	const webcamScalabilityMode = urlParser.query.webcamScalabilityMode;
 	const sharingScalabilityMode = urlParser.query.sharingScalabilityMode;
 	const numWebcamSimulcastStreams = urlParser.query.numWebcamSimulcastStreams
@@ -160,8 +172,10 @@ async function run() {
 			case 'forceAV1':
 			case 'disableBwe':
 			case 'removeBweExtensions':
-			case 'enableWebcamLayers':
-			case 'enableSharingLayers':
+			case 'enableWebcamSimulcast':
+			case 'enableSharingSimulcast':
+			case 'enableWebcamSvc':
+			case 'enableSharingSvc':
 			case 'webcamScalabilityMode':
 			case 'sharingScalabilityMode':
 			case 'numWebcamSimulcastStreams':
@@ -232,8 +246,10 @@ async function run() {
 		forceAV1,
 		disableBwe,
 		removeBweExtensions,
-		enableWebcamLayers,
-		enableSharingLayers,
+		enableWebcamSimulcast,
+		enableSharingSimulcast,
+		enableWebcamSvc,
+		enableSharingSvc,
 		webcamScalabilityMode,
 		sharingScalabilityMode,
 		numWebcamSimulcastStreams,

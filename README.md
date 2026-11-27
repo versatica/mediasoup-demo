@@ -37,8 +37,10 @@ By adding query parameters into the URL you can set certain settings of the appl
 | `forceH264`        | Boolean | Force H264 codec for webcam and screen sharing | `false` |
 | `forceVP9`         | Boolean | Force VP9 codec for webcam and screen sharing | `false` |
 | `forceAV1`         | Boolean | Force AV1 codec for webcam and screen sharing | `false` |
-| `enableWebcamLayers` | Boolean | Enable simulcast or SVC for webcam | `true` |
-| `enableSharingLayers` | Boolean | Enable simulcast or SVC for screen sharing | `true` |
+| `enableWebcamSvc`  | Boolean | Use SVC for webcam when the codec supports it. See [Video layers](#video-layers) | `true` |
+| `enableSharingSvc` | Boolean | Use SVC for screen sharing when the codec supports it. See [Video layers](#video-layers) | `true` |
+| `enableWebcamSimulcast` | Boolean | Use simulcast for webcam. See [Video layers](#video-layers) | Not set |
+| `enableSharingSimulcast` | Boolean | Use simulcast for screen sharing. See [Video layers](#video-layers) | Not set |
 | `webcamScalabilityMode` | String | `scalabilityMode` for webcam | 'L1T3' for VP8/H264 (in each simulcast encoding), 'L3T3_KEY' for VP9 |
 | `sharingScalabilityMode` | String | `scalabilityMode` for screen sharing | 'L1T3' for VP8/H264 (in each simulcast encoding), 'L3T3' for VP9 |
 | `numWebcamSimulcastStreams` | Number | Number of streams for simulcast in webcam | 3 |
@@ -59,6 +61,26 @@ By adding query parameters into the URL you can set certain settings of the appl
 | `enableAbsCaptureTime` | Boolean | Enable "abs-capture-time" RTP extension | `false` |
 | `disableDD`        | Boolean | Remove "dependency-descriptor" RTP header extension from router RTP capabilities before loading the mediasoup-client `Device` | `false` |
 | `rtcstatsUrl`      | String  | If present, Websocket URL to connect to an [rtcstats-server](https://github.com/rtcstats/rtcstats), including token (it overrides the `providers.rtcstatsUrl` value in `config.mjs` in the server)  | |
+
+### Video layers
+
+For each video source (webcam and screen sharing) the encodings to send are chosen with the following rules, in order:
+
+1. **SVC** (a single encoding with a multi layer `scalabilityMode`) if the codec supports it (VP9 or AV1) and `enable*Svc` is not `false`, unless `enable*Simulcast=true` was explicitly given.
+2. **Simulcast** (`num*SimulcastStreams` encodings) unless `enable*Simulcast=false` was explicitly given.
+3. **A single stream** otherwise.
+
+Note that `enable*Simulcast` has three different behaviours: not set, `true` and `false`.
+
+| Webcam parameters | VP8 / H264 | VP9 / AV1 |
+| ----------------- | ---------- | --------- |
+| *(none)* | Simulcast | SVC |
+| `enableWebcamSimulcast=true` | Simulcast | Simulcast |
+| `enableWebcamSvc=false` | Simulcast | Simulcast |
+| `enableWebcamSimulcast=false` | Single stream | SVC |
+| `enableWebcamSimulcast=false&enableWebcamSvc=false` | Single stream | Single stream |
+
+Screen sharing behaves the same way with `enableSharingSvc` and `enableSharingSimulcast`.
 
 ## Installation
 
